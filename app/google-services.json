@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "353801580108",
+    "project_id": "oor-145a0",
+    "storage_bucket": "oor-145a0.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:353801580108:android:d3e33600541d4e1c864ee9",
+        "android_client_info": {
+          "package_name": "com.example.outofroutebuddy"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA_Slu4Vrv3nZIn7qfZiSN8gtaGDv-xTj4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
