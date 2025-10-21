@@ -334,4 +334,285 @@ object MockServices {
             }
         }
     }
+    
+    // ==================== MOCK UNIFIED TRIP SERVICE ====================
+    
+    /**
+     * ✅ NEW (#30 Infrastructure): Mock UnifiedTripService
+     * 
+     * Mock implementation for testing trip calculations, period statistics,
+     * and period mode switching without real service dependencies.
+     */
+    class MockUnifiedTripService {
+        private var currentPeriodMode = "STANDARD"
+        private val tripHistory = mutableListOf<MockTrip>()
+        private var shouldFail = false
+        private var failureMessage = "Mock failure"
+        
+        data class MockTrip(
+            val loadedMiles: Double,
+            val bounceMiles: Double,
+            val actualMiles: Double,
+            val oorMiles: Double,
+            val oorPercentage: Double,
+            val timestamp: Long = System.currentTimeMillis()
+        )
+        
+        data class MockPeriodCalculation(
+            val totalTrips: Int,
+            val totalDistance: Double,
+            val totalOor: Double,
+            val averageOorPercentage: Double
+        )
+        
+        fun setPeriodMode(mode: String) {
+            currentPeriodMode = mode
+        }
+        
+        fun getPeriodMode(): String = currentPeriodMode
+        
+        fun calculateTrip(loaded: Double, bounce: Double, actual: Double): MockTrip {
+            if (shouldFail) throw Exception(failureMessage)
+            
+            val dispatched = loaded + bounce
+            val oor = actual - dispatched
+            val oorPercent = if (dispatched > 0) (oor / dispatched) * 100 else 0.0
+            
+            val trip = MockTrip(loaded, bounce, actual, oor, oorPercent)
+            tripHistory.add(trip)
+            return trip
+        }
+        
+        fun calculatePeriodStatistics(): MockPeriodCalculation {
+            if (shouldFail) throw Exception(failureMessage)
+            
+            return MockPeriodCalculation(
+                totalTrips = tripHistory.size,
+                totalDistance = tripHistory.sumOf { it.actualMiles },
+                totalOor = tripHistory.sumOf { it.oorMiles },
+                averageOorPercentage = if (tripHistory.isNotEmpty()) {
+                    tripHistory.map { it.oorPercentage }.average()
+                } else 0.0
+            )
+        }
+        
+        fun getTripHistory(): List<MockTrip> = tripHistory.toList()
+        fun clearHistory() = tripHistory.clear()
+        fun setShouldFail(shouldFail: Boolean, message: String = "Mock failure") {
+            this.shouldFail = shouldFail
+            this.failureMessage = message
+        }
+    }
+    
+    // ==================== MOCK UNIFIED LOCATION SERVICE ====================
+    
+    /**
+     * ✅ NEW (#30 Infrastructure): Mock UnifiedLocationService
+     * 
+     * Mock implementation for testing GPS tracking, location updates,
+     * and validation without real location services.
+     */
+    class MockUnifiedLocationService {
+        private var isTracking = false
+        private val locationUpdates = mutableListOf<MockLocation>()
+        private var shouldFail = false
+        private var failureMessage = "Mock GPS failure"
+        private var mockAccuracy = 10f
+        
+        data class MockLocation(
+            val latitude: Double,
+            val longitude: Double,
+            val accuracy: Float,
+            val speed: Float,
+            val timestamp: Long = System.currentTimeMillis()
+        )
+        
+        fun startTracking(): Boolean {
+            if (shouldFail) throw Exception(failureMessage)
+            isTracking = true
+            return true
+        }
+        
+        fun stopTracking(): Boolean {
+            isTracking = false
+            return true
+        }
+        
+        fun isTracking(): Boolean = isTracking
+        
+        fun addLocationUpdate(lat: Double, lon: Double, speed: Float = 0f) {
+            if (!isTracking) throw IllegalStateException("Not tracking")
+            if (shouldFail) throw Exception(failureMessage)
+            
+            locationUpdates.add(MockLocation(lat, lon, mockAccuracy, speed))
+        }
+        
+        fun getLocationHistory(): List<MockLocation> = locationUpdates.toList()
+        fun clearLocationHistory() = locationUpdates.clear()
+        fun getLocationCount(): Int = locationUpdates.size
+        
+        fun setMockAccuracy(accuracy: Float) {
+            mockAccuracy = accuracy
+        }
+        
+        fun setShouldFail(shouldFail: Boolean, message: String = "Mock GPS failure") {
+            this.shouldFail = shouldFail
+            this.failureMessage = message
+        }
+    }
+    
+    // ==================== MOCK UNIFIED OFFLINE SERVICE ====================
+    
+    /**
+     * ✅ NEW (#30 Infrastructure): Mock UnifiedOfflineService
+     * 
+     * Mock implementation for testing offline sync, queue management,
+     * and network state handling without real network dependencies.
+     */
+    class MockUnifiedOfflineService {
+        private var isOnline = true
+        private val syncQueue = mutableListOf<MockSyncItem>()
+        private var shouldFail = false
+        private var failureMessage = "Mock sync failure"
+        private val syncHistory = mutableListOf<MockSyncResult>()
+        
+        data class MockSyncItem(
+            val dataType: String,
+            val data: Any,
+            val timestamp: Long = System.currentTimeMillis()
+        )
+        
+        data class MockSyncResult(
+            val success: Boolean,
+            val itemsProcessed: Int,
+            val itemsFailed: Int,
+            val timestamp: Long = System.currentTimeMillis()
+        )
+        
+        fun setOnline(online: Boolean) {
+            isOnline = online
+        }
+        
+        fun isOnline(): Boolean = isOnline
+        
+        fun queueSync(dataType: String, data: Any) {
+            syncQueue.add(MockSyncItem(dataType, data))
+        }
+        
+        fun performSync(): MockSyncResult {
+            if (shouldFail) throw Exception(failureMessage)
+            if (!isOnline) {
+                val result = MockSyncResult(false, 0, syncQueue.size)
+                syncHistory.add(result)
+                return result
+            }
+            
+            val itemCount = syncQueue.size
+            syncQueue.clear()
+            val result = MockSyncResult(true, itemCount, 0)
+            syncHistory.add(result)
+            return result
+        }
+        
+        fun getQueueSize(): Int = syncQueue.size
+        fun getSyncHistory(): List<MockSyncResult> = syncHistory.toList()
+        fun clearQueue() = syncQueue.clear()
+        fun clearHistory() = syncHistory.clear()
+        
+        fun setShouldFail(shouldFail: Boolean, message: String = "Mock sync failure") {
+            this.shouldFail = shouldFail
+            this.failureMessage = message
+        }
+    }
+    
+    // ==================== UPDATED MOCK SERVICE FACTORY ====================
+    
+    /**
+     * Factory for creating ALL mock service instances (includes unified services)
+     */
+    object UnifiedMockServiceFactory {
+        
+        /**
+         * Creates a mock unified trip service
+         */
+        fun createMockTripService(): MockUnifiedTripService {
+            return MockUnifiedTripService()
+        }
+        
+        /**
+         * Creates a mock unified location service
+         */
+        fun createMockLocationService(): MockUnifiedLocationService {
+            return MockUnifiedLocationService()
+        }
+        
+        /**
+         * Creates a mock unified offline service
+         */
+        fun createMockOfflineService(): MockUnifiedOfflineService {
+            return MockUnifiedOfflineService()
+        }
+        
+        /**
+         * Creates complete unified service suite
+         */
+        fun createUnifiedServiceSuite(): UnifiedMockServiceSuite {
+            return UnifiedMockServiceSuite(
+                tripService = createMockTripService(),
+                locationService = createMockLocationService(),
+                offlineService = createMockOfflineService()
+            )
+        }
+    }
+    
+    /**
+     * Complete suite of unified mock services
+     */
+    data class UnifiedMockServiceSuite(
+        val tripService: MockUnifiedTripService,
+        val locationService: MockUnifiedLocationService,
+        val offlineService: MockUnifiedOfflineService
+    ) {
+        /**
+         * Reset all services to clean state
+         */
+        fun resetAll() {
+            tripService.clearHistory()
+            tripService.setShouldFail(false)
+            
+            locationService.stopTracking()
+            locationService.clearLocationHistory()
+            locationService.setShouldFail(false)
+            
+            offlineService.setOnline(true)
+            offlineService.clearQueue()
+            offlineService.clearHistory()
+            offlineService.setShouldFail(false)
+        }
+        
+        /**
+         * Configure for offline scenario
+         */
+        fun configureOfflineScenario() {
+            offlineService.setOnline(false)
+            locationService.setMockAccuracy(50f) // Poor accuracy
+        }
+        
+        /**
+         * Configure for online scenario
+         */
+        fun configureOnlineScenario() {
+            offlineService.setOnline(true)
+            locationService.setMockAccuracy(10f) // Good accuracy
+        }
+        
+        /**
+         * Configure for error scenario
+         */
+        fun configureErrorScenario() {
+            tripService.setShouldFail(true)
+            locationService.setShouldFail(true)
+            offlineService.setShouldFail(true)
+        }
+    }
 } 
