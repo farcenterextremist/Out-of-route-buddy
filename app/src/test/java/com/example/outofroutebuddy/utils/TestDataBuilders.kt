@@ -30,7 +30,6 @@ object TestDataBuilders {
         private var oorPercentage: Double = 4.17
         private var startTime: Date? = Date()
         private var endTime: Date? = Date()
-        private var periodMode: PeriodMode = PeriodMode.STANDARD
         
         fun withId(id: String) = apply { this.id = id }
         fun withLoadedMiles(miles: Double) = apply { this.loadedMiles = miles }
@@ -40,7 +39,6 @@ object TestDataBuilders {
         fun withOorPercentage(percentage: Double) = apply { this.oorPercentage = percentage }
         fun withStartTime(time: Date?) = apply { this.startTime = time }
         fun withEndTime(time: Date?) = apply { this.endTime = time }
-        fun withPeriodMode(mode: PeriodMode) = apply { this.periodMode = mode }
         
         /**
          * Build with automatic OOR calculation
@@ -61,8 +59,7 @@ object TestDataBuilders {
                 oorMiles = oorMiles,
                 oorPercentage = oorPercentage,
                 startTime = startTime,
-                endTime = endTime,
-                periodMode = periodMode
+                endTime = endTime
             )
         }
         
@@ -76,7 +73,6 @@ object TestDataBuilders {
                 .buildWithCalculation()
             
             fun aCustomPeriodTrip() = TripBuilder()
-                .withPeriodMode(PeriodMode.CUSTOM)
                 .withLoadedMiles(100.0)
                 .withBounceMiles(20.0)
                 .withActualMiles(125.0)
