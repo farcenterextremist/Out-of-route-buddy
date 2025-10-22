@@ -1,5 +1,6 @@
 package com.example.outofroutebuddy.services
 
+import com.example.outofroutebuddy.services.TripCalculationService
 import org.junit.Assert.*
 import org.junit.Test
 import java.util.*

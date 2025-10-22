@@ -1,0 +1,226 @@
+name: Coverage Analysis & Quality Gates
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+jobs:
+  coverage-analysis:
+    name: Coverage Analysis
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        cache: gradle
+        
+    - name: Grant execute permission for gradlew
+      run: chmod +x gradlew
+      
+    - name: Run Unit Tests
+      run: ./gradlew testDebugUnitTest --stacktrace
+      
+    - name: Generate JaCoCo Coverage Report
+      run: ./gradlew jacocoTestReport
+      
+    - name: Run Coverage Analysis
+      run: |
+        echo "📊 JaCoCo Coverage Analysis"
+        echo "============================"
+        
+        # Check if XML report exists
+        if [ -f "app/build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml" ]; then
+          echo "✅ Coverage report found"
+          
+          # Extract coverage metrics
+          OVERALL=$(grep -o 'line-rate="[0-9.]*"' app/build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml | head -1 | grep -o '[0-9.]*' | awk '{printf "%.1f", $1 * 100}')
+          BRANCH=$(grep -o 'branch-rate="[0-9.]*"' app/build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml | head -1 | grep -o '[0-9.]*' | awk '{printf "%.1f", $1 * 100}')
+          INSTRUCTION=$(grep -o 'instruction-rate="[0-9.]*"' app/build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml | head -1 | grep -o '[0-9.]*' | awk '{printf "%.1f", $1 * 100}')
+          
+          echo ""
+          echo "📈 COVERAGE METRICS:"
+          echo "  Overall Coverage: ${OVERALL}%"
+          echo "  Branch Coverage:   ${BRANCH}%"
+          echo "  Instruction Coverage: ${INSTRUCTION}%"
+          echo ""
+          
+          # Coverage thresholds
+          OVERALL_THRESHOLD=70.0
+          BRANCH_THRESHOLD=60.0
+          INSTRUCTION_THRESHOLD=75.0
+          
+          echo "🎯 COVERAGE THRESHOLDS:"
+          echo "  Overall:    ${OVERALL_THRESHOLD}% (Current: ${OVERALL}%)"
+          echo "  Branch:     ${BRANCH_THRESHOLD}% (Current: ${BRANCH}%)"
+          echo "  Instruction: ${INSTRUCTION_THRESHOLD}% (Current: ${INSTRUCTION}%)"
+          echo ""
+          
+          # Check thresholds
+          OVERALL_PASS=$(echo "$OVERALL >= $OVERALL_THRESHOLD" | bc -l)
+          BRANCH_PASS=$(echo "$BRANCH >= $BRANCH_THRESHOLD" | bc -l)
+          INSTRUCTION_PASS=$(echo "$INSTRUCTION >= $INSTRUCTION_THRESHOLD" | bc -l)
+          
+          if [ "$OVERALL_PASS" -eq 1 ] && [ "$BRANCH_PASS" -eq 1 ] && [ "$INSTRUCTION_PASS" -eq 1 ]; then
+            echo "✅ All coverage thresholds met!"
+            echo "🎯 Overall: ${OVERALL}% >= ${OVERALL_THRESHOLD}%"
+            echo "🎯 Branch: ${BRANCH}% >= ${BRANCH_THRESHOLD}%"
+            echo "🎯 Instruction: ${INSTRUCTION}% >= ${INSTRUCTION_THRESHOLD}%"
+          else
+            echo "❌ Some coverage thresholds not met:"
+            if [ "$OVERALL_PASS" -eq 0 ]; then
+              echo "  - Overall coverage ${OVERALL}% < ${OVERALL_THRESHOLD}%"
+            fi
+            if [ "$BRANCH_PASS" -eq 0 ]; then
+              echo "  - Branch coverage ${BRANCH}% < ${BRANCH_THRESHOLD}%"
+            fi
+            if [ "$INSTRUCTION_PASS" -eq 0 ]; then
+              echo "  - Instruction coverage ${INSTRUCTION}% < ${INSTRUCTION_THRESHOLD}%"
+            fi
+            exit 1
+          fi
+          
+          # Generate coverage badge
+          OVERALL_INT=$(printf "%.0f" "$OVERALL")
+          if [ "$OVERALL_INT" -ge 80 ]; then
+            COLOR="brightgreen"
+          elif [ "$OVERALL_INT" -ge 70 ]; then
+            COLOR="green"
+          elif [ "$OVERALL_INT" -ge 60 ]; then
+            COLOR="yellow"
+          else
+            COLOR="red"
+          fi
+          
+          BADGE_URL="https://img.shields.io/badge/coverage-${OVERALL_INT}%25-${COLOR}"
+          echo ""
+          echo "🏆 COVERAGE BADGE:"
+          echo "   $BADGE_URL"
+          echo ""
+          echo "   Add to README.md:"
+          echo "   ![Coverage]($BADGE_URL)"
+          
+        else
+          echo "❌ Coverage report not found"
+          exit 1
+        fi
+        
+    - name: Upload Coverage Reports
+      uses: actions/upload-artifact@v4
+      with:
+        name: coverage-reports
+        path: |
+          app/build/reports/jacoco/jacocoTestReport/
+        retention-days: 30
+        
+    - name: Comment Coverage on PR
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          const path = require('path');
+          
+          try {
+            const xmlPath = 'app/build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml';
+            if (fs.existsSync(xmlPath)) {
+              const xmlContent = fs.readFileSync(xmlPath, 'utf8');
+              
+              // Extract coverage metrics
+              const lineRateMatch = xmlContent.match(/line-rate="([0-9.]+)"/);
+              const branchRateMatch = xmlContent.match(/branch-rate="([0-9.]+)"/);
+              const instructionRateMatch = xmlContent.match(/instruction-rate="([0-9.]+)"/);
+              
+              const overall = lineRateMatch ? Math.round(parseFloat(lineRateMatch[1]) * 100 * 10) / 10 : 0;
+              const branch = branchRateMatch ? Math.round(parseFloat(branchRateMatch[1]) * 100 * 10) / 10 : 0;
+              const instruction = instructionRateMatch ? Math.round(parseFloat(instructionRateMatch[1]) * 100 * 10) / 10 : 0;
+              
+              const comment = `## 📊 Coverage Report
+              
+              | Metric | Coverage | Threshold | Status |
+              |--------|----------|-----------|--------|
+              | Overall | ${overall}% | 70% | ${overall >= 70 ? '✅' : '❌'} |
+              | Branch | ${branch}% | 60% | ${branch >= 60 ? '✅' : '❌'} |
+              | Instruction | ${instruction}% | 75% | ${instruction >= 75 ? '✅' : '❌'} |
+              
+              📈 **Overall Coverage: ${overall}%**
+              
+              ${overall >= 70 && branch >= 60 && instruction >= 75 ? 
+                '✅ All coverage thresholds met!' : 
+                '❌ Some coverage thresholds not met. Please add more tests.'}
+              
+              📁 [View detailed coverage report](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+              `;
+              
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: comment
+              });
+            }
+          } catch (error) {
+            console.log('Could not create coverage comment:', error);
+          }
+
+  coverage-verification:
+    name: Coverage Quality Gate
+    runs-on: ubuntu-latest
+    needs: coverage-analysis
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        cache: gradle
+        
+    - name: Download Coverage Reports
+      uses: actions/download-artifact@v4
+      with:
+        name: coverage-reports
+        path: app/build/reports/jacoco/jacocoTestReport/
+        
+    - name: Verify Coverage Thresholds
+      run: ./gradlew jacocoCoverageVerification
+      
+    - name: Coverage Quality Gate
+      run: |
+        echo "🎯 Coverage Quality Gate"
+        echo "========================"
+        
+        if [ -f "app/build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml" ]; then
+          OVERALL=$(grep -o 'line-rate="[0-9.]*"' app/build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml | head -1 | grep -o '[0-9.]*' | awk '{printf "%.1f", $1 * 100}')
+          BRANCH=$(grep -o 'branch-rate="[0-9.]*"' app/build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml | head -1 | grep -o '[0-9.]*' | awk '{printf "%.1f", $1 * 100}')
+          
+          echo "📊 Final Coverage Results:"
+          echo "  Overall: ${OVERALL}%"
+          echo "  Branch: ${BRANCH}%"
+          
+          OVERALL_THRESHOLD=70.0
+          BRANCH_THRESHOLD=60.0
+          
+          if (( $(echo "$OVERALL >= $OVERALL_THRESHOLD" | bc -l) )) && (( $(echo "$BRANCH >= $BRANCH_THRESHOLD" | bc -l) )); then
+            echo "✅ Quality Gate PASSED"
+            echo "🎉 Coverage meets all requirements"
+          else
+            echo "❌ Quality Gate FAILED"
+            echo "🚫 Coverage does not meet requirements"
+            exit 1
+          fi
+        else
+          echo "❌ Coverage report not found"
+          exit 1
+        fi

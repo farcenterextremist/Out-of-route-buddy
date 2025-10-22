@@ -242,7 +242,7 @@ open class OutOfRouteApplication : Application() {
                     }
                     runCatching {
                         clazz.getMethod("setCustomKey", String::class.java, String::class.java)
-                            .invoke(instance, "app_version", "1.0")
+                            .invoke(instance, "app_version", "1.0.1")
                     }
                     runCatching {
                         clazz.getMethod("setCustomKey", String::class.java, String::class.java)

@@ -273,13 +273,8 @@ class MainActivity : AppCompatActivity() {
         // For now, we'll just log the error
         Log.e(TAG, "Showing initialization error to user: ${error.message}")
 
-        // Try to show a basic error message
-        try {
-            // You could show a Toast or Dialog here
-            // Toast.makeText(this, "App initialization failed. Please restart the app.", Toast.LENGTH_LONG).show()
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to show error message", e)
-        }
+        // Initialization error logged - user will see unresponsive app
+        // Critical errors should prevent app from loading
     }
 
     override fun onSupportNavigateUp(): Boolean {

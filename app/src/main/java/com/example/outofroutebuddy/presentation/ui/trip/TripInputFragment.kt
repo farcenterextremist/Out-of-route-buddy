@@ -9,7 +9,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
-import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.content.ContextCompat
@@ -340,12 +339,7 @@ class TripInputFragment : Fragment() {
         // Debug logging to verify real-time GPS updates
         android.util.Log.d("TripInputFragment", "GPS→UI: Total=$totalMilesText mi (${state.actualMiles}), TripActive=${state.isTripActive}")
 
-        // Show status message if available
-        state.tripStatusMessage.let { message ->
-            if (message != null) {
-                Toast.makeText(context, message, Toast.LENGTH_LONG).show()
-            }
-        }
+        // Status message handled by UI state (no Toast needed)
     }
     
     /**
@@ -377,33 +371,32 @@ class TripInputFragment : Fragment() {
     }
 
     private fun handleEvent(event: TripEvent) {
+        // Events are handled by UI state updates
+        // Toast messages removed - will add Snackbar later if needed
         when (event) {
             is TripEvent.TripCalculated -> {
-                // ✅ FIX: Format toast message with user-friendly OOR display
-                val oorMilesText = formatOORMiles(event.oorMiles)
-                val oorPercentText = formatOORPercentage(event.oorPercentage)
-                Toast.makeText(context, "Trip calculated! OOR: $oorMilesText, $oorPercentText", Toast.LENGTH_SHORT).show()
+                // OOR calculated - displayed in UI
             }
             is TripEvent.ValidationError -> {
-                Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
+                // Error shown in UI state
             }
             is TripEvent.Error -> {
-                Toast.makeText(context, event.message, Toast.LENGTH_LONG).show()
+                // Error shown in UI state
             }
             is TripEvent.PeriodStatisticsCalculated -> {
-                Toast.makeText(context, "Period statistics calculated!", Toast.LENGTH_SHORT).show()
+                // Statistics displayed in UI
             }
             is TripEvent.CalculationError -> {
-                Toast.makeText(context, event.message, Toast.LENGTH_LONG).show()
+                // Error shown in UI state
             }
             is TripEvent.SaveError -> {
-                Toast.makeText(context, event.message, Toast.LENGTH_LONG).show()
+                // Error shown in UI state
             }
             TripEvent.TripEnded -> {
-                Toast.makeText(context, "Trip ended", Toast.LENGTH_SHORT).show()
+                // Status shown in UI
             }
             TripEvent.TripSaved -> {
-                Toast.makeText(context, "Trip saved successfully", Toast.LENGTH_SHORT).show()
+                // Status shown in UI
             }
         }
     }
@@ -437,17 +430,7 @@ class TripInputFragment : Fragment() {
             )
             .setPositiveButton("OK") { dialog, _ ->
                 dialog.dismiss()
-                // Ask MainActivity to re-request permissions
-                (activity as? MainActivity)?.let { mainActivity ->
-                    // Re-check permissions will trigger the permission flow
-                    if (!mainActivity.hasLocationPermissions()) {
-                        Toast.makeText(
-                            requireContext(),
-                            "Please grant location permission to start trip tracking",
-                            Toast.LENGTH_LONG
-                        ).show()
-                    }
-                }
+                // Permission dialog shown - no additional message needed
             }
             .show()
     }

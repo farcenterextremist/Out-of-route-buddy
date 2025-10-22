@@ -63,7 +63,7 @@ BuildConfig.TARGET_SDK = 34
 
 // Application info
 BuildConfig.PACKAGE_NAME = "com.example.outofroutebuddy"
-BuildConfig.VERSION_NAME = "1.0.0"
+BuildConfig.VERSION_NAME = "1.0.1"
 BuildConfig.APP_NAME = "OutOfRouteBuddy"
 
 // Services

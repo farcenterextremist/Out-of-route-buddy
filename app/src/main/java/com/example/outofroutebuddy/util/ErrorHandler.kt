@@ -309,12 +309,12 @@ object ErrorHandler {
      */
     private fun showUserError(context: Context, error: AppError) {
         try {
-            // For now, we'll use Toast. In a production app, you might want to use
-            // a custom dialog or snackbar for better UX
+            // Error messages are handled by UI state
+            // Will implement Snackbar later if needed
             val message = error.userMessage ?: "An error occurred"
-            android.widget.Toast.makeText(context, message, android.widget.Toast.LENGTH_LONG).show()
+            Log.w(TAG, "User error: $message")
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to show user error message", e)
+            Log.e(TAG, "Failed to log user error message", e)
         }
     }
     

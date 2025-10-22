@@ -1,6 +1,7 @@
 package com.example.outofroutebuddy.services
 
 import android.location.Location
+import com.example.outofroutebuddy.services.LocationValidationService
 import com.example.outofroutebuddy.utils.TestLocationUtils
 import org.junit.Assert.*
 import org.junit.Before

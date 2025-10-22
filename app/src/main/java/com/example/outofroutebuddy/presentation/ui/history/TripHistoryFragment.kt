@@ -4,7 +4,6 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
@@ -53,8 +52,7 @@ class TripHistoryFragment : Fragment() {
     private fun setupRecyclerView() {
         adapter = TripHistoryAdapter(
             onTripClick = { trip ->
-                // Navigate to trip details
-                Toast.makeText(requireContext(), "Trip: ${trip.id}", Toast.LENGTH_SHORT).show()
+                // Navigate to trip details (navigation handled by adapter)
             },
             onDeleteClick = { trip ->
                 viewModel.deleteTrip(trip)
@@ -69,8 +67,7 @@ class TripHistoryFragment : Fragment() {
     
     private fun setupClickListeners() {
         binding.filterButton.setOnClickListener {
-            // Show filter options
-            Toast.makeText(requireContext(), "Filter options coming soon", Toast.LENGTH_SHORT).show()
+            // Filter options - to be implemented
         }
         
         binding.exportButton.setOnClickListener {
