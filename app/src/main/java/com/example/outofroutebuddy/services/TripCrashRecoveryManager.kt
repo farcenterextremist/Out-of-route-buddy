@@ -3,6 +3,7 @@ package com.example.outofroutebuddy.services
 import android.content.Context
 import android.content.SharedPreferences
 import android.util.Log
+import androidx.core.content.edit
 import com.example.outofroutebuddy.domain.models.Trip
 import com.google.gson.Gson
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -72,7 +73,7 @@ class TripCrashRecoveryManager @Inject constructor(
                 
                 // Increment crash count
                 val crashCount = prefs.getInt(KEY_CRASH_COUNT, 0) + 1
-                prefs.edit().putInt(KEY_CRASH_COUNT, crashCount).apply()
+                prefs.edit {putInt(KEY_CRASH_COUNT, crashCount)}
                 
                 // Try to recover trip state
                 val recoveredState = recoverTripState()
@@ -86,7 +87,7 @@ class TripCrashRecoveryManager @Inject constructor(
             }
             
             // Mark app as running
-            prefs.edit().putBoolean(KEY_APP_RUNNING, true).apply()
+            prefs.edit {putBoolean(KEY_APP_RUNNING, true)}
             
             Log.d(TAG, "Crash recovery initialized")
             return null
@@ -141,10 +142,10 @@ class TripCrashRecoveryManager @Inject constructor(
     fun saveTripState(tripState: RecoverableTripState) {
         try {
             val json = gson.toJson(tripState)
-            prefs.edit()
-                .putString(KEY_TRIP_STATE, json)
-                .putLong(KEY_LAST_SAVE_TIME, System.currentTimeMillis())
-                .apply()
+            prefs.edit {
+                    putString(KEY_TRIP_STATE, json)
+                    .putLong(KEY_LAST_SAVE_TIME, System.currentTimeMillis())
+                }
             
             Log.v(TAG, "Trip state saved: ${tripState.actualMiles} miles")
         } catch (e: Exception) {
@@ -190,10 +191,10 @@ class TripCrashRecoveryManager @Inject constructor(
      */
     fun markNormalShutdown() {
         try {
-            prefs.edit()
-                .putBoolean(KEY_APP_RUNNING, false)
-                .remove(KEY_TRIP_STATE) // Clear saved state on normal exit
-                .apply()
+            prefs.edit {
+                    putBoolean(KEY_APP_RUNNING, false)
+                    .remove(KEY_TRIP_STATE) // Clear saved state on normal exit
+                }
             
             Log.d(TAG, "Normal shutdown marked")
         } catch (e: Exception) {
@@ -206,11 +207,11 @@ class TripCrashRecoveryManager @Inject constructor(
      */
     fun clearRecoveryData() {
         try {
-            prefs.edit()
-                .remove(KEY_TRIP_STATE)
-                .remove(KEY_LAST_SAVE_TIME)
-                .putBoolean(KEY_APP_RUNNING, false)
-                .apply()
+            prefs.edit {
+                    remove(KEY_TRIP_STATE)
+                    .remove(KEY_LAST_SAVE_TIME)
+                    .putBoolean(KEY_APP_RUNNING, false)
+                }
             
             Log.d(TAG, "Recovery data cleared")
         } catch (e: Exception) {
@@ -233,7 +234,7 @@ class TripCrashRecoveryManager @Inject constructor(
      * Reset crash counter
      */
     fun resetCrashCounter() {
-        prefs.edit().putInt(KEY_CRASH_COUNT, 0).apply()
+        prefs.edit {putInt(KEY_CRASH_COUNT, 0)}
     }
     
     /**

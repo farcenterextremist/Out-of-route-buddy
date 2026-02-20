@@ -1,0 +1,73 @@
+warning: in the working copy of 'app/src/main/java/com/example/outofroutebuddy/data/PreferencesManager.kt', LF will be replaced by CRLF the next time Git touches it
+[1mdiff --git a/app/src/main/java/com/example/outofroutebuddy/data/PreferencesManager.kt b/app/src/main/java/com/example/outofroutebuddy/data/PreferencesManager.kt[m
+[1mindex 1df411f..d46f21f 100644[m
+[1m--- a/app/src/main/java/com/example/outofroutebuddy/data/PreferencesManager.kt[m
+[1m+++ b/app/src/main/java/com/example/outofroutebuddy/data/PreferencesManager.kt[m
+[36m@@ -2,6 +2,7 @@[m [mpackage com.example.outofroutebuddy.data[m
+ [m
+ import android.content.Context[m
+ import android.content.SharedPreferences[m
+[32m+[m[32mimport androidx.core.content.edit[m
+ import com.example.outofroutebuddy.domain.models.PeriodMode[m
+ [m
+ /**[m
+[36m@@ -27,9 +28,9 @@[m [mclass PreferencesManager(context: Context) {[m
+      * Save the selected period mode[m
+      */[m
+     fun savePeriodMode(mode: PeriodMode) {[m
+[31m-        sharedPreferences.edit()[m
+[31m-            .putString(KEY_PERIOD_MODE, mode.name)[m
+[31m-            .apply()[m
+[32m+[m[32m        sharedPreferences.edit {[m
+[32m+[m[32m                putString(KEY_PERIOD_MODE, mode.name)[m
+[32m+[m[32m            }[m
+     }[m
+ [m
+     /**[m
+[36m@@ -48,9 +49,9 @@[m [mclass PreferencesManager(context: Context) {[m
+      * Save the last entered loaded miles for convenience[m
+      */[m
+     fun saveLastLoadedMiles(miles: String) {[m
+[31m-        sharedPreferences.edit()[m
+[31m-            .putString(KEY_LAST_LOADED_MILES, miles)[m
+[31m-            .apply()[m
+[32m+[m[32m        sharedPreferences.edit {[m
+[32m+[m[32m                putString(KEY_LAST_LOADED_MILES, miles)[m
+[32m+[m[32m            }[m
+     }[m
+ [m
+     /**[m
+[36m@@ -64,9 +65,9 @@[m [mclass PreferencesManager(context: Context) {[m
+      * Save the last entered bounce miles for convenience[m
+      */[m
+     fun saveLastBounceMiles(miles: String) {[m
+[31m-        sharedPreferences.edit()[m
+[31m-            .putString(KEY_LAST_BOUNCE_MILES, miles)[m
+[31m-            .apply()[m
+[32m+[m[32m        sharedPreferences.edit {[m
+[32m+[m[32m                putString(KEY_LAST_BOUNCE_MILES, miles)[m
+[32m+[m[32m            }[m
+     }[m
+ [m
+     /**[m
+[36m@@ -80,9 +81,9 @@[m [mclass PreferencesManager(context: Context) {[m
+      * Save whether a trip is currently active[m
+      */[m
+     fun saveTripActive(isActive: Boolean) {[m
+[31m-        sharedPreferences.edit()[m
+[31m-            .putBoolean(KEY_TRIP_ACTIVE, isActive)[m
+[31m-            .apply()[m
+[32m+[m[32m        sharedPreferences.edit {[m
+[32m+[m[32m                putBoolean(KEY_TRIP_ACTIVE, isActive)[m
+[32m+[m[32m            }[m
+     }[m
+ [m
+     /**[m
+[36m@@ -96,6 +97,6 @@[m [mclass PreferencesManager(context: Context) {[m
+      * Clear all saved preferences (for testing or reset)[m
+      */[m
+     fun clearAllPreferences() {[m
+[31m-        sharedPreferences.edit().clear().apply()[m
+[32m+[m[32m        sharedPreferences.edit {clear()}[m
+     }[m
+ } [m

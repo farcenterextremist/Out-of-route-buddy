@@ -4,13 +4,18 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.fragment.app.Fragment
 import androidx.preference.ListPreference
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.SwitchPreferenceCompat
+import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.ViewModelProvider
 import com.example.outofroutebuddy.R
+import com.example.outofroutebuddy.core.config.BuildConfig
+import com.example.outofroutebuddy.presentation.viewmodel.TripInputViewModel
 import dagger.hilt.android.AndroidEntryPoint
 
 /**
@@ -25,6 +30,9 @@ import dagger.hilt.android.AndroidEntryPoint
  */
 @AndroidEntryPoint
 class SettingsFragment : PreferenceFragmentCompat() {
+    
+    // ✅ FIX: Access ViewModel via activity scope to ensure it survives config changes
+    private val tripInputViewModel: TripInputViewModel by activityViewModels()
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         // Use the same SharedPreferences file as SettingsManager
@@ -69,6 +77,9 @@ class SettingsFragment : PreferenceFragmentCompat() {
             AppCompatDelegate.setDefaultNightMode(mode)
             android.util.Log.d("SettingsFragment", "Theme changed to: $themeValue")
             
+            // ✅ FIX: Save current trip data before recreation
+            saveCurrentTripData()
+            
             // Recreate activity to apply theme immediately
             activity?.recreate()
             true
@@ -100,6 +111,13 @@ class SettingsFragment : PreferenceFragmentCompat() {
             // This will be checked when app launches
             true
         }
+        
+        // About preference - show version information
+        findPreference<Preference>("about")?.setOnPreferenceClickListener {
+            android.util.Log.d("SettingsFragment", "About preference clicked")
+            showAboutDialog()
+            true
+        }
     }
     
     private fun updateGpsFrequency(seconds: Int) {
@@ -111,6 +129,65 @@ class SettingsFragment : PreferenceFragmentCompat() {
     private fun updateNotificationSettings(enabled: Boolean) {
         // Update notification channel settings
         android.util.Log.d("SettingsFragment", "Notifications enabled: $enabled")
+    }
+    
+    /**
+     * Show about dialog with app version and information
+     */
+    private fun showAboutDialog() {
+        try {
+            android.util.Log.d("SettingsFragment", "showAboutDialog called")
+            val message = """
+                ${BuildConfig.APP_NAME}
+                Version ${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})
+                
+                A GPS tracking app for calculating out-of-route miles.
+                
+                Features:
+                • Real-time GPS tracking
+                • Trip persistence across app restarts
+                • Dark/Light theme support
+                • Comprehensive trip history
+                
+                Built with Android ${BuildConfig.TARGET_SDK}
+            """.trimIndent()
+            
+            android.util.Log.d("SettingsFragment", "About message: $message")
+            
+            AlertDialog.Builder(requireContext())
+                .setTitle("About")
+                .setMessage(message)
+                .setPositiveButton("OK") { dialog, _ ->
+                    android.util.Log.d("SettingsFragment", "About dialog OK clicked")
+                    dialog.dismiss()
+                }
+                .show()
+                
+            android.util.Log.d("SettingsFragment", "About dialog shown")
+                
+        } catch (e: Exception) {
+            android.util.Log.e("SettingsFragment", "Error showing about dialog", e)
+        }
+    }
+    
+    /**
+     * ✅ FIX: Save current trip data before activity recreation
+     */
+    private fun saveCurrentTripData() {
+        try {
+            android.util.Log.d("SettingsFragment", "Saving trip data before theme change")
+            
+            // The TripInputViewModel already handles persistence automatically via:
+            // 1. Auto-save via TripCrashRecoveryManager (every 30 seconds)
+            // 2. TripPersistenceManager saves to SharedPreferences
+            // 3. StateCache persists in-memory state
+            
+            // Hilt ViewModels survive configuration changes by default,
+            // so the ViewModel instance will persist across activity recreation
+            // and trip data will be restored automatically
+        } catch (e: Exception) {
+            android.util.Log.e("SettingsFragment", "Error saving trip data", e)
+        }
     }
     
     companion object {

@@ -108,5 +108,10 @@ class TripHistoryFragment : Fragment() {
         super.onDestroyView()
         _binding = null
     }
+    
+    @androidx.annotation.VisibleForTesting
+    internal fun getViewModel(): TripHistoryViewModel {
+        return viewModel
+    }
 }
 

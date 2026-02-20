@@ -66,8 +66,9 @@ object RepositoryModule {
     fun provideTripStatePersistence(
         repository: DataTripRepository,
         tripStateManager: TripStateManager,
+        tripPersistenceManager: com.example.outofroutebuddy.data.TripPersistenceManager,
         coroutineScope: CoroutineScope,
-    ): TripStatePersistence = TripStatePersistence(repository, tripStateManager, coroutineScope)
+    ): TripStatePersistence = TripStatePersistence(repository, tripStateManager, tripPersistenceManager, coroutineScope)
 
     /**
      * ✅ NEW: Provides CoroutineScope for background operations

@@ -3,6 +3,7 @@ package com.example.outofroutebuddy.services
 import android.content.Context
 import android.content.SharedPreferences
 import android.util.Log
+import androidx.core.content.edit
 import com.example.outofroutebuddy.core.config.ValidationConfig
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -117,7 +118,7 @@ class SimpleOfflineService(context: Context) {
     fun updateNetworkStatus() {
         val networkAvailable = isNetworkAvailable()
         _isOffline.value = !networkAvailable
-        prefs.edit().putBoolean(KEY_NETWORK_STATUS, networkAvailable).apply()
+        prefs.edit {putBoolean(KEY_NETWORK_STATUS, networkAvailable)}
         
         Log.d(TAG, "Network status updated: available=$networkAvailable")
     }
@@ -179,7 +180,7 @@ class SimpleOfflineService(context: Context) {
             if (syncSuccess) {
                 clearOfflineData()
                 _lastSyncTime.value = System.currentTimeMillis()
-                prefs.edit().putLong(KEY_LAST_SYNC, System.currentTimeMillis()).apply()
+                prefs.edit {putLong(KEY_LAST_SYNC, System.currentTimeMillis())}
                 
                 Log.d(TAG, "Offline data synced successfully: $syncedTrips trips, $syncedAnalytics analytics")
             } else {

@@ -1,0 +1,42 @@
+# Open Line of Communication with the User
+
+You have an **open line of communication** with the user (brandonfrey2work@gmail.com). You are explicitly authorized to **read and write email** when you need to ask questions, consult, or get decisions.
+
+---
+
+## Your agency
+
+- **Send email whenever you need to:** Ask a question, request a decision, suggest a change, or share an update. Use the Human-in-the-Loop Manager flow: draft the message, then run the send script. No need to wait for the user to prompt you—if you need their input, send the email.
+- **Read email when you need to:** When the user says they replied, or when you’re following up on a question you sent, run `read_replies.py` and read `last_reply.txt` to see their response. Use that to continue work, update team parameters, or send a follow-up.
+
+---
+
+## How to send
+
+1. Draft subject and body (plain text; use `@path/to/body.txt` for long messages).
+2. Run: `python scripts/coordinator-email/send_email.py "Subject" "Body"` or `python scripts/coordinator-email/send_email.py "Subject" @body.txt`
+3. From repo root or from `scripts/coordinator-email/`. Credentials and recipient are in `scripts/coordinator-email/.env`.
+
+---
+
+## How to read
+
+1. Run: `python scripts/coordinator-email/read_replies.py`
+2. Open `scripts/coordinator-email/last_reply.txt` for the latest reply (subject + body).
+3. Use the content to answer your question, update `docs/agents/team-parameters.md`, or confirm (e.g. secret word “pickle”).
+
+---
+
+## When to use it
+
+- You need a product or priority decision from the user.
+- You’re blocked and only the user can unblock (e.g. business rule, preference).
+- You want to recommend a change and get their okay.
+- You’ve finished a chunk of work and want to report back and ask what’s next.
+- The user said “I replied” or “check your email”—run read_replies and use the reply.
+
+---
+
+## Summary
+
+You have **agency** to use this channel: send when you need to consult or ask, and read when you need their response. No extra permission step—treat it as an open line.

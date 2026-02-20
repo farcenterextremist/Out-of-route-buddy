@@ -37,7 +37,8 @@ data class Trip(
         val dispatchedTotal = loadedMiles + bounceMiles
         
         // Reject all-zeros case (trip must represent some activity)
-        if (loadedMiles == 0.0 && bounceMiles == 0.0 && actualMiles == 0.0) {
+        // EXCEPT for ACTIVE/PENDING trips where GPS hasn't started tracking yet
+        if (loadedMiles == 0.0 && bounceMiles == 0.0 && actualMiles == 0.0 && status != TripStatus.ACTIVE && status != TripStatus.PENDING) {
             throw IllegalArgumentException("Actual miles must be at least 0.001 miles: all trip values are zero")
         }
         

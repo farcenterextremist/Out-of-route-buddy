@@ -4,6 +4,7 @@ import android.content.Context
 import com.example.outofroutebuddy.data.NetworkStateManager
 import com.example.outofroutebuddy.data.PreferencesManager
 import com.example.outofroutebuddy.data.TripStateManager
+import com.example.outofroutebuddy.data.TripPersistenceManager
 import com.example.outofroutebuddy.services.BackgroundSyncService
 import com.example.outofroutebuddy.services.HealthCheckManager
 import com.example.outofroutebuddy.services.OptimizedGpsDataFlow
@@ -98,25 +99,6 @@ object ServiceModule {
         @ApplicationContext context: Context,
     ): NetworkStateManager = NetworkStateManager(context)
 
-    // --- LEGACY SERVICES (COMMENTED OUT) ---
-    // These services have been replaced by the unified services above
-    // They are kept for reference but should be removed once migration is complete
-    
-    // @Provides
-    // @Singleton
-    // fun provideGpsSynchronizationService(
-    //     tripStateManager: TripStateManager,
-    //     @ApplicationContext context: Context,
-    // ): GpsSynchronizationService = GpsSynchronizationService(tripStateManager, context)
-    //
-    // @Provides
-    // @Singleton
-    // fun provideTripTrackingCoordinator(
-    //     @ApplicationContext context: Context,
-    //     tripStateManager: TripStateManager,
-    //     gpsSynchronizationService: GpsSynchronizationService,
-    // ): TripTrackingCoordinator = TripTrackingCoordinator(context, tripStateManager, gpsSynchronizationService)
-    //
     @Provides
     @Singleton
     fun providePeriodCalculationService(): PeriodCalculationService = PeriodCalculationService()
@@ -138,27 +120,14 @@ object ServiceModule {
     fun provideHealthCheckManager(
         @ApplicationContext context: Context
     ): HealthCheckManager = HealthCheckManager(context)
-    // @Provides
-    // @Singleton
-    // fun provideOfflineSyncService(): OfflineSyncService = OfflineSyncService()
-    //
-    // @Provides
-    // @Singleton
-    // fun provideSimpleOfflineService(@ApplicationContext context: Context): SimpleOfflineService = SimpleOfflineService(context)
-    //
-    // @Provides
-    // @Singleton
-    // fun provideStandaloneOfflineService(@ApplicationContext context: Context): StandaloneOfflineService = StandaloneOfflineService.getInstance(context)
-    //
-    // @Provides
-    // @Singleton
-    // fun provideOfflineServiceCoordinator(
-    //     @ApplicationContext context: Context,
-    //     networkStateManager: NetworkStateManager,
-    //     offlineDataManager: OfflineDataManager,
-    //     preferencesManager: PreferencesManager,
-    //     offlineSyncService: OfflineSyncService,
-    //     simpleOfflineService: SimpleOfflineService,
-    //     standaloneOfflineService: StandaloneOfflineService
-    // ): OfflineServiceCoordinator = OfflineServiceCoordinator(context, networkStateManager, offlineDataManager, preferencesManager, offlineSyncService, simpleOfflineService, standaloneOfflineService)
+
+    /**
+     * ✅ NEW: Provides TripPersistenceManager for trip recovery across app restarts
+     */
+    @Provides
+    @Singleton
+    fun provideTripPersistenceManager(
+        @ApplicationContext context: Context,
+        preferencesManager: PreferencesManager
+    ): TripPersistenceManager = TripPersistenceManager(context, preferencesManager)
 } 

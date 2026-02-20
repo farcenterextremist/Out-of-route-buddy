@@ -9,9 +9,16 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
+import com.example.outofroutebuddy.data.TripPersistenceManager
+import com.example.outofroutebuddy.presentation.ui.dialogs.TripRecoveryDialog
+import com.example.outofroutebuddy.presentation.ui.trip.TripInputFragment
+import com.example.outofroutebuddy.presentation.viewmodel.TripInputViewModel
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
 
 /**
  * Main Activity for Out of Route Buddy
@@ -54,7 +61,7 @@ import dagger.hilt.android.AndroidEntryPoint
  * 🎯 PROJECT STATUS: Ready for production deployment
  */
 @AndroidEntryPoint
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity(), TripRecoveryDialog.TripRecoveryListener {
     // ✅ COMPLETED: HIGH PRIORITY - Add state restoration for configuration changes
     // ✅ COMPLETED: HIGH PRIORITY - Add proper error handling for navigation failures
     // ✅ COMPLETED: HIGH PRIORITY - Add Hilt dependency injection framework
@@ -91,6 +98,7 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var navController: NavController
     private var isNavigationInitialized = false
+    private var hasCheckedForRecovery = false
     
     // ✅ NEW: Location permission state tracking
     private var locationPermissionsGranted = false
@@ -136,6 +144,12 @@ class MainActivity : AppCompatActivity() {
             
             // ✅ NEW: Request location permissions on app launch
             checkAndRequestLocationPermissions()
+            
+            // ✅ NEW: Check for trip recovery on app startup (only on initial launch, not configuration changes)
+            if (savedInstanceState == null && !hasCheckedForRecovery) {
+                checkForTripRecovery()
+                hasCheckedForRecovery = true
+            }
 
             Log.d(TAG, "MainActivity onCreate completed successfully")
         } catch (e: Exception) {
@@ -580,6 +594,88 @@ class MainActivity : AppCompatActivity() {
      */
     fun hasBackgroundPermission(): Boolean {
         return backgroundPermissionGranted
+    }
+
+    /**
+     * ✅ NEW: Check for trip recovery on app startup
+     */
+    private fun checkForTripRecovery() {
+        lifecycleScope.launch {
+            try {
+                Log.d(TAG, "Checking for trip recovery")
+                
+                // Get the TripInputViewModel
+                val navHostFragment = supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as? NavHostFragment
+                val navController = navHostFragment?.navController
+                
+                if (navController != null) {
+                    // Navigate to trip input fragment to get ViewModel
+                    navController.navigate(R.id.tripInputFragment)
+                    
+                    // Get ViewModel from the fragment
+                    val tripInputFragment = navHostFragment.childFragmentManager.fragments.firstOrNull()
+                    if (tripInputFragment != null) {
+                        val viewModel = ViewModelProvider(tripInputFragment)[TripInputViewModel::class.java]
+                        
+                        // Check for saved trip state
+                        val savedState = viewModel.checkForTripRecovery()
+                        
+                        if (savedState != null) {
+                            Log.d(TAG, "Trip recovery data found, showing dialog")
+                            showTripRecoveryDialog(savedState, viewModel)
+                        } else {
+                            Log.d(TAG, "No trip recovery data found")
+                        }
+                    }
+                }
+                
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to check for trip recovery", e)
+            }
+        }
+    }
+
+    /**
+     * ✅ NEW: Show trip recovery dialog
+     */
+    private fun showTripRecoveryDialog(
+        savedState: TripPersistenceManager.SavedTripState,
+        viewModel: TripInputViewModel
+    ) {
+        try {
+            // ✅ FIX: Don't show recovery dialog if it's already showing (prevents showing on theme changes)
+            val existingDialog = supportFragmentManager.findFragmentByTag("TripRecoveryDialog")
+            if (existingDialog != null && existingDialog.isAdded) {
+                Log.d(TAG, "Trip recovery dialog already showing, skipping")
+                return
+            }
+            
+            val dialog = TripRecoveryDialog.newInstance(savedState)
+            dialog.show(supportFragmentManager, "TripRecoveryDialog")
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to show trip recovery dialog", e)
+        }
+    }
+    
+    // TripRecoveryDialog.TripRecoveryListener implementation
+    override fun onContinueTrip(savedState: TripPersistenceManager.SavedTripState) {
+        Log.d(TAG, "User chose to continue trip")
+        // Use Activity-scoped ViewModel so we are not dependent on which fragment is currently visible
+        val activityScopedViewModel = ViewModelProvider(this)[TripInputViewModel::class.java]
+        activityScopedViewModel.continueRecoveredTrip(savedState)
+    }
+    
+    override fun onStartNewTrip() {
+        Log.d(TAG, "User chose to start new trip")
+        // Get the current ViewModel and start new trip
+        val navHostFragment = supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as? NavHostFragment
+        val currentFragment = navHostFragment?.childFragmentManager?.fragments?.firstOrNull()
+        if (currentFragment is TripInputFragment) {
+            val viewModel = ViewModelProvider(currentFragment)[TripInputViewModel::class.java]
+            viewModel.startNewTrip()
+            // ✅ FIX: Clear the text input fields when starting new trip
+            currentFragment.clearTextInputs()
+        }
     }
 
     // 🚀 FUTURE ENHANCEMENTS (Optional):

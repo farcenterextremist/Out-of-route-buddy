@@ -262,6 +262,20 @@ object ValidationConfig {
     /** Log interval for accumulated distance (in milliseconds) */
     const val TRAFFIC_DISTANCE_ACCUMULATION_LOG_INTERVAL = 60000L // 1 minute
 
+    // ===== TRAFFIC DISTANCE ACCUMULATION (Step 8) =====
+
+    /** Threshold for traffic distance accumulation in meters */
+    const val TRAFFIC_DISTANCE_ACCUMULATION_THRESHOLD = 10f
+
+    /** Reset threshold for traffic distance accumulation in meters */
+    const val TRAFFIC_DISTANCE_RESET_THRESHOLD = 100f
+
+    /** Smoothing factor for accumulated distances */
+    const val TRAFFIC_DISTANCE_SMOOTHING_FACTOR = 0.8f
+
+    /** Enable/disable traffic distance accumulation */
+    const val TRAFFIC_DISTANCE_ACCUMULATION_ENABLED = true
+
     // ==================== CONVERSION CONSTANTS ====================
 
     /** Earth radius in meters */

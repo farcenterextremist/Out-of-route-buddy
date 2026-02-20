@@ -2,6 +2,7 @@ package com.example.outofroutebuddy.data
 
 import android.content.Context
 import android.content.SharedPreferences
+import androidx.core.content.edit
 import com.example.outofroutebuddy.domain.models.PeriodMode
 
 /**
@@ -27,9 +28,9 @@ class PreferencesManager(context: Context) {
      * Save the selected period mode
      */
     fun savePeriodMode(mode: PeriodMode) {
-        sharedPreferences.edit()
-            .putString(KEY_PERIOD_MODE, mode.name)
-            .apply()
+        sharedPreferences.edit {
+                putString(KEY_PERIOD_MODE, mode.name)
+            }
     }
 
     /**
@@ -48,9 +49,9 @@ class PreferencesManager(context: Context) {
      * Save the last entered loaded miles for convenience
      */
     fun saveLastLoadedMiles(miles: String) {
-        sharedPreferences.edit()
-            .putString(KEY_LAST_LOADED_MILES, miles)
-            .apply()
+        sharedPreferences.edit {
+                putString(KEY_LAST_LOADED_MILES, miles)
+            }
     }
 
     /**
@@ -64,9 +65,9 @@ class PreferencesManager(context: Context) {
      * Save the last entered bounce miles for convenience
      */
     fun saveLastBounceMiles(miles: String) {
-        sharedPreferences.edit()
-            .putString(KEY_LAST_BOUNCE_MILES, miles)
-            .apply()
+        sharedPreferences.edit {
+                putString(KEY_LAST_BOUNCE_MILES, miles)
+            }
     }
 
     /**
@@ -80,9 +81,9 @@ class PreferencesManager(context: Context) {
      * Save whether a trip is currently active
      */
     fun saveTripActive(isActive: Boolean) {
-        sharedPreferences.edit()
-            .putBoolean(KEY_TRIP_ACTIVE, isActive)
-            .apply()
+        sharedPreferences.edit {
+                putBoolean(KEY_TRIP_ACTIVE, isActive)
+            }
     }
 
     /**
@@ -96,6 +97,6 @@ class PreferencesManager(context: Context) {
      * Clear all saved preferences (for testing or reset)
      */
     fun clearAllPreferences() {
-        sharedPreferences.edit().clear().apply()
+        sharedPreferences.edit {clear()}
     }
 } 

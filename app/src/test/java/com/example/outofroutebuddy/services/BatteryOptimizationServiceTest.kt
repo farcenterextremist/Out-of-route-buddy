@@ -97,7 +97,12 @@ class BatteryOptimizationServiceTest {
         val location2 = createMockLocation(37.7749, -122.4194) // Same location
         
         service.checkStationaryStatus(location1)
-        Thread.sleep(1100) // Wait > 1 second
+        // Advance time > 1s; prefer Robolectric idle, fallback to real sleep if unavailable
+        try {
+            org.robolectric.Shadows.shadowOf(android.os.Looper.getMainLooper()).idleFor(1200, java.util.concurrent.TimeUnit.MILLISECONDS)
+        } catch (_: Throwable) {
+            Thread.sleep(1200)
+        }
         service.checkStationaryStatus(location2)
         
         // After STATIONARY_TIME_MS would be stationary
@@ -179,6 +184,11 @@ class BatteryOptimizationServiceTest {
         }
     }
 }
+
+
+
+
+
 
 
 

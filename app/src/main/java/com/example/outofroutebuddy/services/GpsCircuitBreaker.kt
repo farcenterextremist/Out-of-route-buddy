@@ -32,7 +32,7 @@ class GpsCircuitBreaker {
     
     companion object {
         private const val TAG = "GpsCircuitBreaker"
-        private const val MAX_FAILURES_BEFORE_OPEN = 5
+        private const val MAX_FAILURES_BEFORE_OPEN = 10 // ✅ FIXED: Increased from 5 to 10 for less aggressive circuit breaking
         private const val MIN_BACKOFF_MS = 5_000L // 5 seconds
         private const val MAX_BACKOFF_MS = 60_000L // 60 seconds
     }

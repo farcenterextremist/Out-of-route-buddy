@@ -987,4 +987,132 @@ class LocationValidationServiceTest {
         val confidence = indicators.count { it }.toFloat() / indicators.size
         return LocationValidationService.TrafficPattern(isHeavyTraffic, avgSpeed, speedVariance, stopCount, accelerationPattern, confidence)
     }
+    
+    // ===== STEP 8: TRAFFIC DISTANCE ACCUMULATION TESTS =====
+    
+    @Test
+    fun `accumulateTrafficDistance should return 0 when disabled`() {
+        // Test that traffic distance accumulation returns 0 when disabled
+        val distance = service.accumulateTrafficDistance(5f, false)
+        assertEquals(0f, distance, 0.01f)
+    }
+    
+    @Test
+    fun `accumulateTrafficDistance should return 0 when not in traffic mode`() {
+        // Test that traffic distance accumulation returns 0 when not in traffic mode
+        val distance = service.accumulateTrafficDistance(5f, false)
+        assertEquals(0f, distance, 0.01f)
+    }
+    
+    @Test
+    fun `accumulateTrafficDistance should accumulate small movements in traffic mode`() {
+        // Test that small movements are accumulated in traffic mode
+        val distance1 = service.accumulateTrafficDistance(3f, true)
+        assertEquals(0f, distance1, 0.01f) // Not enough movements yet
+        
+        val distance2 = service.accumulateTrafficDistance(4f, true)
+        assertEquals(0f, distance2, 0.01f) // Still not enough
+        
+        val distance3 = service.accumulateTrafficDistance(2f, true)
+        assertTrue("Should return accumulated distance after 3 movements", distance3 > 0f)
+    }
+    
+    @Test
+    fun `accumulateTrafficDistance should reset on large movements`() {
+        // Test that large movements reset accumulation
+        service.accumulateTrafficDistance(3f, true)
+        service.accumulateTrafficDistance(4f, true)
+        
+        val distance = service.accumulateTrafficDistance(150f, true) // Large movement
+        assertEquals(0f, distance, 0.01f) // Should reset and return 0
+    }
+    
+    @Test
+    fun `accumulateTrafficDistance should ignore movements below minimum threshold`() {
+        // Test that movements below 0.1m are ignored
+        val distance = service.accumulateTrafficDistance(0.05f, true)
+        assertEquals(0f, distance, 0.01f)
+    }
+    
+    @Test
+    fun `accumulateTrafficDistance should ignore movements above accumulation threshold`() {
+        // Test that movements above accumulation threshold are ignored
+        val distance = service.accumulateTrafficDistance(15f, true) // Above 10m threshold
+        assertEquals(0f, distance, 0.01f)
+    }
+    
+    @Test
+    fun `resetTrafficDistanceAccumulation should clear all state`() {
+        // Test that reset clears all accumulation state
+        service.accumulateTrafficDistance(3f, true)
+        service.accumulateTrafficDistance(4f, true)
+        
+        service.resetTrafficDistanceAccumulation()
+        
+        val distance = service.accumulateTrafficDistance(2f, true)
+        assertEquals(0f, distance, 0.01f) // Should start fresh
+    }
+    
+    @Test
+    fun `getTrafficDistanceAccumulationStats should return meaningful statistics`() {
+        // Test that stats method returns meaningful information
+        service.accumulateTrafficDistance(3f, true)
+        service.accumulateTrafficDistance(4f, true)
+        
+        val stats = service.getTrafficDistanceAccumulationStats()
+        
+        assertTrue("Stats should contain movement count", stats.contains("movements"))
+        assertTrue("Stats should contain total distance", stats.contains("Total:"))
+        assertTrue("Stats should contain smoothed distance", stats.contains("Smoothed:"))
+        assertTrue("Stats should contain active status", stats.contains("Active:"))
+    }
+    
+    @Test
+    fun `traffic distance accumulation should work with getValidatedDistance`() {
+        // Test integration with main validation flow
+        val location1 = TestLocationUtils.createMockLocation(40.7128, -74.0060, speed = 5.0f, accuracy = 10f)
+        val location2 = TestLocationUtils.createMockLocation(40.7128 + 0.00001, -74.0060, speed = 5.0f, accuracy = 10f) // ~1.1m
+        
+        // First call should return 0 (not enough movements)
+        val distance1 = service.getValidatedDistance(location2, location1, trafficModeEnabled = true)
+        assertEquals(0f, distance1, 0.01f)
+        
+        // Add more movements to trigger accumulation
+        val location3 = TestLocationUtils.createMockLocation(40.7128 + 0.00002, -74.0060, speed = 5.0f, accuracy = 10f) // ~2.2m
+        val location4 = TestLocationUtils.createMockLocation(40.7128 + 0.00003, -74.0060, speed = 5.0f, accuracy = 10f) // ~3.3m
+        
+        service.getValidatedDistance(location3, location2, trafficModeEnabled = true)
+        val accumulatedDistance = service.getValidatedDistance(location4, location3, trafficModeEnabled = true)
+        
+        assertTrue("Should return accumulated distance in traffic mode", accumulatedDistance > 0f)
+    }
+    
+    @Test
+    fun `traffic distance accumulation should not interfere with normal mode`() {
+        // Test that traffic accumulation doesn't interfere with normal mode
+        val location1 = TestLocationUtils.createMockLocation(40.7128, -74.0060, speed = 5.0f, accuracy = 10f)
+        val location2 = TestLocationUtils.createMockLocation(40.7128 + 0.00001, -74.0060, speed = 5.0f, accuracy = 10f) // ~1.1m
+        
+        val distance = service.getValidatedDistance(location2, location1, trafficModeEnabled = false)
+        assertEquals(0f, distance, 0.01f) // Should return 0 in normal mode
+    }
+    
+    @Test
+    fun `traffic distance accumulation should handle edge cases`() {
+        // Test edge cases for traffic distance accumulation
+        val service = LocationValidationService()
+        
+        // Test with exactly threshold values
+        val distance1 = service.accumulateTrafficDistance(10f, true) // Exactly at threshold
+        assertEquals(0f, distance1, 0.01f) // Should be ignored (>= threshold)
+        
+        val distance2 = service.accumulateTrafficDistance(9.99f, true) // Just below threshold
+        assertEquals(0f, distance2, 0.01f) // Not enough movements yet
+        
+        // Test with exactly reset threshold
+        service.accumulateTrafficDistance(3f, true)
+        service.accumulateTrafficDistance(4f, true)
+        val distance3 = service.accumulateTrafficDistance(100f, true) // Exactly at reset threshold
+        assertEquals(0f, distance3, 0.01f) // Should reset
+    }
 } 

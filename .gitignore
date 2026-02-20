@@ -180,6 +180,14 @@ app/TripTestDebug.log
 # Performance logs
 performance.log
 
+# Coordinator email secrets and reply cache (do not commit)
+scripts/coordinator-email/.env
+scripts/coordinator-email/last_reply.txt
+
+# OneDrive / cloud sync lock files (optional; avoid commit noise)
+~$*
+.~lock.*
+
 # Keep important documentation and configs
 !README.md
 !gradle/wrapper/gradle-wrapper.properties

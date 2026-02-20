@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OutOfRouteBuddy - Virtual Phone Emulator</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Toolbar -->
+    <header class="emulator-toolbar">
+      <h1>OutOfRouteBuddy Emulator</h1>
+      <div class="toolbar-actions">
+        <button id="theme-toggle" class="btn btn-secondary" title="Toggle Light/Dark mode">☀ Light</button>
+        <button id="reset-design" class="btn btn-secondary">Reset to Default</button>
+        <button id="copy-for-cursor" class="btn btn-primary" title="Copy edits as Cursor instructions">Copy for Cursor</button>
+        <button id="export-design" class="btn btn-secondary">Export Design</button>
+        <button id="import-design" class="btn btn-secondary">Import Design</button>
+        <input type="file" id="import-file" accept=".json" style="display:none">
+      </div>
+    </header>
+
+    <!-- Main content: phone frame + properties panel -->
+    <div class="main-content">
+      <!-- Phone frame -->
+      <div class="phone-frame">
+        <div class="phone-notch"></div>
+        <div class="phone-screen" id="phone-screen">
+          <!-- App content rendered here -->
+          <div id="app-content" class="app-content"></div>
+        </div>
+      </div>
+
+      <!-- Properties panel -->
+      <aside class="properties-panel" id="properties-panel" style="display:none">
+        <div class="panel-header">
+          <h2>Edit</h2>
+          <button id="close-panel" class="btn-close" title="Close">×</button>
+        </div>
+        <div class="panel-content" id="panel-content">
+          <p class="panel-placeholder">Right-click a field and choose Edit</p>
+        </div>
+      </aside>
+
+    <!-- Context menu (right-click) -->
+    <div class="context-menu" id="context-menu">
+      <button class="context-menu-item" id="context-edit-btn">Edit</button>
+    </div>
+    </div>
+  </div>
+
+  <script src="app-renderer.js"></script>
+  <script src="cursor-exporter.js"></script>
+  <script src="editor.js"></script>
+</body>
+</html>

@@ -3,6 +3,7 @@ package com.example.outofroutebuddy.services
 import android.content.Context
 import android.content.SharedPreferences
 import android.util.Log
+import androidx.core.content.edit
 import com.example.outofroutebuddy.core.config.ValidationConfig
 import com.example.outofroutebuddy.data.NetworkStateManager
 import com.example.outofroutebuddy.data.PreferencesManager
@@ -222,7 +223,7 @@ class UnifiedOfflineService(
                     pendingAnalytics = 0,
                     lastSyncTime = System.currentTimeMillis()
                 )
-                prefs.edit().putLong(KEY_LAST_SYNC, System.currentTimeMillis()).apply()
+                prefs.edit {putLong(KEY_LAST_SYNC, System.currentTimeMillis())}
                 
                 Log.i(TAG, "Sync completed successfully: $totalProcessed items processed")
             } else {

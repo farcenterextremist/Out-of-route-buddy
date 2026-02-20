@@ -23,18 +23,7 @@ import java.util.Locale
  * ✅ COMPLETED: Step 5 - Intelligent Update Frequency
  * ✅ COMPLETED: Step 6 - Traffic State Machine
  * ✅ COMPLETED: Step 7 - Real-Time Analytics & Feedback
- * 
- * TODO: HEAVY TRAFFIC ENHANCEMENT PLAN - REMAINING STEPS
- * 
- * Step 8: Traffic-Optimized Distance Accumulation
- * - Accumulate small distances in traffic for better accuracy
- * - Implement distance smoothing algorithms
- * - Reset accumulation when conditions change
- * 
- * Step 8: Traffic-Optimized Distance Accumulation
- * - Accumulate small distances in traffic for better accuracy
- * - Implement distance smoothing algorithms
- * - Reset accumulation when conditions change
+ * ✅ COMPLETED: Step 8 - Traffic-Optimized Distance Accumulation
  * 
  * IMPLEMENTATION NOTES:
  * - Each step builds upon the previous ones
@@ -132,11 +121,11 @@ open class LocationValidationService {
         val TRAFFIC_MODE_SESSION_MIN_DURATION = ValidationConfig.TRAFFIC_MODE_SESSION_MIN_DURATION
         val TRAFFIC_DISTANCE_ACCUMULATION_LOG_INTERVAL = ValidationConfig.TRAFFIC_DISTANCE_ACCUMULATION_LOG_INTERVAL
         
-        // TODO: Step 8 - Traffic-Optimized Distance Accumulation Constants
-        // val TRAFFIC_DISTANCE_ACCUMULATION_THRESHOLD = 10f // meters - accumulate small movements
-        // val TRAFFIC_DISTANCE_RESET_THRESHOLD = 100f // meters - reset accumulation
-        // val TRAFFIC_DISTANCE_SMOOTHING_FACTOR = 0.8f // smoothing for accumulated distances
-        // val TRAFFIC_DISTANCE_ACCUMULATION_ENABLED = true // enable/disable distance accumulation
+        // ✅ Step 8 - Traffic-Optimized Distance Accumulation Constants
+        val TRAFFIC_DISTANCE_ACCUMULATION_THRESHOLD = ValidationConfig.TRAFFIC_DISTANCE_ACCUMULATION_THRESHOLD
+        val TRAFFIC_DISTANCE_RESET_THRESHOLD = ValidationConfig.TRAFFIC_DISTANCE_RESET_THRESHOLD
+        val TRAFFIC_DISTANCE_SMOOTHING_FACTOR = ValidationConfig.TRAFFIC_DISTANCE_SMOOTHING_FACTOR
+        val TRAFFIC_DISTANCE_ACCUMULATION_ENABLED = ValidationConfig.TRAFFIC_DISTANCE_ACCUMULATION_ENABLED
     }
     
     /**
@@ -665,6 +654,88 @@ open class LocationValidationService {
     }
     
     /**
+     * ✅ Step 8: Traffic-Optimized Distance Accumulation
+     * 
+     * Accumulates small distances in traffic for better accuracy.
+     * This complements micro-movement tracking by providing a higher-level
+     * distance accumulation system optimized for traffic conditions.
+     * 
+     * @param distance Distance to potentially accumulate
+     * @param trafficMode Whether we're in traffic mode
+     * @return Accumulated distance if conditions are met, 0f otherwise
+     */
+    fun accumulateTrafficDistance(distance: Float, trafficMode: Boolean): Float {
+        if (!TRAFFIC_DISTANCE_ACCUMULATION_ENABLED || !trafficMode) {
+            return 0f
+        }
+        
+        logger.debug("Traffic distance accumulation: distance=${String.format("%.3f", distance)}m, trafficMode=$trafficMode, active=${trafficDistanceAccumulationState.isActive}")
+        
+        // Check if this is a large movement that should reset accumulation
+        if (distance > TRAFFIC_DISTANCE_RESET_THRESHOLD) {
+            logger.debug("Large movement detected, resetting traffic distance accumulation: ${String.format("%.3f", distance)}m > ${TRAFFIC_DISTANCE_RESET_THRESHOLD}m")
+            resetTrafficDistanceAccumulation()
+            return 0f
+        }
+        
+        // Check if this is a small movement suitable for accumulation
+        if (distance < TRAFFIC_DISTANCE_ACCUMULATION_THRESHOLD && distance > 0.1f) {
+            trafficDistanceAccumulationState.isActive = true
+            trafficDistanceAccumulationState.accumulatedDistance += distance
+            trafficDistanceAccumulationState.movementCount++
+            
+            // Apply smoothing
+            trafficDistanceAccumulationState.smoothedDistance = applyTrafficDistanceSmoothing(
+                trafficDistanceAccumulationState.smoothedDistance,
+                trafficDistanceAccumulationState.accumulatedDistance
+            )
+            
+            logger.debug("Traffic distance accumulated: total=${String.format("%.3f", trafficDistanceAccumulationState.accumulatedDistance)}m, " +
+                        "smoothed=${String.format("%.3f", trafficDistanceAccumulationState.smoothedDistance)}m, " +
+                        "movements=${trafficDistanceAccumulationState.movementCount}")
+            
+            // Return smoothed distance if we have enough movements
+            if (trafficDistanceAccumulationState.movementCount >= 3) {
+                return trafficDistanceAccumulationState.smoothedDistance
+            }
+        }
+        
+        return 0f
+    }
+    
+    /**
+     * Reset traffic distance accumulation when conditions change
+     */
+    fun resetTrafficDistanceAccumulation() {
+        val previousDistance = trafficDistanceAccumulationState.accumulatedDistance
+        val previousCount = trafficDistanceAccumulationState.movementCount
+        
+        trafficDistanceAccumulationState = TrafficDistanceAccumulationState(
+            lastResetTime = System.currentTimeMillis()
+        )
+        
+        logger.debug("Traffic distance accumulation reset: previousDistance=${String.format("%.3f", previousDistance)}m, previousCount=$previousCount")
+    }
+    
+    /**
+     * Apply smoothing to accumulated traffic distance
+     */
+    private fun applyTrafficDistanceSmoothing(currentSmoothed: Float, newAccumulated: Float): Float {
+        return currentSmoothed * TRAFFIC_DISTANCE_SMOOTHING_FACTOR + 
+               newAccumulated * (1f - TRAFFIC_DISTANCE_SMOOTHING_FACTOR)
+    }
+    
+    /**
+     * Get current traffic distance accumulation statistics
+     */
+    fun getTrafficDistanceAccumulationStats(): String {
+        return "Traffic accumulation: ${trafficDistanceAccumulationState.movementCount} movements, " +
+               "Total: ${String.format("%.2f", trafficDistanceAccumulationState.accumulatedDistance)}m, " +
+               "Smoothed: ${String.format("%.2f", trafficDistanceAccumulationState.smoothedDistance)}m, " +
+               "Active: ${trafficDistanceAccumulationState.isActive}"
+    }
+    
+    /**
      * ✅ COMPLETED: Step 4 - Adaptive GPS Accuracy Methods
      * 
      * Adapt GPS accuracy requirements based on traffic conditions.
@@ -1018,6 +1089,19 @@ open class LocationValidationService {
     private var trafficStateMachine = TrafficStateMachineState()
     
     /**
+     * ✅ Step 8: Traffic distance accumulation state
+     */
+    data class TrafficDistanceAccumulationState(
+        var accumulatedDistance: Float = 0f,
+        var smoothedDistance: Float = 0f,
+        var lastResetTime: Long = 0L,
+        var movementCount: Int = 0,
+        var isActive: Boolean = false
+    )
+    
+    private var trafficDistanceAccumulationState = TrafficDistanceAccumulationState()
+    
+    /**
      * ✅ REFACTORED: Validate a single location update using unified validation framework
      * This method now delegates all validation logic to LocationValidationFramework
      * to eliminate code duplication and ensure consistent validation behavior.
@@ -1206,6 +1290,20 @@ open class LocationValidationService {
 
         // 4. Check for minimal movement to filter out GPS "dither" when stationary.
         if (distance < minThreshold) {
+            // ✅ Step 8: Try traffic distance accumulation for small movements in traffic mode
+            if (finalTrafficMode) {
+                val accumulatedDistance = accumulateTrafficDistance(distance, finalTrafficMode)
+                if (accumulatedDistance > 0f) {
+                    logger.info(
+                        "getValidatedDistance: Using traffic distance accumulation: " +
+                        "raw=${String.format(Locale.US, "%.2f", distance)}m, " +
+                        "accumulated=${String.format(Locale.US, "%.2f", accumulatedDistance)}m, " +
+                        "threshold=${String.format(Locale.US, "%.2f", minThreshold)}m"
+                    )
+                    return accumulatedDistance
+                }
+            }
+            
             logger.debug(
                 "getValidatedDistance: Movement below threshold: ${FormatUtils.formatMeters(distance.toDouble())}. " +
                         "Threshold: ${String.format(Locale.US, "%.2f", minThreshold)}m. " +

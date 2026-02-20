@@ -1,0 +1,12 @@
+This is a test email from the Master Branch Coordinator / Human-in-the-Loop Manager.
+
+Please reply to this message to confirm you received it.
+
+We need your input on workdays for the team (Design/Creative, UI/UX, Front-end, Back-end, DevOps, QA, Security, and Human-in-the-Loop). For example:
+- Which days should each role be "on" or available?
+- Any hours or time windows to respect?
+- Time zone to use for scheduling?
+
+We will monitor these parameters and use your reply to set team availability. Once you reply, we'll confirm back that we've noted your preferences.
+
+— OutOfRouteBuddy Coordinator

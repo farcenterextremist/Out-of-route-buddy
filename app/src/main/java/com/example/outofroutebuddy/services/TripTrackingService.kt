@@ -12,6 +12,7 @@ import android.os.IBinder
 import android.os.Looper
 import android.util.Log
 import androidx.core.app.NotificationCompat
+import androidx.core.content.edit
 import com.example.outofroutebuddy.R
 import com.example.outofroutebuddy.data.repository.TripRepository
 import com.example.outofroutebuddy.models.Trip
@@ -23,6 +24,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -35,7 +37,10 @@ import java.util.*
 
 const val ACTION_START_TRIP = "ACTION_START_TRIP"
 const val ACTION_END_TRIP = "ACTION_END_TRIP"
+const val ACTION_PAUSE_TRIP = "ACTION_PAUSE_TRIP"
+const val ACTION_RESUME_TRIP = "ACTION_RESUME_TRIP"
 const val EXTRA_EXPECTED_MILES = "EXTRA_EXPECTED_MILES"
+private const val EXTRA_INITIAL_TOTAL_MILES = "EXTRA_INITIAL_TOTAL_MILES"
     private const val NOTIFICATION_ID = BuildConfig.NOTIFICATION_ID
 private const val NOTIFICATION_CHANNEL_ID = "TripTrackingChannel"
 private const val TAG = "TripTrackingService"
@@ -96,6 +101,9 @@ class TripTrackingService : Service() {
     private var consecutiveErrors = 0
     private val maxConsecutiveErrors = 3
     
+    // ✅ NEW: Pause state tracking
+    private var isPaused = false
+    
     // ✅ ENHANCED: GPS metadata tracking for accuracy auditing
     private var totalGpsPoints = 0
     private var validGpsPoints = 0
@@ -111,6 +119,8 @@ class TripTrackingService : Service() {
     private var speedReadings = 0
     private var tripStartTime = 0L
     private var interruptionCount = 0
+    private var lastHealthCheckTime = 0L
+    private val healthCheckInterval = 30000L // 30 seconds
     
     // ✅ NEW: Enhanced GPS tracking data
     private var currentAccuracy = 0f
@@ -130,12 +140,13 @@ class TripTrackingService : Service() {
         private val _gpsTrackingData = MutableStateFlow(GpsTrackingData())
         val gpsTrackingData: StateFlow<GpsTrackingData> = _gpsTrackingData.asStateFlow()
 
-        fun startService(context: Context, loadedMiles: Double, bounceMiles: Double) {
+        fun startService(context: Context, loadedMiles: Double, bounceMiles: Double, initialTotalMiles: Double? = null) {
             try {
                 val intent = Intent(context, TripTrackingService::class.java).apply {
                     action = ACTION_START_TRIP
                     putExtra("EXTRA_LOADED_MILES", loadedMiles)
                     putExtra("EXTRA_BOUNCE_MILES", bounceMiles)
+                    initialTotalMiles?.let { putExtra(EXTRA_INITIAL_TOTAL_MILES, it) }
                 }
                 context.startService(intent)
                 Log.d(TAG, "Trip tracking service start requested")
@@ -179,6 +190,58 @@ class TripTrackingService : Service() {
                 // ✅ ADDED: Report error to Firebase Crashlytics
                 (context.applicationContext as? OutOfRouteApplication)?.reportErrorToCrashlytics(
                     "Failed to stop trip tracking service",
+                    e
+                )
+            }
+        }
+        
+        /**
+         * ✅ NEW: Pause trip tracking service
+         */
+        fun pauseService(context: Context) {
+            try {
+                val intent = Intent(context, TripTrackingService::class.java).apply {
+                    action = ACTION_PAUSE_TRIP
+                }
+                context.startService(intent)
+                Log.d(TAG, "Trip tracking service pause requested")
+                
+                // ✅ ADDED: Log analytics event for trip pause
+                (context.applicationContext as? OutOfRouteApplication)?.logAnalyticsEvent("trip_paused")
+                
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to pause trip tracking service", e)
+                notifyUserOfServiceFailure(context, "Failed to pause trip tracking: ${e.message}")
+                
+                // ✅ ADDED: Report error to Firebase Crashlytics
+                (context.applicationContext as? OutOfRouteApplication)?.reportErrorToCrashlytics(
+                    "Failed to pause trip tracking service",
+                    e
+                )
+            }
+        }
+        
+        /**
+         * ✅ NEW: Resume trip tracking service
+         */
+        fun resumeService(context: Context) {
+            try {
+                val intent = Intent(context, TripTrackingService::class.java).apply {
+                    action = ACTION_RESUME_TRIP
+                }
+                context.startService(intent)
+                Log.d(TAG, "Trip tracking service resume requested")
+                
+                // ✅ ADDED: Log analytics event for trip resume
+                (context.applicationContext as? OutOfRouteApplication)?.logAnalyticsEvent("trip_resumed")
+                
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to resume trip tracking service", e)
+                notifyUserOfServiceFailure(context, "Failed to resume trip tracking: ${e.message}")
+                
+                // ✅ ADDED: Report error to Firebase Crashlytics
+                (context.applicationContext as? OutOfRouteApplication)?.reportErrorToCrashlytics(
+                    "Failed to resume trip tracking service",
                     e
                 )
             }
@@ -278,11 +341,19 @@ class TripTrackingService : Service() {
             val validatedDistanceInMeters = locationValidationService.getValidatedVehicleDistance(location, lastLocation)
 
             if (validatedDistanceInMeters > 0) {
-                // The distance is valid, add it to the total.
+                // The distance is valid, add it to the total IF NOT PAUSED
                 // Conversion from meters to miles happens here.
                 val distanceInMiles = validatedDistanceInMeters / 1609.34
-                totalDistance += distanceInMiles
-                validGpsPoints++
+                
+                // ✅ CRITICAL FIX: Only accumulate distance if trip is not paused
+                if (!isPaused) {
+                    totalDistance += distanceInMiles
+                    validGpsPoints++
+                } else {
+                    // Trip is paused - log but don't accumulate distance
+                    Log.d(TAG, "Location update received while paused - distance not accumulated")
+                    rejectedGpsPoints++
+                }
                 
                 // ✅ NEW: Log detailed tracking information for debugging
                 Log.i(
@@ -330,6 +401,9 @@ class TripTrackingService : Service() {
             
             // ✅ NEW: Broadcast real-time GPS data to UI
             broadcastRealTimeGpsData(location)
+            
+            // ✅ NEW: Perform periodic health check
+            performHealthCheck()
 
         } catch (e: Exception) {
             Log.e(TAG, "Error updating location", e)
@@ -359,11 +433,64 @@ class TripTrackingService : Service() {
             updateServiceState(false, errorMessage)
             notifyUserOfServiceFailure(this, errorMessage)
             
+            // ✅ NEW: Attempt GPS recovery before giving up
+            attemptGpsRecovery()
+            
             // ✅ ADDED: Report location failure to Firebase Crashlytics
             (application as? OutOfRouteApplication)?.reportErrorToCrashlytics(
                 "Location tracking failure: $message",
                 null
             )
+        }
+    }
+    
+    /**
+     * ✅ NEW: Attempt to recover GPS tracking when it fails.
+     * Runs on background scope to avoid blocking the main thread (location callbacks use MainLooper).
+     */
+    private fun attemptGpsRecovery() {
+        serviceScope.launch {
+            try {
+                Log.i(TAG, "Attempting GPS recovery...")
+                stopLocationUpdates()
+                delay(2000)
+                startLocationUpdates()
+                Log.i(TAG, "GPS recovery attempt completed")
+            } catch (e: Exception) {
+                Log.e(TAG, "GPS recovery failed", e)
+            }
+        }
+    }
+    
+    /**
+     * ✅ NEW: Perform periodic health check to detect GPS issues
+     */
+    private fun performHealthCheck() {
+        try {
+            val currentTime = System.currentTimeMillis()
+            
+            // Only check every 30 seconds
+            if (currentTime - lastHealthCheckTime < healthCheckInterval) {
+                return
+            }
+            
+            lastHealthCheckTime = currentTime
+            
+            // Check if we haven't received location updates for too long
+            val timeSinceLastUpdate = currentTime - lastUpdateTime
+            if (timeSinceLastUpdate > 60000) { // 60 seconds without updates
+                Log.w(TAG, "No GPS updates for ${timeSinceLastUpdate / 1000}s - attempting recovery")
+                attemptGpsRecovery()
+            }
+            
+            // Check if we're getting too many consecutive errors
+            if (consecutiveErrors > 5) {
+                Log.w(TAG, "High error count: $consecutiveErrors - attempting recovery")
+                attemptGpsRecovery()
+            }
+            
+        } catch (e: Exception) {
+            Log.e(TAG, "Health check failed", e)
         }
     }
 
@@ -411,10 +538,18 @@ class TripTrackingService : Service() {
                 ACTION_START_TRIP -> {
                     loadedMiles = intent.getDoubleExtra("EXTRA_LOADED_MILES", 0.0)
                     bounceMiles = intent.getDoubleExtra("EXTRA_BOUNCE_MILES", 0.0)
+                    // If resuming a recovered trip, seed totalDistance
+                    totalDistance = intent.getDoubleExtra(EXTRA_INITIAL_TOTAL_MILES, totalDistance)
                     startTrip()
                 }
                 ACTION_END_TRIP -> {
                     stopTrip()
+                }
+                ACTION_PAUSE_TRIP -> {
+                    pauseTrip()
+                }
+                ACTION_RESUME_TRIP -> {
+                    resumeTrip()
                 }
                 "TIMEZONE_CHANGED" -> {
                     handleTimeZoneChange()
@@ -506,7 +641,7 @@ class TripTrackingService : Service() {
      */
     private fun clearServiceState() {
         try {
-            getSharedPreferences("trip_service_state", Context.MODE_PRIVATE).edit().clear().apply()
+            getSharedPreferences("trip_service_state", Context.MODE_PRIVATE).edit {clear()}
             Log.d(TAG, "Service state cleared")
         } catch (e: Exception) {
             Log.e(TAG, "Error clearing service state", e)
@@ -524,9 +659,15 @@ class TripTrackingService : Service() {
 
     private fun startTrip() {
         try {
-            Log.d(TAG, "Starting trip with loaded: $loadedMiles, bounce: $bounceMiles")
+            // ✅ FIX: Preserve seeded totalDistance for trip recovery
+            // If totalDistance was seeded via EXTRA_INITIAL_TOTAL_MILES (trip recovery),
+            // don't reset it to 0.0 - keep the existing value so UI doesn't jump backwards
+            val preserveDistance = totalDistance > 0.0
+            val seededDistance = if (preserveDistance) totalDistance else 0.0
             
-            totalDistance = 0.0
+            Log.d(TAG, "Starting trip with loaded: $loadedMiles, bounce: $bounceMiles, ${if (preserveDistance) "resuming from ${seededDistance}mi" else "starting fresh"}")
+            
+            totalDistance = seededDistance
             lastLocation = null
             lastUpdateTime = System.currentTimeMillis()
             consecutiveErrors = 0
@@ -550,7 +691,8 @@ class TripTrackingService : Service() {
             tripStartTime = System.currentTimeMillis()
             interruptionCount = 0
             
-            _tripMetrics.value = TripMetrics(0.0, 0.0)
+            // ✅ FIX: Initialize metrics with seeded distance for trip recovery
+            _tripMetrics.value = TripMetrics(totalDistance, 0.0)
             serviceState = serviceState.copy(
                 isRunning = true,
                 isHealthy = true,
@@ -636,21 +778,67 @@ class TripTrackingService : Service() {
             throw e
         }
     }
+    
+    /**
+     * ✅ NEW: Pause trip tracking (stop accumulating distance)
+     */
+    private fun pauseTrip() {
+        try {
+            Log.d(TAG, "Pausing trip tracking")
+            
+            isPaused = true
+            
+            // Update notification to show paused state
+            updateNotification("Trip PAUSED - Total: ${String.format(Locale.US, "%.1f", totalDistance)} mi")
+            
+            Log.d(TAG, "Trip paused successfully - distance accumulation stopped")
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to pause trip", e)
+            (application as? OutOfRouteApplication)?.reportErrorToCrashlytics(
+                "Failed to pause trip",
+                e
+            )
+        }
+    }
+    
+    /**
+     * ✅ NEW: Resume trip tracking (resume accumulating distance)
+     */
+    private fun resumeTrip() {
+        try {
+            Log.d(TAG, "Resuming trip tracking")
+            
+            isPaused = false
+            
+            // Update notification to show active state
+            val dispatchedMiles = loadedMiles + bounceMiles
+            val oorMiles = totalDistance - dispatchedMiles
+            updateNotification("Total: ${String.format(Locale.US, "%.1f", totalDistance)} mi, OOR: ${String.format(Locale.US, "%.1f", oorMiles)} mi")
+            
+            Log.d(TAG, "Trip resumed successfully - distance accumulation resumed")
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to resume trip", e)
+            (application as? OutOfRouteApplication)?.reportErrorToCrashlytics(
+                "Failed to resume trip",
+                e
+            )
+        }
+    }
 
     @SuppressLint("MissingPermission")
     private fun startLocationUpdates() {
         try {
-            // ✅ IMPROVED: Vehicle-optimized location request configuration
-            val locationRequest = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 10000) // 10 seconds (was 5)
+            // ✅ IMPROVED: More resilient location request configuration
+            val locationRequest = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 15000) // ✅ FIXED: Increased to 15 seconds for better reliability
                 .setGranularity(Granularity.GRANULARITY_PERMISSION_LEVEL)
-                .setMinUpdateDistanceMeters(25f) // 25 meters (was 10) - vehicle appropriate
-                .setWaitForAccurateLocation(true) // ✅ NEW: Wait for accurate location
-                .setMaxUpdates(1000) // ✅ NEW: Limit updates to prevent battery drain
-                .setMaxUpdateDelayMillis(15000) // ✅ NEW: Max 15 second delay
+                .setMinUpdateDistanceMeters(20f) // ✅ FIXED: Reduced to 20 meters for more frequent updates
+                .setWaitForAccurateLocation(false) // ✅ FIXED: Don't wait for accurate location to prevent blocking
+                .setMaxUpdates(2000) // ✅ FIXED: Increased limit for longer trips
+                .setMaxUpdateDelayMillis(30000) // ✅ FIXED: Increased max delay to 30 seconds
                 .build()
             
             fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, Looper.getMainLooper())
-            Log.d(TAG, "Vehicle-optimized location updates started")
+            Log.d(TAG, "Resilient location updates started")
         } catch (e: Exception) {
             Log.e(TAG, "Failed to start location updates", e)
             updateServiceState(false, "Failed to start location updates: ${e.message}")

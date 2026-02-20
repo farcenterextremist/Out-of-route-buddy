@@ -142,7 +142,10 @@ class SyncWorker @AssistedInject constructor(
 
     override suspend fun doWork(): Result {
         val syncType = inputData.getString(KEY_SYNC_TYPE) ?: SYNC_TYPE_FULL
-        
+        val metrics = WorkMetricsLoggerProvider.get(applicationContext)
+        val start = System.currentTimeMillis()
+        metrics.onWorkStart(syncType)
+
         Log.d(TAG, "Starting sync work: $syncType (attempt ${runAttemptCount + 1})")
         
         return try {
@@ -156,8 +159,13 @@ class SyncWorker @AssistedInject constructor(
                     Result.failure()
                 }
             }
+            .also {
+                val dur = System.currentTimeMillis() - start
+                metrics.onWorkSuccess(syncType, dur)
+            }
         } catch (e: Exception) {
             Log.e(TAG, "Sync work failed: ${e.message}", e)
+            metrics.onWorkFailure(syncType, runAttemptCount + 1, e)
             
             // Retry with exponential backoff for transient errors
             if (runAttemptCount < 3) {

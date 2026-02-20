@@ -1,44 +1,5 @@
 package com.example.outofroutebuddy.data.repository
 
-// TODO: DATA LAYER IMPROVEMENTS - PRIORITY TASKS
-// ===============================================
-// 1. CACHING STRATEGY: Implement intelligent caching
-//    - Add Room database with proper caching
-//    - Implement cache invalidation strategies
-//    - Add offline-first architecture
-//    - Create cache size management
-//
-// 2. DATA VALIDATION: Add comprehensive validation
-//    - Validate all input data before storage
-//    - Add data integrity checks
-//    - Implement data migration strategies
-//    - Add data corruption detection
-//
-// 3. SYNC MECHANISM: Improve data synchronization
-//    - Implement conflict resolution
-//    - Add incremental sync
-//    - Create sync status tracking
-//    - Add retry mechanisms with exponential backoff
-//
-// 4. PERFORMANCE: Optimize database operations
-//    - Add database indexing
-//    - Implement query optimization
-//    - Add connection pooling
-//    - Create database maintenance routines
-//
-// 5. SECURITY: Add data security measures
-//    - Implement data encryption
-//    - Add secure data transmission
-//    - Create data backup strategies
-//    - Add data privacy controls
-//
-// 6. MONITORING: Add data layer monitoring
-//    - Implement database performance metrics
-//    - Add query performance tracking
-//    - Create data usage analytics
-//    - Add error reporting for data operations
-// ===============================================
-
 import android.util.Log
 import androidx.room.*
 import com.example.outofroutebuddy.data.dao.TripDao
@@ -53,8 +14,6 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import java.util.Calendar
 import java.util.Date
-
-// TODO: Add error handling for database failures (e.g., try/catch, user feedback).
 
 /**
  * Repository for managing trip data operations.

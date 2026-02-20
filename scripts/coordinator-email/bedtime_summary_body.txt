@@ -1,0 +1,25 @@
+Hi — here’s a short summary before you head to bed.
+
+FUTURE PLANS (high level)
+• Auto drive detected mode/button — Detect when you’re likely driving (movement/speed) and show a clear “Auto drive detected” state with a one-tap button to start a trip. Less friction if you forget to tap Start. We’ll spec and build this with Design, UI/UX, Front-end, Back-end, and a Security review for privacy.
+• Emulator — Finish Settings dialog, End Trip confirmation, period picker for Statistics, and long-press for edit. Then use the emulator as the visual spec for the real app.
+• Open line — We’ll keep using email to ask you questions and read your replies. Optional: weekly one-liner and “reply with a number” when we need a quick priority.
+
+EACH WORKER’S ONE IDEA (for you to approve, defer, or combine)
+• Design: Driver check-in — After a trip, one optional prompt: “How was the route?” (thumbs up/down). One tap, no forms.
+• UI/UX: Trip summary card — When you end a trip, one card: “X.X mi driven, Y.Y% OOR” with Share/Save. Clear “done” moment.
+• Front-end: Haptic on trip start/end — Light vibration when trip starts and ends so you get confirmation without looking.
+• Back-end: Smart default for bounce miles — Remember last bounce miles and prefill; still editable.
+• DevOps: Nightly digest — Optional Sunday-evening email with a 3-line summary of the week’s changes. Off by default.
+• QA: Screenshot on trip end — In debug builds, optional screenshot when you end a trip for visual regression.
+• Security: App PIN or biometric to end trip — Optional; reduces risk if someone else has your unlocked phone.
+• Email Editor: Weekly one-liner — One short line each week: “This week: X. Next: Y. Reply with any changes.”
+• File Organizer: Changelog for you — One place (e.g. CHANGELOG_USER.md) with “What we did / What’s next” in plain language.
+• Human-in-the-Loop: Reply with a number — When we need priority, we ask “1=Auto drive, 2=Reports, 3=Emulator” and you reply with just the number.
+
+WORKER TODOS
+Every role has a short todo list (including Auto drive spec, emulator items, and open-line improvements). Full list is in docs/agents/WORKER_TODOS_AND_IDEAS.md. We’ll pick from these next session based on your workdays (Sunday 3–4 hr) and your priorities.
+
+Reply when you’re back with any “yes / no / later” on the ideas or what you want first. Sleep well.
+
+— OutOfRouteBuddy Coordinator

@@ -126,7 +126,9 @@ class SimulatedTripTest {
             unifiedTripService = mockUnifiedTripService,
             unifiedOfflineService = mockUnifiedOfflineService,
             crashRecoveryManager = mockk(relaxed = true),
-            application = mockApplication
+            tripPersistenceManager = mockk(relaxed = true),
+            application = mockApplication,
+            ioDispatcher = testDispatcher
         )
 
         testDispatcher.scheduler.advanceUntilIdle()

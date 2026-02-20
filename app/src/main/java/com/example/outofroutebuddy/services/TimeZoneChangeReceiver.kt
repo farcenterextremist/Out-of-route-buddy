@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.util.Log
+import androidx.core.content.edit
 import java.util.TimeZone
 
 /**
@@ -54,11 +55,11 @@ class TimeZoneChangeReceiver : BroadcastReceiver() {
             
             // Update any cached time zone data
             val prefs = context.getSharedPreferences("TimeZonePrefs", Context.MODE_PRIVATE)
-            prefs.edit()
-                .putString("last_timezone", timeZoneId)
-                .putLong("last_timezone_change", System.currentTimeMillis())
-                .putInt("timezone_offset", offset)
-                .apply()
+            prefs.edit {
+                    putString("last_timezone", timeZoneId)
+                    .putLong("last_timezone_change", System.currentTimeMillis())
+                    .putInt("timezone_offset", offset)
+                }
         } catch (e: Exception) {
             Log.e(TAG, "Error updating time zone preferences", e)
         }
@@ -71,11 +72,11 @@ class TimeZoneChangeReceiver : BroadcastReceiver() {
         try {
             // Store the new time zone info in SharedPreferences for reference
             val prefs = context.getSharedPreferences("TimeZonePrefs", Context.MODE_PRIVATE)
-            prefs.edit()
-                .putString("last_timezone", timeZoneId)
-                .putLong("last_timezone_change", System.currentTimeMillis())
-                .putInt("timezone_offset", offset)
-                .apply()
+            prefs.edit {
+                    putString("last_timezone", timeZoneId)
+                    .putLong("last_timezone_change", System.currentTimeMillis())
+                    .putInt("timezone_offset", offset)
+                }
                 
             Log.d(TAG, "Updated time zone data: $timeZoneId")
             

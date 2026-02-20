@@ -15,6 +15,18 @@ import java.util.*
  * Purpose: Simplify test data creation
  */
 object TestDataBuilders {
+    // Simple creator
+    fun simpleTrip(
+        id: String = java.util.UUID.randomUUID().toString(),
+        loadedMiles: Double = 100.0,
+        bounceMiles: Double = 20.0,
+        actualMiles: Double = 125.0
+    ): Trip = Trip(
+        id = id,
+        loadedMiles = loadedMiles,
+        bounceMiles = bounceMiles,
+        actualMiles = actualMiles
+    )
     
     // ==================== TRIP BUILDER ====================
     

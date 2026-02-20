@@ -29,6 +29,9 @@ class TripHistoryViewModel @Inject constructor(
     
     private val _trips = MutableStateFlow<List<Trip>>(emptyList())
     val trips: StateFlow<List<Trip>> = _trips.asStateFlow()
+
+    @Volatile
+    private var testModeOverride = false
     
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
@@ -42,7 +45,9 @@ class TripHistoryViewModel @Inject constructor(
             try {
                 _isLoading.value = true
                 repository.getAllTrips().collect { tripList ->
-                    _trips.value = tripList.sortedByDescending { (it.endTime ?: it.startTime)?.time ?: 0L }
+                    if (!testModeOverride) {
+                        _trips.value = tripList.sortedByDescending { (it.endTime ?: it.startTime)?.time ?: 0L }
+                    }
                 }
             } catch (e: Exception) {
                 android.util.Log.e("TripHistoryViewModel", "Error loading trips", e)
@@ -116,6 +121,12 @@ class TripHistoryViewModel @Inject constructor(
                 android.util.Log.e("TripHistoryViewModel", "Error filtering trips", e)
             }
         }
+    }
+
+    @androidx.annotation.VisibleForTesting
+    internal fun setTripsForTest(tripsForTest: List<Trip>) {
+        testModeOverride = true
+        _trips.value = tripsForTest
     }
 }
 
