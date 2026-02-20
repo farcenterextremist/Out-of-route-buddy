@@ -198,9 +198,7 @@ class MockGpsSynchronizationServiceTest {
         coEvery { mockRepository.deleteTripById(any()) } returns Unit
         coEvery { mockRepository.getTripStatistics(any(), any()) } returns com.example.outofroutebuddy.domain.repository.TripStatistics()
         coEvery { mockRepository.getTodayTripStatistics() } returns com.example.outofroutebuddy.domain.repository.TripStatistics()
-        coEvery { mockRepository.getWeeklyTripStatistics() } returns com.example.outofroutebuddy.domain.repository.TripStatistics()
         coEvery { mockRepository.getMonthlyTripStatistics() } returns com.example.outofroutebuddy.domain.repository.TripStatistics()
-        coEvery { mockRepository.getYearlyTripStatistics() } returns com.example.outofroutebuddy.domain.repository.TripStatistics()
         coEvery { mockRepository.clearAllTrips() } returns Unit
         coEvery { mockRepository.exportTripData(any(), any()) } returns ""
         every { mockStateCache.getCacheMetrics() } returns

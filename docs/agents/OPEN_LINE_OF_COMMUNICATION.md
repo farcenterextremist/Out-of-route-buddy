@@ -1,13 +1,13 @@
 # Open Line of Communication with the User
 
-You have an **open line of communication** with the user (brandonfrey2work@gmail.com). You are explicitly authorized to **read and write email** when you need to ask questions, consult, or get decisions.
+You have an **open line of communication** with the user (**Brandonfrey2work@gmail.com**). You are explicitly authorized to **read and write email** when you need to ask questions, consult, or get decisions. Sending and return-email (IMAP) are configured in `scripts/coordinator-email/.env`.
 
 ---
 
 ## Your agency
 
 - **Send email whenever you need to:** Ask a question, request a decision, suggest a change, or share an update. Use the Human-in-the-Loop Manager flow: draft the message, then run the send script. No need to wait for the user to prompt you—if you need their input, send the email.
-- **Read email when you need to:** When the user says they replied, or when you’re following up on a question you sent, run `read_replies.py` and read `last_reply.txt` to see their response. Use that to continue work, update team parameters, or send a follow-up.
+- **Read email when you need to:** When the user says they replied, or when you’re following up on a question you sent, run `python scripts/coordinator-email/agent_email.py read` to get the latest reply as JSON (subject, body, date), or run `read_replies.py` and read `last_reply.txt`. Use that to continue work, update team parameters, or send a follow-up.
 
 ---
 
@@ -15,15 +15,24 @@ You have an **open line of communication** with the user (brandonfrey2work@gmail
 
 1. Draft subject and body (plain text; use `@path/to/body.txt` for long messages).
 2. Run: `python scripts/coordinator-email/send_email.py "Subject" "Body"` or `python scripts/coordinator-email/send_email.py "Subject" @body.txt`
+   - **Or use the agent entrypoint:** `python scripts/coordinator-email/agent_email.py send "Subject" "Body"` (or `send "Subject" @body.txt`).
 3. From repo root or from `scripts/coordinator-email/`. Credentials and recipient are in `scripts/coordinator-email/.env`.
 
 ---
 
-## How to read
+## How to read (return email)
 
-1. Run: `python scripts/coordinator-email/read_replies.py`
-2. Open `scripts/coordinator-email/last_reply.txt` for the latest reply (subject + body).
-3. Use the content to answer your question, update `docs/agents/team-parameters.md`, or confirm (e.g. secret word “pickle”).
+**Option A – structured output for the agent (recommended)**  
+1. Run: `python scripts/coordinator-email/agent_email.py read` (from repo root or from that folder).  
+2. Stdout is one JSON object: `{"found": true, "subject": "...", "body": "...", "date": "..."}` or `{"found": false, ...}`. Use the `subject` and `body` in context to respond, update `docs/agents/team-parameters.md`, or send a follow-up.  
+3. The same run also writes `last_reply.txt` so existing flows that read that file still work.
+
+**Option B – file-based**  
+1. Run: `python scripts/coordinator-email/read_replies.py` (or `read_replies.py --json` for JSON on stdout).  
+2. Open `scripts/coordinator-email/last_reply.txt` for the latest reply (subject + body). The script looks for messages with "Re:" and "OutOfRouteBuddy" in the subject.  
+3. Use the content to answer your question, update `docs/agents/team-parameters.md`, or confirm (e.g. secret word "pickle").  
+
+**Gmail:** IMAP must be enabled (Settings → Forwarding and POP/IMAP → Enable IMAP). The same Gmail App Password in `.env` is used for both sending and reading.
 
 ---
 

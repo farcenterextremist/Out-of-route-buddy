@@ -1,0 +1,5 @@
+# Python dependencies for OutOfRouteBuddy scripts
+# Install: pip install -r requirements.txt
+
+# Emulator sync: generate stylized icon.ico for desktop shortcut
+Pillow>=10.0.0

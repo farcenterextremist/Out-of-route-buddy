@@ -5,6 +5,12 @@
   --phone-height: 780px;
   --phone-bg: #1a1a1a;
   --phone-border: #333;
+  /* Phase B: 1:1 spacing (app dp → px at 360px) */
+  --toolbar-height: 56px;
+  --toolbar-margin: 16px;
+  --toolbar-gap: 8px;
+  --card-padding: 10px;
+  --input-elevation: 0 2px 4px rgba(0,0,0,0.1);
 }
 
 /* Light mode - matches app values/colors.xml + drawable */
@@ -82,16 +88,50 @@ body {
   backdrop-filter: blur(10px);
 }
 
+.emulator-toolbar-title-block {
+  flex-shrink: 0;
+}
 .emulator-toolbar h1 {
   font-size: 1.25rem;
   font-weight: 600;
   color: #fff;
+}
+.emulator-toolbar-scope {
+  font-size: 0.75rem;
+  color: rgba(255,255,255,0.7);
+  margin: 2px 0 0 0;
+}
+
+.emulator-toolbar-hint {
+  font-size: 0.8rem;
+  color: rgba(255,255,255,0.8);
+  margin: 0 0 4px 0;
+  max-width: 420px;
+}
+@media (max-width: 768px) {
+  .emulator-toolbar-hint { display: none; }
+}
+
+.sync-indicator {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #666;
+  flex-shrink: 0;
+  margin: auto 0;
+}
+.sync-indicator.reachable {
+  background: #2e7d32;
+}
+.sync-indicator.unreachable {
+  background: #666;
 }
 
 .toolbar-actions {
   display: flex;
   gap: 12px;
   flex-wrap: wrap;
+  align-items: center;
 }
 
 .btn {
@@ -204,15 +244,16 @@ body {
   pointer-events: auto;
 }
 
-/* Toolbar (inside app) - matches custom_toolbar.xml, colorPrimary */
+/* Toolbar (inside app) - matches custom_toolbar.xml; stretched cracked-road texture (same as real app) */
 .app-toolbar {
-  background: var(--toolbar-bg);
+  background: var(--toolbar-bg) url('toolbar_background_cracked_road.png') no-repeat center center;
+  background-size: 100% 100%;
   color: var(--toolbar-text);
-  padding: 12px 16px;
+  padding: 12px var(--toolbar-margin);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  min-height: 56px;
+  min-height: var(--toolbar-height);
 }
 
 .app-toolbar-title {
@@ -242,12 +283,36 @@ body {
   background: rgba(255,255,255,0.15);
 }
 
+/* Improvement #1: SVG icon in settings button (color inherited from toolbar) */
+.app-toolbar-settings-svg svg {
+  width: 24px;
+  height: 24px;
+  display: block;
+  color: inherit;
+}
+.app-toolbar-settings-svg {
+  font-size: 0;
+}
+.stats-arrow svg {
+  width: 20px;
+  height: 20px;
+  display: block;
+  color: inherit;
+}
+.app-pause-btn svg {
+  width: 24px;
+  height: 24px;
+  margin: 0 auto;
+  display: block;
+  color: inherit;
+}
+
 .app-toolbar-center {
   display: flex;
   align-items: center;
   justify-content: center;
   flex: 1;
-  gap: 8px;
+  gap: var(--toolbar-gap);
 }
 
 .app-toolbar-line {
@@ -270,7 +335,7 @@ body {
   background: var(--input-bg);
   color: var(--text-primary);
   font-size: 16px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: var(--input-elevation);
   display: block;
   cursor: text;
   text-align: center;
@@ -278,6 +343,12 @@ body {
 
 .app-input::placeholder {
   color: var(--input-hint);
+}
+
+/* Improvement #5: error state for validation */
+.app-input.app-input-error {
+  border-color: #b00020;
+  box-shadow: 0 0 0 2px rgba(176,0,32,0.3);
 }
 
 /* Buttons - matches button_3d_material.xml */
@@ -309,7 +380,7 @@ body {
 .app-card {
   background: var(--card-bg);
   border-radius: 12px;
-  padding: 10px 16px;
+  padding: var(--card-padding) 16px;
   box-shadow: 0 4px 8px rgba(0,0,0,0.15);
 }
 
@@ -579,6 +650,92 @@ body {
 
 .save-btn.saved {
   background: #2e7d32;
+}
+
+/* Modals (Improvements #2, #3) */
+.app-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9000;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s ease, visibility 0.2s;
+}
+.app-modal-overlay[hidden] {
+  display: none;
+}
+.app-modal-overlay.visible {
+  opacity: 1;
+  visibility: visible;
+}
+.app-modal {
+  background: #fff;
+  color: #111;
+  border-radius: 12px;
+  min-width: 280px;
+  max-width: 90vw;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+  overflow: hidden;
+}
+.app-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  background: var(--primary);
+  color: white;
+}
+.app-modal-header h2 {
+  font-size: 1.1rem;
+  margin: 0;
+}
+.app-modal-header .btn-close {
+  background: rgba(255,255,255,0.2);
+  color: white;
+}
+.app-modal-body {
+  padding: 16px;
+}
+.app-modal-row {
+  margin-bottom: 12px;
+}
+.app-modal-row:last-child {
+  margin-bottom: 0;
+}
+.app-modal-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: #555;
+  margin-bottom: 8px;
+}
+.app-modal-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.app-modal-actions.vertical {
+  flex-direction: column;
+}
+.app-modal-actions .btn {
+  flex: 1;
+  min-width: 0;
+}
+.app-mode-btn.active {
+  background: rgba(0,0,0,0.15);
+  border-color: rgba(0,0,0,0.3);
+}
+.app-modal-full {
+  width: 100%;
+}
+.app-modal-p {
+  margin: 0 0 12px;
+  color: #333;
+  font-size: 14px;
 }
 
 /* Responsive */

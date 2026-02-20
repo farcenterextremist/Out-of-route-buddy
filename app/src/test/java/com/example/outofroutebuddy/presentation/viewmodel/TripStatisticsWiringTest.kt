@@ -31,7 +31,7 @@ import java.util.*
  * 1. Trip saving to repository when trip ends
  * 2. Statistics refresh after trip ends
  * 3. Calendar picker period mode awareness (STANDARD vs CUSTOM)
- * 4. Weekly/monthly/yearly statistics accuracy
+ * 4. Monthly statistics accuracy
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class TripStatisticsWiringTest {
@@ -216,21 +216,9 @@ class TripStatisticsWiringTest {
         viewModel.calculateTrip(100.0, 25.0, 125.0)
         delay(100)
         
-        // Setup repository responses
+        // Setup repository responses (monthly only)
         coEvery { mockRepository.insertTrip(any()) } returns "trip-789"
-        coEvery { mockRepository.getWeeklyTripStatistics() } returns TripStatistics(
-            totalTrips = 1,
-            totalActualMiles = 125.0,
-            totalOorMiles = 0.0,
-            avgOorPercentage = 0.0
-        )
         coEvery { mockRepository.getMonthlyTripStatistics() } returns TripStatistics(
-            totalTrips = 1,
-            totalActualMiles = 125.0,
-            totalOorMiles = 0.0,
-            avgOorPercentage = 0.0
-        )
-        coEvery { mockRepository.getYearlyTripStatistics() } returns TripStatistics(
             totalTrips = 1,
             totalActualMiles = 125.0,
             totalOorMiles = 0.0,
@@ -241,17 +229,13 @@ class TripStatisticsWiringTest {
         viewModel.endTrip()
         // Wait for coroutines on IO dispatcher to complete (refreshAggregateStatistics uses Dispatchers.IO)
         // Use coVerify with timeout since IO dispatcher runs on real threads
-        coVerify(timeout = 1000) { mockRepository.getWeeklyTripStatistics() }
         coVerify(timeout = 1000) { mockRepository.getMonthlyTripStatistics() }
-        coVerify(timeout = 1000) { mockRepository.getYearlyTripStatistics() }
         
         // Give a bit more time for UI state update (runs on Main dispatcher)
         delay(50)
         
-        // Verify statistics are in UI state
-        assertNotNull("Weekly statistics should be loaded", viewModel.uiState.value.weeklyStatistics)
+        // Verify monthly statistics are in UI state
         assertNotNull("Monthly statistics should be loaded", viewModel.uiState.value.monthlyStatistics)
-        assertNotNull("Yearly statistics should be loaded", viewModel.uiState.value.yearlyStatistics)
     }
     
     @Test
@@ -259,20 +243,8 @@ class TripStatisticsWiringTest {
         // Given: No existing trips, then save a new trip
         coEvery { mockRepository.insertTrip(any()) } returns "trip-new"
         
-        // Setup statistics to show the new trip
-        coEvery { mockRepository.getWeeklyTripStatistics() } returns TripStatistics(
-            totalTrips = 1,
-            totalActualMiles = 125.0,
-            totalOorMiles = 25.0,
-            avgOorPercentage = 20.0
-        )
+        // Setup monthly statistics to show the new trip
         coEvery { mockRepository.getMonthlyTripStatistics() } returns TripStatistics(
-            totalTrips = 1,
-            totalActualMiles = 125.0,
-            totalOorMiles = 25.0,
-            avgOorPercentage = 20.0
-        )
-        coEvery { mockRepository.getYearlyTripStatistics() } returns TripStatistics(
             totalTrips = 1,
             totalActualMiles = 125.0,
             totalOorMiles = 25.0,
@@ -298,15 +270,15 @@ class TripStatisticsWiringTest {
         // When: End trip
         viewModel.endTrip()
         // Wait for coroutines on IO dispatcher to complete (refreshAggregateStatistics uses Dispatchers.IO)
-        coVerify(timeout = 1000) { mockRepository.getWeeklyTripStatistics() }
+        coVerify(timeout = 1000) { mockRepository.getMonthlyTripStatistics() }
         delay(50) // Give time for UI state update
         
-        // Then: Statistics should reflect the new trip
-        val weeklyStats = viewModel.uiState.value.weeklyStatistics
-        assertNotNull("Weekly stats should exist", weeklyStats)
-        assertEquals("Weekly total trips should be 1", 1, weeklyStats?.totalTrips ?: 0)
-        assertEquals("Weekly total miles should be 125.0", 125.0, weeklyStats?.totalMiles ?: 0.0, 0.01)
-        assertEquals("Weekly OOR percentage should be 20.0", 20.0, weeklyStats?.oorPercentage ?: 0.0, 0.01)
+        // Then: Monthly statistics should reflect the new trip
+        val monthlyStats = viewModel.uiState.value.monthlyStatistics
+        assertNotNull("Monthly stats should exist", monthlyStats)
+        assertEquals("Monthly total trips should be 1", 1, monthlyStats?.totalTrips ?: 0)
+        assertEquals("Monthly total miles should be 125.0", 125.0, monthlyStats?.totalMiles ?: 0.0, 0.01)
+        assertEquals("Monthly OOR percentage should be 20.0", 20.0, monthlyStats?.oorPercentage ?: 0.0, 0.01)
     }
     
     // ==================== CALENDAR PICKER PERIOD MODE TESTS ====================
@@ -407,35 +379,7 @@ class TripStatisticsWiringTest {
         assertEquals("OOR percentage should match", 10.0, periodStats?.averageOorPercentage ?: 0.0, 0.01)
     }
     
-    // ==================== WEEKLY/MONTHLY/YEARLY STATISTICS TESTS ====================
-    
-    @Test
-    fun `weekly statistics calculation includes all trips in current week`() = runTest {
-        // Given: Multiple trips in the current week
-        val weeklyStats = TripStatistics(
-            totalTrips = 3,
-            totalActualMiles = 375.0,
-            totalOorMiles = 37.5,
-            avgOorPercentage = 10.0
-        )
-        coEvery { mockRepository.getWeeklyTripStatistics() } returns weeklyStats
-        
-        // When: Statistics are refreshed
-        viewModel.calculateTrip(100.0, 25.0, 125.0)
-        delay(100)
-        
-        viewModel.endTrip()
-        // Wait for coroutines on IO dispatcher to complete
-        coVerify(timeout = 1000) { mockRepository.getWeeklyTripStatistics() }
-        delay(50) // Give time for UI state update
-        
-        // Then: Weekly statistics should be accurate
-        val stats = viewModel.uiState.value.weeklyStatistics
-        assertNotNull("Weekly stats should exist", stats)
-        assertEquals("Total trips should be 3", 3, stats?.totalTrips ?: 0)
-        assertEquals("Total miles should be 375.0", 375.0, stats?.totalMiles ?: 0.0, 0.01)
-        assertEquals("OOR percentage should be 10.0", 10.0, stats?.oorPercentage ?: 0.0, 0.01)
-    }
+    // ==================== MONTHLY STATISTICS TESTS ====================
     
     @Test
     fun `monthly statistics calculation includes all trips in current month`() = runTest {
@@ -464,53 +408,19 @@ class TripStatisticsWiringTest {
     }
     
     @Test
-    fun `yearly statistics calculation includes all trips in current year`() = runTest {
-        // Given: Multiple trips in the current year
-        val yearlyStats = TripStatistics(
-            totalTrips = 50,
-            totalActualMiles = 6250.0,
-            totalOorMiles = 625.0,
-            avgOorPercentage = 10.0
-        )
-        coEvery { mockRepository.getYearlyTripStatistics() } returns yearlyStats
-        
-        // When: Statistics are refreshed
-        viewModel.calculateTrip(100.0, 25.0, 125.0)
-        
-        viewModel.endTrip()
-        // Wait for coroutines on IO dispatcher to complete
-        coVerify(timeout = 1000) { mockRepository.getYearlyTripStatistics() }
-        delay(50) // Give time for UI state update
-        
-        // Then: Yearly statistics should be accurate
-        val stats = viewModel.uiState.value.yearlyStatistics
-        assertNotNull("Yearly stats should exist", stats)
-        assertEquals("Total trips should be 50", 50, stats?.totalTrips ?: 0)
-        assertEquals("Total miles should be 6250.0", 6250.0, stats?.totalMiles ?: 0.0, 0.01)
-    }
-    
-    @Test
     fun `statistics refresh happens after trip save completes`() = runTest {
         // Given: An active trip
         viewModel.calculateTrip(100.0, 25.0, 125.0)
         delay(100)
         
-        // Setup repository to track call order
+        // Setup repository to track call order (monthly only)
         val callOrder = mutableListOf<String>()
         coEvery { mockRepository.insertTrip(any()) } coAnswers {
             callOrder.add("insertTrip")
             "trip-ordered"
         }
-        coEvery { mockRepository.getWeeklyTripStatistics() } coAnswers {
-            callOrder.add("getWeeklyStats")
-            TripStatistics()
-        }
         coEvery { mockRepository.getMonthlyTripStatistics() } coAnswers {
             callOrder.add("getMonthlyStats")
-            TripStatistics()
-        }
-        coEvery { mockRepository.getYearlyTripStatistics() } coAnswers {
-            callOrder.add("getYearlyStats")
             TripStatistics()
         }
         
@@ -518,17 +428,12 @@ class TripStatisticsWiringTest {
         viewModel.endTrip()
         // Wait for coroutines on IO dispatcher to complete
         coVerify(timeout = 1000) { mockRepository.insertTrip(any()) }
-        coVerify(timeout = 1000) { mockRepository.getWeeklyTripStatistics() }
         coVerify(timeout = 1000) { mockRepository.getMonthlyTripStatistics() }
-        coVerify(timeout = 1000) { mockRepository.getYearlyTripStatistics() }
         delay(50) // Give time for all coroutines to complete
         
-        // Then: Insert should happen before statistics queries
-        // Note: Due to async nature, we verify that all calls happened, order is guaranteed by ViewModel code
+        // Then: Insert should happen before statistics query; monthly stats should be called
         assertTrue("Insert should be called", callOrder.contains("insertTrip"))
-        assertTrue("Weekly stats should be called", callOrder.contains("getWeeklyStats"))
         assertTrue("Monthly stats should be called", callOrder.contains("getMonthlyStats"))
-        assertTrue("Yearly stats should be called", callOrder.contains("getYearlyStats"))
     }
 }
 

@@ -1,0 +1,11 @@
+{
+  "recommendations": [
+    "fwcd.kotlin",
+    "vscjava.vscode-gradle",
+    "vscjava.vscode-java-pack",
+    "ms-python.python",
+    "WakaTime.vscode-wakatime",
+    "JustJuggle.just-juggle"
+  ],
+  "unwantedRecommendations": []
+}

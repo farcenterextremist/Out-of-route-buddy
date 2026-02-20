@@ -1,0 +1,27 @@
+Phase A/B/C execution on the emulator is complete. Summary:
+
+Phase A – Editing that makes sense
+• Undo and Redo (toolbar + Ctrl+Z / Ctrl+Y), with stacks and correct enable/disable state.
+• Clear split: Save = update in emulator only; Sync to project = write to repo (strings.xml).
+• One-line hint in UI; Auto-sync option (debounced 500 ms) after each Save.
+• README "Editing and sync" section and link to sync service; QA smoke doc (EMULATOR_EDITING_SMOKE.md).
+
+Phase B – 1:1 fidelity
+• phone-emulator/1TO1_SPEC.md: screens in scope, spacing (toolbar 56px, margins, card padding, elevation), string-key parity table, Load from project, icons, security (no secrets).
+• CSS variables for toolbar height, margins, card padding, input elevation; applied in styles.css.
+• Sync service: GET /design reads strings.xml and returns design JSON; emulator "Load from project" button merges it in (with one undo step so you can revert).
+• README updated with Load from project and link to 1TO1_SPEC.
+
+Phase C – Polish
+• docs/qa/EMULATOR_PHASE_ABC_CHECKLIST.md: string-key parity checklist + test cases (Edit/Save, Undo, Redo, Sync, Auto-sync, Load from project, Copy for Cursor, Export/Import).
+• Emulator index in README includes Phase ABC checklist; ROADMAP line for Phase A/B/C complete; HITL email drafts in docs/agents/EMULATOR_PHASE_ABC_HITL_EMAIL_DRAFTS.md.
+• In-app copy reviewed; optional C-FE/DD items addressed where applicable.
+
+The full task list is 103 items in docs/agents/EMULATOR_PHASE_ABC_100_TODOS.md (Phase A 33, Phase B 41, Phase C 29). The Cursor todo list you saw had 9 high-level execution items (create doc, link, execute Phase A/B/C); the 103 are the granular agent-assigned tasks in that document.
+
+What you can do next:
+• Open the emulator (desktop shortcut or scripts\launch_emulator.bat), edit a field, Save, Undo, then Sync to project or turn on Auto-sync.
+• Use "Load from project" to pull current strings from the repo into the emulator.
+• Run through docs/qa/EMULATOR_PHASE_ABC_CHECKLIST.md when you have time.
+
+Reply with any changes or questions.

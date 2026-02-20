@@ -102,25 +102,11 @@ interface TripRepository {
     suspend fun getTodayTripStatistics(): TripStatistics
 
     /**
-     * Get weekly trip statistics
-     *
-     * @return Weekly trip statistics
-     */
-    suspend fun getWeeklyTripStatistics(): TripStatistics
-
-    /**
      * Get monthly trip statistics
      *
      * @return Monthly trip statistics
      */
     suspend fun getMonthlyTripStatistics(): TripStatistics
-
-    /**
-     * Get yearly trip statistics
-     *
-     * @return Yearly trip statistics
-     */
-    suspend fun getYearlyTripStatistics(): TripStatistics
 
     /**
      * Clear all trip data

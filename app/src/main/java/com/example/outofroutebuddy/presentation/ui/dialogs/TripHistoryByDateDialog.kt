@@ -105,7 +105,7 @@ class TripHistoryByDateDialog : DialogFragment() {
     private fun setupRecyclerView() {
         adapter = TripHistoryAdapter(
             onTripClick = { trip ->
-                // TODO: Navigate to trip details if needed
+                // Backlog: Navigate to trip details screen (see CRUCIAL #4, ROADMAP "History improvements", docs/agents/APP_IMPROVEMENT_25_POINT_BRAINSTORM.md #7). No details screen yet; add when implemented.
             },
             onDeleteClick = { trip ->
                 viewModel.deleteTrip(trip)

@@ -21,6 +21,8 @@ This folder contains the script used by the **Human-in-the-Loop Manager** to sen
 
 3. **Do not commit `.env`** – It is listed in `.gitignore` for `scripts/coordinator-email/.env`.
 
+If `python` is not found when you run the script, see **`docs/Make_Python_Available.md`** (add Python to PATH or run `scripts\ensure_python_on_path.ps1` once).
+
 ## Usage
 
 The Human-in-the-Loop Manager (or you, when testing) runs:
@@ -37,6 +39,26 @@ python send_email.py "Subject line" "Body text."
 - **Second argument:** Body (plain text). Use quotes so the whole message is one argument.
 
 For multi-line bodies, use a body file: `python send_email.py "Subject" @path/to/body.txt`
+
+**After Phase A/B/C execution (automated):** Run as the last step so the user gets the summary without manual action: `python scripts/coordinator-email/send_phase_completion_email.py phase_abc` or `scripts\coordinator-email\send_phase_completion_email.bat phase_abc`. Presets are in `send_phase_completion_email.py`; add more for other milestones.
+
+---
+
+## Agent entrypoint (read + reply)
+
+For the agent (Coordinator, Human-in-the-Loop Manager), a single script provides read and send:
+
+```bash
+# Read latest reply → JSON on stdout: {"found": true, "subject": "...", "body": "...", "date": "..."}
+python scripts/coordinator-email/agent_email.py read
+
+# Send email (body can be @path/to/body.txt)
+python scripts/coordinator-email/agent_email.py send "Subject" "Body"
+```
+
+The agent can use the JSON from `agent_email.py read` in context without opening a file. See **`docs/agents/OPEN_LINE_OF_COMMUNICATION.md`**.
+
+**Alternative:** `read_replies.py --json` also prints JSON; `read_replies.py` without flags writes `last_reply.txt` as before.
 
 ---
 

@@ -38,7 +38,7 @@ object TestConfig {
                 "loaded_miles_input" to "Input field for loaded miles. Enter the number of miles you are contracted to drive.",
                 "bounce_miles_input" to "Input field for bounce miles. Enter the number of miles you drive to return to your starting point.",
                 "start_trip_button" to "Button to start or end your trip tracking. Tap to begin GPS tracking or end current trip.",
-                "statistics_button" to "Button to expand or collapse trip statistics. Shows weekly, monthly, and yearly trip data.",
+                "statistics_button" to "Button to expand or collapse trip statistics. Shows monthly trip data.",
                 "settings_button" to "Button to access app settings. Configure app preferences and view help information.",
                 "total_miles_output" to "Total miles driven during the current trip",
                 "oor_miles_output" to "Out of route miles calculated for the current trip",

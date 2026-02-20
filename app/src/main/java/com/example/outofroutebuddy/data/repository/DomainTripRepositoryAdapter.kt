@@ -216,23 +216,6 @@ class DomainTripRepositoryAdapter(
         return getTripStatistics(startOfDay, endOfDay)
     }
 
-    override suspend fun getWeeklyTripStatistics(): TripStatistics {
-        val today = java.util.Date()
-        val calendar = java.util.Calendar.getInstance()
-        calendar.time = today
-        calendar.set(java.util.Calendar.DAY_OF_WEEK, calendar.firstDayOfWeek)
-        calendar.set(java.util.Calendar.HOUR_OF_DAY, 0)
-        calendar.set(java.util.Calendar.MINUTE, 0)
-        calendar.set(java.util.Calendar.SECOND, 0)
-        calendar.set(java.util.Calendar.MILLISECOND, 0)
-        val startOfWeek = calendar.time
-        
-        calendar.add(java.util.Calendar.WEEK_OF_YEAR, 1)
-        val endOfWeek = calendar.time
-        
-        return getTripStatistics(startOfWeek, endOfWeek)
-    }
-
     override suspend fun getMonthlyTripStatistics(): TripStatistics {
         val today = java.util.Date()
         val calendar = java.util.Calendar.getInstance()
@@ -248,23 +231,6 @@ class DomainTripRepositoryAdapter(
         val endOfMonth = calendar.time
         
         return getTripStatistics(startOfMonth, endOfMonth)
-    }
-
-    override suspend fun getYearlyTripStatistics(): TripStatistics {
-        val today = java.util.Date()
-        val calendar = java.util.Calendar.getInstance()
-        calendar.time = today
-        calendar.set(java.util.Calendar.DAY_OF_YEAR, 1)
-        calendar.set(java.util.Calendar.HOUR_OF_DAY, 0)
-        calendar.set(java.util.Calendar.MINUTE, 0)
-        calendar.set(java.util.Calendar.SECOND, 0)
-        calendar.set(java.util.Calendar.MILLISECOND, 0)
-        val startOfYear = calendar.time
-        
-        calendar.add(java.util.Calendar.YEAR, 1)
-        val endOfYear = calendar.time
-        
-        return getTripStatistics(startOfYear, endOfYear)
     }
 
     override suspend fun clearAllTrips() {

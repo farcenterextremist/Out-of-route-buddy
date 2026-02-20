@@ -249,6 +249,9 @@ class TripInputFragment : Fragment() {
         binding.startTripButton.text = getString(R.string.start_trip)
         binding.progressBar.visibility = View.GONE
 
+        // Toolbar: use stretched cracked-road texture instead of plain black
+        binding.customToolbarLayout.setBackgroundResource(R.drawable.toolbar_background_cracked_road)
+
         // Ensure statistics content starts collapsed
         binding.statisticsContent.visibility = View.GONE
         binding.statisticsButton.setIconResource(R.drawable.ic_arrow_down)
@@ -628,9 +631,10 @@ class TripInputFragment : Fragment() {
         binding.oorMilesOutput.text = oorMilesText
         binding.oorPercentageOutput.text = oorPercentText
 
-        updateStatisticsRow(binding.weeklyStats, state.weeklyStatistics)
+        // Only monthly aggregate statistics (weekly/yearly removed per backend)
+        binding.weeklyStats.root.visibility = View.GONE
+        binding.yearlyStats.root.visibility = View.GONE
         updateStatisticsRow(binding.monthlyStats, state.monthlyStatistics)
-        updateStatisticsRow(binding.yearlyStats, state.yearlyStatistics)
 
         binding.selectedPeriodValue.text = state.selectedPeriodLabel
         

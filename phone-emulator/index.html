@@ -10,11 +10,20 @@
   <div class="app-container">
     <!-- Toolbar -->
     <header class="emulator-toolbar">
-      <h1>OutOfRouteBuddy Emulator</h1>
+      <div class="emulator-toolbar-title-block">
+        <h1>OutOfRouteBuddy Emulator</h1>
+        <p class="emulator-toolbar-scope" title="Screens and elements currently represented in this emulator">In scope: Trip screen (main) · v1</p>
+      </div>
+      <p class="emulator-toolbar-hint" id="emulator-hint" title="Save = update here. Sync to project = update Cursor. Use Undo to revert.">Save = update here. Sync = update Cursor. Use Undo to revert.</p>
       <div class="toolbar-actions">
+        <span class="sync-indicator unreachable" id="sync-indicator" title="Sync service status (green = service running)" aria-label="Sync service status"></span>
+        <button type="button" id="undo-btn" class="btn btn-secondary" title="Revert last edit" aria-label="Undo" disabled>Undo</button>
+        <button type="button" id="redo-btn" class="btn btn-secondary" title="Reapply reverted edit" aria-label="Redo" disabled>Redo</button>
         <button id="theme-toggle" class="btn btn-secondary" title="Toggle Light/Dark mode">☀ Light</button>
         <button id="reset-design" class="btn btn-secondary">Reset to Default</button>
         <button id="copy-for-cursor" class="btn btn-primary" title="Copy edits as Cursor instructions">Copy for Cursor</button>
+        <button id="sync-to-project" class="btn btn-primary" title="Push edits to project (requires sync service running)">Sync to project</button>
+        <button id="load-from-project" class="btn btn-secondary" title="Load current strings from project into emulator">Load from project</button>
         <button id="export-design" class="btn btn-secondary">Export Design</button>
         <button id="import-design" class="btn btn-secondary">Import Design</button>
         <input type="file" id="import-file" accept=".json" style="display:none">
@@ -26,7 +35,7 @@
       <!-- Phone frame -->
       <div class="phone-frame">
         <div class="phone-notch"></div>
-        <div class="phone-screen" id="phone-screen">
+        <div class="phone-screen" id="phone-screen" role="application" aria-label="OutOfRouteBuddy trip screen">
           <!-- App content rendered here -->
           <div id="app-content" class="app-content"></div>
         </div>
@@ -46,6 +55,96 @@
     <!-- Context menu (right-click) -->
     <div class="context-menu" id="context-menu">
       <button class="context-menu-item" id="context-edit-btn">Edit</button>
+      <button class="context-menu-item" id="context-add-element-btn">Add element here</button>
+    </div>
+
+    <!-- Add element dialog (Phase E) -->
+    <div class="app-modal-overlay" id="add-element-dialog" role="dialog" aria-labelledby="add-element-title" aria-modal="true" hidden>
+      <div class="app-modal">
+        <div class="app-modal-header">
+          <h2 id="add-element-title">Add element here</h2>
+          <button type="button" class="btn-close modal-close" id="add-element-close" aria-label="Close">×</button>
+        </div>
+        <div class="app-modal-body">
+          <div class="property-group">
+            <label for="add-element-type">Type</label>
+            <select id="add-element-type" aria-label="Element type">
+              <option value="heading">Heading</option>
+              <option value="label">Label</option>
+              <option value="button">Button</option>
+              <option value="textinput">Text input</option>
+              <option value="spacer">Spacer</option>
+            </select>
+          </div>
+          <div class="property-group" id="add-element-text-wrap">
+            <label for="add-element-text">Text</label>
+            <input type="text" id="add-element-text" placeholder="New heading" aria-label="Element text" />
+          </div>
+          <div class="app-modal-actions">
+            <button type="button" class="btn btn-primary" id="add-element-confirm">Add</button>
+            <button type="button" class="btn btn-secondary" id="add-element-cancel">Cancel</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Settings modal (Improvement #2) -->
+    <div class="app-modal-overlay" id="settings-modal" role="dialog" aria-labelledby="settings-modal-title" aria-modal="true" hidden>
+      <div class="app-modal">
+        <div class="app-modal-header">
+          <h2 id="settings-modal-title">Settings</h2>
+          <button type="button" class="btn-close modal-close" id="settings-modal-close" aria-label="Close">×</button>
+        </div>
+        <div class="app-modal-body">
+          <div class="app-modal-row">
+            <span class="app-modal-label">Mode</span>
+            <div class="app-modal-actions">
+              <button type="button" class="btn btn-secondary app-mode-btn" data-mode="light">Light</button>
+              <button type="button" class="btn btn-secondary app-mode-btn" data-mode="dark">Dark</button>
+            </div>
+          </div>
+          <div class="app-modal-row">
+            <button type="button" class="btn btn-secondary app-modal-full" id="settings-templates">Templates</button>
+          </div>
+          <div class="app-modal-row">
+            <button type="button" class="btn btn-secondary app-modal-full" id="settings-help">Help &amp; Info</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Statistics period picker (Improvement #6) -->
+    <div class="app-modal-overlay" id="period-picker-modal" role="dialog" aria-labelledby="period-picker-title" aria-modal="true" hidden>
+      <div class="app-modal">
+        <div class="app-modal-header">
+          <h2 id="period-picker-title">View period</h2>
+          <button type="button" class="btn-close modal-close" id="period-picker-close" aria-label="Close">×</button>
+        </div>
+        <div class="app-modal-body">
+          <div class="app-modal-actions vertical">
+            <button type="button" class="btn btn-primary" id="period-this-month">This month</button>
+            <button type="button" class="btn btn-secondary" id="period-custom">Custom</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- End Trip confirmation modal (Improvement #3) -->
+    <div class="app-modal-overlay" id="end-trip-modal" role="dialog" aria-labelledby="end-trip-modal-title" aria-modal="true" hidden>
+      <div class="app-modal">
+        <div class="app-modal-header">
+          <h2 id="end-trip-modal-title">End Trip</h2>
+          <button type="button" class="btn-close modal-close" id="end-trip-modal-close" aria-label="Close">×</button>
+        </div>
+        <div class="app-modal-body">
+          <p class="app-modal-p">What would you like to do?</p>
+          <div class="app-modal-actions vertical">
+            <button type="button" class="btn btn-primary" id="end-trip-confirm">End Trip</button>
+            <button type="button" class="btn btn-secondary" id="end-trip-clear">Clear Trip</button>
+            <button type="button" class="btn btn-secondary" id="end-trip-continue">Continue Trip</button>
+          </div>
+        </div>
+      </div>
     </div>
     </div>
   </div>

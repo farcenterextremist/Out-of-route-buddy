@@ -26,7 +26,6 @@ import com.example.outofroutebuddy.validation.ValidationFramework
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -225,24 +224,14 @@ class TripInputViewModel
             }
         }
 
+        /** Load only monthly aggregate statistics (weekly/yearly removed per backend). */
         private fun refreshAggregateStatistics() {
             viewModelScope.launch(ioDispatcher) {
                 try {
-                    val weeklyDeferred = async { tripRepository.getWeeklyTripStatistics() }
-                    val monthlyDeferred = async { tripRepository.getMonthlyTripStatistics() }
-                    val yearlyDeferred = async { tripRepository.getYearlyTripStatistics() }
-
-                    val weeklyStats = weeklyDeferred.await()
-                    val monthlyStats = monthlyDeferred.await()
-                    val yearlyStats = yearlyDeferred.await()
-
+                    val monthlyStats = tripRepository.getMonthlyTripStatistics()
                     withContext(Dispatchers.Main) {
                         _uiState.update { currentState ->
-                            currentState.copy(
-                                weeklyStatistics = mapToSummary(weeklyStats),
-                                monthlyStatistics = mapToSummary(monthlyStats),
-                                yearlyStatistics = mapToSummary(yearlyStats)
-                            )
+                            currentState.copy(monthlyStatistics = mapToSummary(monthlyStats))
                         }
                     }
                 } catch (e: Exception) {
@@ -1009,9 +998,7 @@ class TripInputViewModel
             val gpsQuality: GpsQualityInfo? = null,
             val error: String? = null,
             val periodStatistics: PeriodStatistics? = null,
-            val weeklyStatistics: SummaryStatistics? = null,
             val monthlyStatistics: SummaryStatistics? = null,
-            val yearlyStatistics: SummaryStatistics? = null,
             val selectedPeriod: SelectedPeriod? = null,
             val selectedPeriodLabel: String = DEFAULT_PERIOD_LABEL,
             val locationStatistics: LocationStatistics? = null,

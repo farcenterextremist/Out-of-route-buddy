@@ -4,8 +4,12 @@ Read the latest reply from the user's inbox (IMAP).
 Use when the user says they replied to a coordinator email.
 Requires .env with COORDINATOR_EMAIL_* and COORDINATOR_IMAP_* (or SMTP user/password for Gmail IMAP).
 Writes the most recent matching reply to last_reply.txt in this folder.
+
+For agent use: pass --json to get structured output on stdout (subject, body, date) instead of only
+writing last_reply.txt. The agent can then use the reply in context without reading a file.
 """
 
+import json
 import os
 import sys
 import email
@@ -116,12 +120,16 @@ def read_replies():
 
 
 def main():
+    use_json = "--json" in sys.argv
     out_dir = os.path.dirname(__file__)
     out_file = os.path.join(out_dir, "last_reply.txt")
     try:
         subject, body, date = read_replies()
         if not body and not subject:
-            print("No reply found (no message with Re: and OutOfRouteBuddy in subject).", file=sys.stderr)
+            if use_json:
+                print(json.dumps({"found": False, "subject": None, "body": None, "date": None}))
+            else:
+                print("No reply found (no message with Re: and OutOfRouteBuddy in subject).", file=sys.stderr)
             sys.exit(0)
         lines = []
         if date:
@@ -133,9 +141,15 @@ def main():
         content = "\n".join(lines)
         with open(out_file, "w", encoding="utf-8") as f:
             f.write(content)
-        print(f"Latest reply written to {out_file}")
+        if use_json:
+            print(json.dumps({"found": True, "subject": subject, "body": body or "", "date": date}))
+        else:
+            print(f"Latest reply written to {out_file}")
     except Exception as e:
-        print(f"Error: {e}", file=sys.stderr)
+        if use_json:
+            print(json.dumps({"found": False, "error": str(e)}))
+        else:
+            print(f"Error: {e}", file=sys.stderr)
         sys.exit(1)
 
 

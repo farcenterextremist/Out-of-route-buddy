@@ -4,9 +4,9 @@
 
 ### **Development Environment**
 - **Android Studio**: Latest stable version
-- **JDK**: Version 11 or higher
-- **Gradle**: Version 7.0 or higher
-- **Android SDK**: API level 21+ (Android 5.0+)
+- **JDK**: **Version 17 (Java 17)** — required for current Gradle and Kotlin
+- **Gradle**: Version 7.0 or higher (see `GRADLE_9_MIGRATION_NOTES.md` for Gradle 9 / `--warning-mode all`)
+- **Android SDK**: **minSdk 24** (Android 7.0+), targetSdk 34, compileSdk 34
 
 ### **System Requirements**
 - **RAM**: Minimum 8GB, recommended 16GB
@@ -25,7 +25,7 @@ android {
     compileSdk 34
     
     defaultConfig {
-        minSdk 21
+        minSdk 24
         targetSdk 34
         versionCode 1
         versionName "1.0.1"
@@ -218,7 +218,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-java@v3
         with:
-          java-version: '11'
+          java-version: '17'
       - run: ./gradlew test
       - run: ./gradlew detekt
       - run: ./gradlew ktlintCheck

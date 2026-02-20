@@ -1,0 +1,14 @@
+Hi,
+
+The team completed the 20 emulator improvements and wired the process so you get this kind of summary automatically at the end of big changes (no need to ask).
+
+What was completed:
+- All 20 items from the full-team consultation are done or in place: SVG icons (settings, chevron, pause/play), Settings and End Trip modals, input validation and error state, Statistics period picker, long-press for touch, optional live preview in the property panel, sync service reachability indicator (green dot in toolbar), "In scope" and in-app hint, one-command run script (scripts/start_emulator_and_sync.bat), cursor-exporter and sync service statisticsPeriod mappings, QA smoke checklist (docs/qa/EMULATOR_SYNC_SMOKE_CHECKLIST.md), and the rest. Progress is in docs/agents/EMULATOR_20_IMPROVEMENTS_PROGRESS.md.
+
+What you might want to do next:
+- Run the emulator: use scripts\start_emulator_and_sync.bat from the repo root (starts sync service + emulator at http://localhost:3000), or open phone-emulator/index.html and use the desktop shortcut for sync when you need "Sync to project."
+- Walk through the smoke checklist: docs/qa/EMULATOR_SYNC_SMOKE_CHECKLIST.md.
+
+Reply with any changes you’d like or what to prioritize next.
+
+— OutOfRouteBuddy team

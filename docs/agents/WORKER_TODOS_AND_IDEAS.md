@@ -2,6 +2,10 @@
 
 Assigned by the Coordinator. Each role has a short todo list and proposes **one idea** for the roadmap.
 
+**Docs index:** **`docs/README.md`** — index of product, agents, QA, deployment, security, comms.  
+**Crucial improvements:** See **`docs/CRUCIAL_IMPROVEMENTS_TODO.md`** for the full list and owners.  
+**Per-agent comprehensive todo list:** See **`docs/agents/COMPREHENSIVE_AGENT_TODOS.md`** for one checklist per role (crucial improvements + worker todos + user preference: statistics monthly only).
+
 ---
 
 ## Project Design / Creative Manager

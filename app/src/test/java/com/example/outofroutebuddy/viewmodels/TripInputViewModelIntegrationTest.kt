@@ -173,9 +173,7 @@ class TripInputViewModelIntegrationTest {
     private fun setupMockBehaviors() {
         every { mockPreferencesManager.getPeriodMode() } returns PeriodMode.STANDARD
         every { mockPreferencesManager.isTripActive() } returns false
-        coEvery { mockRepository.getWeeklyTripStatistics() } returns TripStatistics()
         coEvery { mockRepository.getMonthlyTripStatistics() } returns TripStatistics()
-        coEvery { mockRepository.getYearlyTripStatistics() } returns TripStatistics()
         coEvery { mockRepository.getTripStatistics(any(), any()) } returns TripStatistics()
         every { mockRepository.getTripsByDateRange(any(), any()) } returns flowOf(emptyList())
         
@@ -245,9 +243,7 @@ class TripInputViewModelIntegrationTest {
         coEvery { mockRepository.deleteTripById(any()) } returns Unit
         coEvery { mockRepository.getTripStatistics(any(), any()) } returns com.example.outofroutebuddy.domain.repository.TripStatistics()
         coEvery { mockRepository.getTodayTripStatistics() } returns com.example.outofroutebuddy.domain.repository.TripStatistics()
-        coEvery { mockRepository.getWeeklyTripStatistics() } returns com.example.outofroutebuddy.domain.repository.TripStatistics()
         coEvery { mockRepository.getMonthlyTripStatistics() } returns com.example.outofroutebuddy.domain.repository.TripStatistics()
-        coEvery { mockRepository.getYearlyTripStatistics() } returns com.example.outofroutebuddy.domain.repository.TripStatistics()
         coEvery { mockRepository.clearAllTrips() } returns Unit
         coEvery { mockRepository.exportTripData(any(), any()) } returns ""
         every { mockStateCache.getCacheMetrics() } returns

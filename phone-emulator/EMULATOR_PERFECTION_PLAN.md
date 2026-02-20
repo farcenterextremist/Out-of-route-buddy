@@ -111,9 +111,13 @@ A detailed roadmap to achieve a true 1:1 emulator that matches the real Android 
 
 ## 5. Editor / UX Improvements
 
+**Comprehensive plan:** See **`docs/agents/EMULATOR_EDITING_TEAM_CONSULTATION_AND_TODO.md`** for team consultation and full todo: right-click edit anything, right-click empty space to add elements, real-time enactment, long-press, and live preview.
+
 ### 5.1 Context Menu
 - [ ] **Touch devices**: Right-click not available; add long-press to open context menu
 - [ ] **Keyboard**: Support keyboard shortcut to open edit (e.g., Enter when focused?)
+- [ ] **Edit anything**: Ensure every visible text/control is editable (data-edit-path/key + .editable)
+- [ ] **Add element here**: Right-click empty/container → "Add element here" → dialog (type + text) → inject and re-render in real time
 
 ### 5.2 Properties Panel
 - [ ] **Input type for numbers**: When editing numeric fields, use `type="number"` or restrict input

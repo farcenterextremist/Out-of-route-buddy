@@ -19,6 +19,13 @@ These are set by the user and used by the coordinator and Human-in-the-Loop Mana
 
 ---
 
+## Current improvement list
+
+- **Crucial:** `docs/CRUCIAL_IMPROVEMENTS_TODO.md`
+- **25-point app improvement:** `docs/agents/APP_IMPROVEMENT_25_POINT_BRAINSTORM.md` (execute workday after user approval)
+
+---
+
 ## Last updated
 
 Set from user message (email content) — 2025.

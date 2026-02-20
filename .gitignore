@@ -184,6 +184,10 @@ performance.log
 scripts/coordinator-email/.env
 scripts/coordinator-email/last_reply.txt
 
+# Python bytecode
+__pycache__/
+*.pyc
+
 # OneDrive / cloud sync lock files (optional; avoid commit noise)
 ~$*
 .~lock.*
