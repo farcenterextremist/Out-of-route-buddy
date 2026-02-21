@@ -316,22 +316,19 @@ open class UnifiedTripService(
         val now = Date()
         return when (periodMode) {
             PeriodMode.STANDARD -> {
-                // STANDARD mode: Today's date range (00:00 to 23:59)
+                // STANDARD mode: 1st of month to last of month (full calendar month)
                 val calendar = Calendar.getInstance()
                 calendar.time = now
+                calendar.set(Calendar.DAY_OF_MONTH, 1)
                 calendar.set(Calendar.HOUR_OF_DAY, 0)
                 calendar.set(Calendar.MINUTE, 0)
                 calendar.set(Calendar.SECOND, 0)
                 calendar.set(Calendar.MILLISECOND, 0)
-                val startOfDay = calendar.time
-                
-                calendar.set(Calendar.HOUR_OF_DAY, 23)
-                calendar.set(Calendar.MINUTE, 59)
-                calendar.set(Calendar.SECOND, 59)
-                calendar.set(Calendar.MILLISECOND, 999)
-                val endOfDay = calendar.time
-                
-                startOfDay to endOfDay
+                val startOfMonth = calendar.time
+                calendar.add(Calendar.MONTH, 1)
+                calendar.add(Calendar.MILLISECOND, -1)
+                val endOfMonth = calendar.time
+                startOfMonth to endOfMonth
             }
             PeriodMode.CUSTOM -> {
                 // CUSTOM mode: Current business period

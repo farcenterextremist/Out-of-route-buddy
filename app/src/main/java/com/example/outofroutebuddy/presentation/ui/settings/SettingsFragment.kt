@@ -1,5 +1,6 @@
 package com.example.outofroutebuddy.presentation.ui.settings
 
+import android.content.Context
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -44,21 +45,31 @@ class SettingsFragment : PreferenceFragmentCompat() {
         
         setupPreferenceListeners()
     }
+
+    override fun onResume() {
+        super.onResume()
+        // Refresh theme display when returning to Settings (e.g. after changing theme elsewhere)
+        syncThemePreferenceDisplay()
+    }
     
     /**
-     * Sync the theme preference display with actual saved value
+     * Sync the theme preference display with actual saved value.
+     * Reads from the same SharedPreferences as SettingsManager so the selection
+     * always reflects the persisted theme (e.g. Dark) even when opened from Settings.
      */
     private fun syncThemePreferenceDisplay() {
         try {
+            val prefs = requireContext().getSharedPreferences("app_settings", Context.MODE_PRIVATE)
+            val savedValue = prefs.getString("theme_preference", "system") ?: "system"
             val themePreference = findPreference<ListPreference>("theme_preference")
             themePreference?.let { pref ->
-                // Get the current saved value (defaults to "light" if not set)
-                val currentValue = pref.value ?: "light"
-                
-                // Ensure the preference displays the correct current selection
-                pref.value = currentValue
-                
-                android.util.Log.d("SettingsFragment", "Theme preference synced to: $currentValue")
+                pref.value = savedValue
+                // Show current selection in summary (e.g. "Dark Mode")
+                val entries = pref.entries
+                val values = pref.entryValues
+                val index = (0 until values.size).indexOfFirst { values[it].toString() == savedValue }
+                if (index in entries.indices) pref.summary = entries[index]
+                android.util.Log.d("SettingsFragment", "Theme preference synced to: $savedValue")
             }
         } catch (e: Exception) {
             android.util.Log.e("SettingsFragment", "Error syncing theme preference", e)

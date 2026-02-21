@@ -33,6 +33,7 @@ import com.example.outofroutebuddy.databinding.DialogTemplateSelectBinding
 import com.example.outofroutebuddy.databinding.FragmentTripInputBinding
 import com.example.outofroutebuddy.databinding.StatisticsRowBinding
 import com.example.outofroutebuddy.domain.models.PeriodMode
+import com.example.outofroutebuddy.data.SettingsManager
 import com.example.outofroutebuddy.presentation.viewmodel.TripInputViewModel
 import com.example.outofroutebuddy.presentation.viewmodel.TripInputViewModel.TripEvent
 import com.example.outofroutebuddy.presentation.ui.dialogs.CustomCalendarDialog
@@ -69,9 +70,11 @@ class TripInputFragment : Fragment() {
     private val binding: FragmentTripInputBinding
         get() = _binding ?: throw IllegalStateException("Binding accessed before onCreateView or after onDestroyView")
 
-    // ✅ NEW: Inject PeriodCalculationService for calendar date highlighting
     @Inject
     lateinit var periodCalculationService: PeriodCalculationService
+
+    @Inject
+    lateinit var settingsManager: SettingsManager
 
     // ✅ FIXED: Use Hilt for ViewModel injection
     //
@@ -249,9 +252,7 @@ class TripInputFragment : Fragment() {
         binding.startTripButton.text = getString(R.string.start_trip)
         binding.progressBar.visibility = View.GONE
 
-        // Toolbar: use stretched cracked-road texture instead of plain black
-        binding.customToolbarLayout.setBackgroundResource(R.drawable.toolbar_background_cracked_road)
-
+        // Toolbar background: set in custom_toolbar.xml (toolbar_background_cracked_road)
         // Ensure statistics content starts collapsed
         binding.statisticsContent.visibility = View.GONE
         binding.statisticsButton.setIconResource(R.drawable.ic_arrow_down)
@@ -362,7 +363,7 @@ class TripInputFragment : Fragment() {
         }
         
         val messageText = android.widget.TextView(requireContext()).apply {
-            text = "Are you sure you want to end this trip? This will calculate your Out of Route percentage."
+            text = getString(R.string.end_trip_dialog_message)
             setPadding(0, 16, 0, 24)
         }
         dialogView.addView(messageText)
@@ -423,7 +424,7 @@ class TripInputFragment : Fragment() {
     private fun showClearTripConfirmation() {
         android.app.AlertDialog.Builder(requireContext())
             .setTitle("Clear Trip?")
-            .setMessage("Are you sure you want to clear trip?")
+            .setMessage(getString(R.string.clear_trip_dialog_message))
             .setPositiveButton("Yes, Clear") { _, _ ->
                 // User confirmed - clear the trip
                 viewModel.clearTrip()
@@ -467,16 +468,13 @@ class TripInputFragment : Fragment() {
         dialog.setContentView(dialogBinding.root)
         dialog.setCancelable(true)
 
-        // Load preferences using ViewModel
-        val isDarkMode =
-            when (AppCompatDelegate.getDefaultNightMode()) {
-                AppCompatDelegate.MODE_NIGHT_YES -> true
-                AppCompatDelegate.MODE_NIGHT_NO -> false
-                else -> false
-            }
-
-        // Set initial summary text
-        dialogBinding.modeSummary.text = if (isDarkMode) "Dark" else "Light"
+        // Load theme from persisted preference so summary matches after restart
+        val themePreference = settingsManager.getThemePreference()
+        dialogBinding.modeSummary.text = when (themePreference) {
+            "dark" -> "Dark"
+            "light" -> "Light"
+            else -> "System"
+        }
         dialogBinding.templateSummary.text = viewModel.getCurrentPeriodModeDisplayText()
 
         // Mode row click
@@ -493,6 +491,8 @@ class TripInputFragment : Fragment() {
         dialogBinding.helpInfoButton.setOnClickListener {
             showHelpInfoDialog()
         }
+        // Transparent window so rounded corners of content drawable show through
+        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
         dialog.show()
     }
 
@@ -502,24 +502,31 @@ class TripInputFragment : Fragment() {
         dialog.setContentView(modeBinding.root)
         dialog.setCancelable(true)
 
-        // Set initial selection
-        val isDarkMode =
-            when (AppCompatDelegate.getDefaultNightMode()) {
-                AppCompatDelegate.MODE_NIGHT_YES -> true
-                AppCompatDelegate.MODE_NIGHT_NO -> false
-                else -> false
-            }
-        modeBinding.modeSelectRadioGroup.check(if (isDarkMode) R.id.radio_mode_dark else R.id.radio_mode_light)
+        // Initial selection from persisted preference (or current delegate if system)
+        val pref = settingsManager.getThemePreference()
+        val isDark = when (pref) {
+            "dark" -> true
+            "light" -> false
+            else -> AppCompatDelegate.getDefaultNightMode() == AppCompatDelegate.MODE_NIGHT_YES
+        }
+        val checkedId = if (isDark) R.id.radio_mode_dark else R.id.radio_mode_light
+        modeBinding.modeSelectRadioGroup.check(checkedId)
+        // Apply selection after layout so it's visible when dialog is shown
+        modeBinding.root.post { modeBinding.modeSelectRadioGroup.check(checkedId) }
 
         modeBinding.modeSelectRadioGroup.setOnCheckedChangeListener { _, checkedId ->
             when (checkedId) {
                 R.id.radio_mode_light -> {
+                    settingsManager.setThemePreference("light")
                     AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
                     summaryTextView.text = "Light"
+                    activity?.recreate()
                 }
                 R.id.radio_mode_dark -> {
+                    settingsManager.setThemePreference("dark")
                     AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
                     summaryTextView.text = "Dark"
+                    activity?.recreate()
                 }
             }
             dialog.dismiss()
@@ -631,12 +638,39 @@ class TripInputFragment : Fragment() {
         binding.oorMilesOutput.text = oorMilesText
         binding.oorPercentageOutput.text = oorPercentText
 
-        // Only monthly aggregate statistics (weekly/yearly removed per backend)
-        binding.weeklyStats.root.visibility = View.GONE
-        binding.yearlyStats.root.visibility = View.GONE
+        // Monthly statistics only (weekly/yearly sections removed)
         updateStatisticsRow(binding.monthlyStats, state.monthlyStatistics)
 
         binding.selectedPeriodValue.text = state.selectedPeriodLabel
+
+        // Calendar/current period: show days with saved trips (clickable)
+        val datesWithTrips = state.datesWithTripsInPeriod
+        if (datesWithTrips.isEmpty()) {
+            binding.daysWithTripsLabel.visibility = View.GONE
+            binding.daysWithTripsContainerWrapper.visibility = View.GONE
+            binding.daysWithTripsContainer.removeAllViews()
+        } else {
+            binding.daysWithTripsLabel.visibility = View.VISIBLE
+            binding.daysWithTripsContainerWrapper.visibility = View.VISIBLE
+            binding.daysWithTripsContainer.removeAllViews()
+            val dateFormat = java.text.SimpleDateFormat("MMM d", Locale.getDefault())
+            val dp8 = (8 * resources.displayMetrics.density).toInt()
+            val dp12 = (12 * resources.displayMetrics.density).toInt()
+            for (date in datesWithTrips) {
+                val chip = com.google.android.material.button.MaterialButton(requireContext(), null, com.google.android.material.R.attr.materialButtonOutlinedStyle).apply {
+                    text = dateFormat.format(date)
+                    setOnClickListener { showTripHistoryForDate(date) }
+                    setPadding(dp12, dp8, dp12, dp8)
+                    minimumWidth = 0
+                    minWidth = 0
+                }
+                val params = android.widget.LinearLayout.LayoutParams(
+                    android.view.ViewGroup.LayoutParams.WRAP_CONTENT,
+                    android.view.ViewGroup.LayoutParams.WRAP_CONTENT
+                ).apply { marginEnd = dp8 }
+                binding.daysWithTripsContainer.addView(chip, params)
+            }
+        }
         
         // ✅ New: Lock inputs while trip is active; unlock when trip ends
         val inputsEnabled = !state.isTripActive
@@ -711,18 +745,18 @@ class TripInputFragment : Fragment() {
         val selectedPeriod = viewModel.uiState.value.selectedPeriod
         val referenceDate = selectedPeriod?.startDate ?: Date()
         
-        // ✅ NEW: Use CustomCalendarDialog instead of MaterialDatePicker
+        // ✅ NEW: Use CustomCalendarDialog; pass dates with saved trips so calendar can mark them
+        val datesWithTrips = viewModel.uiState.value.datesWithTripsInPeriod
         val dialog = CustomCalendarDialog.newInstance(
             periodMode = periodMode,
             referenceDate = referenceDate,
             onPeriodConfirmed = { startDate, endDate ->
-                // Period selection confirmed (always boundaries)
                 viewModel.onCalendarPeriodSelected(periodMode, startDate, endDate)
             },
             onHistoryDateClicked = { date ->
-                // History viewing for clicked date
                 showTripHistoryForDate(date)
-            }
+            },
+            datesWithTrips = datesWithTrips
         )
         dialog.show(parentFragmentManager, "custom_calendar_dialog")
     }

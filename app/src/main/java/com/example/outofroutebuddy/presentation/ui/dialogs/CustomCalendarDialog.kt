@@ -56,21 +56,26 @@ class CustomCalendarDialog : DialogFragment() {
     private var periodStartDate: CalendarDay? = null
     private var periodEndDate: CalendarDay? = null
     private var isSelectionLocked: Boolean = true
+    /** Start-of-day time in millis for dates that have at least one saved (ended) trip. Used to decorate calendar. */
+    private var datesWithTripsMillis: Set<Long> = emptySet()
     
     companion object {
         private const val ARG_PERIOD_MODE = "period_mode"
         private const val ARG_REFERENCE_DATE = "reference_date"
+        private const val ARG_DATES_WITH_TRIPS = "dates_with_trips"
         
         fun newInstance(
             periodMode: PeriodMode,
             referenceDate: Date,
             onPeriodConfirmed: (Date, Date) -> Unit,
-            onHistoryDateClicked: (Date) -> Unit
+            onHistoryDateClicked: (Date) -> Unit,
+            datesWithTrips: List<Date> = emptyList()
         ): CustomCalendarDialog {
             return CustomCalendarDialog().apply {
                 arguments = Bundle().apply {
                     putSerializable(ARG_PERIOD_MODE, periodMode)
                     putSerializable(ARG_REFERENCE_DATE, referenceDate)
+                    putLongArray(ARG_DATES_WITH_TRIPS, datesWithTrips.map { it.time }.toLongArray())
                 }
                 this.onPeriodConfirmed = onPeriodConfirmed
                 this.onHistoryDateClicked = onHistoryDateClicked
@@ -83,12 +88,14 @@ class CustomCalendarDialog : DialogFragment() {
         arguments?.let {
             periodMode = it.getSerializable(ARG_PERIOD_MODE) as? PeriodMode ?: PeriodMode.STANDARD
             referenceDate = it.getSerializable(ARG_REFERENCE_DATE) as? Date
+            datesWithTripsMillis = it.getLongArray(ARG_DATES_WITH_TRIPS)?.toSet() ?: emptySet()
         }
     }
     
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         val dialog = super.onCreateDialog(savedInstanceState)
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
+        dialog.setCanceledOnTouchOutside(true)
         return dialog
     }
     
@@ -103,18 +110,16 @@ class CustomCalendarDialog : DialogFragment() {
     
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        
+        isCancelable = true
         setupCalendar()
-        setupButtons()
+        setupToolbarBack()
         updateTitle()
     }
     
     private fun updateTitle() {
-        val title = when (periodMode) {
-            PeriodMode.STANDARD -> getString(R.string.statistics_select_day)
-            PeriodMode.CUSTOM -> getString(R.string.statistics_select_range)
-        }
-        binding.calendarTitle.text = title
+        // Title left empty per design - user sees month name in calendar header instead
+        binding.calendarTitle.text = ""
+        binding.calendarTitle.visibility = android.view.View.GONE
     }
     
     /**
@@ -143,15 +148,22 @@ class CustomCalendarDialog : DialogFragment() {
             .setMaximumDate(maxDate)
             .commit()
         
-        // ✅ AUTOMATIC HIGHLIGHTING: Add decorators for boundary dates
+        // ✅ AUTOMATIC HIGHLIGHTING: Add decorators for boundary dates (green start, red end)
         calendar.addDecorator(StartDateDecorator(periodStartDate!!))
         calendar.addDecorator(EndDateDecorator(periodEndDate!!))
+        // ✅ Current date (today) highlighted grey when not a boundary date
+        val today = CalendarDay.today()
+        calendar.addDecorator(CurrentDateDecorator(today, periodStartDate!!, periodEndDate!!))
+        // ✅ Days with saved trips: show a dot so user knows which days are clickable for history
+        if (datesWithTripsMillis.isNotEmpty()) {
+            calendar.addDecorator(DaysWithTripsDecorator(datesWithTripsMillis))
+        }
         
-        // ✅ LOCKED SELECTION: Pre-select boundary range
+        // ✅ SINGLE-DAY SELECTION: Only the tapped day is highlighted (not the whole period)
+        calendar.selectionMode = MaterialCalendarView.SELECTION_MODE_SINGLE
         calendar.selectedDate = periodStartDate
-        calendar.selectRange(periodStartDate, periodEndDate)
         
-        // ✅ CLICK HANDLING: Distinguish between boundary clicks (locked) and history clicks
+        // ✅ CLICK HANDLING: Highlight only the selected day; open history for non-boundary taps
         calendar.setOnDateChangedListener(object : OnDateSelectedListener {
             override fun onDateSelected(
                 widget: MaterialCalendarView,
@@ -160,27 +172,14 @@ class CustomCalendarDialog : DialogFragment() {
             ) {
                 val clickedLocalDate = date.date
                 val clickedDate = localDateToDate(clickedLocalDate)
-                
-                if (isBoundaryDate(clickedLocalDate)) {
-                    // ✅ LOCKED: User clicked a boundary date
-                    // Reset selection to boundaries (don't allow change)
-                    widget.selectedDate = periodStartDate
-                    widget.selectRange(periodStartDate, periodEndDate)
-                    // Selection stays locked - no action needed
-                } else {
-                    // ✅ HISTORY: User clicked a non-boundary date
-                    // Open history dialog for that date
+                // Show only this day as selected (single selection; no range)
+                widget.selectedDate = date
+                if (!isBoundaryDate(clickedLocalDate)) {
+                    // Non-boundary: open trip history for this date
                     onHistoryDateClicked?.invoke(clickedDate)
-                    
-                    // Reset selection back to boundaries after showing history
-                    widget.selectedDate = periodStartDate
-                    widget.selectRange(periodStartDate, periodEndDate)
                 }
             }
         })
-        
-        // Set selection mode to range
-        calendar.selectionMode = MaterialCalendarView.SELECTION_MODE_RANGE
     }
     
     /**
@@ -273,20 +272,8 @@ class CustomCalendarDialog : DialogFragment() {
         return cal.timeInMillis
     }
     
-    private fun setupButtons() {
-        binding.confirmButton.setOnClickListener {
-            // Period selection is always locked to boundaries
-            val startLocalDate = periodStartDate?.date ?: return@setOnClickListener
-            val endLocalDate = periodEndDate?.date ?: return@setOnClickListener
-            val start = localDateToDate(startLocalDate)
-            val end = localDateToDate(endLocalDate)
-            onPeriodConfirmed?.invoke(start, end)
-            dismiss()
-        }
-        
-        binding.cancelButton.setOnClickListener {
-            dismiss()
-        }
+    private fun setupToolbarBack() {
+        binding.calendarBackButton.setOnClickListener { dismiss() }
     }
     
     override fun onStart() {
@@ -347,5 +334,49 @@ class EndDateDecorator(private val endDate: CalendarDay) : DayViewDecorator {
         )
         // White text for visibility
         view.addSpan(android.text.style.ForegroundColorSpan(android.graphics.Color.WHITE))
+    }
+}
+
+/**
+ * ✅ DECORATOR: Highlight current date (today) with grey circle.
+ * Only applies when today is not the period start or end (those keep green/red).
+ */
+class CurrentDateDecorator(
+    private val today: CalendarDay,
+    private val startDate: CalendarDay,
+    private val endDate: CalendarDay
+) : DayViewDecorator {
+    override fun shouldDecorate(day: CalendarDay): Boolean {
+        if (day != today) return false
+        if (day == startDate || day == endDate) return false
+        return true
+    }
+
+    override fun decorate(view: DayViewFacade) {
+        view.setBackgroundDrawable(
+            android.graphics.drawable.GradientDrawable().apply {
+                shape = android.graphics.drawable.GradientDrawable.OVAL
+                setColor(0xFF9E9E9E.toInt()) // Grey 500
+                setSize(48, 48)
+            }
+        )
+        view.addSpan(android.text.style.ForegroundColorSpan(android.graphics.Color.WHITE))
+    }
+}
+
+/**
+ * ✅ DECORATOR: Mark days that have at least one saved (ended) trip.
+ * Shows a small dot so users know which days are clickable for trip history.
+ */
+class DaysWithTripsDecorator(private val datesWithTripsMillis: Set<Long>) : DayViewDecorator {
+    override fun shouldDecorate(day: CalendarDay): Boolean {
+        val cal = Calendar.getInstance()
+        cal.set(day.year, day.month - 1, day.day, 0, 0, 0)
+        cal.set(Calendar.MILLISECOND, 0)
+        return datesWithTripsMillis.contains(cal.timeInMillis)
+    }
+    
+    override fun decorate(view: DayViewFacade) {
+        view.addSpan(DotSpan(5, 0xFF2196F3.toInt())) // Blue dot below date
     }
 }

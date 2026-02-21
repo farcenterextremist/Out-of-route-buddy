@@ -265,6 +265,16 @@ class TripInputViewModel
                         Log.w(TAG, "Failed to load trips for period stats", ex)
                         emptyList()
                     }
+                    // Unique dates (start of day) that have at least one saved trip, for calendar/period clickable days
+                    val calendar = java.util.Calendar.getInstance()
+                    val datesWithTrips = trips.mapNotNull { it.startTime }.map { startTime ->
+                        calendar.time = startTime
+                        calendar.set(java.util.Calendar.HOUR_OF_DAY, 0)
+                        calendar.set(java.util.Calendar.MINUTE, 0)
+                        calendar.set(java.util.Calendar.SECOND, 0)
+                        calendar.set(java.util.Calendar.MILLISECOND, 0)
+                        calendar.time
+                    }.distinctBy { it.time }.sortedBy { it.time }
 
                     val periodCalculation = UnifiedTripService.PeriodCalculation(
                         periodMode = periodMode,
@@ -298,6 +308,7 @@ class TripInputViewModel
                                     label = label
                                 ),
                                 selectedPeriodLabel = label,
+                                datesWithTripsInPeriod = datesWithTrips,
                                 showStatistics = true
                             )
                         }
@@ -326,7 +337,7 @@ class TripInputViewModel
 
         private fun formatPeriodLabel(periodMode: PeriodMode, startDate: Date, endDate: Date): String {
             return when (periodMode) {
-                PeriodMode.STANDARD -> PERIOD_LABEL_FORMAT.format(startDate)
+                PeriodMode.STANDARD -> "${PERIOD_LABEL_FORMAT.format(startDate)} – ${PERIOD_LABEL_FORMAT.format(endDate)}"
                 PeriodMode.CUSTOM -> "${PERIOD_LABEL_FORMAT.format(startDate)} - ${PERIOD_LABEL_FORMAT.format(endDate)}"
             }
         }
@@ -851,8 +862,8 @@ class TripInputViewModel
          */
         fun getCurrentPeriodModeDisplayText(): String {
             return when (preferencesManager.getPeriodMode()) {
-                PeriodMode.STANDARD -> "Standard (Daily)"
-                PeriodMode.CUSTOM -> "Custom Period"
+                PeriodMode.STANDARD -> "Standard (1st–last of month)"
+                PeriodMode.CUSTOM -> "Custom (Thu before first Fri)"
             }
         }
 
@@ -1001,6 +1012,8 @@ class TripInputViewModel
             val monthlyStatistics: SummaryStatistics? = null,
             val selectedPeriod: SelectedPeriod? = null,
             val selectedPeriodLabel: String = DEFAULT_PERIOD_LABEL,
+            /** Dates (start-of-day) in the selected period that have at least one saved (ended) trip. Used for calendar/period clickable days. */
+            val datesWithTripsInPeriod: List<Date> = emptyList(),
             val locationStatistics: LocationStatistics? = null,
             val tripStatistics: TripStatistics? = null,
             val offlineStatistics: OfflineStatistics? = null,
