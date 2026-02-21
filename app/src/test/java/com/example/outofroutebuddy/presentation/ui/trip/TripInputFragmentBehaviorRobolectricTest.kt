@@ -222,23 +222,64 @@ class TripInputFragmentBehaviorRobolectricTest {
         val decorView = window?.decorView
         assertThat(decorView).isNotNull()
         
-        // Find the TextView with the message text
-        fun findTextView(parent: android.view.View?): android.widget.TextView? {
-            if (parent is android.widget.TextView && parent.text.toString().contains("calculate", ignoreCase = true)) {
-                return parent
+        // Find the TextView that contains the body message (save + count), not the title
+        fun findMessageTextView(parent: android.view.View?): android.widget.TextView? {
+            if (parent is android.widget.TextView) {
+                val t = parent.text.toString()
+                if (t.contains("save", ignoreCase = true) && t.contains("monthly statistics", ignoreCase = true)) return parent
             }
             if (parent is android.view.ViewGroup) {
                 for (i in 0 until parent.childCount) {
-                    val found = findTextView(parent.getChildAt(i))
+                    val found = findMessageTextView(parent.getChildAt(i))
                     if (found != null) return found
                 }
             }
             return null
         }
-        val messageTextView = findTextView(decorView)
+        val messageTextView = findMessageTextView(decorView)
         assertThat(messageTextView).isNotNull()
         val message = messageTextView?.text?.toString() ?: ""
-        assertThat(message).contains("calculate your Out of Route percentage")
+        assertThat(message).contains("save")
+        assertThat(message).contains("count")
+        assertThat(message).contains("monthly statistics")
+    }
+
+    @Test
+    fun clearTrip_confirmation_dialog_hasExpectedMessage() {
+        val (activity, fragment) = launchFragment()
+        val root = fragment.requireView()
+
+        root.findViewById<EditText>(R.id.loaded_miles_input).setText("10")
+        root.findViewById<EditText>(R.id.bounce_miles_input).setText("2")
+        val startButton = root.findViewById<MaterialButton>(R.id.start_trip_button)
+        startButton.performClick()
+        startButton.performClick() // Open End Trip dialog
+        org.robolectric.Shadows.shadowOf(android.os.Looper.getMainLooper()).idle()
+
+        val endDialog = org.robolectric.shadows.ShadowAlertDialog.getLatestAlertDialog()
+        assertThat(endDialog).isNotNull()
+        val dialogView = endDialog.window?.decorView
+        assertThat(dialogView).isNotNull()
+        fun findClearTripButton(v: android.view.View?): com.google.android.material.button.MaterialButton? {
+            if (v is com.google.android.material.button.MaterialButton &&
+                v.text.toString().contains("Clear Trip", ignoreCase = true)) return v
+            if (v is android.view.ViewGroup) {
+                for (i in 0 until v.childCount) {
+                    findClearTripButton(v.getChildAt(i))?.let { return it }
+                }
+            }
+            return null
+        }
+        val clearButton = findClearTripButton(dialogView)
+        assertThat(clearButton).isNotNull()
+        clearButton!!.performClick()
+        org.robolectric.Shadows.shadowOf(android.os.Looper.getMainLooper()).idle()
+
+        val clearDialog = org.robolectric.shadows.ShadowAlertDialog.getLatestAlertDialog()
+        assertThat(clearDialog).isNotNull()
+        val clearMessage = org.robolectric.Shadows.shadowOf(clearDialog).message?.toString() ?: ""
+        assertThat(clearMessage).contains("not be saved")
+        assertThat(clearMessage).contains("not count")
     }
 }
 

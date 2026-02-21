@@ -333,6 +333,43 @@ class CalendarDateHighlightingUnitTest {
         assertEquals("Last day second should be 59", 59, lastDay.get(Calendar.SECOND))
     }
 
+    @Test
+    fun `single-day period - first equals last for same month`() {
+        val calendar = Calendar.getInstance()
+        calendar.set(2024, Calendar.MARCH, 15)
+        val date = calendar.time
+
+        val firstDay = calculateFirstDayOfMonth(date)
+        val lastDay = calculateLastDayOfMonth(date)
+
+        // For a month, first is 1st, last is 31st - different
+        assertNotEquals(firstDay.get(Calendar.DAY_OF_MONTH), lastDay.get(Calendar.DAY_OF_MONTH))
+    }
+
+    @Test
+    fun `February has 28 or 29 days - edge case for short months`() {
+        val nonLeap = Calendar.getInstance().apply { set(2023, Calendar.FEBRUARY, 1) }
+        val leap = Calendar.getInstance().apply { set(2024, Calendar.FEBRUARY, 1) }
+
+        val lastNonLeap = calculateLastDayOfMonth(nonLeap.time)
+        val lastLeap = calculateLastDayOfMonth(leap.time)
+
+        assertEquals(28, lastNonLeap.get(Calendar.DAY_OF_MONTH))
+        assertEquals(29, lastLeap.get(Calendar.DAY_OF_MONTH))
+    }
+
+    @Test
+    fun `custom period December to January crosses year boundary`() {
+        val calendar = Calendar.getInstance()
+        calendar.set(2024, Calendar.DECEMBER, 15)
+        val date = calendar.time
+
+        val periodEnd = periodCalculationService.calculateCustomPeriodEnd(date)
+
+        assertEquals(2025, periodEnd.get(Calendar.YEAR))
+        assertEquals(Calendar.JANUARY, periodEnd.get(Calendar.MONTH))
+    }
+
     // ==================== HELPER METHODS ====================
 
     private fun calculateFirstDayOfMonth(date: Date): Calendar {

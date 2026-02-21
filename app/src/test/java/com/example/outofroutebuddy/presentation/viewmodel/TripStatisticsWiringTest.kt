@@ -207,6 +207,23 @@ class TripStatisticsWiringTest {
             mockUnifiedOfflineService.saveDataWithOfflineFallback(any(), eq("trip_data"), any())
         }
     }
+
+    @Test
+    fun `clearTrip does not insert trip into repository`() = runTest {
+        // Given: An active trip
+        viewModel.calculateTrip(100.0, 25.0, 125.0)
+        delay(100)
+        coEvery { mockRepository.insertTrip(any()) } returns "would-be-id"
+
+        // When: Clear trip (discard without saving)
+        viewModel.clearTrip()
+        delay(150) // Allow clearTrip coroutines to complete
+
+        // Then: insertTrip must never be called
+        coVerify(exactly = 0) { mockRepository.insertTrip(any()) }
+        // UI should show trip inactive
+        assertFalse("Trip should be inactive after clear", viewModel.uiState.value.isTripActive)
+    }
     
     // ==================== STATISTICS REFRESH TESTS ====================
     
@@ -434,6 +451,193 @@ class TripStatisticsWiringTest {
         // Then: Insert should happen before statistics query; monthly stats should be called
         assertTrue("Insert should be called", callOrder.contains("insertTrip"))
         assertTrue("Monthly stats should be called", callOrder.contains("getMonthlyStats"))
+    }
+
+    // ==================== SAVED TRIP DATA → CALENDAR (datesWithTripsInPeriod) ====================
+
+    @Test
+    fun `datesWithTripsInPeriod reflects saved trips from repository for selected period`() = runTest {
+        // Given: Repository returns trips with distinct startTime dates in range
+        val cal = Calendar.getInstance()
+        cal.set(2025, Calendar.MARCH, 15, 10, 30, 0)
+        cal.set(Calendar.MILLISECOND, 0)
+        val day1 = cal.time
+        cal.set(Calendar.DAY_OF_MONTH, 20)
+        val day2 = cal.time
+        val trip1 = Trip(
+            id = "t1",
+            loadedMiles = 10.0,
+            bounceMiles = 2.0,
+            actualMiles = 12.0,
+            startTime = day1,
+            endTime = day1,
+            status = TripStatus.COMPLETED
+        )
+        val trip2 = Trip(
+            id = "t2",
+            loadedMiles = 20.0,
+            bounceMiles = 5.0,
+            actualMiles = 25.0,
+            startTime = day2,
+            endTime = day2,
+            status = TripStatus.COMPLETED
+        )
+        val periodStart = Calendar.getInstance().apply {
+            set(2025, Calendar.MARCH, 1, 0, 0, 0)
+            set(Calendar.MILLISECOND, 0)
+        }.time
+        val periodEnd = Calendar.getInstance().apply {
+            set(2025, Calendar.MARCH, 31, 23, 59, 59)
+            set(Calendar.MILLISECOND, 999)
+        }.time
+        coEvery { mockRepository.getTripStatistics(any(), any()) } returns TripStatistics(
+            totalTrips = 2,
+            totalActualMiles = 37.0,
+            totalOorMiles = 0.0,
+            avgOorPercentage = 0.0
+        )
+        coEvery { mockRepository.getTripsByDateRange(any(), any()) } returns flowOf(listOf(trip1, trip2))
+
+        // When: Calendar period selected (triggers updatePeriodStatistics)
+        viewModel.onCalendarPeriodSelected(PeriodMode.STANDARD, periodStart, periodEnd)
+        coVerify(timeout = 1000) { mockRepository.getTripsByDateRange(periodStart, periodEnd) }
+        delay(100)
+
+        // Then: datesWithTripsInPeriod contains exactly the distinct start-of-day dates
+        val datesWithTrips = viewModel.uiState.value.datesWithTripsInPeriod
+        assertNotNull(datesWithTrips)
+        assertEquals("Should have two distinct days", 2, datesWithTrips.size)
+        val normalizedDay1 = Calendar.getInstance().apply {
+            time = day1
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }.time
+        val normalizedDay2 = Calendar.getInstance().apply {
+            time = day2
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }.time
+        assertTrue("Day 1 should be in list", datesWithTrips.any { it.time == normalizedDay1.time })
+        assertTrue("Day 2 should be in list", datesWithTrips.any { it.time == normalizedDay2.time })
+    }
+
+    @Test
+    fun `datesWithTripsInPeriod is empty when repository returns no trips for period`() = runTest {
+        val periodStart = Date()
+        val periodEnd = Date()
+        coEvery { mockRepository.getTripStatistics(any(), any()) } returns TripStatistics()
+        coEvery { mockRepository.getTripsByDateRange(any(), any()) } returns flowOf(emptyList())
+
+        viewModel.onCalendarPeriodSelected(PeriodMode.STANDARD, periodStart, periodEnd)
+        coVerify(timeout = 1000) { mockRepository.getTripsByDateRange(periodStart, periodEnd) }
+        delay(100)
+
+        assertTrue(
+            "datesWithTripsInPeriod should be empty",
+            viewModel.uiState.value.datesWithTripsInPeriod.isEmpty()
+        )
+    }
+
+    @Test
+    fun `datesWithTripsInPeriod deduplicates multiple trips on same day`() = runTest {
+        val cal = Calendar.getInstance()
+        cal.set(2025, Calendar.APRIL, 7, 8, 0, 0)
+        cal.set(Calendar.MILLISECOND, 0)
+        val morning = cal.time
+        cal.set(Calendar.HOUR_OF_DAY, 14)
+        val afternoon = cal.time
+        val trip1 = Trip(
+            id = "a",
+            loadedMiles = 5.0,
+            bounceMiles = 0.0,
+            actualMiles = 5.0,
+            startTime = morning,
+            endTime = morning,
+            status = TripStatus.COMPLETED
+        )
+        val trip2 = Trip(
+            id = "b",
+            loadedMiles = 10.0,
+            bounceMiles = 0.0,
+            actualMiles = 10.0,
+            startTime = afternoon,
+            endTime = afternoon,
+            status = TripStatus.COMPLETED
+        )
+        val periodStart = Calendar.getInstance().apply {
+            set(2025, Calendar.APRIL, 1, 0, 0, 0)
+            set(Calendar.MILLISECOND, 0)
+        }.time
+        val periodEnd = Calendar.getInstance().apply {
+            set(2025, Calendar.APRIL, 30, 23, 59, 59)
+            set(Calendar.MILLISECOND, 999)
+        }.time
+        coEvery { mockRepository.getTripStatistics(any(), any()) } returns TripStatistics(
+            totalTrips = 2,
+            totalActualMiles = 15.0,
+            totalOorMiles = 0.0,
+            avgOorPercentage = 0.0
+        )
+        coEvery { mockRepository.getTripsByDateRange(any(), any()) } returns flowOf(listOf(trip1, trip2))
+
+        viewModel.onCalendarPeriodSelected(PeriodMode.CUSTOM, periodStart, periodEnd)
+        coVerify(timeout = 1000) { mockRepository.getTripsByDateRange(periodStart, periodEnd) }
+        delay(100)
+
+        val datesWithTrips = viewModel.uiState.value.datesWithTripsInPeriod
+        assertEquals("Same calendar day should appear once", 1, datesWithTrips.size)
+    }
+
+    @Test
+    fun `updatePeriodStatistics sets periodStatistics and datesWithTripsInPeriod from repository`() = runTest {
+        val cal = Calendar.getInstance()
+        cal.set(2025, Calendar.MAY, 10, 12, 0, 0)
+        cal.set(Calendar.MILLISECOND, 0)
+        val tripDate = cal.time
+        val trip = Trip(
+            id = "single",
+            loadedMiles = 50.0,
+            bounceMiles = 10.0,
+            actualMiles = 60.0,
+            oorMiles = 5.0,
+            oorPercentage = 10.0,
+            startTime = tripDate,
+            endTime = tripDate,
+            status = TripStatus.COMPLETED
+        )
+        val periodStart = Calendar.getInstance().apply {
+            set(2025, Calendar.MAY, 1, 0, 0, 0)
+            set(Calendar.MILLISECOND, 0)
+        }.time
+        val periodEnd = Calendar.getInstance().apply {
+            set(2025, Calendar.MAY, 31, 23, 59, 59)
+            set(Calendar.MILLISECOND, 999)
+        }.time
+        val mockStats = TripStatistics(
+            totalTrips = 1,
+            totalActualMiles = 60.0,
+            totalOorMiles = 5.0,
+            avgOorPercentage = 10.0
+        )
+        coEvery { mockRepository.getTripStatistics(any(), any()) } returns mockStats
+        coEvery { mockRepository.getTripsByDateRange(any(), any()) } returns flowOf(listOf(trip))
+
+        viewModel.onCalendarPeriodSelected(PeriodMode.STANDARD, periodStart, periodEnd)
+        coVerify(timeout = 1000) { mockRepository.getTripStatistics(periodStart, periodEnd) }
+        coVerify(timeout = 1000) { mockRepository.getTripsByDateRange(periodStart, periodEnd) }
+        delay(100)
+
+        val periodStats = viewModel.uiState.value.periodStatistics
+        assertNotNull(periodStats)
+        assertEquals(1, periodStats?.totalTrips ?: 0)
+        assertEquals(60.0, periodStats?.totalDistance ?: 0.0, 0.01)
+        assertEquals(10.0, periodStats?.averageOorPercentage ?: 0.0, 0.01)
+        val datesWithTrips = viewModel.uiState.value.datesWithTripsInPeriod
+        assertEquals(1, datesWithTrips.size)
     }
 }
 
