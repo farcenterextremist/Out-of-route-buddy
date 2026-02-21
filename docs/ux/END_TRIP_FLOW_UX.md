@@ -2,7 +2,14 @@
 
 **Owner:** UI/UX Specialist  
 **Purpose:** Confirm copy and button order for End Trip so they match user expectations.  
-**Related:** 25-point list #5, `docs/agents/APP_IMPROVEMENT_25_POINT_BRAINSTORM.md`.
+**Related:** 25-point list #5, `docs/agents/APP_IMPROVEMENT_25_POINT_BRAINSTORM.md`, `docs/agents/MONTHLY_STATS_PERSISTENCE_CALENDAR_PLAN.md`.
+
+---
+
+## User-facing message (must be clear)
+
+- **End Trip** = **Saves** the trip and **stores it**. The trip **counts toward your monthly statistics** and appears in trip history and calendar. Use when the trip is real and you want it recorded.
+- **Clear Trip** = **Does not save** the trip. It **will not count** toward monthly stats and **will not appear** in history or calendar. Use for bad trips, test runs, or when you want to discard this trip.
 
 ---
 

@@ -32,8 +32,9 @@ This document captures security review findings and recommendations. Implementat
 - **Transmission:** No evidence that trip or raw location data are sent to any remote server. Background sync (e.g. `SyncWorker`, `OfflineSyncService`) is used for local operations (cache cleanup, data integrity), not for uploading PII off-device.
 
 **Recommendations:**
-- **Do not log PII:** Avoid logging full coordinates, trip IDs that could be linked to a user, or other PII. Prefer log levels and tags only (e.g. "sync started", "trip saved") or non-identifying metrics.
+- **Do not log PII:** Avoid logging full coordinates, trip IDs that could be linked to a user, or other PII. Prefer log levels and tags only (e.g. "sync started", "trip saved") or non-identifying metrics. For monthly-stats and End/Clear trip flows, log only that a trip was saved or cleared—not coordinates or user-identifying trip content.
 - **Encryption at rest:** Android app-private storage is already protected by the OS (per-app isolation; on many devices, encryption at rest is enabled). For extra hardening, consider EncryptedSharedPreferences or SQLCipher for the DB if handling higher-sensitivity data in the future.
+- **Trip metadata:** Store trip metadata in structured fields (e.g. Room columns). Avoid free-form text blobs for notes or descriptors that could contain PII; if adding notes, prefer bounded/typed fields or sanitization.
 - **Future back-ends:** If trip or location data are ever sent to a server, use HTTPS only and avoid logging request/response bodies that contain PII.
 
 ---

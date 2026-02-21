@@ -2,6 +2,7 @@
 
 ## Consumes (reads / references)
 
+- **Known truths & SSOT:** `docs/agents/KNOWN_TRUTHS_AND_SINGLE_SOURCE_OF_TRUTH.md` — ViewModel → repository flow, period/theme ownership, calendar/stats source; use before changing UI that touches persistence or settings.
 - **Layouts:** `app/src/main/res/layout/*.xml`
 - **Values:** `app/src/main/res/values/`, `values-night/`
 - **Presentation:** `app/src/main/java/.../presentation/` (ViewModels, fragments, activities, UI packages)

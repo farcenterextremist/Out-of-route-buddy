@@ -2,7 +2,13 @@
 
 **Owner:** Back-end  
 **Purpose:** Document current state and plan for persisting offline storage across app restarts.  
-**Related:** 25-point #11, CRUCIAL #2, `app/.../data/OfflineDataManager.kt`.
+**Related:** 25-point #11, CRUCIAL #2, `app/.../data/OfflineDataManager.kt`, `docs/agents/CURRENT_WIRING_PLAN.md`.
+
+---
+
+## Status: deferred
+
+**Implementation of `loadOfflineStorage()` and `saveOfflineStorage()` is formally deferred.** In-memory offline behavior remains; persistence across app restart will be implemented when offline-across-restart is a product requirement. See Implementation checklist in `docs/agents/CURRENT_WIRING_PLAN.md`.
 
 ---
 

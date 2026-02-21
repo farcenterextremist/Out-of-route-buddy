@@ -3,6 +3,7 @@
 ## Consumes (reads / references)
 
 ### Primary
+- **Known truths & SSOT:** `docs/agents/KNOWN_TRUTHS_AND_SINGLE_SOURCE_OF_TRUTH.md` — persistence, recovery, repository chain, Room, OfflineDataManager status; use before changing data or services.
 - **Data layer:** `app/src/main/java/com/example/outofroutebuddy/data/` — repositories, DAOs, database, adapters (e.g. `AppDatabase`, `TripRepository`, `DomainTripRepositoryAdapter`).
 - **Domain:** `app/src/main/java/com/example/outofroutebuddy/domain/` — models, repository interfaces, use-case boundaries; you implement these.
 - **Services:** `app/src/main/java/com/example/outofroutebuddy/services/` — `TripTrackingService`, `UnifiedLocationService`, `UnifiedTripService`, `UnifiedOfflineService`, sync workers, etc. You own behavior and changes here.

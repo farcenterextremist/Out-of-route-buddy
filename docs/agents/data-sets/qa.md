@@ -3,6 +3,7 @@
 ## Consumes (reads / references)
 
 ### Primary
+- **Known truths & SSOT:** `docs/agents/KNOWN_TRUTHS_AND_SINGLE_SOURCE_OF_TRUTH.md` — End vs Clear semantics, recovery precedence, what drives calendar/stats; use to derive test scenarios and assertions.
 - **Unit tests:** `app/src/test/` — JVM tests (Robolectric, coroutines, ViewModels, services, repositories). Use existing patterns (`runBlocking`, test fixtures, naming).
 - **Instrumented tests:** `app/src/androidTest/` — device/emulator UI and integration tests. Use to add or extend coverage.
 - **Worker todos (test-related):** `docs/agents/WORKER_TODOS_AND_IDEAS.md` — test-related items (e.g. “Add tests for Auto drive,” “Fix or document failing test,” “Smoke-test email scripts”).

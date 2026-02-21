@@ -44,6 +44,17 @@ You have an **open line of communication** with the user (**Brandonfrey2work@gma
 - You’ve finished a chunk of work and want to report back and ask what’s next.
 - The user said “I replied” or “check your email”—run read_replies and use the reply.
 
+## Proactive sending (do not wait for the user to ask)
+
+**Send the user more emails.** The user should not have to always ask for updates. Whenever you have something to report, ask, or recommend:
+
+- **Send an email** with a short summary and, if relevant, one clear ask.
+- After **meaningful work** (a feature, refactor, or batch of changes): send a 2–3 sentence update.
+- After **sessions** where something was decided or built: send a brief “here’s what we did / what’s next.”
+- When you have a **question or suggestion**: send it; don’t wait for the user to say “email me.”
+
+Use the same send script and flow. The rule: **when in doubt, send.** See also `docs/agents/EMAIL_AT_END_OF_BIG_CHANGES.md` (always email at end of big changes) and `docs/agents/TWO_WAY_EMAIL_PROGRAM.md`.
+
 ---
 
 ## Summary

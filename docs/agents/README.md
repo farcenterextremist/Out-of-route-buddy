@@ -15,6 +15,7 @@ The coordinator and Human-in-the-Loop Manager (and the AI when helping in Cursor
 
 | File | Purpose |
 |------|--------|
+| [KNOWN_TRUTHS_AND_SINGLE_SOURCE_OF_TRUTH.md](./KNOWN_TRUTHS_AND_SINGLE_SOURCE_OF_TRUTH.md) | **Agent training:** Known truths and SSOT for persistence, recovery, calendar, GPS, theme, etc. |
 | [OPEN_LINE_OF_COMMUNICATION.md](./OPEN_LINE_OF_COMMUNICATION.md) | How we read/write email to ask questions or consult |
 | [team-structure.md](./team-structure.md) | Roster, responsibilities, and handoff rules |
 | [coordinator-instructions.md](./coordinator-instructions.md) | Master Branch Coordinator agent instructions |

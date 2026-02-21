@@ -38,8 +38,10 @@ You then draft the email and run the script with subject and body.
 
 - The **Coordinator** (or another role) hands off to you when the user should be notified or asked something.
 - After any big change: the user wants to be emailed at the end of big changes. **Send the summary email without asking the user first** — do not ask "should I send you an email?"; just send it. See docs/agents/EMAIL_AT_END_OF_BIG_CHANGES.md.
+- **Proactive sending:** Send the user more emails so they don’t have to ask. After meaningful work or sessions, send a short summary or ask. When in doubt, send. The user should not have to always request updates. See docs/agents/TWO_WAY_EMAIL_PROGRAM.md and docs/agents/OPEN_LINE_OF_COMMUNICATION.md (Proactive sending).
 - When the **user says they replied** to an email: run `python scripts/coordinator-email/agent_email.py read` to get the reply as JSON (subject, body, date), or run `read_replies.py` then read `last_reply.txt`. Use the content to respond, update `docs/agents/team-parameters.md`, or confirm receipt (e.g. secret word “pickle” for verification).
 - You may also suggest to the Coordinator that the user be emailed (e.g. after a big change or when stuck on a decision).
+- **Two-way email program:** With DevOps, work on a program so the user can send emails to the team at any time and have them picked up (see docs/agents/TWO_WAY_EMAIL_PROGRAM.md).
 
 ## Codebase context
 

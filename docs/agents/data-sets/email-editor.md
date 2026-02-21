@@ -2,6 +2,8 @@
 
 ## Consumes (reads / references)
 
+- **Known truths & SSOT (optional):** `docs/agents/KNOWN_TRUTHS_AND_SINGLE_SOURCE_OF_TRUTH.md` — when email mentions features (e.g. trip save, calendar) so copy is accurate.
+
 - **Email setup:** `scripts/coordinator-email/README.md`, `docs/agents/OPEN_LINE_OF_COMMUNICATION.md`.
 - **Context:** `docs/agents/team-parameters.md` (tone, user); example bodies in `scripts/coordinator-email/*.txt`.
 

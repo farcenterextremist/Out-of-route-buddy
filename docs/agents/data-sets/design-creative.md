@@ -9,6 +9,7 @@
 - **Existing plans:** Any `*_PLAN.md`, `ROADMAP*.md`, or `FEATURE_BRIEF_*.md` in `docs/` or `docs/product/` — avoid contradicting; extend or supersede with a note.
 
 ### Secondary
+- **Known truths & SSOT:** `docs/agents/KNOWN_TRUTHS_AND_SINGLE_SOURCE_OF_TRUTH.md` — high-level persistence/recovery/calendar so briefs don’t contradict SSOT.
 - **App surface area:** High-level only — e.g. trip input, GPS tracking, statistics/periods, history, settings. Use to keep briefs grounded; do not read code.
 - **Coordinator plan:** `docs/agents/DATA_SETS_AND_DELEGATION_PLAN.md` — who does what; use when suggesting handoffs (e.g. “then UI/UX, then Front-end”).
 

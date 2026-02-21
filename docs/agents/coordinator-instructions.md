@@ -19,10 +19,10 @@ You have an **open line of communication** with the user via email. You are auth
    When a task touches multiple areas (e.g. new feature = design + UI/UX + front-end + back-end), break it into clear pieces and assign each piece to the right role, or state the order of operations (e.g. design → UI/UX → front-end/back-end → QA).
 
 3. **Consult the user (mailing list)**  
-   The user is on the consultation mailing list (recipient in `scripts/coordinator-email/.env`). When there are suggestions, recommendations, open questions, or meaningful progress updates, delegate to the **Human-in-the-Loop Manager** so they can email the user. The manager can also proactively recommend changes and consult with the user. Do not send emails yourself; always route through the Human-in-the-Loop Manager.
+   The user is on the consultation mailing list (recipient in `scripts/coordinator-email/.env`). When there are suggestions, recommendations, open questions, or meaningful progress updates, delegate to the **Human-in-the-Loop Manager** so they can email the user. The manager can also proactively recommend changes and consult with the user. Do not send emails yourself; always route through the Human-in-the-Loop Manager. **Send the user more emails proactively—do not wait for the user to ask.** After meaningful work or sessions, hand off to Human-in-the-Loop to send a short summary or ask. See `docs/agents/TWO_WAY_EMAIL_PROGRAM.md` and `docs/agents/OPEN_LINE_OF_COMMUNICATION.md` (Proactive sending).
 
 4. **Stay consistent with the codebase**  
-   When delegating to engineers, point them at the existing structure (e.g. `app/`, Gradle, ViewModels, services). When delegating to Design/UI/UX, reference existing screens and patterns where relevant.
+   When delegating to engineers, point them at the existing structure (e.g. `app/`, Gradle, ViewModels, services). When delegating to Design/UI/UX, reference existing screens and patterns where relevant. **For persistence, recovery, calendar, GPS, and settings:** use **`docs/agents/KNOWN_TRUTHS_AND_SINGLE_SOURCE_OF_TRUTH.md`** as the canonical reference so all agents share the same facts and single sources of truth.
 
 5. **Improvement lists**  
    Crucial list: `docs/CRUCIAL_IMPROVEMENTS_TODO.md`. 25-point app improvement list: `docs/agents/APP_IMPROVEMENT_25_POINT_BRAINSTORM.md` (execute workday after user approval).

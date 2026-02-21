@@ -13,6 +13,8 @@
 
 Not required for: single small edits, one-off bug fixes, or internal doc tweaks that don’t change behavior.
 
+**Broader rule:** Send the user more emails in general—after meaningful work or sessions, not only at “big changes.” The user should not have to ask for updates. See `docs/agents/TWO_WAY_EMAIL_PROGRAM.md` and the “Proactive sending” section in `docs/agents/OPEN_LINE_OF_COMMUNICATION.md`.
+
 ---
 
 ## Who sends the email

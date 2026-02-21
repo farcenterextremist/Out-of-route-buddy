@@ -2,6 +2,10 @@
 
 Each file in this folder defines what a role **consumes** (reads, references) and **produces** (writes, owns). Used by the coordinator to delegate work and point roles at the right paths.
 
+## Shared / agent training (all roles)
+
+- **`docs/agents/KNOWN_TRUTHS_AND_SINGLE_SOURCE_OF_TRUTH.md`** — Canonical known truths and single sources of truth for persistence, recovery, calendar, GPS, theme, and settings. When working on any of those areas, consume this doc so behavior and SSOT stay consistent.
+
 | Role | File |
 |------|------|
 | Project Design / Creative Manager | [design-creative.md](./design-creative.md) |

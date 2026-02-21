@@ -2,6 +2,7 @@
 
 ## Consumes (reads / references)
 
+- **Known truths & SSOT:** `docs/agents/KNOWN_TRUTHS_AND_SINGLE_SOURCE_OF_TRUTH.md` — where trip/location data lives, no PII in logs; use with `docs/security/SECURITY_NOTES.md`.
 - **Manifest:** `app/src/main/AndroidManifest.xml` — permissions, components.
 - **Services/data:** `app/.../services/`, `app/.../data/` — for data handling and exposure.
 - **Credentials:** `scripts/coordinator-email/.env.example` only (never .env or real secrets).
