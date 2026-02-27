@@ -372,7 +372,8 @@ open class OutOfRouteApplication : Application() {
         try {
             // Use SharedPreferences directly to avoid initialization order issues
             val prefs = getSharedPreferences("app_settings", Context.MODE_PRIVATE)
-            val themePreference = prefs.getString("theme_preference", "system") ?: "system"
+            // Use "light" as default to match preferences.xml; avoids dark-on-fresh-start when user expects light
+            val themePreference = prefs.getString("theme_preference", "light") ?: "light"
             
             val mode = when (themePreference) {
                 "light" -> AppCompatDelegate.MODE_NIGHT_NO

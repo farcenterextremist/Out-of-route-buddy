@@ -183,6 +183,36 @@ function initEditor() {
       window.AppRenderer?.redo();
     }
   });
+
+  // Three-line menu (top left): Add element
+  const menuBtn = document.getElementById('emulator-menu-btn');
+  const menuDropdown = document.getElementById('emulator-menu-dropdown');
+  const menuAddElement = document.getElementById('menu-add-element');
+  function closeEmulatorMenu() {
+    if (menuDropdown) {
+      menuDropdown.setAttribute('hidden', '');
+      if (menuBtn) menuBtn.setAttribute('aria-expanded', 'false');
+    }
+  }
+  menuBtn?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const open = menuDropdown?.hasAttribute('hidden') !== true;
+    if (open) {
+      menuDropdown?.removeAttribute('hidden');
+      menuBtn?.setAttribute('aria-expanded', 'true');
+    } else {
+      closeEmulatorMenu();
+    }
+  });
+  menuAddElement?.addEventListener('click', () => {
+    showAddElementDialog();
+    closeEmulatorMenu();
+  });
+  document.addEventListener('click', (e) => {
+    if (menuDropdown && !menuDropdown.contains(e.target) && !menuBtn?.contains(e.target)) {
+      closeEmulatorMenu();
+    }
+  });
 }
 
 // Use a single contextmenu listener on app-content (event delegation) so it works
@@ -248,6 +278,19 @@ function attachEditorListeners() {
     longPressTimer = null;
     longPressMeta = null;
   }, { passive: true });
+
+  // Double-click on editable opens Edit panel (skip context menu)
+  appContent.addEventListener('dblclick', function(e) {
+    const el = e.target.closest('.editable');
+    if (!el?.dataset?.editPath || !el?.dataset?.editKey) return;
+    if (el.closest('#start-end-btn') || el.closest('#pause-btn') || el.closest('.app-toolbar-settings') || el.closest('#statistics-btn') || el.closest('.app-stats-view-btn')) return;
+    e.preventDefault();
+    e.stopPropagation();
+    selectedElement = el;
+    pendingContextMeta = { path: el.dataset.editPath, key: el.dataset.editKey, type: el.dataset.editType || 'text' };
+    selectElement(el, pendingContextMeta);
+    pendingContextMeta = null;
+  });
 }
 
 function handleContextMenu(e) {
@@ -296,9 +339,35 @@ function deselect() {
   hideContextMenu();
 }
 
+function friendlyEditLabel(path, key) {
+  const map = {
+    'toolbar.title': 'Toolbar title',
+    'toolbar.settingsIcon': 'Settings icon',
+    'loadedMiles.hint': 'Loaded Miles placeholder',
+    'loadedMiles.value': 'Loaded Miles value',
+    'bounceMiles.hint': 'Bounce Miles placeholder',
+    'bounceMiles.value': 'Bounce Miles value',
+    'startButton.text': 'Start Trip button',
+    'todaysInfo.title': "Today's Info title",
+    'totalMiles.label': 'Total Miles label',
+    'totalMiles.value': 'Total Miles value',
+    'oorMiles.label': 'OOR Miles label',
+    'oorMiles.value': 'OOR Miles value',
+    'oorPercent.label': 'OOR % label',
+    'oorPercent.value': 'OOR % value',
+    'statisticsButton.text': 'Statistics button',
+    'statisticsPeriod.label': 'Current Period label',
+    'statisticsPeriod.value': 'Period value',
+    'statisticsPeriod.button': 'View button',
+    'monthlyStats.title': 'Monthly Statistics title',
+  };
+  return map[path + '.' + key] || path + '.' + key;
+}
+
 function showPropertiesPanel(meta) {
   const panel = document.getElementById('properties-panel');
   const content = document.getElementById('panel-content');
+  const panelTitle = document.getElementById('panel-edit-title');
   if (!panel || !content) return;
 
   const design = window.AppRenderer?.getDesign();
@@ -309,8 +378,12 @@ function showPropertiesPanel(meta) {
   const pathKey = `${meta.path}.${meta.key}`;
   const currentNote = window.AppRenderer?.getNote(pathKey) ?? '';
 
+  const valueLabel = meta.type === 'placeholder' ? 'Placeholder' : 'Value';
   const livePreview = localStorage.getItem('oorb-emulator-live-preview') === 'true';
   const autoSync = localStorage.getItem('oorb-emulator-auto-sync') === 'true';
+
+  if (panelTitle) panelTitle.textContent = friendlyEditLabel(meta.path, meta.key);
+
   content.innerHTML = `
     <div class="property-group">
       <label><input type="checkbox" id="prop-live-preview" ${livePreview ? 'checked' : ''} /> Live preview (update as you type)</label>
@@ -319,8 +392,8 @@ function showPropertiesPanel(meta) {
       <label><input type="checkbox" id="prop-auto-sync" ${autoSync ? 'checked' : ''} /> Auto-sync to project (after each Save)</label>
     </div>
     <div class="property-group">
-      <label>Value</label>
-      <input type="text" id="prop-value-input" value="${escapeAttr(currentValue)}" placeholder="Enter value" aria-label="Value" />
+      <label>${escapeAttr(valueLabel)}</label>
+      <input type="text" id="prop-value-input" value="${escapeAttr(currentValue)}" placeholder="Enter ${escapeAttr(valueLabel.toLowerCase())}" aria-label="${escapeAttr(valueLabel)}" />
     </div>
     <div class="property-group">
       <label>Notes</label>
@@ -379,6 +452,14 @@ function showPropertiesPanel(meta) {
     }, LIVE_PREVIEW_DEBOUNCE_MS);
   });
 
+  const closeOnEscape = (e) => {
+    if (e.key === 'Escape') {
+      deselect();
+    }
+  };
+  panel._escapeHandler = closeOnEscape;
+  document.addEventListener('keydown', closeOnEscape);
+
   panel.style.display = 'block';
   requestAnimationFrame(() => panel.classList.add('visible'));
   input?.focus();
@@ -387,10 +468,14 @@ function showPropertiesPanel(meta) {
 function hidePropertiesPanel() {
   const panel = document.getElementById('properties-panel');
   if (panel) {
+    if (panel._escapeHandler) {
+      document.removeEventListener('keydown', panel._escapeHandler);
+      panel._escapeHandler = null;
+    }
     panel.classList.remove('visible');
     setTimeout(() => {
       panel.style.display = 'none';
-      document.getElementById('panel-content').innerHTML = '<p class="panel-placeholder">Right-click a field and choose Edit</p>';
+      document.getElementById('panel-content').innerHTML = '<p class="panel-placeholder">Right-click or double-click a field to edit</p>';
     }, 150);
   }
 }

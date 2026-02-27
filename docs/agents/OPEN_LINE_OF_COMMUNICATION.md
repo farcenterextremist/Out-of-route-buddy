@@ -4,6 +4,20 @@ You have an **open line of communication** with the user (**Brandonfrey2work@gma
 
 ---
 
+## Two-way email: how you reply and how we read (user-facing)
+
+**How you reply:** Reply to any coordinator email from your normal inbox. Keep "Re:" and "OutOfRouteBuddy" in the subject so our script can match it.
+
+**How we read your reply:** When you say "I replied" or when we follow up, we run `python scripts/coordinator-email/agent_email.py read` (or `read_replies.py`) and get your latest reply as JSON or from `scripts/coordinator-email/last_reply.txt`. We then update plans, team parameters, or send a follow-up. No scheduled polling—we read on demand when you've replied.
+
+**One-line for you:** Reply to the same thread; we'll read it when you tell us you replied (or when we check).
+
+**Automatic replies (optional):** You can run `scripts/coordinator-email/check_and_respond.py` on a schedule (e.g. every 15–30 min via Task Scheduler or cron). It reads your latest reply and sends a short auto-response (e.g. "We'll set up weekly digest," "Thanks—we'll follow up," or "We got your message"). See `scripts/coordinator-email/README.md` for setup.
+
+**Coordinator listener (optional):** For an open line **while Cursor is online**, run `python scripts/coordinator-email/coordinator_listener.py` in a Cursor terminal. While it runs, it checks your inbox every few minutes and, when you send a new reply, responds **as the Master Branch Coordinator** (assigns work, delegates, or escalates to Human-in-the-Loop). Requires an OpenAI API key in `.env`. When you close Cursor or the terminal, the listener stops. See `scripts/coordinator-email/README.md`.
+
+---
+
 ## Your agency
 
 - **Send email whenever you need to:** Ask a question, request a decision, suggest a change, or share an update. Use the Human-in-the-Loop Manager flow: draft the message, then run the send script. No need to wait for the user to prompt you—if you need their input, send the email.

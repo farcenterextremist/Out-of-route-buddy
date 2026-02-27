@@ -93,6 +93,8 @@ class TripRepository(private val tripDao: TripDao) {
                 // Handle timeout result
                 if (result.isSuccess) {
                     val tripId = result.getOrThrow()
+                    // Audit: filterable tag for detection of bulk/anomalous inserts (Purple Team 2025-02-20)
+                    Log.w("TripInsertAudit", "trip_inserted trip_id=$tripId result=true")
                     Log.d(TAG, "Successfully inserted trip with ID: $tripId (attempt ${attempt + 1})")
                     return tripId
                 } else {
@@ -344,6 +346,19 @@ class TripRepository(private val tripDao: TripDao) {
         } catch (e: Exception) {
             Log.e(TAG, "Failed to clear all trips: ${e.message}", e)
             throw RuntimeException("Failed to clear trip data: ${e.message}", e)
+        }
+    }
+
+    /**
+     * Delete trips with date strictly before [cutoffDate] (for "delete old data from device").
+     */
+    suspend fun deleteTripsOlderThan(cutoffDate: Date) {
+        try {
+            tripDao.deleteTripsBefore(cutoffDate)
+            Log.d(TAG, "Successfully deleted trips older than $cutoffDate")
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to delete trips older than $cutoffDate: ${e.message}", e)
+            throw RuntimeException("Failed to delete old trip data: ${e.message}", e)
         }
     }
 

@@ -1,0 +1,10 @@
+{
+  "key": "version",
+  "priority": 80,
+  "keywords": ["version", "build", "latest", "what version"],
+  "keywords_combine": "any",
+  "subject": "Re: OutOfRouteBuddy — version",
+  "body": "Hi,\n\n{{version}}\n\n— Jarvey",
+  "fetcher": "version",
+  "fetcher_fallback": "Version not found. Check app/build.gradle.kts."
+}

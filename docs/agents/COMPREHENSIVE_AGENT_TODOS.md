@@ -73,7 +73,7 @@ Each agent has a single checklist. When a task is done, check it off here and in
 **Data set:** `docs/agents/data-sets/devops.md`
 
 - [ ] **CRUCIAL #1** — Gradle 9 readiness: run build with `--warning-mode all`, document sources in `GRADLE_9_MIGRATION_NOTES.md`, plan plugin updates. Ref: `build_warnings.txt`, `GRADLE_9_MIGRATION_NOTES.md`.
-- [ ] **CRUCIAL #1** — Update `docs/DEPLOYMENT.md`: set minSdk 24 and Java 17 (currently says minSdk 21 and JDK 11).
+- [x] **CRUCIAL #1** — Update `docs/DEPLOYMENT.md`: set minSdk 24 and Java 17. *(Done: DEPLOYMENT.md already correct.)*
 - [ ] Document how to run the emulator in CI (e.g. static build or smoke test) if we want a "no regressions" gate.
 - [ ] Add a one-line "health" script or target that checks: build, unit tests, and (optional) coordinator email .env present.
 - [ ] Keep Gradle and JDK versions in README or DEPLOYMENT.md up to date.

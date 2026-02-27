@@ -113,7 +113,6 @@ class MockGpsSynchronizationServiceTest {
                 preferencesManager = mockPreferencesManager,
                 tripStateManager = mockTripStateManager,
                 tripStatePersistence = mockTripStatePersistence,
-                stateCache = mockStateCache,
                 backgroundSyncService = mockBackgroundSyncService,
                 optimizedGpsDataFlow = mockOptimizedGpsDataFlow,
                 validationFramework = mockValidationFramework,
@@ -192,10 +191,9 @@ class MockGpsSynchronizationServiceTest {
         coEvery { mockRepository.getAllTrips() } returns MutableStateFlow(emptyList())
         coEvery { mockRepository.getTripById(any()) } returns MutableStateFlow(null)
         coEvery { mockRepository.getTripsByDateRange(any(), any()) } returns MutableStateFlow(emptyList())
-        coEvery { mockRepository.getCurrentActiveTrip() } returns MutableStateFlow(null)
-        coEvery { mockRepository.updateTrip(any()) } returns Unit
-        coEvery { mockRepository.deleteTrip(any()) } returns Unit
-        coEvery { mockRepository.deleteTripById(any()) } returns Unit
+        coEvery { mockRepository.updateTrip(any()) } returns true
+        coEvery { mockRepository.deleteTrip(any()) } returns true
+        coEvery { mockRepository.deleteTripById(any()) } returns true
         coEvery { mockRepository.getTripStatistics(any(), any()) } returns com.example.outofroutebuddy.domain.repository.TripStatistics()
         coEvery { mockRepository.getTodayTripStatistics() } returns com.example.outofroutebuddy.domain.repository.TripStatistics()
         coEvery { mockRepository.getMonthlyTripStatistics() } returns com.example.outofroutebuddy.domain.repository.TripStatistics()
@@ -292,7 +290,6 @@ class MockGpsSynchronizationServiceTest {
                 preferencesManager = mockPreferencesManager,
                 tripStateManager = mockTripStateManager,
                 tripStatePersistence = mockTripStatePersistence,
-                stateCache = mockStateCache,
                 backgroundSyncService = mockBackgroundSyncService,
                 optimizedGpsDataFlow = mockOptimizedGpsDataFlow,
                 validationFramework = mockValidationFramework,
@@ -363,7 +360,6 @@ class MockGpsSynchronizationServiceTest {
                 preferencesManager = mockPreferencesManager,
                 tripStateManager = mockTripStateManager,
                 tripStatePersistence = mockTripStatePersistence,
-                stateCache = mockStateCache,
                 backgroundSyncService = mockBackgroundSyncService,
                 optimizedGpsDataFlow = mockOptimizedGpsDataFlow,
                 validationFramework = mockValidationFramework,

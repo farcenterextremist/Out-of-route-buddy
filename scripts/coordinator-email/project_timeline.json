@@ -1,0 +1,80 @@
+[
+  {
+    "date": "2025-10-21",
+    "type": "phase",
+    "title": "Phase 0 & 1 Complete: Infrastructure + Critical Tests",
+    "detail": "Testing infrastructure and critical test coverage in place."
+  },
+  {
+    "date": "2025-10-21",
+    "type": "phase",
+    "title": "Complete Testing Suite Overhaul - Phases 0, 1, 2",
+    "detail": "Comprehensive test suite restructure across phases."
+  },
+  {
+    "date": "2025-10-22",
+    "type": "release",
+    "title": "v1.0.1 - Code Cleanup & GPS Tracking Fixes",
+    "detail": "Major release: cleanup and GPS tracking improvements."
+  },
+  {
+    "date": "2026-02-19",
+    "type": "setup",
+    "title": "Initial push: OutOfRouteBuddy app, emulator, agents",
+    "detail": "OneDrive + Git setup; app, emulator, and agent docs in repo."
+  },
+  {
+    "date": "2026-02-20",
+    "type": "docs",
+    "title": "25-point workday: ROADMAP, FEATURE_BRIEF_reports, UX/QA docs",
+    "detail": "ROADMAP, reports feature brief, UX/QA/technical docs, health script, coordinator links."
+  },
+  {
+    "date": "2026-02-21",
+    "type": "app",
+    "title": "Standard period 1st-last of month, theme persistence, calendar",
+    "detail": "Standard period (1st–last of month), theme persistence in Settings, calendar back/dismiss/single-day, DotSpan."
+  },
+  {
+    "date": "2026-02-21",
+    "type": "tests",
+    "title": "datesWithTripsInPeriod and period stats (TripStatisticsWiringTest)",
+    "detail": "Tests for datesWithTripsInPeriod and period stats from repository."
+  },
+  {
+    "date": "2026-02-21",
+    "type": "docs",
+    "title": "Known truths & SSOT, two-way email, wiring/recovery/persistence",
+    "detail": "Docs: KNOWN_TRUTHS, SSOT, two-way email program, wiring/recovery/persistence, agents data sets."
+  },
+  {
+    "date": "2026-02-26",
+    "type": "ui",
+    "title": "Toolbar: stretched layout, background image, Out of Route text",
+    "detail": "Toolbar stretched to edges, cracked-road background image, 'Out of Route' title with black outline, centered text."
+  },
+  {
+    "date": "2026-02-26",
+    "type": "ui",
+    "title": "Settings menu: soft edges, Help & Info visibility, X close buttons",
+    "detail": "Settings dialog rounded corners, improved Help & Info button visibility (dark mode), white X close buttons, text visibility improvements."
+  },
+  {
+    "date": "2026-02-26",
+    "type": "ui",
+    "title": "Calendar: current date highlight, bigger month name, removed placeholder",
+    "detail": "Current date highlighted grey, month name enlarged, 'Select data range' text removed."
+  },
+  {
+    "date": "2026-02-26",
+    "type": "ui",
+    "title": "Statistics: removed weekly/yearly, focus on Monthly Statistics",
+    "detail": "Weekly and yearly statistics sections removed; Monthly Statistics retained. Plan for wiring Monthly Statistics and Stat Card on calendar."
+  },
+  {
+    "date": "2026-02-26",
+    "type": "app",
+    "title": "App icon iterations, period onboarding refresh flow",
+    "detail": "App icon updates (adaptive icon, saturation); period onboarding on first run; refresh TripInput period after onboarding."
+  }
+]

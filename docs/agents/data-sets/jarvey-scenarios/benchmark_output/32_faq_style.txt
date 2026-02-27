@@ -1,0 +1,7 @@
+You asked about the difference between End trip and Clear trip.
+
+End trip writes the trip to Room (the `trips` table); the trip appears in monthly stats, calendar, and history. After saving a completed trip, the corresponding state is cleared from TripStatePersistence/TripStateManager, so the trip is no longer marked as "in-progress".
+
+Clear trip, on the other hand, stops GPS, stops auto-save, clears any persisted trip data (i.e., it doesn't write to Room), and resets UI state. There is no row written to the `trips` table; the trip simply disappears from all views.
+
+— Jarvey

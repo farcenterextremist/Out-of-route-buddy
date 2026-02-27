@@ -6,8 +6,11 @@ import androidx.lifecycle.viewModelScope
 import com.example.outofroutebuddy.domain.models.Trip
 import com.example.outofroutebuddy.domain.repository.TripRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -32,7 +35,10 @@ class TripHistoryByDateViewModel @Inject constructor(
     
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
-    
+
+    private val _deleteError = MutableSharedFlow<String>(extraBufferCapacity = 1)
+    val deleteError: SharedFlow<String> = _deleteError.asSharedFlow()
+
     private var currentDate: Date? = null
     
     /**
@@ -62,7 +68,7 @@ class TripHistoryByDateViewModel @Inject constructor(
                 val tripList = try {
                     repository.getTripsByDateRange(startOfDay, endOfDay).first()
                 } catch (e: Exception) {
-                    android.util.Log.e("TripHistoryByDateViewModel", "Error fetching trips from repository", e)
+                    android.util.Log.e(TAG, "Error fetching trips from repository", e)
                     emptyList()
                 }
                 
@@ -91,7 +97,7 @@ class TripHistoryByDateViewModel @Inject constructor(
                             tripCalendar.timeInMillis == dateCalendar.timeInMillis
                         } catch (e: Exception) {
                             // ✅ EDGE CASE: If date parsing fails, exclude the trip
-                            android.util.Log.w("TripHistoryByDateViewModel", "Error comparing trip date", e)
+                            android.util.Log.w(TAG, "Error comparing trip date", e)
                             false
                         }
                     } else {
@@ -105,7 +111,7 @@ class TripHistoryByDateViewModel @Inject constructor(
                     (trip.endTime ?: trip.startTime)?.time ?: 0L
                 }
             } catch (e: Exception) {
-                android.util.Log.e("TripHistoryByDateViewModel", "Error loading trips for date", e)
+                android.util.Log.e(TAG, "Error loading trips for date", e)
                 _trips.value = emptyList()
             } finally {
                 _isLoading.value = false
@@ -116,16 +122,23 @@ class TripHistoryByDateViewModel @Inject constructor(
     fun deleteTrip(trip: Trip) {
         viewModelScope.launch {
             try {
-                repository.deleteTrip(trip)
-                android.util.Log.d("TripHistoryByDateViewModel", "Trip deleted: ${trip.id}")
-                
-                // Reload trips after deletion if we have a current date
-                currentDate?.let { date ->
-                    loadTripsForDate(date)
+                val deleted = repository.deleteTrip(trip)
+                if (deleted) {
+                    android.util.Log.d(TAG, "Trip deleted: ${trip.id}")
+                    currentDate?.let { date ->
+                        loadTripsForDate(date)
+                    }
+                } else {
+                    _deleteError.emit("Failed to delete trip")
                 }
             } catch (e: Exception) {
-                android.util.Log.e("TripHistoryByDateViewModel", "Error deleting trip", e)
+                android.util.Log.e(TAG, "Error deleting trip", e)
+                _deleteError.emit("Failed to delete trip: ${e.message ?: "Unknown error"}")
             }
         }
+    }
+
+    companion object {
+        private const val TAG = "TripHistoryByDateViewModel"
     }
 }

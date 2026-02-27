@@ -1,8 +1,8 @@
 # Feature brief: Monthly statistics and trip persistence
 
 **Owner:** Project Design / Creative Manager  
-**Created:** 2026-02-20  
-**Related:** `docs/agents/MONTHLY_STATS_PERSISTENCE_CALENDAR_PLAN.md`, `docs/ux/END_TRIP_FLOW_UX.md`, `docs/ux/STATISTICS_SECTION_SPEC.md`.
+**Created:** 2025-02-20  
+**Related:** [ROADMAP.md](ROADMAP.md), [MONTHLY_STATS_PERSISTENCE_CALENDAR_PLAN.md](../agents/MONTHLY_STATS_PERSISTENCE_CALENDAR_PLAN.md), [END_TRIP_FLOW_UX.md](../ux/END_TRIP_FLOW_UX.md), [STATISTICS_SECTION_SPEC.md](../ux/STATISTICS_SECTION_SPEC.md), [KNOWN_TRUTHS_AND_SINGLE_SOURCE_OF_TRUTH.md](../agents/KNOWN_TRUTHS_AND_SINGLE_SOURCE_OF_TRUTH.md).
 
 ---
 

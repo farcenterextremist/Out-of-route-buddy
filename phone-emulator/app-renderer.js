@@ -14,7 +14,7 @@ const ICONS = {
 };
 
 const DEFAULT_DESIGN = {
-  toolbar: { title: 'OOR', settingsIcon: '⚙' },
+  toolbar: { title: 'Out of Route', settingsIcon: '⚙' },
   loadedMiles: { hint: 'Loaded Miles', value: '' },
   bounceMiles: { hint: 'Bounce Miles', value: '' },
   startButton: { text: 'Start Trip' },
@@ -24,10 +24,8 @@ const DEFAULT_DESIGN = {
   oorMiles: { label: 'OOR Miles', value: '0.0' },
   oorPercent: { label: 'OOR %', value: '0.0%' },
   statisticsButton: { text: 'STATISTICS' },
-  statisticsPeriod: { label: 'Calendar/Current period', value: 'N/A', button: 'View' },
-  weeklyStats: { title: 'Weekly Statistics', miles: '0.0', oor: '0.0', percent: '0.0%' },
+  statisticsPeriod: { label: 'Current Period', value: 'N/A', button: 'View' },
   monthlyStats: { title: 'Monthly Statistics', miles: '0.0', oor: '0.0', percent: '0.0%' },
-  yearlyStats: { title: 'Yearly Statistics', miles: '0.0', oor: '0.0', percent: '0.0%' },
   customElements: [],
 };
 
@@ -240,16 +238,15 @@ function showToast(msg) {
   setTimeout(() => t.remove(), 2000);
 }
 
-// Improvement #2: Settings modal (Mode, Templates, Help & Info)
+// Improvement #2: Settings modal (1:1 with dialog_settings.xml: Mode row, Templates row, Help & Info)
 function showSettingsModal() {
   const overlay = document.getElementById('settings-modal');
   if (!overlay) return;
   overlay.removeAttribute('hidden');
   overlay.classList.add('visible');
   const theme = getTheme();
-  document.querySelectorAll('.app-mode-btn').forEach((btn) => {
-    btn.classList.toggle('active', btn.dataset.mode === theme);
-  });
+  const modeSummary = document.getElementById('settings-mode-summary');
+  if (modeSummary) modeSummary.textContent = theme === 'dark' ? 'Dark' : 'Light';
 }
 function hideSettingsModal() {
   const overlay = document.getElementById('settings-modal');
@@ -314,9 +311,7 @@ function render() {
       <!-- Toolbar (matches custom_toolbar.xml) -->
       <div class="app-toolbar">
         <div class="app-toolbar-center">
-          <span class="app-toolbar-line"></span>
           <span class="app-toolbar-title editable" data-edit-path="toolbar" data-edit-key="title" data-edit-type="text">${escapeHtml(d.toolbar.title)}</span>
-          <span class="app-toolbar-line"></span>
         </div>
         <button type="button" class="app-toolbar-settings editable app-toolbar-settings-svg" data-edit-path="toolbar" data-edit-key="settingsIcon" data-edit-type="text" title="Settings" aria-label="Settings">${ICONS.gear}</button>
       </div>
@@ -360,25 +355,18 @@ function render() {
           </div>
         </div>
 
-        <!-- Statistics Button (icon gravity textEnd - arrow on right) -->
-        <button type="button" class="app-button editable app-statistics-btn" id="statistics-btn" data-edit-path="statisticsButton" data-edit-key="text" data-edit-type="text">
+        <!-- Statistics Button (full width, icon at end - matches fragment_trip_input MaterialButton) -->
+        <button type="button" class="app-button app-statistics-btn editable" id="statistics-btn" data-edit-path="statisticsButton" data-edit-key="text" data-edit-type="text">
           <span class="stats-btn-text">${escapeHtml(d.statisticsButton.text)}</span>
           <span id="stats-arrow" class="stats-arrow">${ICONS.chevronDown}</span>
         </button>
 
-        <!-- Statistics Section (expandable, matches statistics_content layout) -->
+        <!-- Statistics Section (expandable, matches statistics_content: Current Period + View, divider, Monthly Statistics) -->
         <div class="app-stats-section" id="app-stats-section">
           <p class="app-stats-period-label">${escapeHtml(d.statisticsPeriod.label)}</p>
           <div class="app-stats-period-row">
             <span class="app-stats-period-value">${escapeHtml(d.statisticsPeriod.value)}</span>
-            <button type="button" class="app-button-outlined editable" data-edit-path="statisticsPeriod" data-edit-key="button" data-edit-type="text">${escapeHtml(d.statisticsPeriod.button)}</button>
-          </div>
-          <div class="app-stats-divider"></div>
-          <div class="app-stat-block editable" data-edit-path="weeklyStats" data-edit-key="title" data-edit-type="text">
-            <h4>${escapeHtml(d.weeklyStats.title)}</h4>
-            <div class="app-stat-row"><span class="stat-label">${escapeHtml(d.totalMiles.label)}</span><span class="stat-value">${escapeHtml(d.weeklyStats.miles)}</span></div>
-            <div class="app-stat-row"><span class="stat-label">${escapeHtml(d.oorMiles.label)}</span><span class="stat-value">${escapeHtml(d.weeklyStats.oor)}</span></div>
-            <div class="app-stat-row"><span class="stat-label">${escapeHtml(d.oorPercent.label)}</span><span class="stat-value">${escapeHtml(d.weeklyStats.percent)}</span></div>
+            <button type="button" class="app-button app-stats-view-btn editable" data-edit-path="statisticsPeriod" data-edit-key="button" data-edit-type="text">${escapeHtml(d.statisticsPeriod.button)}</button>
           </div>
           <div class="app-stats-divider"></div>
           <div class="app-stat-block editable" data-edit-path="monthlyStats" data-edit-key="title" data-edit-type="text">
@@ -386,13 +374,6 @@ function render() {
             <div class="app-stat-row"><span class="stat-label">${escapeHtml(d.totalMiles.label)}</span><span class="stat-value">${escapeHtml(d.monthlyStats.miles)}</span></div>
             <div class="app-stat-row"><span class="stat-label">${escapeHtml(d.oorMiles.label)}</span><span class="stat-value">${escapeHtml(d.monthlyStats.oor)}</span></div>
             <div class="app-stat-row"><span class="stat-label">${escapeHtml(d.oorPercent.label)}</span><span class="stat-value">${escapeHtml(d.monthlyStats.percent)}</span></div>
-          </div>
-          <div class="app-stats-divider"></div>
-          <div class="app-stat-block editable" data-edit-path="yearlyStats" data-edit-key="title" data-edit-type="text">
-            <h4>${escapeHtml(d.yearlyStats.title)}</h4>
-            <div class="app-stat-row"><span class="stat-label">${escapeHtml(d.totalMiles.label)}</span><span class="stat-value">${escapeHtml(d.yearlyStats.miles)}</span></div>
-            <div class="app-stat-row"><span class="stat-label">${escapeHtml(d.oorMiles.label)}</span><span class="stat-value">${escapeHtml(d.yearlyStats.oor)}</span></div>
-            <div class="app-stat-row"><span class="stat-label">${escapeHtml(d.oorPercent.label)}</span><span class="stat-value">${escapeHtml(d.yearlyStats.percent)}</span></div>
           </div>
         </div>
       </div>
@@ -402,7 +383,7 @@ function render() {
   // Add spacing styles (matches fragment_trip_input.xml padding/margins)
   const style = document.createElement('style');
   style.textContent = `
-    .app-body { padding: 16px; }
+    .app-body { padding: 16px; padding-bottom: 32px; }
     .app-body .app-input { margin: 12px auto 0; display: block; }
     .app-body .app-input:first-of-type { margin-top: 16px; }
     .app-body .app-button { margin: 12px auto; display: block; }
@@ -414,8 +395,7 @@ function render() {
     .app-progress-wrap { margin: 0 auto 12px; height: 4px; background: var(--divider); border-radius: 2px; overflow: hidden; max-width: 320px; }
     .app-progress-bar { height: 100%; width: 30%; background: var(--primary); animation: progress-indeterminate 1s ease-in-out infinite; }
     @keyframes progress-indeterminate { 0% { transform: translateX(-100%); } 100% { transform: translateX(400%); } }
-    .app-statistics-btn { width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; }
-    .stats-arrow { margin-left: auto; }
+    .app-body .app-statistics-btn { margin: 24px 0 12px 0; }
   `;
   container.appendChild(style);
 
@@ -550,14 +530,13 @@ function initModals() {
   const settingsOverlay = document.getElementById('settings-modal');
   document.getElementById('settings-modal-close')?.addEventListener('click', hideSettingsModal);
   settingsOverlay?.addEventListener('click', (e) => { if (e.target === settingsOverlay) hideSettingsModal(); });
-  document.querySelectorAll('.app-mode-btn').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const mode = btn.dataset.mode;
-      if (mode) setTheme(mode);
-      document.querySelectorAll('.app-mode-btn').forEach((b) => b.classList.toggle('active', b.dataset.mode === getTheme()));
-    });
+  document.getElementById('settings-mode-row')?.addEventListener('click', () => {
+    setTheme(getTheme() === 'dark' ? 'light' : 'dark');
+    render();
+    const modeSummary = document.getElementById('settings-mode-summary');
+    if (modeSummary) modeSummary.textContent = getTheme() === 'dark' ? 'Dark' : 'Light';
   });
-  document.getElementById('settings-templates')?.addEventListener('click', () => { showToast('Templates'); hideSettingsModal(); });
+  document.getElementById('settings-templates-row')?.addEventListener('click', () => { showToast('Templates'); hideSettingsModal(); });
   document.getElementById('settings-help')?.addEventListener('click', () => { showToast('Help & Info'); hideSettingsModal(); });
 
   const endTripOverlay = document.getElementById('end-trip-modal');

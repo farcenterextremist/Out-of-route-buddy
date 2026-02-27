@@ -5,12 +5,17 @@
   --phone-height: 780px;
   --phone-bg: #1a1a1a;
   --phone-border: #333;
-  /* Phase B: 1:1 spacing (app dp → px at 360px) */
-  --toolbar-height: 56px;
+  /* Phase B: 1:1 spacing (app dp → px at 360px) - matches custom_toolbar.xml */
+  --toolbar-height: 80px;
   --toolbar-margin: 16px;
   --toolbar-gap: 8px;
+  --toolbar-title-size: 28px;
   --card-padding: 10px;
   --input-elevation: 0 2px 4px rgba(0,0,0,0.1);
+  /* 3D button (used in phone and in modals like End Trip) */
+  --button-gradient: linear-gradient(180deg, #666666 0%, #333333 50%, #000000 100%);
+  --button-shadow: 0 4px 0 rgba(0,0,0,0.25);
+  --button-pressed: translateY(2px);
 }
 
 /* Light mode - matches app values/colors.xml + drawable */
@@ -86,6 +91,71 @@ body {
   border-radius: 12px;
   margin-bottom: 24px;
   backdrop-filter: blur(10px);
+}
+
+.emulator-toolbar-left {
+  position: relative;
+  flex-shrink: 0;
+  margin-right: 12px;
+}
+
+.emulator-menu-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.08);
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.emulator-menu-btn:hover {
+  background: rgba(255,255,255,0.15);
+}
+.emulator-menu-btn[aria-expanded="true"] {
+  background: rgba(255,255,255,0.2);
+}
+
+.emulator-menu-icon {
+  display: block;
+  width: 24px;
+  height: 24px;
+}
+
+.emulator-menu-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: 8px;
+  min-width: 180px;
+  padding: 6px 0;
+  background: rgba(30,30,30,0.98);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  z-index: 1000;
+}
+.emulator-menu-dropdown[hidden] {
+  display: none;
+}
+.emulator-menu-dropdown button {
+  display: block;
+  width: 100%;
+  padding: 10px 16px;
+  border: none;
+  background: none;
+  color: #fff;
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.emulator-menu-dropdown button:hover {
+  background: rgba(255,255,255,0.1);
 }
 
 .emulator-toolbar-title-block {
@@ -233,7 +303,7 @@ body {
 
 .app-content .editable.selected {
   outline: 2px solid #03DAC6;
-  outline-offset: 2px;
+  outline-offset: 0;
   border-radius: 4px;
 }
 
@@ -244,51 +314,91 @@ body {
   pointer-events: auto;
 }
 
-/* Toolbar (inside app) - matches custom_toolbar.xml; stretched cracked-road texture (same as real app) */
+/* Toolbar (inside app) - matches custom_toolbar.xml: 80dp height, 28sp bold title */
 .app-toolbar {
-  background: var(--toolbar-bg) url('toolbar_background_cracked_road.png') no-repeat center center;
-  background-size: 100% 100%;
+  width: 100%;
+  height: var(--toolbar-height);
+  min-height: var(--toolbar-height);
+  flex-shrink: 0;
+  background-color: var(--toolbar-bg);
+  background-image: url('toolbar_background_cracked_road.png');
+  background-repeat: no-repeat;
+  background-position: center center;
+  background-size: 100% auto;
   color: var(--toolbar-text);
-  padding: 12px var(--toolbar-margin);
+  padding: 0 var(--toolbar-margin);
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  min-height: var(--toolbar-height);
+  justify-content: flex-end;
+  position: relative;
+  box-sizing: border-box;
+  /* No border/shadow - was cutting into statistics section below */
 }
 
 .app-toolbar-title {
-  font-size: 24px;
+  font-size: var(--toolbar-title-size);
   font-weight: bold;
   color: var(--toolbar-text);
+  letter-spacing: 0.05em;
+  /* Black outline: thicker stroke for visibility on textured background */
+  text-shadow:
+    0 0 3px #000,
+    -2px -2px 0 #000,
+    -2px -1px 0 #000,
+    -2px 0 0 #000,
+    -2px 1px 0 #000,
+    -2px 2px 0 #000,
+    -1px -2px 0 #000,
+    -1px 2px 0 #000,
+    0 -2px 0 #000,
+    0 2px 0 #000,
+    1px -2px 0 #000,
+    1px 2px 0 #000,
+    2px -2px 0 #000,
+    2px -1px 0 #000,
+    2px 0 0 #000,
+    2px 1px 0 #000,
+    2px 2px 0 #000,
+    -1px -1px 0 #000,
+    -1px 0 0 #000,
+    -1px 1px 0 #000,
+    0 -1px 0 #000,
+    0 1px 0 #000,
+    1px -1px 0 #000,
+    1px 0 0 #000,
+    1px 1px 0 #000;
 }
 
 .app-toolbar-settings {
-  width: 40px;
-  height: 40px;
-  min-width: 40px;
-  min-height: 40px;
+  width: 48px;
+  height: 48px;
+  min-width: 48px;
+  min-height: 48px;
   border: none;
   background: transparent;
   border-radius: 8px;
   cursor: pointer;
-  font-size: 20px;
+  font-size: 0;
   color: var(--toolbar-text);
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 0;
+  margin-left: auto;
+  flex-shrink: 0;
 }
 .app-toolbar-settings:hover,
 .app-toolbar-settings:active {
   background: rgba(255,255,255,0.15);
 }
 
-/* Improvement #1: SVG icon in settings button (color inherited from toolbar) */
+/* Improvement #1: SVG icon in settings button (color inherited from toolbar) - matches 24dp icon */
 .app-toolbar-settings-svg svg {
   width: 24px;
   height: 24px;
   display: block;
   color: inherit;
+  flex-shrink: 0;
 }
 .app-toolbar-settings-svg {
   font-size: 0;
@@ -299,6 +409,18 @@ body {
   display: block;
   color: inherit;
 }
+.app-pause-btn {
+  color: #FFFFFF;
+  background: var(--button-gradient);
+  box-shadow: var(--button-shadow);
+}
+.app-pause-btn:hover {
+  filter: brightness(1.1);
+}
+.app-pause-btn:active {
+  transform: var(--button-pressed);
+  box-shadow: 0 2px 0 rgba(0,0,0,0.3);
+}
 .app-pause-btn svg {
   width: 24px;
   height: 24px;
@@ -307,12 +429,20 @@ body {
   color: inherit;
 }
 
+/* Title centered in full toolbar; overlay so settings stays on right */
 .app-toolbar-center {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  flex: 1;
-  gap: var(--toolbar-gap);
+  pointer-events: none;
+}
+.app-toolbar-center .app-toolbar-title {
+  pointer-events: auto;
 }
 
 .app-toolbar-line {
@@ -351,7 +481,7 @@ body {
   box-shadow: 0 0 0 2px rgba(176,0,32,0.3);
 }
 
-/* Buttons - matches button_3d_material.xml */
+/* Buttons - matches button_3d_material.xml (Start Trip, Statistics, View, Pause) */
 .app-button {
   padding: 12px 24px;
   min-width: 200px;
@@ -376,11 +506,49 @@ body {
   box-shadow: 0 2px 0 rgba(0,0,0,0.3);
 }
 
-/* Card - matches card_white_rounded */
+/* Statistics bar: full-width, no max-width (overrides .app-button) */
+.app-statistics-btn {
+  width: 100%;
+  max-width: none;
+  min-width: 0;
+  margin-top: 24px;
+  margin-left: 0;
+  margin-right: 0;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 24px;
+}
+.app-statistics-btn .stats-arrow {
+  flex-shrink: 0;
+}
+
+/* View button in period row: same 3D style as Start Trip / Statistics, slightly smaller */
+.app-stats-view-btn {
+  margin: 0;
+  min-width: 72px;
+  min-height: 40px;
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: bold;
+  color: #FFFFFF;
+  background: var(--button-gradient);
+  box-shadow: var(--button-shadow);
+}
+.app-stats-view-btn:hover {
+  filter: brightness(1.1);
+}
+.app-stats-view-btn:active {
+  transform: var(--button-pressed);
+  box-shadow: 0 2px 0 rgba(0,0,0,0.3);
+}
+
+/* Card - matches card_white_rounded (10dp padding all sides per fragment_trip_input) */
 .app-card {
   background: var(--card-bg);
   border-radius: 12px;
-  padding: var(--card-padding) 16px;
+  padding: 10px;
   box-shadow: 0 4px 8px rgba(0,0,0,0.15);
 }
 
@@ -388,7 +556,7 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 8px 0;
+  padding: 4px 0;
   border-bottom: 1px solid var(--divider);
   color: var(--text-primary);
 }
@@ -419,6 +587,7 @@ body {
 .app-stats-section.expanded {
   max-height: 600px;
   opacity: 1;
+  overflow: visible;
 }
 
 .app-stats-period-label {
@@ -656,7 +825,8 @@ body {
 .app-modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.5);
+  background: rgba(0,0,0,0.45);
+  backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -675,10 +845,10 @@ body {
 .app-modal {
   background: #fff;
   color: #111;
-  border-radius: 12px;
+  border-radius: 20px;
   min-width: 280px;
   max-width: 90vw;
-  box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+  box-shadow: 0 16px 48px rgba(0,0,0,0.18), 0 0 0 1px rgba(0,0,0,0.04);
   overflow: hidden;
 }
 .app-modal-header {
@@ -736,6 +906,82 @@ body {
   margin: 0 0 12px;
   color: #333;
   font-size: 14px;
+}
+
+/* Settings modal 1:1 with dialog_settings.xml */
+.app-settings-body {
+  padding: 24px;
+}
+.app-settings-row {
+  display: flex;
+  flex-direction: column;
+  padding: 12px 8px;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: background 0.15s;
+}
+.app-settings-row + .app-settings-row {
+  margin-top: 12px;
+}
+.app-settings-row:hover {
+  background: rgba(0,0,0,0.06);
+}
+.app-settings-row:active {
+  background: rgba(0,0,0,0.1);
+}
+.app-settings-row-title {
+  font-size: 18px;
+  font-weight: bold;
+  color: #111;
+}
+.app-settings-row-summary {
+  font-size: 14px;
+  color: #757575;
+  margin-top: 2px;
+}
+/* Help & Info: same 3D style as Start Trip / Statistics */
+.app-settings-help-btn {
+  width: 100%;
+  margin-top: 32px;
+  padding: 12px 24px;
+  font-size: 16px;
+  font-weight: bold;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  color: #FFFFFF;
+  background: var(--button-gradient);
+  box-shadow: var(--button-shadow);
+  transition: transform 0.1s;
+}
+.app-settings-help-btn:hover {
+  filter: brightness(1.1);
+}
+.app-settings-help-btn:active {
+  transform: var(--button-pressed);
+  box-shadow: 0 2px 0 rgba(0,0,0,0.3);
+}
+
+/* End Trip modal: same 3D buttons as Start Trip / Statistics */
+.app-end-trip-actions .app-button-3d {
+  width: 100%;
+  padding: 12px 24px;
+  font-size: 16px;
+  font-weight: bold;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  color: #FFFFFF;
+  background: var(--button-gradient);
+  box-shadow: var(--button-shadow);
+  transition: transform 0.1s;
+}
+.app-end-trip-actions .app-button-3d:hover {
+  filter: brightness(1.1);
+}
+.app-end-trip-actions .app-button-3d:active {
+  transform: var(--button-pressed);
+  box-shadow: 0 2px 0 rgba(0,0,0,0.3);
 }
 
 /* Responsive */

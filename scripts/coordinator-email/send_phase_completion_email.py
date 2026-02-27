@@ -9,6 +9,7 @@ Requires .env (same as send_email.py). Body files live in this folder.
 
 import os
 import sys
+from datetime import date
 
 # Presets: preset_name -> (subject, body_filename)
 PRESETS = {
@@ -38,6 +39,17 @@ def main():
         sys.exit(1)
     with open(body_path, encoding="utf-8") as f:
         body = f.read()
+    # Append to project timeline before sending
+    try:
+        from context_loader import append_to_timeline
+        append_to_timeline(
+            date=str(date.today()),
+            etype="phase",
+            title=subject,
+            detail=f"Preset: {preset}",
+        )
+    except Exception:
+        pass
     # Delegate to send_email
     from send_email import send
     try:

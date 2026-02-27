@@ -1,15 +1,22 @@
 package com.example.outofroutebuddy.data.repository
 
+import android.util.Log
 import com.example.outofroutebuddy.domain.models.Trip
 import com.example.outofroutebuddy.domain.models.TripStatus
 import com.example.outofroutebuddy.domain.repository.TripRepository as DomainTripRepository
 import com.example.outofroutebuddy.domain.repository.TripStatistics
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
-import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 import com.example.outofroutebuddy.data.repository.TripRepository as DataTripRepository
+import com.example.outofroutebuddy.utils.extensions.endOfDay
+import com.example.outofroutebuddy.utils.extensions.endOfMonth
+import com.example.outofroutebuddy.utils.extensions.startOfDay
+import com.example.outofroutebuddy.utils.extensions.startOfMonth
 
 /**
  * ✅ ADAPTER: Domain TripRepository implementation using data layer
@@ -21,6 +28,10 @@ import com.example.outofroutebuddy.data.repository.TripRepository as DataTripRep
 class DomainTripRepositoryAdapter(
     private val dataRepository: DataTripRepository,
 ) : DomainTripRepository {
+
+    companion object {
+        private const val TAG = "DomainTripRepositoryAdapter"
+    }
     override fun getAllTrips(): Flow<List<Trip>> {
         return dataRepository.getAllTrips().map { trips ->
             trips.map { dataTrip ->
@@ -40,30 +51,29 @@ class DomainTripRepositoryAdapter(
 
     override fun getTripById(id: String): Flow<Trip?> {
         return kotlinx.coroutines.flow.flow {
-            try {
-                val tripId = id.toLongOrNull()
-                if (tripId != null) {
-                    val trip = dataRepository.getTripById(tripId)
-                    emit(
-                        trip?.let { dataTrip ->
-                            Trip(
-                                id = dataTrip.id.toString(),
-                                loadedMiles = dataTrip.loadedMiles,
-                                bounceMiles = dataTrip.bounceMiles,
-                                actualMiles = dataTrip.actualMiles,
-                                oorMiles = dataTrip.oorMiles,
-                                oorPercentage = dataTrip.oorPercentage,
-                                startTime = dataTrip.date,
-                                status = TripStatus.COMPLETED,
-                            )
-                        },
-                    )
-                } else {
-                    emit(null)
-                }
-            } catch (e: Exception) {
+            val tripId = id.toLongOrNull()
+            if (tripId != null) {
+                val trip = dataRepository.getTripById(tripId)
+                emit(
+                    trip?.let { dataTrip ->
+                        Trip(
+                            id = dataTrip.id.toString(),
+                            loadedMiles = dataTrip.loadedMiles,
+                            bounceMiles = dataTrip.bounceMiles,
+                            actualMiles = dataTrip.actualMiles,
+                            oorMiles = dataTrip.oorMiles,
+                            oorPercentage = dataTrip.oorPercentage,
+                            startTime = dataTrip.date,
+                            status = TripStatus.COMPLETED,
+                        )
+                    },
+                )
+            } else {
                 emit(null)
             }
+        }.catch { e ->
+            Log.w(TAG, "getTripById failed for id=$id", e)
+            emit(null)
         }
     }
 
@@ -72,65 +82,46 @@ class DomainTripRepositoryAdapter(
         endDate: Date,
     ): Flow<List<Trip>> {
         return kotlinx.coroutines.flow.flow {
-            try {
-                val trips = dataRepository.getTripsForDateRange(startDate, endDate)
-                val domainTrips =
-                    trips.map { dataTrip ->
-                        Trip(
-                            id = dataTrip.id.toString(),
-                            loadedMiles = dataTrip.loadedMiles,
-                            bounceMiles = dataTrip.bounceMiles,
-                            actualMiles = dataTrip.actualMiles,
-                            oorMiles = dataTrip.oorMiles,
-                            oorPercentage = dataTrip.oorPercentage,
-                            startTime = dataTrip.date,
-                            status = TripStatus.COMPLETED,
-                        )
-                    }
-                emit(domainTrips)
-            } catch (e: Exception) {
-                emit(emptyList())
+            val trips = dataRepository.getTripsForDateRange(startDate, endDate)
+            val domainTrips = trips.map { dataTrip ->
+                Trip(
+                    id = dataTrip.id.toString(),
+                    loadedMiles = dataTrip.loadedMiles,
+                    bounceMiles = dataTrip.bounceMiles,
+                    actualMiles = dataTrip.actualMiles,
+                    oorMiles = dataTrip.oorMiles,
+                    oorPercentage = dataTrip.oorPercentage,
+                    startTime = dataTrip.date,
+                    status = TripStatus.COMPLETED,
+                )
             }
+            emit(domainTrips)
+        }.catch { e ->
+            Log.w(TAG, "getTripsByDateRange failed", e)
+            emit(emptyList())
         }
     }
 
     override fun getTripsByStatus(status: TripStatus): Flow<List<Trip>> {
-        return kotlinx.coroutines.flow.flow {
-            try {
-                // For now, return all trips as completed since we don't have status tracking yet
-                val allTrips = mutableListOf<com.example.outofroutebuddy.models.Trip>()
-                dataRepository.getAllTrips().collect { trips ->
-                    allTrips.clear()
-                    allTrips.addAll(trips)
-                }
-                val domainTrips =
-                    allTrips.map { dataTrip ->
-                        Trip(
-                            id = dataTrip.id.toString(),
-                            loadedMiles = dataTrip.loadedMiles,
-                            bounceMiles = dataTrip.bounceMiles,
-                            actualMiles = dataTrip.actualMiles,
-                            oorMiles = dataTrip.oorMiles,
-                            oorPercentage = dataTrip.oorPercentage,
-                            startTime = dataTrip.date,
-                            status = TripStatus.COMPLETED,
-                        )
-                    }
-                emit(domainTrips)
-            } catch (e: Exception) {
-                emit(emptyList())
+        return flow {
+            // One-shot snapshot: getAllTrips() is an infinite Flow, so use first() to avoid hanging
+            val allTrips = dataRepository.getAllTrips().first()
+            val domainTrips = allTrips.map { dataTrip ->
+                Trip(
+                    id = dataTrip.id.toString(),
+                    loadedMiles = dataTrip.loadedMiles,
+                    bounceMiles = dataTrip.bounceMiles,
+                    actualMiles = dataTrip.actualMiles,
+                    oorMiles = dataTrip.oorMiles,
+                    oorPercentage = dataTrip.oorPercentage,
+                    startTime = dataTrip.date,
+                    status = TripStatus.COMPLETED,
+                )
             }
-        }
-    }
-
-    override fun getCurrentActiveTrip(): Flow<Trip?> {
-        return kotlinx.coroutines.flow.flow {
-            try {
-                // For now, return null since we don't have active trip tracking yet
-                emit(null)
-            } catch (e: Exception) {
-                emit(null)
-            }
+            emit(domainTrips)
+        }.catch { e ->
+            Log.w(TAG, "getTripsByStatus failed", e)
+            emit(emptyList())
         }
     }
 
@@ -178,8 +169,7 @@ class DomainTripRepositoryAdapter(
         return id.toString()
     }
 
-    // 2. Implement the missing updateTrip method
-    override suspend fun updateTrip(trip: Trip) {
+    override suspend fun updateTrip(trip: Trip): Boolean {
         val dataTrip = com.example.outofroutebuddy.models.Trip(
             id = trip.id.toLongOrNull() ?: 0L,
             date = trip.startTime ?: java.util.Date(),
@@ -187,54 +177,42 @@ class DomainTripRepositoryAdapter(
             bounceMiles = trip.bounceMiles,
             actualMiles = trip.actualMiles
         )
-        dataRepository.updateTrip(dataTrip)
+        return dataRepository.updateTrip(dataTrip)
     }
 
     // 3. Implement other missing methods
-    override suspend fun deleteTrip(trip: Trip) {
-        val tripId = trip.id.toLongOrNull() ?: 0L
-        dataRepository.deleteTripById(tripId)
+    override suspend fun deleteTrip(trip: Trip): Boolean {
+        val tripId = trip.id.toLongOrNull()
+        if (tripId == null || tripId <= 0L) return false
+        return dataRepository.deleteTripById(tripId)
     }
 
-    override suspend fun deleteTripById(id: String) {
-        dataRepository.deleteTripById(id.toLongOrNull() ?: 0L)
+    override suspend fun deleteTripById(id: String): Boolean {
+        val tripId = id.toLongOrNull()
+        if (tripId == null || tripId <= 0L) return false
+        return dataRepository.deleteTripById(tripId)
     }
 
     override suspend fun getTodayTripStatistics(): TripStatistics {
-        val today = java.util.Date()
-        val calendar = java.util.Calendar.getInstance()
-        calendar.time = today
-        calendar.set(java.util.Calendar.HOUR_OF_DAY, 0)
-        calendar.set(java.util.Calendar.MINUTE, 0)
-        calendar.set(java.util.Calendar.SECOND, 0)
-        calendar.set(java.util.Calendar.MILLISECOND, 0)
-        val startOfDay = calendar.time
-        
-        calendar.add(java.util.Calendar.DAY_OF_MONTH, 1)
-        val endOfDay = calendar.time
-        
-        return getTripStatistics(startOfDay, endOfDay)
+        val today = Date()
+        val start = today.startOfDay()
+        val end = today.endOfDay()
+        return getTripStatistics(start, end)
     }
 
     override suspend fun getMonthlyTripStatistics(): TripStatistics {
-        val today = java.util.Date()
-        val calendar = java.util.Calendar.getInstance()
-        calendar.time = today
-        calendar.set(java.util.Calendar.DAY_OF_MONTH, 1)
-        calendar.set(java.util.Calendar.HOUR_OF_DAY, 0)
-        calendar.set(java.util.Calendar.MINUTE, 0)
-        calendar.set(java.util.Calendar.SECOND, 0)
-        calendar.set(java.util.Calendar.MILLISECOND, 0)
-        val startOfMonth = calendar.time
-        
-        calendar.add(java.util.Calendar.MONTH, 1)
-        val endOfMonth = calendar.time
-        
-        return getTripStatistics(startOfMonth, endOfMonth)
+        val today = Date()
+        val start = today.startOfMonth()
+        val end = today.endOfMonth()
+        return getTripStatistics(start, end)
     }
 
     override suspend fun clearAllTrips() {
         dataRepository.clearAllTrips()
+    }
+
+    override suspend fun deleteTripsOlderThan(cutoffDate: Date) {
+        dataRepository.deleteTripsOlderThan(cutoffDate)
     }
 
     override suspend fun exportTripData(startDate: Date, endDate: Date): String {

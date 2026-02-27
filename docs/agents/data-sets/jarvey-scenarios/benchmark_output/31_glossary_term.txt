@@ -1,0 +1,7 @@
+You asked about recent project changes.
+
+**OutOfRouteBuddy** helps delivery drivers and fleet operators track **out-of-route (OOR) miles** accurately. The app is the single place to log loaded and bounce miles, run trips with GPS, and see monthly statistics and history so users can report and improve OOR performance.
+ 
+**Stack:** Android (Kotlin), Gradle, Room for persistence, ViewModels, TripTrackingService for live miles. Key docs: `docs/agents/KNOWN_TRUTHS_AND_SINGLE_SOURCE_OF_TRUTH.md`, `docs/technical/WIRING_MAP.md`.
+
+— Jarvey

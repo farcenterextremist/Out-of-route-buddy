@@ -24,7 +24,7 @@ class OptimizedGpsDataFlow {
         private const val BATCH_SIZE = ValidationConfig.GPS_BATCH_SIZE
         private const val BATCH_TIMEOUT_MS = ValidationConfig.GPS_BATCH_TIMEOUT_MS
         private const val MIN_DISTANCE_METERS = ValidationConfig.GPS_MIN_DISTANCE_METERS
-        private const val MAX_SPEED_MPH = ValidationConfig.GPS_MAX_SPEED_MPH
+        private const val MAX_SPEED_MPH = ValidationConfig.VEHICLE_MAX_SPEED_MPH.toDouble()
         private const val MIN_ACCURACY_METERS = ValidationConfig.GPS_MIN_ACCURACY_METERS
         private const val MAX_ACCURACY_METERS = ValidationConfig.GPS_MAX_ACCURACY_METERS
         

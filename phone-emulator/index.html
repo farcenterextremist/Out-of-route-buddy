@@ -3,6 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <title>OutOfRouteBuddy - Virtual Phone Emulator</title>
   <link rel="stylesheet" href="styles.css">
 </head>
@@ -10,6 +13,14 @@
   <div class="app-container">
     <!-- Toolbar -->
     <header class="emulator-toolbar">
+      <div class="emulator-toolbar-left">
+        <button type="button" class="emulator-menu-btn" id="emulator-menu-btn" title="Menu" aria-label="Open menu" aria-expanded="false" aria-haspopup="true">
+          <svg class="emulator-menu-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+        <div class="emulator-menu-dropdown" id="emulator-menu-dropdown" role="menu" aria-label="Emulator menu" hidden>
+          <button type="button" role="menuitem" id="menu-add-element">Add element</button>
+        </div>
+      </div>
       <div class="emulator-toolbar-title-block">
         <h1>OutOfRouteBuddy Emulator</h1>
         <p class="emulator-toolbar-scope" title="Screens and elements currently represented in this emulator">In scope: Trip screen (main) · v1</p>
@@ -44,7 +55,7 @@
       <!-- Properties panel -->
       <aside class="properties-panel" id="properties-panel" style="display:none">
         <div class="panel-header">
-          <h2>Edit</h2>
+          <h2>Edit: <span id="panel-edit-title" aria-live="polite"></span></h2>
           <button id="close-panel" class="btn-close" title="Close">×</button>
         </div>
         <div class="panel-content" id="panel-content">
@@ -95,20 +106,16 @@
           <h2 id="settings-modal-title">Settings</h2>
           <button type="button" class="btn-close modal-close" id="settings-modal-close" aria-label="Close">×</button>
         </div>
-        <div class="app-modal-body">
-          <div class="app-modal-row">
-            <span class="app-modal-label">Mode</span>
-            <div class="app-modal-actions">
-              <button type="button" class="btn btn-secondary app-mode-btn" data-mode="light">Light</button>
-              <button type="button" class="btn btn-secondary app-mode-btn" data-mode="dark">Dark</button>
-            </div>
+        <div class="app-modal-body app-settings-body">
+          <div class="app-settings-row" id="settings-mode-row" role="button" tabindex="0">
+            <span class="app-settings-row-title">Mode</span>
+            <span class="app-settings-row-summary" id="settings-mode-summary">Light</span>
           </div>
-          <div class="app-modal-row">
-            <button type="button" class="btn btn-secondary app-modal-full" id="settings-templates">Templates</button>
+          <div class="app-settings-row" id="settings-templates-row" role="button" tabindex="0">
+            <span class="app-settings-row-title">Templates</span>
+            <span class="app-settings-row-summary" id="settings-template-summary">Standard</span>
           </div>
-          <div class="app-modal-row">
-            <button type="button" class="btn btn-secondary app-modal-full" id="settings-help">Help &amp; Info</button>
-          </div>
+          <button type="button" class="app-settings-help-btn" id="settings-help">Help &amp; Info</button>
         </div>
       </div>
     </div>
@@ -138,10 +145,10 @@
         </div>
         <div class="app-modal-body">
           <p class="app-modal-p">What would you like to do?</p>
-          <div class="app-modal-actions vertical">
-            <button type="button" class="btn btn-primary" id="end-trip-confirm">End Trip</button>
-            <button type="button" class="btn btn-secondary" id="end-trip-clear">Clear Trip</button>
-            <button type="button" class="btn btn-secondary" id="end-trip-continue">Continue Trip</button>
+          <div class="app-modal-actions vertical app-end-trip-actions">
+            <button type="button" class="btn app-button-3d" id="end-trip-confirm">End Trip</button>
+            <button type="button" class="btn app-button-3d" id="end-trip-clear">Clear Trip</button>
+            <button type="button" class="btn app-button-3d" id="end-trip-continue">Continue Trip</button>
           </div>
         </div>
       </div>

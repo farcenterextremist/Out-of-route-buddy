@@ -47,13 +47,6 @@ interface TripRepository {
     fun getTripsByStatus(status: com.example.outofroutebuddy.domain.models.TripStatus): Flow<List<Trip>>
 
     /**
-     * Get current active trip
-     *
-     * @return Flow of the current active trip, or null if none
-     */
-    fun getCurrentActiveTrip(): Flow<Trip?>
-
-    /**
      * Insert a new trip
      *
      * @param trip The trip to insert
@@ -65,22 +58,25 @@ interface TripRepository {
      * Update an existing trip
      *
      * @param trip The trip to update
+     * @return true if updated, false if not found or error
      */
-    suspend fun updateTrip(trip: Trip)
+    suspend fun updateTrip(trip: Trip): Boolean
 
     /**
      * Delete a trip
      *
      * @param trip The trip to delete
+     * @return true if deleted, false if not found or error
      */
-    suspend fun deleteTrip(trip: Trip)
+    suspend fun deleteTrip(trip: Trip): Boolean
 
     /**
      * Delete trip by ID
      *
      * @param id The trip ID to delete
+     * @return true if deleted, false if not found or error
      */
-    suspend fun deleteTripById(id: String)
+    suspend fun deleteTripById(id: String): Boolean
 
     /**
      * Get trip statistics for a date range
@@ -112,6 +108,11 @@ interface TripRepository {
      * Clear all trip data
      */
     suspend fun clearAllTrips()
+
+    /**
+     * Delete trips with date strictly before [cutoffDate]. Used for "delete old data from device" flow.
+     */
+    suspend fun deleteTripsOlderThan(cutoffDate: Date)
 
     /**
      * Export trip data

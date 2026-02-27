@@ -13,11 +13,14 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
+import com.example.outofroutebuddy.data.PreferencesManager
 import com.example.outofroutebuddy.data.TripPersistenceManager
+import com.example.outofroutebuddy.domain.models.PeriodMode
 import com.example.outofroutebuddy.presentation.ui.dialogs.TripRecoveryDialog
 import com.example.outofroutebuddy.presentation.ui.trip.TripInputFragment
 import com.example.outofroutebuddy.presentation.viewmodel.TripInputViewModel
 import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 import kotlinx.coroutines.launch
 
 /**
@@ -95,6 +98,9 @@ class MainActivity : AppCompatActivity(), TripRecoveryDialog.TripRecoveryListene
         // Background permission (Android 10+)
         private val BACKGROUND_PERMISSION = Manifest.permission.ACCESS_BACKGROUND_LOCATION
     }
+
+    @Inject
+    lateinit var preferencesManager: PreferencesManager
 
     private lateinit var navController: NavController
     private var isNavigationInitialized = false
@@ -416,6 +422,8 @@ class MainActivity : AppCompatActivity(), TripRecoveryDialog.TripRecoveryListene
                 // Check background permission (Android 10+)
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                     checkBackgroundPermission()
+                } else {
+                    onPermissionsFlowComplete()
                 }
             }
         } catch (e: Exception) {
@@ -473,6 +481,8 @@ class MainActivity : AppCompatActivity(), TripRecoveryDialog.TripRecoveryListene
                 // Ask for background permission on Android 10+
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                     showBackgroundPermissionRationale()
+                } else {
+                    onPermissionsFlowComplete()
                 }
             } else {
                 Log.w(TAG, "❌ Location permissions denied")
@@ -500,6 +510,7 @@ class MainActivity : AppCompatActivity(), TripRecoveryDialog.TripRecoveryListene
                 // We'll ask for this when user starts a trip
             } else {
                 Log.d(TAG, "Background location permission already granted")
+                onPermissionsFlowComplete()
             }
         }
     }
@@ -522,6 +533,7 @@ class MainActivity : AppCompatActivity(), TripRecoveryDialog.TripRecoveryListene
                 .setNegativeButton("Skip") { dialog, _ ->
                     dialog.dismiss()
                     Log.d(TAG, "User skipped background permission")
+                    onPermissionsFlowComplete()
                 }
                 .show()
         }
@@ -552,6 +564,7 @@ class MainActivity : AppCompatActivity(), TripRecoveryDialog.TripRecoveryListene
         } else {
             Log.w(TAG, "❌ Background location permission denied")
         }
+        onPermissionsFlowComplete()
     }
     
     /**
@@ -580,6 +593,66 @@ class MainActivity : AppCompatActivity(), TripRecoveryDialog.TripRecoveryListene
                 dialog.dismiss()
             }
             .show()
+    }
+
+    /**
+     * Called when the permission flow is complete (all prompts done, user granted or declined).
+     * Shows period onboarding dialog on first run if location permissions are granted.
+     */
+    private fun onPermissionsFlowComplete() {
+        if (!locationPermissionsGranted) return
+        maybeShowPeriodOnboarding()
+    }
+
+    /**
+     * Show period selection dialog on first run after permissions are confirmed.
+     * Only shows if user hasn't seen it before and location permissions are granted.
+     */
+    private fun maybeShowPeriodOnboarding() {
+        if (!locationPermissionsGranted) return
+        if (preferencesManager.hasSeenPeriodOnboarding()) return
+
+        val dialogView = layoutInflater.inflate(R.layout.dialog_period_onboarding, null)
+        val radioGroup = dialogView.findViewById<android.widget.RadioGroup>(R.id.period_onboarding_radio_group)
+        val radioStandard = dialogView.findViewById<android.widget.RadioButton>(R.id.radio_period_standard)
+        val radioCustom = dialogView.findViewById<android.widget.RadioButton>(R.id.radio_period_custom)
+        val confirmButton = dialogView.findViewById<android.widget.Button>(R.id.period_onboarding_confirm)
+
+        radioStandard.isChecked = true
+
+        val dialog = AlertDialog.Builder(this)
+            .setView(dialogView)
+            .setCancelable(false)
+            .create()
+
+        confirmButton.setOnClickListener {
+            val mode = if (radioCustom.isChecked) PeriodMode.CUSTOM else PeriodMode.STANDARD
+            preferencesManager.savePeriodMode(mode)
+            preferencesManager.setHasSeenPeriodOnboarding(true)
+            dialog.dismiss()
+            Log.d(TAG, "Period onboarding completed: $mode")
+            refreshTripInputPeriodAfterOnboarding()
+        }
+
+        dialog.show()
+    }
+
+    /**
+     * Refresh period statistics in TripInputFragment after onboarding completes.
+     * Ensures the selected period (Standard/Custom) is displayed in the statistics field and calendar.
+     */
+    private fun refreshTripInputPeriodAfterOnboarding() {
+        try {
+            val navHostFragment = supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as? NavHostFragment
+            val tripInputFragment = navHostFragment?.childFragmentManager?.fragments?.firstOrNull() as? TripInputFragment
+            if (tripInputFragment != null) {
+                val viewModel = ViewModelProvider(tripInputFragment)[TripInputViewModel::class.java]
+                viewModel.calculateCurrentPeriodStatistics()
+                Log.d(TAG, "Period refreshed in TripInputFragment after onboarding")
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "Failed to refresh period after onboarding", e)
+        }
     }
     
     /**

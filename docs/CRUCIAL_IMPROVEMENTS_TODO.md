@@ -8,7 +8,7 @@
 ## 1. Build & docs alignment — **DevOps Engineer**
 
 - **Gradle 9 readiness:** Build currently reports "Deprecated Gradle features were used in this build, making it incompatible with Gradle 9.0." Run with `--warning-mode all` to identify sources; document in `GRADLE_9_MIGRATION_NOTES.md` and plan plugin updates. *(Ref: `build_warnings.txt`, `GRADLE_9_MIGRATION_NOTES.md`.)*
-- **DEPLOYMENT.md vs actual build:** `docs/DEPLOYMENT.md` says minSdk 21 and JDK 11; project uses **minSdk 24** and **Java 17**. Update DEPLOYMENT.md so new contributors and CI match the real setup.
+- **DEPLOYMENT.md vs actual build:** ✅ **Done.** `docs/DEPLOYMENT.md` now correctly states minSdk 24 and Java 17.
 
 **Artifacts:** Updated `docs/DEPLOYMENT.md`, updated `GRADLE_9_MIGRATION_NOTES.md`.
 
@@ -74,8 +74,7 @@
 
 ## 8. Single source of truth for improvement list — **File Organizer**
 
-- Ensure this document (`docs/CRUCIAL_IMPROVEMENTS_TODO.md`) is referenced from `docs/agents/WORKER_TODOS_AND_IDEAS.md` or coordinator instructions so the team and future sessions know where the "crucial improvements" live.
-- Optionally add a one-line in `docs/agents/team-parameters.md` (if it exists) or README: "Current crucial improvement list: docs/CRUCIAL_IMPROVEMENTS_TODO.md."
+- ✅ **Done.** This document is referenced from `docs/README.md` (Quick links), `docs/agents/team-parameters.md` (Current improvement list), and `docs/agents/WORKER_TODOS_AND_IDEAS.md`.
 
 **Artifacts:** One or two cross-links in `docs/agents/` and/or root README.
 

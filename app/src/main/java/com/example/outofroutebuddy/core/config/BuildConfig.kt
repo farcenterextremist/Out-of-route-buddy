@@ -53,10 +53,10 @@ object BuildConfig {
     const val PACKAGE_NAME = "com.example.outofroutebuddy"
 
     /** Application version name */
-    const val VERSION_NAME = "1.0.1"
+    const val VERSION_NAME = "1.0.2"
 
     /** Application version code */
-    const val VERSION_CODE = 1
+    const val VERSION_CODE = 2
 
     /** Application name */
     const val APP_NAME = "OutOfRouteBuddy"

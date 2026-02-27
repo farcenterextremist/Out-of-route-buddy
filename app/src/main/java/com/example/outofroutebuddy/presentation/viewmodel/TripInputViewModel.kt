@@ -4,7 +4,6 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.outofroutebuddy.data.PreferencesManager
-import com.example.outofroutebuddy.data.StateCache
 import com.example.outofroutebuddy.data.TripPersistenceManager
 import com.example.outofroutebuddy.data.TripStateManager
 import com.example.outofroutebuddy.data.TripStatePersistence
@@ -33,6 +32,7 @@ import kotlinx.coroutines.flow.first
 import java.text.SimpleDateFormat
 import java.util.*
 import javax.inject.Inject
+import com.example.outofroutebuddy.utils.extensions.startOfDay
 
 /**
  * ✅ CRITICAL GPS TRACKING FIXES: ViewModel for handling trip input and real-time GPS tracking
@@ -70,7 +70,6 @@ class TripInputViewModel
         private val tripStateManager: TripStateManager,
         private val tripStatePersistence: TripStatePersistence,
         private val tripPersistenceManager: TripPersistenceManager,
-        private val stateCache: StateCache,
         private val backgroundSyncService: BackgroundSyncService,
         private val optimizedGpsDataFlow: OptimizedGpsDataFlow,
         private val validationFramework: ValidationFramework,
@@ -85,7 +84,7 @@ class TripInputViewModel
     ) : ViewModel() {
         companion object {
             private const val TAG = "TripInputViewModel"
-            private const val DEFAULT_PERIOD_LABEL = "Today"
+            private const val DEFAULT_PERIOD_LABEL = "N/A"
             private val PERIOD_LABEL_FORMAT = SimpleDateFormat("MMM d, yyyy", Locale.US)
         }
 
@@ -266,15 +265,10 @@ class TripInputViewModel
                         emptyList()
                     }
                     // Unique dates (start of day) that have at least one saved trip, for calendar/period clickable days
-                    val calendar = java.util.Calendar.getInstance()
-                    val datesWithTrips = trips.mapNotNull { it.startTime }.map { startTime ->
-                        calendar.time = startTime
-                        calendar.set(java.util.Calendar.HOUR_OF_DAY, 0)
-                        calendar.set(java.util.Calendar.MINUTE, 0)
-                        calendar.set(java.util.Calendar.SECOND, 0)
-                        calendar.set(java.util.Calendar.MILLISECOND, 0)
-                        calendar.time
-                    }.distinctBy { it.time }.sortedBy { it.time }
+                    val datesWithTrips = trips.mapNotNull { it.startTime }
+                        .map { it.startOfDay() }
+                        .distinctBy { it.time }
+                        .sortedBy { it.time }
 
                     val periodCalculation = UnifiedTripService.PeriodCalculation(
                         periodMode = periodMode,
@@ -331,7 +325,24 @@ class TripInputViewModel
                 totalTrips = stats.totalTrips,
                 totalMiles = stats.totalActualMiles,
                 oorMiles = stats.totalOorMiles,
-                oorPercentage = stats.avgOorPercentage
+                oorPercentage = stats.avgOorPercentage,
+                extraFields = emptyMap()
+            )
+        }
+
+        /**
+         * Maps PeriodStatistics to SummaryStatistics for the stats row display.
+         * Used when stats row shows selected period (not current month).
+         * Add optional metrics via extraFields when needed.
+         */
+        fun mapPeriodToSummary(period: PeriodStatistics?): SummaryStatistics? {
+            if (period == null) return null
+            return SummaryStatistics(
+                totalTrips = period.totalTrips,
+                totalMiles = period.totalDistance,
+                oorMiles = period.totalOorMiles,
+                oorPercentage = period.averageOorPercentage,
+                extraFields = emptyMap()
             )
         }
 
@@ -345,6 +356,91 @@ class TripInputViewModel
         private fun refreshSelectedPeriod() {
             val selected = _uiState.value.selectedPeriod ?: return
             updatePeriodStatistics(selected.periodMode, selected.startDate, selected.endDate, emitEvent = false)
+        }
+
+        /**
+         * Runs both monthly and period refresh in one coroutine so the UI sees a consistent
+         * state after a trip is saved (monthly statistics + days with trips + calendar data).
+         */
+        private suspend fun refreshStatisticsAfterSave(selectedPeriod: SelectedPeriod?) {
+            withContext(ioDispatcher) {
+                try {
+                    val monthlyStats = tripRepository.getMonthlyTripStatistics()
+                    if (selectedPeriod != null) {
+                        val stats = tripRepository.getTripStatistics(selectedPeriod.startDate, selectedPeriod.endDate)
+                        val trips = try {
+                            tripRepository.getTripsByDateRange(selectedPeriod.startDate, selectedPeriod.endDate).first()
+                        } catch (ex: Exception) {
+                            Log.w(TAG, "Failed to load trips for period stats", ex)
+                            emptyList()
+                        }
+                        val datesWithTrips = trips.mapNotNull { it.startTime }
+                            .map { it.startOfDay() }
+                            .distinctBy { it.time }
+                            .sortedBy { it.time }
+                        val label = formatPeriodLabel(selectedPeriod.periodMode, selectedPeriod.startDate, selectedPeriod.endDate)
+                        withContext(Dispatchers.Main) {
+                            _uiState.update { currentState ->
+                                currentState.copy(
+                                    monthlyStatistics = mapToSummary(monthlyStats),
+                                    periodStatistics = PeriodStatistics(
+                                        totalTrips = stats.totalTrips,
+                                        totalDistance = stats.totalActualMiles,
+                                        totalOorMiles = stats.totalOorMiles,
+                                        averageOorPercentage = stats.avgOorPercentage,
+                                        periodMode = selectedPeriod.periodMode,
+                                        startDate = selectedPeriod.startDate,
+                                        endDate = selectedPeriod.endDate
+                                    ),
+                                    selectedPeriod = SelectedPeriod(
+                                        startDate = selectedPeriod.startDate,
+                                        endDate = selectedPeriod.endDate,
+                                        periodMode = selectedPeriod.periodMode,
+                                        label = label
+                                    ),
+                                    selectedPeriodLabel = label,
+                                    datesWithTripsInPeriod = datesWithTrips,
+                                    showStatistics = true
+                                )
+                            }
+                        }
+                    } else {
+                        withContext(Dispatchers.Main) {
+                            _uiState.update { currentState ->
+                                currentState.copy(monthlyStatistics = mapToSummary(monthlyStats), showStatistics = true)
+                            }
+                        }
+                    }
+                } catch (e: Exception) {
+                    Log.e(TAG, "Failed to refresh statistics after save", e)
+                }
+            }
+        }
+
+        /**
+         * Refreshes period statistics and [datesWithTripsInPeriod] so the calendar dialog
+         * shows the latest saved trips. Call from the UI before opening the calendar picker.
+         */
+        suspend fun refreshPeriodForCalendar() {
+            val selected = _uiState.value.selectedPeriod
+            refreshStatisticsAfterSave(selected)
+        }
+
+        /**
+         * Returns distinct start-of-day dates that have at least one saved trip in [minDate]..[maxDate].
+         * Used so the calendar dialog can show trip dots across the full ±1 year range.
+         */
+        suspend fun getDatesWithTripsForCalendarRange(minDate: Date, maxDate: Date): List<Date> = withContext(ioDispatcher) {
+            val trips = try {
+                tripRepository.getTripsByDateRange(minDate, maxDate).first()
+            } catch (e: Exception) {
+                Log.w(TAG, "getDatesWithTripsForCalendarRange failed", e)
+                emptyList()
+            }
+            trips.mapNotNull { it.startTime }
+                .map { it.startOfDay() }
+                .distinctBy { it.time }
+                .sortedBy { it.time }
         }
 
         /**
@@ -736,11 +832,11 @@ class TripInputViewModel
                 // ✅ NEW: Clear trip persistence when trip ends
                 clearTripPersistence()
 
-                // ✅ FIX: Refresh statistics AFTER trip is saved to repository
-                // This ensures the new trip appears in weekly/monthly/yearly statistics
-                refreshAggregateStatistics()
-                refreshSelectedPeriod()
-
+                // ✅ FIX: Refresh monthly stats and period/datesWithTrips in one coroutine so UI sees consistent state
+                val selected = _uiState.value.selectedPeriod
+                viewModelScope.launch(ioDispatcher) {
+                    refreshStatisticsAfterSave(selected)
+                }
             } catch (e: Exception) {
                 Log.e(TAG, "Error ending trip", e)
                 _events.emit(TripEvent.CalculationError("Failed to end trip: ${e.message}"))
@@ -1058,11 +1154,16 @@ class TripInputViewModel
             val lastTripEndTime: Date?
         )
 
+        /**
+         * Summary stats for the stat card row. Add new metrics via [extraFields] and the
+         * stats_extra_rows_container in statistics_row.xml so stat cards stay versatile without layout changes.
+         */
         data class SummaryStatistics(
             val totalTrips: Int,
             val totalMiles: Double,
             val oorMiles: Double,
-            val oorPercentage: Double
+            val oorPercentage: Double,
+            val extraFields: Map<String, String> = emptyMap()
         )
 
         data class SelectedPeriod(
@@ -1253,9 +1354,10 @@ class TripInputViewModel
                     
                     Log.d(TAG, "Trip cleared successfully")
 
-                    refreshAggregateStatistics()
-                    refreshSelectedPeriod()
-                    
+                    val selected = _uiState.value.selectedPeriod
+                    viewModelScope.launch(ioDispatcher) {
+                        refreshStatisticsAfterSave(selected)
+                    }
                 } catch (e: Exception) {
                     Log.e(TAG, "Error clearing trip", e)
                     _events.emit(TripEvent.CalculationError("Failed to clear trip: ${e.message}"))

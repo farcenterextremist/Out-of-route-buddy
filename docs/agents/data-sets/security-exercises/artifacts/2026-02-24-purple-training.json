@@ -1,0 +1,59 @@
+{
+  "exercise_id": "2026-02-24-purple-simulations",
+  "date": "2026-02-24",
+  "source": "run_purple_simulations.py",
+  "unit_tests_passed": true,
+  "validation_simulations": [
+    {
+      "attack": "validate_unknown_top_level",
+      "expected": "reject",
+      "actual": "reject",
+      "passed": true,
+      "blue_visibility": "validate_design_keys in sync_service"
+    },
+    {
+      "attack": "validate_unknown_nested",
+      "expected": "reject",
+      "actual": "reject",
+      "passed": true,
+      "blue_visibility": "validate_design_keys in sync_service"
+    },
+    {
+      "attack": "validate_known_paths",
+      "expected": "accept",
+      "actual": "accept",
+      "passed": true,
+      "blue_visibility": "Key allowlist allows known paths"
+    }
+  ],
+  "http_simulations": [
+    {
+      "attack": "valid_design",
+      "expected": "200",
+      "actual": "200",
+      "passed": true,
+      "blue_visibility": "SyncServiceAudit would log on success"
+    },
+    {
+      "attack": "unknown_key_injection",
+      "expected": "400",
+      "actual": "400",
+      "passed": true,
+      "blue_visibility": "Key allowlist correctly rejected"
+    },
+    {
+      "attack": "oversized_payload",
+      "expected": "413",
+      "actual": "413",
+      "passed": true,
+      "blue_visibility": "Size limit correctly rejected"
+    }
+  ],
+  "summary": {
+    "unit_tests": "pass",
+    "validation_passed": 3,
+    "validation_total": 3,
+    "http_passed": 3,
+    "http_total": 3
+  }
+}

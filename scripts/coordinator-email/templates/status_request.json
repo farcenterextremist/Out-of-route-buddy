@@ -1,0 +1,10 @@
+{
+  "key": "status_request",
+  "priority": 61,
+  "keywords": ["status", "progress", "how's it going", "hows it going", "update", "where are we"],
+  "keywords_combine": "any",
+  "subject": "Re: OutOfRouteBuddy — status",
+  "body": "Hi,\n\n{{timeline}}\n\n— Jarvey",
+  "fetcher": "timeline",
+  "fetcher_fallback": "Here's a quick status: we're on track. For a detailed timeline, ask \"what's recent\" or \"timeline.\" I'll send a fuller update in the next session."
+}

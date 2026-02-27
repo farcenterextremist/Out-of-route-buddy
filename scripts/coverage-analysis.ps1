@@ -180,7 +180,7 @@ function Main {
     Write-Status "Next steps:" "Blue"
     Write-Host "  1. Review HTML report for detailed coverage"
     Write-Host "  2. Add tests for low-coverage classes"
-    Write-Host "  3. Run './gradlew coverageCheck' to verify thresholds"
+    Write-Host "  3. Run './gradlew jacocoCoverageVerification' to verify thresholds"
     Write-Host "  4. Integrate with CI/CD pipeline"
     Write-Host "  5. Use -OpenReport flag to open HTML report automatically"
 }

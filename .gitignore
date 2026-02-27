@@ -183,6 +183,9 @@ performance.log
 # Coordinator email secrets and reply cache (do not commit)
 scripts/coordinator-email/.env
 scripts/coordinator-email/last_reply.txt
+scripts/coordinator-email/last_responded_state.txt
+scripts/coordinator-email/auto_reply_draft.txt
+scripts/coordinator-email/last_sent_timestamp.txt
 
 # Python bytecode
 __pycache__/

@@ -15,6 +15,9 @@ import sys
 import email
 import imaplib
 from email.header import decode_header
+from email.utils import getaddresses
+
+from retry_utils import with_retry
 
 # Same env loader as send_email
 def load_env():
@@ -68,6 +71,31 @@ def get_body(msg):
     return body.strip()
 
 
+def _is_agent_sent(msg) -> bool:
+    """True if message has X-OutOfRouteBuddy-Sent header (agent-sent; skip when reading)."""
+    return msg.get("X-OutOfRouteBuddy-Sent", "").strip().lower() == "true"
+
+
+def _normalize_email(addr):
+    """Return lowercase email address for comparison, or None if not parseable."""
+    if not addr or not isinstance(addr, str):
+        return None
+    addrs = getaddresses([addr])
+    if not addrs:
+        return None
+    # getaddresses returns list of (display_name, addr_spec)
+    _, addr_spec = addrs[0]
+    if not addr_spec or "@" not in addr_spec:
+        return None
+    return addr_spec.strip().lower()
+
+
+# Public aliases for use by diagnose_inbox and other scripts
+normalize_email = _normalize_email
+is_agent_sent = _is_agent_sent
+
+
+@with_retry
 def read_replies():
     env = load_env()
     # Gmail IMAP: use same credentials as SMTP for same account
@@ -79,20 +107,46 @@ def read_replies():
     if not user or not password:
         raise RuntimeError("Missing COORDINATOR_IMAP_USER/IMAP_PASSWORD or SMTP_USER/SMTP_PASSWORD in .env")
 
+    our_from = env.get("COORDINATOR_EMAIL_FROM", "").strip().lower()
+    if our_from:
+        our_from = _normalize_email(our_from) or our_from
+
+    # Only consider messages FROM the user (COORDINATOR_EMAIL_TO = consultation recipient)
+    # Supports comma-separated addresses so reply from work/personal both work
+    user_email_raw = env.get("COORDINATOR_EMAIL_TO", "").strip()
+    user_emails = set()
+    if user_email_raw:
+        for addr in user_email_raw.split(","):
+            a = _normalize_email(addr.strip())
+            if a:
+                user_emails.add(a)
+
+    # Same-inbox only when there is a single allowed reply-from address and it equals our FROM.
+    # If COORDINATOR_EMAIL_TO has multiple addresses (e.g. user + bot), do not treat as same-inbox.
+    same_inbox = (
+        bool(our_from)
+        and len(user_emails) == 1
+        and our_from in user_emails
+    )
+    if same_inbox:
+        print("Same-inbox mode: FROM and TO are the same address", file=sys.stderr)
+
     mail = imaplib.IMAP4_SSL(host, port)
     mail.login(user, password)
     mail.select("INBOX")
 
-    # Find emails that look like replies to us (Re: OutOfRouteBuddy or subject contains OutOfRouteBuddy)
+    # Search ALL so we find user messages even if already marked read (e.g. by email client).
+    # Previously we used UNSEEN first; that skipped user messages that were SEEN, so Jarvey never responded.
     _, msgnums = mail.search(None, "ALL")
-    msg_ids = msgnums[0].split()
+    msg_ids = msgnums[0].split() if msgnums[0] else []
     if not msg_ids:
         mail.logout()
-        return None, None, None
+        return None, None, None, None
 
     latest_subject = None
     latest_body = None
     latest_date = None
+    latest_msg_id = None
 
     for mid in reversed(msg_ids[-50:]):  # last 50
         _, data = mail.fetch(mid, "(RFC822)")
@@ -101,22 +155,37 @@ def read_replies():
         raw = data[0][1]
         msg = email.message_from_bytes(raw)
         subj = decode_mime_header(msg.get("Subject", ""))
-        if "OutOfRouteBuddy" not in subj and "OutOfRoute" not in subj and "Re:" not in subj:
+        # Skip messages we sent (agent-sent have this header; user replies do not)
+        if _is_agent_sent(msg):
             continue
-        # Prefer replies (Re:)
-        if "Re:" in subj or "RE:" in subj.upper():
-            body = get_body(msg)
-            date_str = msg.get("Date", "")
-            latest_subject = subj
-            latest_body = body
-            latest_date = date_str
-            # Mark as read so we don't reprocess
-            mail.store(mid, "+FLAGS", "\\Seen")
-            break
+        # Skip messages from ourselves (when we have a dedicated bot address).
+        # In same-inbox mode (our_from == user_email), we rely on X-OutOfRouteBuddy-Sent only;
+        # otherwise we'd skip the user's messages too (they're FROM the same address).
+        if our_from and our_from not in user_emails:
+            from_header = msg.get("From", "")
+            sender = _normalize_email(from_header)
+            if sender and sender == our_from:
+                continue
+        # Only consider messages FROM the user (when COORDINATOR_EMAIL_TO is set)
+        if user_emails:
+            from_header = msg.get("From", "")
+            sender = _normalize_email(from_header)
+            if not sender or sender not in user_emails:
+                continue
+        body = get_body(msg)
+        date_str = msg.get("Date", "")
+        msg_id_header = (msg.get("Message-ID") or "").strip() or None
+        latest_subject = subj
+        latest_body = body
+        latest_date = date_str
+        latest_msg_id = msg_id_header or (mid.decode() if isinstance(mid, bytes) else str(mid))
+        # Mark as read so we don't reprocess
+        mail.store(mid, "+FLAGS", "\\Seen")
+        break
 
     mail.logout()
 
-    return latest_subject, latest_body, latest_date
+    return latest_subject, latest_body, latest_date, latest_msg_id
 
 
 def main():
@@ -124,12 +193,12 @@ def main():
     out_dir = os.path.dirname(__file__)
     out_file = os.path.join(out_dir, "last_reply.txt")
     try:
-        subject, body, date = read_replies()
+        subject, body, date, message_id = read_replies()
         if not body and not subject:
             if use_json:
-                print(json.dumps({"found": False, "subject": None, "body": None, "date": None}))
+                print(json.dumps({"found": False, "subject": None, "body": None, "date": None, "message_id": None}))
             else:
-                print("No reply found (no message with Re: and OutOfRouteBuddy in subject).", file=sys.stderr)
+                print("No reply found (no message from user in inbox).", file=sys.stderr)
             sys.exit(0)
         lines = []
         if date:
@@ -142,7 +211,7 @@ def main():
         with open(out_file, "w", encoding="utf-8") as f:
             f.write(content)
         if use_json:
-            print(json.dumps({"found": True, "subject": subject, "body": body or "", "date": date}))
+            print(json.dumps({"found": True, "subject": subject, "body": body or "", "date": date, "message_id": message_id}))
         else:
             print(f"Latest reply written to {out_file}")
     except Exception as e:

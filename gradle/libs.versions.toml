@@ -36,6 +36,7 @@ mockito-kotlin = "5.2.1"
 orchestrator = "1.4.2"
 gson = "2.10.1"
 work = "2.9.0"
+detekt = "1.23.5"
 
 [libraries]
 robolectric = { group = "org.robolectric", name = "robolectric", version.ref = "robolectric" }
@@ -118,4 +119,5 @@ orchestrator = { group = "androidx.test", name = "orchestrator", version.ref = "
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 navigation-safeargs = { id = "androidx.navigation.safeargs", version.ref = "navigation" }
+detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
 

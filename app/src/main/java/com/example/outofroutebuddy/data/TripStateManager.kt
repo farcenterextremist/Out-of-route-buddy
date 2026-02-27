@@ -17,6 +17,9 @@ class TripStateManager(
 ) {
     companion object {
         private const val TAG = "TripStateManager"
+        /** Speed threshold for location jump detection: 120 mph in m/s. Implied speed above this = jump. */
+        private const val JUMP_SPEED_THRESHOLD_MS = 53.6
+        private const val EARTH_RADIUS_METERS = 6_371_000.0
     }
 
     // ✅ SINGLE SOURCE OF TRUTH: Centralized trip state
@@ -172,8 +175,8 @@ class TripStateManager(
             val currentState = _tripState.value
             val currentMetadata = currentState.gpsMetadata
 
-            // Update GPS metadata
-            val newMetadata = updateGpsMetadata(currentMetadata, location)
+            // Update GPS metadata (pass lastLocation for jump detection)
+            val newMetadata = updateGpsMetadata(currentMetadata, location, currentState.lastLocation)
 
             val newState =
                 currentState.copy(
@@ -192,14 +195,30 @@ class TripStateManager(
 
     /**
      * ✅ NEW: Update GPS metadata with new location
+     * Implements jump detection per docs/technical/JUMP_DETECTION_AND_TRIP_STATE.md
      */
     private fun updateGpsMetadata(
         current: GpsMetadata,
         newLocation: LocationData,
+        lastLocation: LocationData?,
     ): GpsMetadata {
         val totalPoints = current.totalPoints + 1
         val accuracy = newLocation.accuracy.toDouble()
         val speed = newLocation.speed.toDouble()
+
+        // Jump detection: implied speed (distance/time) > threshold = jump
+        val newLocationJumps = if (lastLocation != null) {
+            val distanceMeters = calculateHaversineDistance(lastLocation, newLocation)
+            val timeDeltaMs = newLocation.timestamp.time - lastLocation.timestamp.time
+            if (timeDeltaMs > 0) {
+                val impliedSpeedMs = distanceMeters / (timeDeltaMs / 1000.0)
+                if (impliedSpeedMs > JUMP_SPEED_THRESHOLD_MS) current.locationJumps + 1 else current.locationJumps
+            } else {
+                current.locationJumps
+            }
+        } else {
+            current.locationJumps
+        }
 
         // Determine if point is valid (accuracy < 20 meters)
         val isValid = accuracy < 20.0
@@ -228,11 +247,27 @@ class TripStateManager(
             maxAccuracy = newMaxAccuracy,
             avgSpeed = newAvgSpeed,
             maxSpeed = newMaxSpeed,
-            locationJumps = current.locationJumps, // TODO: Implement jump detection
+            locationJumps = newLocationJumps,
             accuracyWarnings = current.accuracyWarnings + accuracyWarning,
             speedAnomalies = current.speedAnomalies + speedAnomaly,
             interruptions = current.interruptions,
         )
+    }
+
+    /**
+     * Calculate distance between two LocationData points using Haversine formula (meters).
+     */
+    private fun calculateHaversineDistance(a: LocationData, b: LocationData): Double {
+        val lat1 = Math.toRadians(a.latitude)
+        val lon1 = Math.toRadians(a.longitude)
+        val lat2 = Math.toRadians(b.latitude)
+        val lon2 = Math.toRadians(b.longitude)
+        val dLat = lat2 - lat1
+        val dLon = lon2 - lon1
+        val x = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) * Math.sin(dLon / 2)
+        val c = 2 * Math.atan2(Math.sqrt(x), Math.sqrt(1 - x))
+        return EARTH_RADIUS_METERS * c
     }
 
     /**

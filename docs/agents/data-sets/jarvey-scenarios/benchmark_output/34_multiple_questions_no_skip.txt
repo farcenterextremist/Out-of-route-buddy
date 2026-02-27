@@ -1,0 +1,9 @@
+You asked about prioritizing the reports screen and when it will be done.
+
+* The reports screen is currently in a semi-simplified phase, which means we have a functional but not fully polished version that can still benefit from user testing and feedback. 
+* Our next step is to prioritize this feature based on business requirements and gather input from stakeholders.
+* We'll then proceed with implementing the features as per our prioritization and will share updates on the progress.
+
+Please let me know if you'd like to discuss further or have any additional questions about this priority.
+
+— Jarvey

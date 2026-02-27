@@ -2,9 +2,18 @@ package com.example.outofroutebuddy.data
 
 import android.content.Context
 import android.util.Log
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.preferencesDataStore
+import com.google.gson.GsonBuilder
+import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
 import java.util.Date
 import java.util.UUID
 
@@ -24,7 +33,14 @@ class OfflineDataManager(
         private const val MAX_OFFLINE_STORAGE_SIZE = 50 * 1024 * 1024 // 50MB
         private const val MAX_OFFLINE_TRIPS = 1000
         private const val MAX_OFFLINE_ANALYTICS = 5000
+        private const val OFFLINE_STORAGE_KEY = "offline_storage_v1"
+
+        private val Context.offlineDataStore: DataStore<Preferences> by preferencesDataStore(name = "offline_storage")
+        private val gson = GsonBuilder().setDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").create()
+        private val offlineStorageType = object : TypeToken<OfflineStorage>() {}.type
     }
+
+    private val dataStore = context.offlineDataStore
 
     // ✅ OFFLINE STORAGE: Local data storage
     private val _offlineStorage = MutableStateFlow(OfflineStorage())
@@ -119,14 +135,24 @@ class OfflineDataManager(
     }
 
     /**
-     * ✅ NEW: Load offline storage from local storage
+     * Load offline storage from DataStore (JSON). Called on init.
+     * On failure or missing data, starts with empty OfflineStorage.
      */
     private fun loadOfflineStorage() {
         try {
-            // TODO: Implement actual loading from local storage (SharedPreferences, SQLite, etc.)
-            Log.d(TAG, "Offline storage loaded")
+            val json = runBlocking {
+                dataStore.data.first()[stringPreferencesKey(OFFLINE_STORAGE_KEY)]
+            }
+            if (!json.isNullOrBlank()) {
+                val loaded = gson.fromJson<OfflineStorage>(json, offlineStorageType)
+                _offlineStorage.value = loaded
+                Log.d(TAG, "Offline storage loaded: ${loaded.tripCount} trips, ${loaded.analyticsCount} analytics")
+            } else {
+                Log.d(TAG, "Offline storage empty (first run or cleared)")
+            }
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to load offline storage", e)
+            Log.w(TAG, "Failed to load offline storage, starting empty", e)
+            _offlineStorage.value = OfflineStorage()
         }
     }
 
@@ -357,12 +383,18 @@ class OfflineDataManager(
     }
 
     /**
-     * ✅ NEW: Save offline storage to local storage
+     * Save offline storage to DataStore (JSON). Called after every mutation.
      */
     private fun saveOfflineStorage() {
         try {
-            // TODO: Implement actual saving to local storage
-            Log.d(TAG, "Offline storage saved")
+            val storage = _offlineStorage.value
+            val json = gson.toJson(storage)
+            runBlocking {
+                dataStore.edit { prefs ->
+                    prefs[stringPreferencesKey(OFFLINE_STORAGE_KEY)] = json
+                }
+            }
+            Log.d(TAG, "Offline storage saved: ${storage.tripCount} trips, ${storage.analyticsCount} analytics")
         } catch (e: Exception) {
             Log.e(TAG, "Failed to save offline storage", e)
         }

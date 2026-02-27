@@ -18,5 +18,10 @@ Each file in this folder defines what a role **consumes** (reads, references) an
 | Email Editor / Market Guru | [email-editor.md](./email-editor.md) |
 | File Organizer | [file-organizer.md](./file-organizer.md) |
 | Human-in-the-Loop Manager | [human-in-the-loop.md](./human-in-the-loop.md) |
+| Email coordinator (Jarvey) | [jarvey.md](./jarvey.md) |
 
-See **`docs/agents/DATA_SETS_AND_DELEGATION_PLAN.md`** for the full plan and delegation matrix.
+See **`docs/agents/DATA_SETS_AND_DELEGATION_PLAN.md`** for the full plan and delegation matrix. Jarvey (email coordinator bot) uses coordinator-instructions and coordinator-project-context from `docs/agents/`; see [jarvey.md](./jarvey.md) for full index.
+
+## Training and alignment
+
+- **[employee-roundtable-transcript.md](./employee-roundtable-transcript.md)** — Simulated 1-hour roundtable among all employees (Coordinator + every role). Each role describes their scope and how they hand off to others. Use this transcript to **train and solidify** employee (agent) skills: include it in context when onboarding a role, refining handoffs, or resolving "who does what."

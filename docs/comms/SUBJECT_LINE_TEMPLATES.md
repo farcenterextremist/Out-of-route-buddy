@@ -67,3 +67,10 @@ Use a consistent sign-off so the user knows the message is from the team, not an
 - **— Coordinator, OutOfRouteBuddy** *(if you want to signal the coordinator role explicitly)*
 
 Keep it short and professional; "— OutOfRouteBuddy Team" is clear and brand-aligned.
+
+---
+
+## Tone (Board-adopted)
+
+- **Professional, short, one clear ask per email** so the user can reply without decoding jargon.
+- One main question or request per message when possible; use bullet points for multiple items.

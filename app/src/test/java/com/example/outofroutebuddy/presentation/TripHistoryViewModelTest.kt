@@ -9,12 +9,15 @@ import com.example.outofroutebuddy.presentation.ui.history.TripHistoryViewModel
 import io.mockk.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.async
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.*
 import org.junit.After
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
+import java.io.File
 import java.util.*
 import kotlin.io.path.createTempDirectory
 
@@ -35,23 +38,29 @@ class TripHistoryViewModelTest {
     private lateinit var mockApplication: Application
     private lateinit var mockRepository: TripRepository
     private val testDispatcher = StandardTestDispatcher()
+    private var testCacheDir: File? = null
 
     @Before
     fun setup() {
         Dispatchers.setMain(testDispatcher)
-        
+
         mockApplication = mockk(relaxed = true)
         mockRepository = mockk(relaxed = true)
-        
-        every { mockApplication.cacheDir } returns createTempDirectory("test_history").toFile()
+
+        testCacheDir = createTempDirectory("test_history").toFile()
+        every { mockApplication.cacheDir } returns testCacheDir!!
         every { mockApplication.packageName } returns "com.example.outofroutebuddy"
-        
+        // Stub so ViewModel init loadTrips() completes (tests can override per test)
+        every { mockRepository.getAllTrips() } returns flowOf(emptyList())
+
         viewModel = TripHistoryViewModel(mockApplication, mockRepository)
     }
 
     @After
     fun tearDown() {
         Dispatchers.resetMain()
+        testCacheDir?.deleteRecursively()
+        testCacheDir = null
         unmockkAll()
     }
 
@@ -96,11 +105,11 @@ class TripHistoryViewModelTest {
     fun `isLoading is true during load and false after`() = runTest {
         every { mockRepository.getAllTrips() } returns flowOf(emptyList())
         
-        assertEquals("Initial loading should be false", false, viewModel.isLoading.value)
+        // ViewModel init triggers loadTrips(); let that complete so we start from idle
+        advanceUntilIdle()
+        assertEquals("After init load completes, loading should be false", false, viewModel.isLoading.value)
         
         viewModel.loadTrips()
-        
-        // After completion
         advanceUntilIdle()
         assertEquals("Loading should be false after load", false, viewModel.isLoading.value)
     }
@@ -110,7 +119,7 @@ class TripHistoryViewModelTest {
     @Test
     fun `deleteTrip calls repository deleteTrip`() = runTest {
         val trip = createTestTrip()
-        coEvery { mockRepository.deleteTrip(trip) } just Runs
+        coEvery { mockRepository.deleteTrip(trip) } returns true
         
         viewModel.deleteTrip(trip)
         advanceUntilIdle()
@@ -122,13 +131,24 @@ class TripHistoryViewModelTest {
     fun `deleteTrip handles errors gracefully`() = runTest {
         val trip = createTestTrip()
         coEvery { mockRepository.deleteTrip(trip) } throws Exception("Delete failed")
-        
+
         // Should not crash
         viewModel.deleteTrip(trip)
         advanceUntilIdle()
-        
+
         // Just verify it was attempted
         coVerify { mockRepository.deleteTrip(trip) }
+    }
+
+    @Test
+    fun `deleteTrip emits deleteError when repository returns false`() = runTest {
+        val trip = createTestTrip()
+        coEvery { mockRepository.deleteTrip(trip) } returns false
+
+        val errorDeferred = async { viewModel.deleteError.first() }
+        viewModel.deleteTrip(trip)
+        advanceUntilIdle()
+        assertEquals("Failed to delete trip", errorDeferred.await())
     }
 
     // ==================== EXPORT TESTS ====================

@@ -20,6 +20,12 @@ The coordinator and Human-in-the-Loop Manager (and the AI when helping in Cursor
 | [team-structure.md](./team-structure.md) | Roster, responsibilities, and handoff rules |
 | [coordinator-instructions.md](./coordinator-instructions.md) | Master Branch Coordinator agent instructions |
 | [roles/*.md](./roles/) | One agent card per employee role |
+| [purple-team-protocol.md](./purple-team-protocol.md) | Red + Blue collaboration (attack, check alarm, fix) |
+| [security-team-proof-of-work.md](./security-team-proof-of-work.md) | Log and save Red/Blue/Purple exercises for proof of work |
+| [AGENT_APTITUDE_AND_SCORING.md](./AGENT_APTITUDE_AND_SCORING.md) | Tests and scoring to find which agents need more training or data injection |
+| [SUBAGENTS_SPAWN_AND_TRAINING.md](./SUBAGENTS_SPAWN_AND_TRAINING.md) | **Subagents:** How spawning works and how to inject role cards, data sets, Known Truths, and roundtable into spawned subagents |
+| [BOARD_MEETING_PLAN.md](./BOARD_MEETING_PLAN.md) | **Board Meeting:** Call script to summon every agent in sequence for opinions, recommendations, and weekly progress; transcript + summary output |
+| [COORDINATOR_EMAIL_LISTENER_RUNBOOK.md](./COORDINATOR_EMAIL_LISTENER_RUNBOOK.md) | **Coordinator email listener:** Open line while Cursor is online—runbook (Cursor loop) or `coordinator_listener.py` (LLM) |
 
 ## Roles
 
@@ -35,6 +41,14 @@ The coordinator and Human-in-the-Loop Manager (and the AI when helping in Cursor
 | Email Editor / Market Guru | [email-editor-market-guru.md](./roles/email-editor-market-guru.md) | Email copy, marketing messaging, outreach |
 | File Organizer | [file-organizer.md](./roles/file-organizer.md) | Repo and doc structure, file naming |
 | Human-in-the-Loop Manager | [human-in-the-loop-manager.md](./roles/human-in-the-loop-manager.md) | Sends you emails (suggestions, questions, updates) |
+| **Red Team** | [red-team-agent.md](./roles/red-team-agent.md) | Attack simulation: Lead, Specialist (phishing), Technical Ninja |
+| **Blue Team** | [blue-team-agent.md](./roles/blue-team-agent.md) | Defenders: detect, respond, fix when Red attacks |
+
+## Security team (Red, Blue, Purple)
+
+- **Red Team:** Simulates full-scale attacks (not just bugs). Invoke: "Red Team" or "act as the Red Team" (optionally "Technical Ninja only" or "Specialist only"). See [red-team-agent.md](./roles/red-team-agent.md).
+- **Blue Team:** Checks whether alarms went off after Red attacks; proposes or implements fixes if not. Invoke: "Blue Team" or "act as the Blue Team." See [blue-team-agent.md](./roles/blue-team-agent.md).
+- **Purple:** Red and Blue work together in one flow. See [purple-team-protocol.md](./purple-team-protocol.md). Proof of work and artifact storage: [security-team-proof-of-work.md](./security-team-proof-of-work.md) and `data-sets/security-exercises/`.
 
 ## Human-in-the-Loop email
 
@@ -46,6 +60,7 @@ The Human-in-the-Loop Manager sends you emails via the script in **`scripts/coor
 
 ## Invocation examples
 
+- Red / Blue / Purple: *"Act as the Red Team – Technical Ninja only"*, *"Run a Purple Team exercise: Red attacks [X], Blue checks alarms"*, *"Blue Team: review the last Red action and propose a fix if we missed it."*
 - *“Act as the Master Branch Coordinator and break down the work for adding a new ‘Reports’ screen.”*
 - *“I need the UI/UX Specialist to suggest improvements for the statistics section.”* (Optionally: *“Use docs/agents/roles/ui-ux-specialist.md.”*)
 - *“Coordinator: we’re done with the calendar refactor; have the Human-in-the-Loop Manager email me a short summary and ask if I want to prioritize anything next.”*

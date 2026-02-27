@@ -118,7 +118,6 @@ class SimulatedTripTest {
             preferencesManager = mockPreferencesManager,
             tripStateManager = mockTripStateManager,
             tripStatePersistence = mockTripStatePersistence,
-            stateCache = mockStateCache,
             backgroundSyncService = mockBackgroundSyncService,
             optimizedGpsDataFlow = mockOptimizedGpsDataFlow,
             validationFramework = mockValidationFramework,

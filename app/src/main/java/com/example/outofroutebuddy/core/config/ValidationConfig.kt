@@ -314,10 +314,6 @@ object ValidationConfig {
     /** Minimum distance between GPS points in meters */
     const val GPS_MIN_DISTANCE_METERS = 10.0
 
-    /** Maximum realistic speed in MPH - DEPRECATED: Use VEHICLE_MAX_SPEED_MPH instead */
-    @Deprecated("Use VEHICLE_MAX_SPEED_MPH for consistency", ReplaceWith("VEHICLE_MAX_SPEED_MPH"))
-    const val GPS_MAX_SPEED_MPH = 85.0 // Standardized to match VEHICLE_MAX_SPEED_MPH
-
     /** Minimum GPS accuracy in meters (aligned with VEHICLE_MIN_ACCURACY) */
     const val GPS_MIN_ACCURACY_METERS = 20.0 // Matches VEHICLE_MIN_ACCURACY
 

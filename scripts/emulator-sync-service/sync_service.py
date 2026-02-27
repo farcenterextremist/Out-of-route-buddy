@@ -34,12 +34,16 @@ EMULATOR_TO_PROJECT = {
     "statisticsPeriod.label": {"file": "app/src/main/res/values/strings.xml", "stringName": "statistics_period_label"},
     "statisticsPeriod.button": {"file": "app/src/main/res/values/strings.xml", "stringName": "statistics_change_period_button"},
     "statisticsPeriod.value": {"file": "app/src/main/res/values/strings.xml", "stringName": "statistics_period_value"},
-    "weeklyStats.title": {"file": "app/src/main/res/values/strings.xml", "stringName": "weekly_statistics"},
     "monthlyStats.title": {"file": "app/src/main/res/values/strings.xml", "stringName": "monthly_statistics"},
-    "yearlyStats.title": {"file": "app/src/main/res/values/strings.xml", "stringName": "yearly_statistics"},
 }
 
 SYNC_PORT = int(os.environ.get("OORB_SYNC_PORT", "8765"))
+
+# Max request body size (bytes) - prevents DoS / memory exhaustion
+MAX_REQUEST_BODY_SIZE = 64 * 1024  # 64KB
+
+# Audit tag for sync requests - filterable for log aggregation
+SYNC_AUDIT_TAG = "SyncServiceAudit"
 
 
 def get_value_at_path(obj, path):
@@ -48,6 +52,29 @@ def get_value_at_path(obj, path):
         if obj is None:
             return None
     return obj
+
+
+def get_paths_from_dict(obj: dict, prefix: str = "") -> list[str]:
+    """Extract all leaf paths from nested dict (e.g. 'toolbar.title', 'loadedMiles.hint')."""
+    paths = []
+    for key, value in obj.items():
+        path = f"{prefix}.{key}" if prefix else key
+        if isinstance(value, dict):
+            paths.extend(get_paths_from_dict(value, path))
+        else:
+            paths.append(path)
+    return paths
+
+
+def validate_design_keys(design: dict) -> bool:
+    """Reject design if it contains any path not in EMULATOR_TO_PROJECT (key allowlist)."""
+    if not isinstance(design, dict):
+        return False
+    paths = get_paths_from_dict(design)
+    for path in paths:
+        if path not in EMULATOR_TO_PROJECT:
+            return False
+    return True
 
 
 def escape_xml_value(s):
@@ -195,8 +222,23 @@ class SyncHandler(BaseHTTPRequestHandler):
             self.end_headers()
             return
 
+        content_length = int(self.headers.get("Content-Length", 0))
+        if content_length > MAX_REQUEST_BODY_SIZE:
+            self.send_response(413)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.end_headers()
+            self.wfile.write(
+                json.dumps(
+                    {
+                        "ok": False,
+                        "error": f"Request body too large (max {MAX_REQUEST_BODY_SIZE} bytes).",
+                    }
+                ).encode()
+            )
+            return
+
         try:
-            content_length = int(self.headers.get("Content-Length", 0))
             body = self.rfile.read(content_length)
             design = json.loads(body.decode("utf-8"))
         except Exception as e:
@@ -205,6 +247,21 @@ class SyncHandler(BaseHTTPRequestHandler):
             self.send_header("Access-Control-Allow-Origin", "*")
             self.end_headers()
             self.wfile.write(json.dumps({"ok": False, "error": str(e)}).encode())
+            return
+
+        if not validate_design_keys(design):
+            self.send_response(400)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.end_headers()
+            self.wfile.write(
+                json.dumps(
+                    {
+                        "ok": False,
+                        "error": "Design contains keys not in allowlist (EMULATOR_TO_PROJECT).",
+                    }
+                ).encode()
+            )
             return
 
         project_root = os.environ.get("OORB_PROJECT_ROOT", "").strip()
@@ -225,6 +282,9 @@ class SyncHandler(BaseHTTPRequestHandler):
 
         try:
             applied = apply_design_to_strings_xml(project_root, design)
+            # Audit trail: who changed strings (filterable tag for log aggregation)
+            keys_changed = ",".join(a.split("=", 1)[0] for a in applied) if applied else "none"
+            print(f"[{SYNC_AUDIT_TAG}] sync_requested applied={len(applied)} keys={keys_changed}")
             self.send_response(200)
             self.send_header("Content-Type", "application/json")
             self.send_header("Access-Control-Allow-Origin", "*")

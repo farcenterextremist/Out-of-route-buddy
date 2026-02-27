@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.util.Date
+import com.example.outofroutebuddy.utils.extensions.isToday
 
 /**
  * ✅ NEW: Database-backed State Persistence
@@ -63,17 +64,17 @@ class TripStatePersistence(
     }
 
     /**
-     * Auto-save trip state to database
-     * Currently disabled - auto-save functionality is handled by TripPersistenceManager
+     * Auto-save trip state. No-op: TripPersistenceManager handles auto-save.
+     * Kept for API compatibility; see CODE_QUALITY_NOTES.md.
      */
     private suspend fun autoSaveTripState() {
-        // Auto-save is currently handled by TripPersistenceManager
-        // This method is kept for potential future use
-        return
+        // No-op; kept for API compatibility.
     }
 
     /**
-     * ✅ NEW: Save completed trip to database
+     * Save completed trip to database with GPS metadata.
+     * Currently unused: TripInputViewModel.endTrip() uses domain TripRepository.insertTrip(trip) instead.
+     * Use this when saving with GPS metadata is required, or remove if not needed.
      */
     suspend fun saveCompletedTrip(actualMiles: Double): Long {
         return try {
@@ -114,19 +115,7 @@ class TripStatePersistence(
             val recentTrips =
                 allTrips.filter { trip ->
                     // Look for trips from today that might be incomplete
-                    val today = Date()
-                    val tripDate = trip.date
-
-                    // Use Calendar for modern date comparison
-                    val todayCal = java.util.Calendar.getInstance().apply { time = today }
-                    val tripCal = java.util.Calendar.getInstance().apply { time = tripDate }
-
-                    val sameDay =
-                        todayCal.get(java.util.Calendar.YEAR) == tripCal.get(java.util.Calendar.YEAR) &&
-                            todayCal.get(java.util.Calendar.MONTH) == tripCal.get(java.util.Calendar.MONTH) &&
-                            todayCal.get(java.util.Calendar.DAY_OF_MONTH) == tripCal.get(java.util.Calendar.DAY_OF_MONTH)
-
-                    sameDay && trip.actualMiles == 0.0 // Incomplete trip
+                    trip.date.isToday() && trip.actualMiles == 0.0 // Incomplete trip
                 }
 
             if (recentTrips.isNotEmpty()) {

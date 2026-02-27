@@ -1,0 +1,31 @@
+EMAIL BOT FRAMEWORK — CHECKLIST
+(Reusing the coordinator-email setup for another bot)
+
+[ ] Naming & identity
+    - Pick a bot name (e.g. Jarvey). Use it in instructions, prompts, and sign-offs.
+    - Optional: env var for bot name (e.g. COORDINATOR_BOT_NAME) with default.
+
+[ ] Instructions
+    - Single instructions file (e.g. coordinator-instructions.md): role, responsibilities, team/reference.
+    - First line or header: "You are <BotName>, ..."
+
+[ ] Project context
+    - One reference file injected into the system prompt (e.g. coordinator-project-context.md).
+    - Header like "<BotName>'s reference" so it's clear whose context it is.
+    - Keep under ~4000 chars so prompt stays within context limits.
+
+[ ] Reply logic
+    - Template-based auto-replies (e.g. thanks, priority, default) with consistent sign-off (e.g. "— <BotName>").
+    - LLM reply path: system prompt = instructions + project context + TASK (structure: acknowledge → answer → next steps; sign as <BotName>).
+
+[ ] Listener (optional)
+    - Poll inbox; cooldown (e.g. 3 min); dedupe by message_id (fallback: timestamp).
+    - Env: SMTP, IMAP, API key or Ollama URL; paths to instructions and context.
+
+[ ] Docs & scoring
+    - README: setup, usage, link to framework docs (see EMAIL_BOT_FRAMEWORK.md).
+    - If using agent scorecard: add section for this bot (e.g. "Email coordinator (Jarvey)") and dimensions.
+
+[ ] Framework docs
+    - EMAIL_BOT_FRAMEWORK.md — high-level overview.
+    - This checklist — EMAIL_BOT_FRAMEWORK_CHECKLIST.txt.

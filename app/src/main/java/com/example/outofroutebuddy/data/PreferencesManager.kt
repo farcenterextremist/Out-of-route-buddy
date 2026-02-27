@@ -17,8 +17,10 @@ class PreferencesManager(context: Context) {
         )
 
     companion object {
+        private const val TAG = "PreferencesManager"
         private const val PREFERENCES_NAME = "OutOfRouteBuddyPreferences"
         private const val KEY_PERIOD_MODE = "period_mode"
+        private const val KEY_HAS_SEEN_PERIOD_ONBOARDING = "has_seen_period_onboarding"
         private const val KEY_LAST_LOADED_MILES = "last_loaded_miles"
         private const val KEY_LAST_BOUNCE_MILES = "last_bounce_miles"
         private const val KEY_TRIP_ACTIVE = "trip_active"
@@ -41,8 +43,16 @@ class PreferencesManager(context: Context) {
         return try {
             PeriodMode.valueOf(modeName ?: PeriodMode.STANDARD.name)
         } catch (e: IllegalArgumentException) {
+            android.util.Log.w(TAG, "Invalid period mode '$modeName', defaulting to STANDARD", e)
             PeriodMode.STANDARD
         }
+    }
+
+    fun hasSeenPeriodOnboarding(): Boolean =
+        sharedPreferences.getBoolean(KEY_HAS_SEEN_PERIOD_ONBOARDING, false)
+
+    fun setHasSeenPeriodOnboarding(seen: Boolean) {
+        sharedPreferences.edit { putBoolean(KEY_HAS_SEEN_PERIOD_ONBOARDING, seen) }
     }
 
     /**

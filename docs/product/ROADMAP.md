@@ -18,8 +18,8 @@
 ## What's next (from worker todos and ideas)
 
 - **Auto drive detected** — Detect when the driver is likely on the road (movement/speed or similar); show a clear state and one-tap start. See `docs/product/FEATURE_BRIEF_auto_drive.md`.
-- **Reports screen** — Dedicated view for trip/out-of-route reports (period, export, or share).
-- **History improvements** — Navigate from history to trip details; clearer list and filters.
+- **Reports screen** — Dedicated view for trip/out-of-route reports (period, export, or share). See `docs/product/FEATURE_BRIEF_reports.md`.
+- **History improvements** — Navigate from history to trip details; clearer list and filters. (CRUCIAL #4 implemented.)
 - **Emulator polish** — Settings dialog (Mode, Templates, Help), End Trip confirmation (End / Clear / Continue), period picker for Statistics, long-press for edit. Emulator then serves as the visual spec for the real app.
 - **Emulator Phase A/B/C complete** — Undo/Redo, clear Save vs Sync, 1:1 spec (spacing, string-key parity), Load from project. See `docs/agents/EMULATOR_PHASE_ABC_100_TODOS.md` and `phone-emulator/1TO1_SPEC.md`.
 - **Open line** — Keep email ask/reply flow; optional weekly one-liner and "reply with a number" for priorities.
@@ -50,3 +50,11 @@ After **emulator polish** and **IMAP/open-line** work are in a good place, the r
 ---
 
 *When priorities change, update this file and optionally notify via Human-in-the-Loop.*
+
+---
+
+## Design process (Board-adopted)
+
+- **Prioritize from one source.** Keep this ROADMAP and `docs/CRUCIAL_IMPROVEMENTS_TODO.md` (and any 25-point list) in sync; when the user picks "next," update the roadmap and hand off in order (Design → UI/UX → Eng → QA).
+- **Briefs reference SSOT.** Every feature brief in this folder should state that persistence, recovery, and calendar follow `docs/agents/KNOWN_TRUTHS_AND_SINGLE_SOURCE_OF_TRUTH.md` so UI/UX and Eng don't invent alternate flows.
+- **User decisions via Human-in-the-Loop.** When we have "Option A vs B vs defer," hand off to the Human-in-the-Loop Manager with a one-paragraph summary so the user gets a clear email, not jargon.

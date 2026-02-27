@@ -102,7 +102,6 @@ class TripStatisticsWiringTest {
             preferencesManager = mockPreferencesManager,
             tripStateManager = mockTripStateManager,
             tripStatePersistence = mockTripStatePersistence,
-            stateCache = mockk(relaxed = true),
             backgroundSyncService = mockk(relaxed = true),
             optimizedGpsDataFlow = mockk(relaxed = true),
             validationFramework = mockk(relaxed = true),
@@ -429,28 +428,26 @@ class TripStatisticsWiringTest {
         // Given: An active trip
         viewModel.calculateTrip(100.0, 25.0, 125.0)
         delay(100)
-        
-        // Setup repository to track call order (monthly only)
-        val callOrder = mutableListOf<String>()
-        coEvery { mockRepository.insertTrip(any()) } coAnswers {
-            callOrder.add("insertTrip")
-            "trip-ordered"
-        }
-        coEvery { mockRepository.getMonthlyTripStatistics() } coAnswers {
-            callOrder.add("getMonthlyStats")
-            TripStatistics()
-        }
-        
+
+        coEvery { mockRepository.insertTrip(any()) } returns "trip-ordered"
+        coEvery { mockRepository.getMonthlyTripStatistics() } returns TripStatistics(
+            totalTrips = 1,
+            totalActualMiles = 125.0,
+            totalOorMiles = 0.0,
+            avgOorPercentage = 0.0
+        )
+        coEvery { mockRepository.getTripStatistics(any(), any()) } returns TripStatistics()
+        coEvery { mockRepository.getTripsByDateRange(any(), any()) } returns flowOf(emptyList())
+
         // When: End trip
         viewModel.endTrip()
-        // Wait for coroutines on IO dispatcher to complete
         coVerify(timeout = 1000) { mockRepository.insertTrip(any()) }
         coVerify(timeout = 1000) { mockRepository.getMonthlyTripStatistics() }
-        delay(50) // Give time for all coroutines to complete
-        
-        // Then: Insert should happen before statistics query; monthly stats should be called
-        assertTrue("Insert should be called", callOrder.contains("insertTrip"))
-        assertTrue("Monthly stats should be called", callOrder.contains("getMonthlyStats"))
+        delay(50)
+
+        // Then: observable outcomes - trip saved and UI state shows statistics
+        assertNotNull("Monthly statistics should be loaded after save", viewModel.uiState.value.monthlyStatistics)
+        assertTrue("Statistics section should be shown", viewModel.uiState.value.showStatistics)
     }
 
     // ==================== SAVED TRIP DATA → CALENDAR (datesWithTripsInPeriod) ====================
@@ -638,6 +635,199 @@ class TripStatisticsWiringTest {
         assertEquals(10.0, periodStats?.averageOorPercentage ?: 0.0, 0.01)
         val datesWithTrips = viewModel.uiState.value.datesWithTripsInPeriod
         assertEquals(1, datesWithTrips.size)
+    }
+
+    // ==================== SAVED TRIPS IN STATISTICS AND CALENDAR (plan verification) ====================
+
+    @Test
+    fun `endTrip updates monthly statistics and datesWithTripsInPeriod when period includes today`() = runTest {
+        // Given: Selected period is current month (so it includes "today")
+        val now = Calendar.getInstance()
+        val startOfMonth = Calendar.getInstance().apply {
+            set(now.get(Calendar.YEAR), now.get(Calendar.MONTH), 1, 0, 0, 0)
+            set(Calendar.MILLISECOND, 0)
+        }.time
+        val endOfMonth = Calendar.getInstance().apply {
+            set(now.get(Calendar.YEAR), now.get(Calendar.MONTH), now.getActualMaximum(Calendar.DAY_OF_MONTH), 23, 59, 59)
+            set(Calendar.MILLISECOND, 999)
+        }.time
+        coEvery { mockRepository.getTripStatistics(any(), any()) } returns TripStatistics(
+            totalTrips = 1,
+            totalActualMiles = 125.0,
+            totalOorMiles = 0.0,
+            avgOorPercentage = 0.0
+        )
+        val tripWithStartToday = Trip(
+            id = "saved-1",
+            loadedMiles = 100.0,
+            bounceMiles = 25.0,
+            actualMiles = 125.0,
+            startTime = Date(),
+            endTime = Date(),
+            status = TripStatus.COMPLETED
+        )
+        coEvery { mockRepository.getTripsByDateRange(any(), any()) } returns flowOf(listOf(tripWithStartToday))
+
+        viewModel.onCalendarPeriodSelected(PeriodMode.STANDARD, startOfMonth, endOfMonth)
+        coVerify(timeout = 1000) { mockRepository.getTripsByDateRange(startOfMonth, endOfMonth) }
+        delay(50)
+
+        viewModel.calculateTrip(100.0, 25.0, 125.0)
+        delay(100)
+        coEvery { mockRepository.insertTrip(any()) } returns "trip-saved"
+        coEvery { mockRepository.getMonthlyTripStatistics() } returns TripStatistics(
+            totalTrips = 1,
+            totalActualMiles = 125.0,
+            totalOorMiles = 0.0,
+            avgOorPercentage = 0.0
+        )
+
+        // When: End trip (insert + refreshStatisticsAfterSave)
+        viewModel.endTrip()
+        coVerify(timeout = 1000) { mockRepository.insertTrip(any()) }
+        coVerify(timeout = 1000) { mockRepository.getMonthlyTripStatistics() }
+        coVerify(timeout = 1000) { mockRepository.getTripsByDateRange(any(), any()) }
+        delay(100)
+
+        // Then: State has non-null monthly statistics and non-empty datesWithTripsInPeriod
+        val state = viewModel.uiState.value
+        assertNotNull("Monthly statistics should be loaded after endTrip", state.monthlyStatistics)
+        assertTrue(
+            "datesWithTripsInPeriod should contain the saved trip day when period includes today",
+            state.datesWithTripsInPeriod.isNotEmpty()
+        )
+    }
+
+    @Test
+    fun `refreshPeriodForCalendar loads monthly statistics and datesWithTripsInPeriod from repository`() = runTest {
+        // Given: Repository has a saved trip; selected period is set to current month
+        val now = Calendar.getInstance()
+        val startOfMonth = Calendar.getInstance().apply {
+            set(now.get(Calendar.YEAR), now.get(Calendar.MONTH), 1, 0, 0, 0)
+            set(Calendar.MILLISECOND, 0)
+        }.time
+        val endOfMonth = Calendar.getInstance().apply {
+            set(now.get(Calendar.YEAR), now.get(Calendar.MONTH), now.getActualMaximum(Calendar.DAY_OF_MONTH), 23, 59, 59)
+            set(Calendar.MILLISECOND, 999)
+        }.time
+        val tripDate = Date()
+        val trip = Trip(
+            id = "refreshed-1",
+            loadedMiles = 50.0,
+            bounceMiles = 10.0,
+            actualMiles = 60.0,
+            startTime = tripDate,
+            endTime = tripDate,
+            status = TripStatus.COMPLETED
+        )
+        coEvery { mockRepository.getMonthlyTripStatistics() } returns TripStatistics(
+            totalTrips = 1,
+            totalActualMiles = 60.0,
+            totalOorMiles = 0.0,
+            avgOorPercentage = 0.0
+        )
+        coEvery { mockRepository.getTripStatistics(any(), any()) } returns TripStatistics(
+            totalTrips = 1,
+            totalActualMiles = 60.0,
+            totalOorMiles = 0.0,
+            avgOorPercentage = 0.0
+        )
+        coEvery { mockRepository.getTripsByDateRange(any(), any()) } returns flowOf(listOf(trip))
+
+        viewModel.onCalendarPeriodSelected(PeriodMode.STANDARD, startOfMonth, endOfMonth)
+        delay(100)
+
+        // When: Run same refresh logic used after save (via public API for calendar)
+        viewModel.refreshPeriodForCalendar()
+        delay(50)
+
+        // Then: monthlyStatistics and datesWithTripsInPeriod reflect the trip from repository
+        val state = viewModel.uiState.value
+        assertNotNull("Monthly statistics should be loaded", state.monthlyStatistics)
+        assertEquals(1, state.monthlyStatistics?.totalTrips ?: 0)
+        assertTrue(
+            "datesWithTripsInPeriod should contain the trip date",
+            state.datesWithTripsInPeriod.isNotEmpty()
+        )
+    }
+
+    // ==================== mapPeriodToSummary & STATS ROW WIRING (monthly statistics / stat card) ====================
+
+    @Test
+    fun `mapPeriodToSummary returns null when period is null`() {
+        val result = viewModel.mapPeriodToSummary(null)
+        assertNull("mapPeriodToSummary should return null for null period", result)
+    }
+
+    @Test
+    fun `mapPeriodToSummary maps PeriodStatistics to SummaryStatistics correctly`() {
+        val periodStart = Calendar.getInstance().apply {
+            set(2025, Calendar.MARCH, 1, 0, 0, 0)
+            set(Calendar.MILLISECOND, 0)
+        }.time
+        val periodEnd = Calendar.getInstance().apply {
+            set(2025, Calendar.MARCH, 31, 23, 59, 59)
+            set(Calendar.MILLISECOND, 999)
+        }.time
+        val period = TripInputViewModel.PeriodStatistics(
+            totalTrips = 7,
+            totalDistance = 1250.5,
+            totalOorMiles = 62.5,
+            averageOorPercentage = 5.0,
+            periodMode = PeriodMode.STANDARD,
+            startDate = periodStart,
+            endDate = periodEnd
+        )
+        val summary = viewModel.mapPeriodToSummary(period)
+        assertNotNull("mapPeriodToSummary should return non-null for valid period", summary)
+        assertEquals("totalTrips should map correctly", 7, summary!!.totalTrips)
+        assertEquals("totalMiles should map from totalDistance", 1250.5, summary.totalMiles, 0.01)
+        assertEquals("oorMiles should map from totalOorMiles", 62.5, summary.oorMiles, 0.01)
+        assertEquals("oorPercentage should map from averageOorPercentage", 5.0, summary.oorPercentage, 0.01)
+    }
+
+    @Test
+    fun `stats row displays period data when period is selected - mapPeriodToSummary produces expected values`() = runTest {
+        // Given: User selects a calendar period; repository returns stats
+        val periodStart = Calendar.getInstance().apply {
+            set(2025, Calendar.APRIL, 1, 0, 0, 0)
+            set(Calendar.MILLISECOND, 0)
+        }.time
+        val periodEnd = Calendar.getInstance().apply {
+            set(2025, Calendar.APRIL, 30, 23, 59, 59)
+            set(Calendar.MILLISECOND, 999)
+        }.time
+        coEvery { mockRepository.getTripStatistics(any(), any()) } returns TripStatistics(
+            totalTrips = 3,
+            totalActualMiles = 450.0,
+            totalOorMiles = 22.5,
+            avgOorPercentage = 5.0
+        )
+        coEvery { mockRepository.getTripsByDateRange(any(), any()) } returns flowOf(emptyList())
+
+        // When: User selects period (triggers updatePeriodStatistics)
+        viewModel.onCalendarPeriodSelected(PeriodMode.STANDARD, periodStart, periodEnd)
+        coVerify(timeout = 1000) { mockRepository.getTripStatistics(periodStart, periodEnd) }
+        delay(50)
+
+        // Then: periodStatistics is populated and mapPeriodToSummary produces SummaryStatistics for stats row
+        val state = viewModel.uiState.value
+        assertNotNull("periodStatistics should be set after period selection", state.periodStatistics)
+        val summary = viewModel.mapPeriodToSummary(state.periodStatistics)
+        assertNotNull("mapPeriodToSummary should produce SummaryStatistics for stats row", summary)
+        assertEquals("Stats row totalTrips", 3, summary!!.totalTrips)
+        assertEquals("Stats row totalMiles", 450.0, summary.totalMiles, 0.01)
+        assertEquals("Stats row oorMiles", 22.5, summary.oorMiles, 0.01)
+        assertEquals("Stats row oorPercentage", 5.0, summary.oorPercentage, 0.01)
+    }
+
+    @Test
+    fun `stats row shows null summary when no period selected - mapPeriodToSummary of null`() {
+        // When: Stats row receives null (e.g. no period selected or cleared), mapPeriodToSummary returns null.
+        // Note: ViewModel auto-initializes periodStatistics from preferences on init, so state.periodStatistics
+        // is typically non-null. This test verifies the defensive behavior when null is passed.
+        val summary = viewModel.mapPeriodToSummary(null)
+        assertNull("mapPeriodToSummary should return null when periodStatistics is null", summary)
     }
 }
 

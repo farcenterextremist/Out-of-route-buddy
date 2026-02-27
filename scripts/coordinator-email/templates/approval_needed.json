@@ -1,0 +1,9 @@
+{
+  "key": "approval_needed",
+  "priority": 59,
+  "keywords": ["approve", "approval", "sign off", "signoff", "ok to proceed", "green light"],
+  "keywords_combine": "any",
+  "subject": "Re: OutOfRouteBuddy — approval",
+  "body": "Hi,\n\nThanks. We've noted your approval and will proceed. If anything changes, we'll reach out.\n\n— Jarvey",
+  "fetcher": null
+}

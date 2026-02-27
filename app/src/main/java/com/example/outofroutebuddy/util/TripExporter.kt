@@ -16,6 +16,7 @@ import java.util.*
 class TripExporter(private val context: Context) {
     
     companion object {
+        private const val TAG = "TripExporter"
         private const val DATE_FORMAT = "yyyy-MM-dd HH:mm:ss"
     }
     
@@ -125,7 +126,7 @@ class TripExporter(private val context: Context) {
             
             context.startActivity(Intent.createChooser(intent, "Share Trip Data"))
         } catch (e: Exception) {
-            android.util.Log.e("TripExporter", "Error sharing file", e)
+            android.util.Log.e(TAG, "Error sharing file", e)
         }
     }
 }

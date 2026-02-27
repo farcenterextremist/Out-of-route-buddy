@@ -13,11 +13,18 @@ import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.SwitchPreferenceCompat
 import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.ViewModelProvider
 import com.example.outofroutebuddy.R
 import com.example.outofroutebuddy.core.config.BuildConfig
+import com.example.outofroutebuddy.presentation.viewmodel.DataManagementViewModel
 import com.example.outofroutebuddy.presentation.viewmodel.TripInputViewModel
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
+import android.widget.Toast
 
 /**
  * ✅ Settings Fragment
@@ -34,6 +41,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
     
     // ✅ FIX: Access ViewModel via activity scope to ensure it survives config changes
     private val tripInputViewModel: TripInputViewModel by activityViewModels()
+    private val dataManagementViewModel: DataManagementViewModel by activityViewModels()
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         // Use the same SharedPreferences file as SettingsManager
@@ -69,10 +77,10 @@ class SettingsFragment : PreferenceFragmentCompat() {
                 val values = pref.entryValues
                 val index = (0 until values.size).indexOfFirst { values[it].toString() == savedValue }
                 if (index in entries.indices) pref.summary = entries[index]
-                android.util.Log.d("SettingsFragment", "Theme preference synced to: $savedValue")
+                android.util.Log.d(TAG, "Theme preference synced to: $savedValue")
             }
         } catch (e: Exception) {
-            android.util.Log.e("SettingsFragment", "Error syncing theme preference", e)
+            android.util.Log.e(TAG, "Error syncing theme preference", e)
         }
     }
     
@@ -86,7 +94,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
                 else -> AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM
             }
             AppCompatDelegate.setDefaultNightMode(mode)
-            android.util.Log.d("SettingsFragment", "Theme changed to: $themeValue")
+            android.util.Log.d(TAG, "Theme changed to: $themeValue")
             
             // ✅ FIX: Save current trip data before recreation
             saveCurrentTripData()
@@ -125,21 +133,63 @@ class SettingsFragment : PreferenceFragmentCompat() {
         
         // About preference - show version information
         findPreference<Preference>("about")?.setOnPreferenceClickListener {
-            android.util.Log.d("SettingsFragment", "About preference clicked")
+            android.util.Log.d(TAG, "About preference clicked")
             showAboutDialog()
             true
+        }
+
+        // Data & privacy: delete old data from device (keep on server)
+        findPreference<Preference>("delete_old_data_from_device")?.setOnPreferenceClickListener {
+            AlertDialog.Builder(requireContext())
+                .setTitle("Delete old data from device")
+                .setMessage("Remove trips older than 12 months from this device? Data may be kept on the server for training.")
+                .setPositiveButton(android.R.string.ok) { _, _ ->
+                    dataManagementViewModel.deleteOldDataFromDevice(12)
+                }
+                .setNegativeButton(android.R.string.cancel, null)
+                .show()
+            true
+        }
+
+        // Data & privacy: clear all trip data from device
+        findPreference<Preference>("clear_all_data_from_device")?.setOnPreferenceClickListener {
+            AlertDialog.Builder(requireContext())
+                .setTitle("Clear all trip data")
+                .setMessage("Remove all trips from this device? Data may be kept on the server for product improvement and training.")
+                .setPositiveButton(android.R.string.ok) { _, _ ->
+                    dataManagementViewModel.clearAllDataFromDevice()
+                }
+                .setNegativeButton(android.R.string.cancel, null)
+                .show()
+            true
+        }
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                dataManagementViewModel.results.collectLatest { result ->
+                    when (result) {
+                        is DataManagementViewModel.DataManagementResult.Success ->
+                            Toast.makeText(requireContext(), result.message, Toast.LENGTH_LONG).show()
+                        is DataManagementViewModel.DataManagementResult.Error ->
+                            Toast.makeText(requireContext(), "Error: ${result.message}", Toast.LENGTH_LONG).show()
+                    }
+                }
+            }
         }
     }
     
     private fun updateGpsFrequency(seconds: Int) {
         // This would update the GPS service configuration
         // For now, just log it
-        android.util.Log.d("SettingsFragment", "GPS update frequency changed to: $seconds seconds")
+        android.util.Log.d(TAG, "GPS update frequency changed to: $seconds seconds")
     }
     
     private fun updateNotificationSettings(enabled: Boolean) {
         // Update notification channel settings
-        android.util.Log.d("SettingsFragment", "Notifications enabled: $enabled")
+        android.util.Log.d(TAG, "Notifications enabled: $enabled")
     }
     
     /**
@@ -147,7 +197,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
      */
     private fun showAboutDialog() {
         try {
-            android.util.Log.d("SettingsFragment", "showAboutDialog called")
+            android.util.Log.d(TAG, "showAboutDialog called")
             val message = """
                 ${BuildConfig.APP_NAME}
                 Version ${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})
@@ -163,21 +213,21 @@ class SettingsFragment : PreferenceFragmentCompat() {
                 Built with Android ${BuildConfig.TARGET_SDK}
             """.trimIndent()
             
-            android.util.Log.d("SettingsFragment", "About message: $message")
+            android.util.Log.d(TAG, "About message: $message")
             
             AlertDialog.Builder(requireContext())
                 .setTitle("About")
                 .setMessage(message)
                 .setPositiveButton("OK") { dialog, _ ->
-                    android.util.Log.d("SettingsFragment", "About dialog OK clicked")
+                    android.util.Log.d(TAG, "About dialog OK clicked")
                     dialog.dismiss()
                 }
                 .show()
                 
-            android.util.Log.d("SettingsFragment", "About dialog shown")
+            android.util.Log.d(TAG, "About dialog shown")
                 
         } catch (e: Exception) {
-            android.util.Log.e("SettingsFragment", "Error showing about dialog", e)
+            android.util.Log.e(TAG, "Error showing about dialog", e)
         }
     }
     
@@ -186,7 +236,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
      */
     private fun saveCurrentTripData() {
         try {
-            android.util.Log.d("SettingsFragment", "Saving trip data before theme change")
+            android.util.Log.d(TAG, "Saving trip data before theme change")
             
             // The TripInputViewModel already handles persistence automatically via:
             // 1. Auto-save via TripCrashRecoveryManager (every 30 seconds)
@@ -197,11 +247,12 @@ class SettingsFragment : PreferenceFragmentCompat() {
             // so the ViewModel instance will persist across activity recreation
             // and trip data will be restored automatically
         } catch (e: Exception) {
-            android.util.Log.e("SettingsFragment", "Error saving trip data", e)
+            android.util.Log.e(TAG, "Error saving trip data", e)
         }
     }
     
     companion object {
+        private const val TAG = "SettingsFragment"
         fun newInstance() = SettingsFragment()
     }
 }

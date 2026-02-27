@@ -2,7 +2,7 @@
 
 **Owner:** UI/UX Specialist  
 **Purpose:** Confirm copy and button order for End Trip so they match user expectations.  
-**Related:** 25-point list #5, `docs/agents/APP_IMPROVEMENT_25_POINT_BRAINSTORM.md`, `docs/agents/MONTHLY_STATS_PERSISTENCE_CALENDAR_PLAN.md`.
+**Related:** 25-point list #5, `docs/agents/APP_IMPROVEMENT_25_POINT_BRAINSTORM.md`, `docs/product/FEATURE_BRIEF_monthly_stats_and_persistence.md`, `docs/technical/TRIP_PERSISTENCE_END_CLEAR.md`.
 
 ---
 

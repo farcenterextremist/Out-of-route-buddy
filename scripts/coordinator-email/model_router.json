@@ -1,0 +1,20 @@
+{
+  "routes": [
+    {
+      "id": "simple",
+      "intents": ["recent", "version", "roadmap"],
+      "backend": "ollama",
+      "model": "phi3:mini",
+      "max_per_hour": 60
+    },
+    {
+      "id": "default",
+      "intents": [],
+      "backend": "ollama",
+      "model": "qwen2.5:7b"
+    }
+  ],
+  "backend_limits": {
+    "ollama": { "max_per_hour": 50 }
+  }
+}

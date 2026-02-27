@@ -1,0 +1,9 @@
+{
+  "key": "blockers",
+  "priority": 65,
+  "keywords": ["blocker", "blocked", "stuck", "can't proceed", "blocking"],
+  "keywords_combine": "any",
+  "subject": "Re: OutOfRouteBuddy — blockers",
+  "body": "Hi,\n\nI've noted the blocker. We'll look into it and follow up. If you can share any error messages or steps to reproduce, that will help. I'll assign to the right role and get back to you.\n\n— Jarvey",
+  "fetcher": null
+}

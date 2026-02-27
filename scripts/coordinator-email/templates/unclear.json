@@ -1,0 +1,10 @@
+{
+  "key": "unclear",
+  "priority": 60,
+  "condition": "short_body",
+  "short_body_max_len": 15,
+  "short_body_whitelist": ["test", "hi", "ok", "ready", "testing", "hello", "thankful", "i'm thankful", "what's next?", "what's next", "tell me something", "tell me anything", "share something", "give me an update", "update me", "news?", "status?", "catch me up", "fill me in", "anything new?", "what's new?", "quick summary", "what's happening?", "what's the latest?", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10"],
+  "subject": "Re: OutOfRouteBuddy",
+  "body": "Hi,\n\nI got your message but couldn't make out what you need. Could you specify: (a) what's next / roadmap, (b) a specific question about the project, or (c) something else?\n\n— Jarvey",
+  "fetcher": null
+}

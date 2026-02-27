@@ -1,7 +1,7 @@
 # Wiring map (one-page)
 
 **Owner:** File Organizer / Back-end  
-**Related:** `docs/agents/CURRENT_WIRING_PLAN.md`.
+**Related:** `docs/agents/KNOWN_TRUTHS_AND_SINGLE_SOURCE_OF_TRUTH.md`, `docs/technical/TRIP_PERSISTENCE_END_CLEAR.md`.
 
 ---
 

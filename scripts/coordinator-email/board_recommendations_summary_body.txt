@@ -1,0 +1,21 @@
+Hi,
+
+We've finished the Board recommendations adoption project. Here's what was done (docs and small checks only; no major feature changes).
+
+Done:
+- Docs index: docs/README.md now has a "Key plans" section linking ROADMAP, CRUCIAL_IMPROVEMENTS, Known Truths, and BOARD_MEETING_PLAN.
+- Design process: ROADMAP.md has a "Design process (Board-adopted)" section (prioritize from one source, briefs reference SSOT, user decisions via HITL).
+- Back-end policy: Known Truths now includes an explicit "Back-end policy" bullet (no new persistence paths, OfflineDataManager must not bypass Clear).
+- Accessibility: docs/ux/ACCESSIBILITY_CHECKLIST.md created (touch targets, labels, contrast, focus order) for Front-end to use in one batch.
+- Comms: docs/comms/SUBJECT_LINE_TEMPLATES.md has a "Tone (Board-adopted)" section; value prop was already there.
+- Lost-device note: docs/security/LOST_DEVICE_NOTE.md added (what's on device, user guidance).
+- Two-way email: OPEN_LINE_OF_COMMUNICATION.md has a short "Two-way email: how you reply and how we read" section for you.
+- CI: Verified .github/workflows/android-tests.yml runs unit + instrumented tests; noted in docs/qa/README.md.
+- QA: docs/qa/TEST_PLAN_TEMPLATE.md, SSOT_TEST_SCENARIOS.md, and README updated (test plan per feature, SSOT scenarios, email smoke when scripts change).
+- Security/Red/Blue: SECURITY_NOTES.md §8 "When Export lands" and purple-team-protocol updated (Purple when Export ships; define alarm, remediate, re-test).
+
+Skipped (per your choices): stats/period copy clarity (G), Help placement (H). Deferred: Export handoff (J) until the feature exists.
+
+If you'd like a weekly Board digest by email, reply and we'll set it up. Otherwise we'll email you after big changes or when we need a decision.
+
+— OutOfRouteBuddy Team

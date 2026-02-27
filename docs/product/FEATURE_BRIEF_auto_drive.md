@@ -2,7 +2,8 @@
 
 **Owner:** Project Design / Creative Manager  
 **Created:** 2025-02-19  
-**Status:** Brief only — hand off to UI/UX (wireframe), Back-end (trigger logic), Front-end (UI), QA (test cases), Security (privacy review).
+**Status:** Brief only — hand off to UI/UX (wireframe), Back-end (trigger logic), Front-end (UI), QA (test cases), Security (privacy review).  
+**Related:** [ROADMAP.md](ROADMAP.md), [CRUCIAL_IMPROVEMENTS_TODO.md](../CRUCIAL_IMPROVEMENTS_TODO.md), [KNOWN_TRUTHS_AND_SINGLE_SOURCE_OF_TRUTH.md](../agents/KNOWN_TRUTHS_AND_SINGLE_SOURCE_OF_TRUTH.md).
 
 ---
 

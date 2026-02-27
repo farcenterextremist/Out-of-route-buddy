@@ -16,9 +16,7 @@ const EMULATOR_TO_PROJECT = {
   'statisticsPeriod.label': { file: 'app/src/main/res/values/strings.xml', stringName: 'statistics_period_label' },
   'statisticsPeriod.button': { file: 'app/src/main/res/values/strings.xml', stringName: 'statistics_change_period_button' },
   'statisticsPeriod.value': { file: 'app/src/main/res/values/strings.xml', stringName: 'statistics_period_value' },
-  'weeklyStats.title': { file: 'app/src/main/res/values/strings.xml', stringName: 'weekly_statistics' },
   'monthlyStats.title': { file: 'app/src/main/res/values/strings.xml', stringName: 'monthly_statistics' },
-  'yearlyStats.title': { file: 'app/src/main/res/values/strings.xml', stringName: 'yearly_statistics' },
 };
 
 function getValueAtPath(obj, path) {

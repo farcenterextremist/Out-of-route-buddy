@@ -1,0 +1,5 @@
+Based on the project context, here's what's next on the roadmap.
+
+[Roadmap summary would be injected from context in real LLM mode.]
+
+— Jarvey

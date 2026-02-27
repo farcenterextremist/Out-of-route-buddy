@@ -1,0 +1,119 @@
+[
+  {
+    "agent_id": "coordinator",
+    "display_name": "Master Branch Coordinator",
+    "role_card_path": "docs/agents/coordinator-instructions.md",
+    "simple_prompt": "We need to add a new 'Export trip to PDF' button on the trip history screen. Who should do what? Assign work.",
+    "semi_simple_prompt": "The user asked: 'Should we support dark mode for the statistics calendar?' You don't know the answer. What do you do, and which role(s) do you involve?",
+    "simple_look_for": "Correct assignment to Front-end/Back-end/UI/UX, handoff to Human-in-the-Loop when the user must decide.",
+    "semi_simple_look_for": "Correct assignment to Front-end/Back-end/UI/UX, handoff to Human-in-the-Loop when the user must decide."
+  },
+  {
+    "agent_id": "design_creative",
+    "display_name": "Project Design / Creative Manager",
+    "role_card_path": "docs/agents/roles/design-creative-manager.md",
+    "simple_prompt": "In one short paragraph, what is the product vision for OutOfRouteBuddy and who it's for?",
+    "semi_simple_prompt": "We have three ideas: (A) in-app reports, (B) fleet-wide dashboard, (C) better trip recovery. Prioritize them with a one-line reason each and say what you'd hand off to whom next.",
+    "simple_look_for": "No code/UI detail; handoff to UI/UX or Coordinator; reference to roadmap/briefs.",
+    "semi_simple_look_for": "No code/UI detail; handoff to UI/UX or Coordinator; reference to roadmap/briefs."
+  },
+  {
+    "agent_id": "ui_ux",
+    "display_name": "UI/UX Specialist",
+    "role_card_path": "docs/agents/roles/ui-ux-specialist.md",
+    "simple_prompt": "Where should a 'Help & Info' entry point live in the app? Give one concrete recommendation and which file or screen you're referring to.",
+    "semi_simple_prompt": "The statistics section feels cramped. Suggest two improvements (layout or copy) and say what you'd hand to the Front-end Engineer.",
+    "simple_look_for": "References to layouts/strings/docs/ux; no Kotlin; handoff to Front-end.",
+    "semi_simple_look_for": "References to layouts/strings/docs/ux; no Kotlin; handoff to Front-end."
+  },
+  {
+    "agent_id": "frontend",
+    "display_name": "Front-end Engineer",
+    "role_card_path": "docs/agents/roles/frontend-engineer.md",
+    "simple_prompt": "Name the main layout file for the trip input screen and one Kotlin fragment that uses it.",
+    "semi_simple_prompt": "We want to add a 'Export to PDF' button on the trip history screen. What file(s) would you change and what would you need from the Back-end or ViewModel?",
+    "simple_look_for": "Concrete paths (res/layout, presentation/); no repository or service logic; handoff to Back-end for data.",
+    "semi_simple_look_for": "Concrete paths (res/layout, presentation/); no repository or service logic; handoff to Back-end for data."
+  },
+  {
+    "agent_id": "backend",
+    "display_name": "Back-end Engineer",
+    "role_card_path": "docs/agents/roles/backend-engineer.md",
+    "simple_prompt": "Where is trip data persisted (e.g. which layer or component)? One sentence.",
+    "semi_simple_prompt": "We need to expose 'total trips this month' for the statistics screen. What would you add or change (repository, service, or domain) and which file(s)?",
+    "simple_look_for": "Data/domain/services paths; no UI; handoff to Front-end for UI contract.",
+    "semi_simple_look_for": "Data/domain/services paths; no UI; handoff to Front-end for UI contract."
+  },
+  {
+    "agent_id": "devops",
+    "display_name": "DevOps Engineer",
+    "role_card_path": "docs/agents/roles/devops-engineer.md",
+    "simple_prompt": "How do we run unit tests from the command line on this project?",
+    "semi_simple_prompt": "We want to run unit tests in CI on every push. What would you use (e.g. Gradle task, script) and where is the config?",
+    "simple_look_for": "Gradle/scripts/CI paths; no test case design; handoff to QA for strategy.",
+    "semi_simple_look_for": "Gradle/scripts/CI paths; no test case design; handoff to QA for strategy."
+  },
+  {
+    "agent_id": "qa",
+    "display_name": "QA Engineer",
+    "role_card_path": "docs/agents/roles/qa-engineer.md",
+    "simple_prompt": "Where are unit tests for the app located (directory path)? Name one test file.",
+    "semi_simple_prompt": "We added a new 'Export to PDF' button. What would you test (list 2–3 test ideas) and would you hand off anything to another role?",
+    "simple_look_for": "app/src/test/ or androidTest/; test strategy not implementation; handoff to Front-end/Back-end for bugs.",
+    "semi_simple_look_for": "app/src/test/ or androidTest/; test strategy not implementation; handoff to Front-end/Back-end for bugs."
+  },
+  {
+    "agent_id": "security",
+    "display_name": "Security Specialist",
+    "role_card_path": "docs/agents/roles/security-specialist.md",
+    "simple_prompt": "Where are security notes or recommendations for this app documented?",
+    "semi_simple_prompt": "We're about to add export to PDF that writes to app cache and shares via FileProvider. What would you check and what doc would you update?",
+    "simple_look_for": "docs/security/, manifest, no implementation; recommendations only.",
+    "semi_simple_look_for": "docs/security/, manifest, no implementation; recommendations only."
+  },
+  {
+    "agent_id": "email_editor",
+    "display_name": "Email Editor / Market Guru",
+    "role_card_path": "docs/agents/roles/email-editor-market-guru.md",
+    "simple_prompt": "Draft a one-line subject and one-sentence body for an email to the user: 'Statistics section refactor is done, please review.'",
+    "semi_simple_prompt": "The Coordinator wants to ask the user to choose between two feature priorities. Draft a short email (subject + 2–3 sentences) that the Human-in-the-Loop Manager could send.",
+    "simple_look_for": "No send logic; clear copy; handoff to HITL for sending.",
+    "semi_simple_look_for": "No send logic; clear copy; handoff to HITL for sending."
+  },
+  {
+    "agent_id": "file_organizer",
+    "display_name": "File Organizer",
+    "role_card_path": "docs/agents/roles/file-organizer.md",
+    "simple_prompt": "Where do agent role definitions live in this repo (folder path)?",
+    "semi_simple_prompt": "We have new docs for the Purple Team (Red/Blue). Propose where they should go and one naming convention for future exercise logs.",
+    "simple_look_for": "docs/ structure; no content authoring; handoff to Coordinator or user for approval.",
+    "semi_simple_look_for": "docs/ structure; no content authoring; handoff to Coordinator or user for approval."
+  },
+  {
+    "agent_id": "human_in_the_loop",
+    "display_name": "Human-in-the-Loop Manager",
+    "role_card_path": "docs/agents/roles/human-in-the-loop-manager.md",
+    "simple_prompt": "What script do you use to send email to the user, and where is it?",
+    "semi_simple_prompt": "The Coordinator says: 'Email the user that the Help & Info dialog fix is deployed and ask them to confirm it looks good on their device.' Draft the subject and body you'd send (you don't have to run the script).",
+    "simple_look_for": "scripts/coordinator-email/, send_email.py or README; draft only; no product decisions.",
+    "semi_simple_look_for": "scripts/coordinator-email/, send_email.py or README; draft only; no product decisions."
+  },
+  {
+    "agent_id": "red_team",
+    "display_name": "Red Team",
+    "role_card_path": "docs/agents/roles/red-team-agent.md",
+    "simple_prompt": "As Red Team Lead, in one sentence what is your main rule of engagement when attacking a target?",
+    "semi_simple_prompt": "Simulate one attack idea for the trip export flow (e.g. who can trigger it, what data is exposed). Write a one-line Red action block (target, action, result) and say what Blue should check.",
+    "simple_look_for": "Scope/no destruction; proof-of-work format; reference to purple-team-protocol or proof-of-work doc.",
+    "semi_simple_look_for": "Scope/no destruction; proof-of-work format; reference to purple-team-protocol or proof-of-work doc."
+  },
+  {
+    "agent_id": "blue_team",
+    "display_name": "Blue Team",
+    "role_card_path": "docs/agents/roles/blue-team-agent.md",
+    "simple_prompt": "After a Red Team action, what is the one question you must answer?",
+    "semi_simple_prompt": "Red just simulated 'user requested CSV export.' What would you check (whether the alarm went off) and what would you do if it didn't?",
+    "simple_look_for": "\"Did the alarm go off?\"; remediation; reference to proof-of-work or security-exercises.",
+    "semi_simple_look_for": "\"Did the alarm go off?\"; remediation; reference to proof-of-work or security-exercises."
+  }
+]

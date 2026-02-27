@@ -1,0 +1,1 @@
+Trip recovery: TripCrashRecoveryManager saves state every 30s. On restart after crash, recoveredTripState loads. — Jarvey

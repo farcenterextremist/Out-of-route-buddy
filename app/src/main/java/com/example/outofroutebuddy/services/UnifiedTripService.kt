@@ -310,13 +310,19 @@ open class UnifiedTripService(
     }
 
     /**
-     * ✅ NEW: Get current period dates based on period mode
+     * Returns the current period date range based on period mode.
+     *
+     * - STANDARD: First day of current month through last day of current month. Always includes today,
+     *   so a trip ended today will appear in "days with trips" and monthly statistics.
+     * - CUSTOM: Thursday before first Friday of the month through the following period end. May not
+     *   include today if today falls outside that business period; trips ended today may not appear
+     *   in the period view until the next period that includes today.
      */
     fun getCurrentPeriodDates(periodMode: PeriodMode): Pair<Date, Date> {
         val now = Date()
         return when (periodMode) {
             PeriodMode.STANDARD -> {
-                // STANDARD mode: 1st of month to last of month (full calendar month)
+                // STANDARD mode: 1st of month to last of month (full calendar month); always includes today
                 val calendar = Calendar.getInstance()
                 calendar.time = now
                 calendar.set(Calendar.DAY_OF_MONTH, 1)
@@ -553,37 +559,34 @@ open class UnifiedTripService(
     }
     
     /**
-     * ✅ UNIFIED: Get trip statistics
-     * ✅ NEW (#13): Thread-safe with Mutex (non-blocking read using runBlocking is acceptable for getters)
+     * ✅ UNIFIED: Get trip statistics (suspend to avoid blocking Main; call from coroutine)
      */
-    fun getTripStatistics(): TripStatistics {
-        return runBlocking {
-            statisticsMutex.withLock {
-                val currentState = _tripState.value
-                val totalTrips = currentState.totalTrips
-                
-                val averageDistance = if (totalTrips > 0) {
-                    currentState.totalDistance / totalTrips
-                } else {
-                    0.0
-                }
-                
-                val averageOorPercentage = if (totalTrips > 0) {
-                    currentState.totalOorMiles / currentState.totalDistance * 100.0
-                } else {
-                    0.0
-                }
-                
-                TripStatistics(
-                    totalTrips = totalTrips,
-                    totalDistance = currentState.totalDistance,
-                    totalOorMiles = currentState.totalOorMiles,
-                    averageDistance = averageDistance,
-                    averageOorPercentage = averageOorPercentage,
-                    isTracking = currentState.isTracking,
-                    lastTripEndTime = currentState.lastTripEndTime
-                )
+    suspend fun getTripStatistics(): TripStatistics {
+        return statisticsMutex.withLock {
+            val currentState = _tripState.value
+            val totalTrips = currentState.totalTrips
+
+            val averageDistance = if (totalTrips > 0) {
+                currentState.totalDistance / totalTrips
+            } else {
+                0.0
             }
+
+            val averageOorPercentage = if (totalTrips > 0) {
+                currentState.totalOorMiles / currentState.totalDistance * 100.0
+            } else {
+                0.0
+            }
+
+            TripStatistics(
+                totalTrips = totalTrips,
+                totalDistance = currentState.totalDistance,
+                totalOorMiles = currentState.totalOorMiles,
+                averageDistance = averageDistance,
+                averageOorPercentage = averageOorPercentage,
+                isTracking = currentState.isTracking,
+                lastTripEndTime = currentState.lastTripEndTime
+            )
         }
     }
     

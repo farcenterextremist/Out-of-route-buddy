@@ -8,12 +8,15 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.TextView
+import androidx.core.os.bundleOf
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.Navigation
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.outofroutebuddy.R
 import com.example.outofroutebuddy.databinding.DialogTripHistoryByDateBinding
+import com.google.android.material.snackbar.Snackbar
 import com.example.outofroutebuddy.presentation.ui.history.TripHistoryAdapter
 import com.example.outofroutebuddy.presentation.ui.history.TripHistoryByDateViewModel
 import dagger.hilt.android.AndroidEntryPoint
@@ -80,11 +83,18 @@ class TripHistoryByDateDialog : DialogFragment() {
         setupViews()
         setupRecyclerView()
         observeTrips()
-        
+        observeDeleteError()
+
         // Load trips for the selected date
         viewModel.loadTripsForDate(selectedDate)
     }
-    
+
+    override fun onResume() {
+        super.onResume()
+        // Refresh when dialog becomes visible (e.g. after saving a trip elsewhere)
+        viewModel.loadTripsForDate(selectedDate)
+    }
+
     private fun setupViews() {
         // ✅ EDGE CASE: Format and display the selected date with proper error handling
         try {
@@ -93,7 +103,7 @@ class TripHistoryByDateDialog : DialogFragment() {
         } catch (e: Exception) {
             // ✅ EDGE CASE: If date formatting fails, show fallback
             binding.dateTitleText.text = "Trips for selected date"
-            android.util.Log.e("TripHistoryByDateDialog", "Error formatting date", e)
+            android.util.Log.e(TAG, "Error formatting date", e)
         }
         
         // Close button
@@ -105,7 +115,13 @@ class TripHistoryByDateDialog : DialogFragment() {
     private fun setupRecyclerView() {
         adapter = TripHistoryAdapter(
             onTripClick = { trip ->
-                // Backlog: Navigate to trip details screen (see CRUCIAL #4, ROADMAP "History improvements", docs/agents/APP_IMPROVEMENT_25_POINT_BRAINSTORM.md #7). No details screen yet; add when implemented.
+                dismiss()
+                try {
+                    val navController = Navigation.findNavController(requireActivity(), R.id.nav_host_fragment)
+                    navController.navigate(R.id.tripDetailsFragment, bundleOf("tripId" to trip.id))
+                } catch (e: Exception) {
+                    android.util.Log.e(TAG, "Failed to navigate to trip details", e)
+                }
             },
             onDeleteClick = { trip ->
                 viewModel.deleteTrip(trip)
@@ -118,6 +134,14 @@ class TripHistoryByDateDialog : DialogFragment() {
         }
     }
     
+    private fun observeDeleteError() {
+        lifecycleScope.launch {
+            viewModel.deleteError.collect { message ->
+                view?.let { Snackbar.make(it, message, Snackbar.LENGTH_SHORT).show() }
+            }
+        }
+    }
+
     private fun observeTrips() {
         lifecycleScope.launch {
             viewModel.trips.collect { trips ->
@@ -157,7 +181,7 @@ class TripHistoryByDateDialog : DialogFragment() {
             (resources.displayMetrics.widthPixels * 0.9f).toInt(),
             (resources.displayMetrics.heightPixels * 0.8f).toInt()
         )
-        dialog?.window?.setBackgroundDrawableResource(R.drawable.dialog_background)
+        dialog?.window?.setBackgroundDrawableResource(android.R.color.transparent)
     }
     
     override fun onDestroyView() {

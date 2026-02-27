@@ -139,21 +139,27 @@ class CustomCalendarDialog : DialogFragment() {
         periodStartDate = CalendarDay.from(startLocalDate)
         periodEndDate = CalendarDay.from(endLocalDate)
         
-        // Set calendar date range
-        val minDate = CalendarDay.from(startLocalDate)
-        val maxDate = CalendarDay.from(endLocalDate)
+        // Set calendar date range: 1 year prior and 1 year future (by month) so user can navigate
+        val minCalendar = getFirstDayOfMonth(refDate).apply { add(Calendar.YEAR, -1) }
+        val maxCalendar = getLastDayOfMonth(refDate).apply { add(Calendar.YEAR, 1) }
+        val minDate = CalendarDay.from(dateToLocalDate(minCalendar.time))
+        val maxDate = CalendarDay.from(dateToLocalDate(maxCalendar.time))
         
         calendar.state().edit()
             .setMinimumDate(minDate)
             .setMaximumDate(maxDate)
             .commit()
-        
+
+        val start = periodStartDate
+        val end = periodEndDate
+        if (start == null || end == null) return
+
         // ✅ AUTOMATIC HIGHLIGHTING: Add decorators for boundary dates (green start, red end)
-        calendar.addDecorator(StartDateDecorator(periodStartDate!!))
-        calendar.addDecorator(EndDateDecorator(periodEndDate!!))
+        calendar.addDecorator(StartDateDecorator(start))
+        calendar.addDecorator(EndDateDecorator(end))
         // ✅ Current date (today) highlighted grey when not a boundary date
         val today = CalendarDay.today()
-        calendar.addDecorator(CurrentDateDecorator(today, periodStartDate!!, periodEndDate!!))
+        calendar.addDecorator(CurrentDateDecorator(today, start, end))
         // ✅ Days with saved trips: show a dot so user knows which days are clickable for history
         if (datesWithTripsMillis.isNotEmpty()) {
             calendar.addDecorator(DaysWithTripsDecorator(datesWithTripsMillis))
@@ -161,7 +167,7 @@ class CustomCalendarDialog : DialogFragment() {
         
         // ✅ SINGLE-DAY SELECTION: Only the tapped day is highlighted (not the whole period)
         calendar.selectionMode = MaterialCalendarView.SELECTION_MODE_SINGLE
-        calendar.selectedDate = periodStartDate
+        calendar.selectedDate = start
         
         // ✅ CLICK HANDLING: Highlight only the selected day; open history for non-boundary taps
         calendar.setOnDateChangedListener(object : OnDateSelectedListener {

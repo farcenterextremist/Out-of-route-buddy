@@ -1,8 +1,6 @@
 package com.example.outofroutebuddy.util
 
 import android.util.Log
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 
 /**
  * ⚡ Performance Tracker
@@ -33,7 +31,6 @@ object PerformanceTracker {
     private const val VERY_SLOW_THRESHOLD_MS = 500L
     
     private val operationStats = mutableMapOf<String, OperationStats>()
-    private val mutex = Mutex()
     
     /**
      * Operation statistics
@@ -92,24 +89,17 @@ object PerformanceTracker {
      */
     @PublishedApi
     internal fun logPerformance(name: String, durationMs: Long) {
-        // Update statistics
-        kotlinx.coroutines.runBlocking {
-            mutex.withLock {
-                val stats = operationStats.getOrPut(name) { OperationStats() }
-                stats.count++
-                stats.totalDurationMs += durationMs
-                stats.minDurationMs = minOf(stats.minDurationMs, durationMs)
-                stats.maxDurationMs = maxOf(stats.maxDurationMs, durationMs)
-                
-                if (durationMs > SLOW_THRESHOLD_MS) {
-                    stats.slowCount++
-                }
-                if (durationMs > VERY_SLOW_THRESHOLD_MS) {
-                    stats.verySlowCount++
-                }
-            }
+        // Update statistics (synchronized to avoid runBlocking; callable from any thread)
+        synchronized(operationStats) {
+            val stats = operationStats.getOrPut(name) { OperationStats() }
+            stats.count++
+            stats.totalDurationMs += durationMs
+            stats.minDurationMs = minOf(stats.minDurationMs, durationMs)
+            stats.maxDurationMs = maxOf(stats.maxDurationMs, durationMs)
+            if (durationMs > SLOW_THRESHOLD_MS) stats.slowCount++
+            if (durationMs > VERY_SLOW_THRESHOLD_MS) stats.verySlowCount++
         }
-        
+
         // Log based on threshold
         when {
             durationMs > VERY_SLOW_THRESHOLD_MS -> {
@@ -127,64 +117,64 @@ object PerformanceTracker {
     /**
      * Get statistics for a specific operation
      */
-    suspend fun getOperationStats(name: String): OperationStats? = mutex.withLock {
+    suspend fun getOperationStats(name: String): OperationStats? = synchronized(operationStats) {
         operationStats[name]
     }
-    
+
     /**
      * Get all operation statistics
      */
-    suspend fun getAllStats(): Map<String, OperationStats> = mutex.withLock {
+    suspend fun getAllStats(): Map<String, OperationStats> = synchronized(operationStats) {
         operationStats.toMap()
     }
-    
+
     /**
      * Get slowest operations
      */
-    suspend fun getSlowestOperations(limit: Int = 10): List<Pair<String, OperationStats>> = mutex.withLock {
+    suspend fun getSlowestOperations(limit: Int = 10): List<Pair<String, OperationStats>> = synchronized(operationStats) {
         operationStats.entries
             .sortedByDescending { it.value.avgDurationMs }
             .take(limit)
             .map { it.key to it.value }
     }
-    
+
     /**
      * Get operations that frequently exceed threshold
      */
-    suspend fun getFrequentlySlowOperations(minSlowPercentage: Double = 10.0): List<Pair<String, OperationStats>> = mutex.withLock {
+    suspend fun getFrequentlySlowOperations(minSlowPercentage: Double = 10.0): List<Pair<String, OperationStats>> = synchronized(operationStats) {
         operationStats.entries
             .filter { it.value.slowPercentage >= minSlowPercentage }
             .sortedByDescending { it.value.slowPercentage }
             .map { it.key to it.value }
     }
-    
+
     /**
      * Reset statistics
      */
-    suspend fun reset() = mutex.withLock {
+    suspend fun reset() = synchronized(operationStats) {
         operationStats.clear()
         Log.d(TAG, "Performance statistics reset")
     }
-    
+
     /**
      * Reset statistics for a specific operation
      */
-    suspend fun resetOperation(name: String) = mutex.withLock {
+    suspend fun resetOperation(name: String) = synchronized(operationStats) {
         operationStats.remove(name)
         Log.d(TAG, "Performance statistics reset for: $name")
     }
-    
+
     /**
      * Print performance report
      */
-    suspend fun printReport() = mutex.withLock {
+    suspend fun printReport() = synchronized(operationStats) block@ {
         Log.i(TAG, "═══════════════════════════════════════")
         Log.i(TAG, "    PERFORMANCE REPORT")
         Log.i(TAG, "═══════════════════════════════════════")
-        
+
         if (operationStats.isEmpty()) {
             Log.i(TAG, "No operations tracked yet")
-            return@withLock
+            return@block
         }
         
         val slowest = operationStats.entries

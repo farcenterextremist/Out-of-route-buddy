@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.detekt)
     id("kotlin-kapt")
     id("com.google.dagger.hilt.android") version "2.48.1"
     id("com.google.gms.google-services")
@@ -15,8 +16,8 @@ android {
         applicationId = "com.example.outofroutebuddy"
         minSdk = 24
         targetSdk = 34
-        versionCode = 1
-        versionName = "1.0.1"
+        versionCode = 2
+        versionName = "1.0.2"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -63,6 +64,8 @@ android {
 
     lint {
         checkReleaseBuilds = true
+        // abortOnError false: allows build to succeed while addressing lint issues; set true when
+        // all lint issues are resolved for stricter CI (e.g. ./gradlew lint must pass).
         abortOnError = false
         disable +=
             setOf(
@@ -82,6 +85,11 @@ android {
             isReturnDefaultValues = true
         }
     }
+}
+
+detekt {
+    config.setFrom(files("${layout.projectDirectory}/config/detekt/detekt.yml"))
+    buildUponDefaultConfig = true
 }
 
 dependencies {
@@ -117,8 +125,10 @@ dependencies {
     // Material Components (for MaterialDatePicker - keeping for now)
     implementation("com.google.android.material:material:1.11.0")
     
-    // MaterialCalendarView - Customizable calendar with decorators
-    implementation("com.github.prolificinteractive:material-calendarview:2.0.1")
+    // MaterialCalendarView - Customizable calendar with decorators (exclude threetenbp: we use one version below)
+    implementation("com.github.prolificinteractive:material-calendarview:2.0.1") {
+        exclude(group = "org.threeten", module = "threetenbp")
+    }
 
     // Navigation
     implementation(libs.androidx.navigation.fragment.ktx)
@@ -144,6 +154,9 @@ dependencies {
 
     // JSON Serialization
     implementation(libs.gson)
+
+    // DataStore for offline persistence
+    implementation("androidx.datastore:datastore-preferences:1.0.0")
     
     // ThreeTen Backport for MaterialCalendarView (requires LocalDate)
     implementation("org.threeten:threetenbp:1.6.8")

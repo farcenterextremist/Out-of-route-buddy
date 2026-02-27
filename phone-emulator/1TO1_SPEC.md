@@ -17,7 +17,7 @@ Defines how the emulator matches the real OutOfRouteBuddy app. See also [EMULATO
 
 ## 2. Source of spacing and colors
 
-- **Toolbar (1:1):** Height 56dp (actionBarSize) → 56px; start/end margin 16dp → 16px; gap between title and lines 8dp → 8px. Matches `custom_toolbar.xml`.
+- **Toolbar (1:1):** Height 80dp → 80px; start/end margin 16dp → 16px. Matches `custom_toolbar.xml` and `fragment_trip_input.xml` (include overrides layout to 80dp).
 - **Card:** Padding 10dp vertical and horizontal (Today's Info). Matches layout padding.
 - **Inputs:** numberDecimal / digits 0-9 and .; no stroke on light (card_white_rounded); elevation 2dp → box-shadow in CSS.
 - **Statistics:** Divider uses `light_gray_background` (#F5F5F5 light, #2C2C2C dark). Row labels secondary text color, values primary.

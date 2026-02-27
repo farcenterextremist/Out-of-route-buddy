@@ -2,7 +2,7 @@
 
 **Owner:** QA Engineer  
 **Purpose:** Document known failing or ignored tests and plan to fix or adjust.  
-**Related:** 25-point #17, `docs/agents/APP_IMPROVEMENT_25_POINT_BRAINSTORM.md`, TEST_STRATEGY (when created).
+**Related:** 25-point #17, `docs/agents/APP_IMPROVEMENT_25_POINT_BRAINSTORM.md`, [TEST_STRATEGY.md](./TEST_STRATEGY.md), [TEST_FAILURES_DOCUMENTATION.md](../../TEST_FAILURES_DOCUMENTATION.md).
 
 ---
 

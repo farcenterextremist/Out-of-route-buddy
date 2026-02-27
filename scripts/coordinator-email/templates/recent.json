@@ -1,0 +1,11 @@
+{
+  "key": "recent",
+  "priority": 85,
+  "keywords": ["recent", "what changed", "timeline", "what'?s new", "last commit", "project history", "recent changes"],
+  "keywords_combine": "any",
+  "subject": "Re: OutOfRouteBuddy — recent updates",
+  "body": "Hi,\n\nHere are recent project changes (from the project timeline and git history):\n\n{{timeline}}\n\n— Jarvey",
+  "body_empty": "Hi,\n\nNo recent entries in the timeline yet. I can summarize changes once the project timeline or git history has updates.\n\n— Jarvey",
+  "fetcher": "timeline",
+  "fetcher_fallback": null
+}

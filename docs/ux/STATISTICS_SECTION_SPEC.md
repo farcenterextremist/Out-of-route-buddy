@@ -26,6 +26,17 @@
 
 ---
 
+## 2b. Copy: Current month vs custom period
+
+When the statistics row shows data, the period label should clearly indicate the source:
+
+- **Standard mode (current month):** Label or tooltip: "Statistics for [Month Year]" or "Current month: [Month Year]". Users should understand these numbers are for the full calendar month.
+- **Custom period:** Label or tooltip: "Custom period: [Start date] – [End date]" or "Selected period: [Start] to [End]". Users should understand these numbers are for the chosen date range (e.g. Thursday–Friday in CUSTOM mode).
+
+Add to `strings.xml` or tooltips when implementing. Example keys: `statistics_period_current_month`, `statistics_period_custom`.
+
+---
+
 ## 3. Hierarchy and contrast (label vs value)
 
 - **Primary vs secondary:** Use a clear visual hierarchy: statistic *values* (numbers) as primary text (e.g. larger or bolder); *labels* (e.g. "Miles this month") as secondary text so users scan values first, then labels. Document or implement in styles (e.g. `textAppearance` or theme).

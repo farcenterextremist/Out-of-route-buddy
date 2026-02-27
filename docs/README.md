@@ -2,6 +2,19 @@
 
 Short index of key docs for OutOfRouteBuddy. Start here to find product, agent, QA, deployment, and process docs.
 
+**Quick links (key plans):** [ROADMAP](./product/ROADMAP.md) | [CRUCIAL_IMPROVEMENTS](./CRUCIAL_IMPROVEMENTS_TODO.md) | [Known Truths](./agents/KNOWN_TRUTHS_AND_SINGLE_SOURCE_OF_TRUTH.md) | [Board Meeting Plan](./agents/BOARD_MEETING_PLAN.md) | [Board Meeting transcripts](./agents/data-sets/board-meeting/)
+
+---
+
+## Key plans (single place)
+
+| Doc | Description |
+|-----|--------------|
+| [CRUCIAL_IMPROVEMENTS_TODO.md](./CRUCIAL_IMPROVEMENTS_TODO.md) | Prioritized high-impact improvements; source for roadmap and agent todos. |
+| [product/ROADMAP.md](./product/ROADMAP.md) | Themes, prioritization, "what's next." Keep in sync with crucial list when you pick "next." |
+| [agents/KNOWN_TRUTHS_AND_SINGLE_SOURCE_OF_TRUTH.md](./agents/KNOWN_TRUTHS_AND_SINGLE_SOURCE_OF_TRUTH.md) | Canonical known truths and SSOT for persistence, recovery, calendar, GPS, settings. |
+| [agents/BOARD_MEETING_PLAN.md](./agents/BOARD_MEETING_PLAN.md) | Board Meeting call script; transcripts in [agents/data-sets/board-meeting/](./agents/data-sets/board-meeting/). |
+
 ---
 
 ## Product & design

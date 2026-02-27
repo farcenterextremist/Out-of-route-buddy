@@ -3,3 +3,15 @@
 
 # Emulator sync: generate stylized icon.ico for desktop shortcut
 Pillow>=10.0.0
+
+# Agent aptitude: LLM-assisted scoring (score_from_responses.py)
+openai>=1.0.0
+
+# Jarvey RAG: embedding + vector search (optional, JARVEY_RAG_ENABLED=1)
+# Pulls in transformers and torch as transitive deps
+sentence-transformers>=2.7.0
+
+# Transformers backend: local SmolLM (COORDINATOR_LISTENER_LLM_BACKEND=transformers)
+# sentence-transformers may already pull in transformers/torch; accelerate for device placement
+transformers>=4.36.0
+accelerate>=0.25.0

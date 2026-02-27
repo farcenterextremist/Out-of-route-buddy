@@ -23,11 +23,11 @@ from send_email import send
 
 
 def cmd_read():
-    subject, body, date = read_replies()
+    subject, body, date, message_id = read_replies()
     if not subject and not body:
-        out = {"found": False, "subject": None, "body": None, "date": None}
+        out = {"found": False, "subject": None, "body": None, "date": None, "message_id": None}
     else:
-        out = {"found": True, "subject": subject or "", "body": body or "", "date": date or ""}
+        out = {"found": True, "subject": subject or "", "body": body or "", "date": date or "", "message_id": message_id}
         # Keep last_reply.txt in sync so existing "read last_reply.txt" flow still works
         lines = []
         if date:

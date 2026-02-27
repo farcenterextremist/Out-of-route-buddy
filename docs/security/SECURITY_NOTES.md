@@ -34,14 +34,16 @@ This document captures security review findings and recommendations. Implementat
 **Recommendations:**
 - **Do not log PII:** Avoid logging full coordinates, trip IDs that could be linked to a user, or other PII. Prefer log levels and tags only (e.g. "sync started", "trip saved") or non-identifying metrics. For monthly-stats and End/Clear trip flows, log only that a trip was saved or cleared—not coordinates or user-identifying trip content.
 - **Encryption at rest:** Android app-private storage is already protected by the OS (per-app isolation; on many devices, encryption at rest is enabled). For extra hardening, consider EncryptedSharedPreferences or SQLCipher for the DB if handling higher-sensitivity data in the future.
+- **StandaloneOfflineService (S-1):** `StandaloneOfflineService` stores its AES encryption key in SharedPreferences, which is not encrypted. This weakens the security of the encrypted cache. **Remediation:** Migrate to Android Keystore (KeyStore + EncryptedSharedPreferences) for key storage. See SECURITY_PLAN Section 9 (Gap Register).
 - **Trip metadata:** Store trip metadata in structured fields (e.g. Room columns). Avoid free-form text blobs for notes or descriptors that could contain PII; if adding notes, prefer bounded/typed fields or sanitization.
 - **Future back-ends:** If trip or location data are ever sent to a server, use HTTPS only and avoid logging request/response bodies that contain PII.
 
 ---
 
-## 3. Coordinator email — .env and last_reply.txt
+## 3. Coordinator email — .env and last_reply.txt (Board 2025-03-15 verified)
 
-**Verification:**
+**Verification (2025-02):** Confirmed `.env` and `last_reply` are never committed.
+
 - **`.env`** and **`last_reply.txt`** are listed in the **root `.gitignore`** under:
   - `scripts/coordinator-email/.env`
   - `scripts/coordinator-email/last_reply.txt`
@@ -70,4 +72,58 @@ This document captures security review findings and recommendations. Implementat
 
 ---
 
+---
+
+## 5. FileProvider scope (Purple Team hardening)
+
+**Context:** Trip export uses `FileProvider` to share CSV/report files from app cache. `res/xml/file_paths.xml` exposes `cache-path name="exported_files" path="."`.
+
+**Recommendation:** Do **not** use user-controlled paths or filenames when building URIs for FileProvider. `TripExporter` uses fixed patterns (`trips_export_*.csv`, `trips_report_*.txt`) and `context.cacheDir` only—no user input in paths. If adding new export or share features, keep file paths and names derived from app-controlled values only, to avoid path traversal or unintended file exposure. For defense in depth, consider a dedicated subfolder (e.g. `cache/exports/`) and a corresponding `<cache-path>` entry with `path="exports"` so the provider scope is minimal.
+
+*Added: Purple Team exercise 2025-02-22 (see `docs/agents/data-sets/security-exercises/`).*
+
+---
+
+## 6. Service-to-service validation (Purple Team 2025-02-20)
+
+**Context:** Android services communicate via Flow/StateFlow and DI. Malicious input could flow from one "worker" (e.g. ViewModel, external input) to another (TripRepository, TripStateManager).
+
+**Defense in depth:**
+- **Trip domain model** (`domain/models/Trip.kt`): Constructor validates and rejects NaN, negative values, out-of-range miles. Throws `IllegalArgumentException` for invalid data.
+- **InputValidator** (`util/InputValidator.kt`): `sanitizeMiles()` enforces 0–10000 range; `sanitizeFilePath()` prevents path traversal.
+- **ValidationFramework** (`validation/ValidationFramework.kt`): `validateTripData()`, `validateTripEntity()` for business logic and DB entity validation.
+- **TripRepository** (`data/repository/TripRepository.kt`): Validates entity before `tripDao.insertTrip()`. Audit log `TripInsertAudit` fires on successful insert (`trip_inserted trip_id=X result=true`) for detection of bulk or anomalous inserts.
+
+**Recommendation:** When adding new services or data flows, ensure validation at each layer. Do not trust internal callers without validation if the data originates from user input or external sources.
+
+*Added: Security Plan Multi-Agent exercise 2025-02-20 (see `docs/agents/data-sets/security-exercises/`).*
+
+---
+
+## 7. Emulator sync service (Purple Team 2025-02-20)
+
+**Context:** `scripts/emulator-sync-service/sync_service.py` exposes GET `/design` and POST `/sync` on 127.0.0.1 for local dev. Any process on the same machine can call it.
+
+**Hardening implemented:**
+- **Key allowlist:** POST `/sync` rejects design objects containing any path not in `EMULATOR_TO_PROJECT`. Prevents injection of unexpected keys.
+- **Request size limit:** 64KB max body size. Prevents DoS or memory exhaustion.
+- **Audit log:** `[SyncServiceAudit] sync_requested applied=N keys=...` printed on each successful sync for audit trail.
+
+**Optional future hardening:** For stricter setups, add an optional API key or token (e.g. `OORB_SYNC_TOKEN` env var) and require it in a header. Document in this file if adopted.
+
+*Added: Security Plan Multi-Agent exercise 2025-02-20.*
+
+---
+
 *For follow-up tasks (e.g. Auto drive privacy, app PIN), see `docs/agents/COMPREHENSIVE_AGENT_TODOS.md` — Security Specialist section.*
+
+---
+
+## 8. When Export (or new sensitive feature) lands (Board-adopted)
+
+When **Export to PDF/CSV** (or another sensitive flow) is added or significantly changed:
+
+- **Security Specialist:** Review FileProvider paths, what's in the file, share scope, and path traversal. Document in this file or in `REVIEW_export.md` (or `REVIEW_<feature>.md`). Update this section with a short summary and link.
+- **Red Team:** Run a short Purple exercise targeting that flow (e.g. path traversal, share scope). Document what Blue should check; log to `docs/agents/data-sets/security-exercises/`.
+- **Blue Team:** Define what "alarm" means for that surface (what we log or enforce). After Red's action, answer "did the alarm go off?"; if not, document the gap and propose or implement a fix. Every fix should be auditable (file or config we can point to). Where possible, Red re-runs the same attack to verify the fix.
+- **User:** Will be emailed when the review and optional Purple exercise are done (Human-in-the-Loop).

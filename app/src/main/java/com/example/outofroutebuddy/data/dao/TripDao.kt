@@ -84,6 +84,12 @@ interface TripDao {
     fun deleteAllTrips()
 
     /**
+     * Delete trips with date strictly before the given date (for "delete old data from device").
+     */
+    @Query("DELETE FROM trips WHERE date < :beforeDate")
+    fun deleteTripsBefore(beforeDate: Date)
+
+    /**
      * Get the total count of trips
      */
     @Query("SELECT COUNT(*) FROM trips")

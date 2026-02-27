@@ -378,7 +378,6 @@ class LocationValidationService {
 | `GPS_BATCH_SIZE` | 5 | GPS data batch size for processing | GPS data batching |
 | `GPS_BATCH_TIMEOUT_MS` | 1000L | Maximum time to wait for GPS batch completion | GPS batch timing |
 | `GPS_MIN_DISTANCE_METERS` | 10.0 | Minimum distance between GPS points in meters | GPS filtering |
-| `GPS_MAX_SPEED_MPH` | 85.0 (DEPRECATED) | Use VEHICLE_MAX_SPEED_MPH instead | GPS speed validation |
 | `GPS_MIN_ACCURACY_METERS` | 20.0 | Minimum GPS accuracy in meters | GPS accuracy filtering |
 | `GPS_MAX_ACCURACY_METERS` | 50.0 | Maximum GPS accuracy to accept in meters (aligned with MAX_ACCURACY) | GPS accuracy filtering |
 | `GPS_MIN_UPDATE_INTERVAL_MS` | 500L | Minimum time between GPS updates in milliseconds | GPS rate limiting |

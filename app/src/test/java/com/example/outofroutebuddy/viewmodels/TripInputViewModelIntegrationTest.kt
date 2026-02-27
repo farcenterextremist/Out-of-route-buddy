@@ -5,6 +5,8 @@ import com.example.outofroutebuddy.data.StateCache
 import com.example.outofroutebuddy.data.TripStateManager
 import com.example.outofroutebuddy.data.TripStatePersistence
 import com.example.outofroutebuddy.domain.models.PeriodMode
+import com.example.outofroutebuddy.domain.models.Trip
+import com.example.outofroutebuddy.domain.models.TripStatus
 import com.example.outofroutebuddy.domain.repository.TripRepository
 import com.example.outofroutebuddy.domain.repository.TripStatistics
 import com.example.outofroutebuddy.presentation.viewmodel.TripInputViewModel
@@ -124,7 +126,6 @@ class TripInputViewModelIntegrationTest {
                 preferencesManager = mockPreferencesManager,
                 tripStateManager = mockTripStateManager,
                 tripStatePersistence = mockTripStatePersistence,
-                stateCache = mockStateCache,
                 backgroundSyncService = mockBackgroundSyncService,
                 optimizedGpsDataFlow = mockOptimizedGpsDataFlow,
                 validationFramework = mockValidationFramework,
@@ -155,10 +156,38 @@ class TripInputViewModelIntegrationTest {
 
         coVerify { mockRepository.getTripStatistics(start, end) }
 
-        val expectedLabel = SimpleDateFormat("MMM d, yyyy", Locale.US).format(start)
+        // ViewModel uses range label for STANDARD: "start – end" (en dash)
+        val formatter = SimpleDateFormat("MMM d, yyyy", Locale.US)
+        val expectedLabel = "${formatter.format(start)} – ${formatter.format(end)}"
         val uiState = viewModel.uiState.value
         assertEquals(expectedLabel, uiState.selectedPeriodLabel)
         assertNotNull(uiState.periodStatistics)
+    }
+
+    @Test
+    fun getDatesWithTripsForCalendarRange_returnsDistinctStartOfDayDatesFromTrips() = runTest(testDispatcher) {
+        val cal = Calendar.getInstance()
+        cal.set(Calendar.HOUR_OF_DAY, 0)
+        cal.set(Calendar.MINUTE, 0)
+        cal.set(Calendar.SECOND, 0)
+        cal.set(Calendar.MILLISECOND, 0)
+        val day1 = cal.time
+        cal.add(Calendar.DAY_OF_MONTH, 1)
+        val day2 = cal.time
+        val trips = listOf(
+            Trip(id = "1", loadedMiles = 10.0, bounceMiles = 0.0, actualMiles = 10.0, startTime = day1, status = TripStatus.COMPLETED),
+            Trip(id = "2", loadedMiles = 20.0, bounceMiles = 0.0, actualMiles = 20.0, startTime = day2, status = TripStatus.COMPLETED),
+            Trip(id = "3", loadedMiles = 15.0, bounceMiles = 0.0, actualMiles = 15.0, startTime = day1, status = TripStatus.COMPLETED),
+        )
+        every { mockRepository.getTripsByDateRange(any(), any()) } returns flowOf(trips)
+
+        val minDate = Date(0)
+        val maxDate = Calendar.getInstance().apply { add(Calendar.YEAR, 1) }.time
+        val result = viewModel.getDatesWithTripsForCalendarRange(minDate, maxDate)
+
+        assertEquals(2, result.size)
+        assertEquals(day1.time, result[0].time)
+        assertEquals(day2.time, result[1].time)
     }
 
     @After
@@ -237,10 +266,9 @@ class TripInputViewModelIntegrationTest {
         coEvery { mockRepository.getAllTrips() } returns MutableStateFlow(emptyList())
         coEvery { mockRepository.getTripById(any()) } returns MutableStateFlow(null)
         coEvery { mockRepository.getTripsByDateRange(any(), any()) } returns MutableStateFlow(emptyList())
-        coEvery { mockRepository.getCurrentActiveTrip() } returns MutableStateFlow(null)
-        coEvery { mockRepository.updateTrip(any()) } returns Unit
-        coEvery { mockRepository.deleteTrip(any()) } returns Unit
-        coEvery { mockRepository.deleteTripById(any()) } returns Unit
+        coEvery { mockRepository.updateTrip(any()) } returns true
+        coEvery { mockRepository.deleteTrip(any()) } returns true
+        coEvery { mockRepository.deleteTripById(any()) } returns true
         coEvery { mockRepository.getTripStatistics(any(), any()) } returns com.example.outofroutebuddy.domain.repository.TripStatistics()
         coEvery { mockRepository.getTodayTripStatistics() } returns com.example.outofroutebuddy.domain.repository.TripStatistics()
         coEvery { mockRepository.getMonthlyTripStatistics() } returns com.example.outofroutebuddy.domain.repository.TripStatistics()
@@ -472,7 +500,6 @@ class TripInputViewModelIntegrationTest {
                 preferencesManager = mockPreferencesManager,
                 tripStateManager = mockTripStateManager,
                 tripStatePersistence = mockTripStatePersistence,
-                stateCache = mockStateCache,
                 backgroundSyncService = mockBackgroundSyncService,
                 optimizedGpsDataFlow = mockOptimizedGpsDataFlow,
                 validationFramework = mockValidationFramework,
@@ -520,22 +547,16 @@ class TripInputViewModelIntegrationTest {
             assertEquals("Actual miles should be reset", 0.0, freshViewModel.uiState.value.actualMiles, 0.01)
         }
 
-    @org.junit.Ignore("TODO: Fix dispatcher conflict with Dispatchers.IO in ViewModel")
     @Test
-    fun `period statistics loading`() =
-        runTest {
-            // When: Load statistics
-            viewModel.calculatePeriodStatistics(PeriodMode.STANDARD, Date(), Date())
-            testDispatcher.scheduler.advanceUntilIdle()
-            
-            // ✅ FIX: Give time for IO dispatcher to complete
-            kotlinx.coroutines.delay(100)
-            testDispatcher.scheduler.advanceUntilIdle()
+    fun `period statistics loading`() = runTest(testDispatcher) {
+        // When: Load statistics (uses ioDispatcher = testDispatcher, so advanceUntilIdle runs it)
+        viewModel.calculatePeriodStatistics(PeriodMode.STANDARD, Date(), Date())
+        testDispatcher.scheduler.advanceUntilIdle()
 
-            // Then: Statistics should be loaded
-            assertNotNull("Statistics should not be null", viewModel.uiState.value.periodStatistics)
-            assertEquals("Should have correct period mode", PeriodMode.STANDARD, viewModel.uiState.value.periodStatistics?.periodMode)
-        }
+        // Then: Statistics should be loaded
+        assertNotNull("Statistics should not be null", viewModel.uiState.value.periodStatistics)
+        assertEquals("Should have correct period mode", PeriodMode.STANDARD, viewModel.uiState.value.periodStatistics?.periodMode)
+    }
 
     // ==================== PERFORMANCE TESTS ====================
 

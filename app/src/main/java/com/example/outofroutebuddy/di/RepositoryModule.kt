@@ -3,7 +3,9 @@ package com.example.outofroutebuddy.di
 import com.example.outofroutebuddy.data.PreferencesManager
 import com.example.outofroutebuddy.data.TripStateManager
 import com.example.outofroutebuddy.data.TripStatePersistence
+import com.example.outofroutebuddy.data.archive.DefaultTripArchiveService
 import com.example.outofroutebuddy.data.dao.TripDao
+import com.example.outofroutebuddy.domain.data.TripArchiveService
 import com.example.outofroutebuddy.data.repository.DomainTripRepositoryAdapter
 import com.example.outofroutebuddy.data.repository.TripRepository as DataTripRepository
 import com.example.outofroutebuddy.domain.repository.TripRepository as DomainTripRepository
@@ -48,6 +50,13 @@ object RepositoryModule {
     fun provideDomainTripRepository(dataRepository: DataTripRepository): DomainTripRepository {
         return DomainTripRepositoryAdapter(dataRepository)
     }
+
+    /**
+     * Provides TripArchiveService for "delete from device (keep on server)" flow. No-op by default.
+     */
+    @Provides
+    @Singleton
+    fun provideTripArchiveService(): TripArchiveService = DefaultTripArchiveService()
 
     /**
      * ✅ FIXED: Provides TripStateManager with correct constructor

@@ -56,7 +56,7 @@ class TripHistoryFragmentRobolectricTest {
 
         // Allow fragment lifecycle to start (onViewCreated, observeTrips)
         activity.supportFragmentManager.executePendingTransactions()
-        org.robolectric.Robolectric.flushForegroundThreadScheduler()
+        Robolectric.flushForegroundThreadScheduler()
         val shadowLooper = org.robolectric.Shadows.shadowOf(android.os.Looper.getMainLooper())
         shadowLooper.idle()
         shadowLooper.idle()
@@ -68,18 +68,27 @@ class TripHistoryFragmentRobolectricTest {
             com.example.outofroutebuddy.domain.models.Trip(id = "t2", startTime = java.util.Date(), status = com.example.outofroutebuddy.domain.models.TripStatus.COMPLETED, actualMiles = 8.0, oorMiles = 0.8)
         ))
 
-        // Allow flow emission and collect block to run (visibility + submitList)
-        org.robolectric.Robolectric.flushForegroundThreadScheduler()
-        shadowLooper.runToEndOfTasks()
-        // AsyncListDiffer runs DiffUtil on background executor, then posts to main - allow it to complete
-        Thread.sleep(80)
-        shadowLooper.runToEndOfTasks()
+        // Allow flow emission, collect block (submitList), and AsyncListDiffer to complete.
+        // AsyncListDiffer runs DiffUtil on a background executor, then posts result to main.
+        // Poll until adapter has items or timeout (handles timing variance in Robolectric).
+        Robolectric.flushForegroundThreadScheduler()
+        var attempts = 0
+        var itemCount = 0
+        while (attempts < 30) {
+            shadowLooper.runToEndOfTasks()
+            Thread.sleep(20)
+            val rv = fragment.requireView().findViewById<androidx.recyclerview.widget.RecyclerView>(R.id.trip_history_recycler_view)
+            itemCount = rv.adapter?.itemCount ?: 0
+            if (itemCount >= 1) break
+            attempts++
+        }
+        shadowLooper.runToEndOfTasks() // Drain any remaining main looper tasks
 
         val root = fragment.requireView()
         val empty = root.findViewById<android.view.View>(R.id.empty_state_text)
         val list = root.findViewById<androidx.recyclerview.widget.RecyclerView>(R.id.trip_history_recycler_view)
         assertThat(empty.visibility).isEqualTo(android.view.View.GONE)
         assertThat(list.visibility).isEqualTo(android.view.View.VISIBLE)
-        assertThat(list.adapter?.itemCount).isAtLeast(1)
+        assertThat(itemCount).isAtLeast(1)
     }
 }

@@ -1,0 +1,9 @@
+{
+  "key": "deployment",
+  "priority": 63,
+  "keywords": ["deploy", "deployment", "release to", "publish", "ship"],
+  "keywords_combine": "any",
+  "subject": "Re: OutOfRouteBuddy — deployment",
+  "body": "Hi,\n\nDeployment is handled by the DevOps role. I'll pass this along and we'll follow up with status. For build and release questions, we can check the Gradle config and CI setup.\n\n— Jarvey",
+  "fetcher": null
+}

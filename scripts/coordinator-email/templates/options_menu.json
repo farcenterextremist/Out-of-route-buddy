@@ -1,0 +1,10 @@
+{
+  "key": "options_menu",
+  "priority": 76,
+  "keywords": ["what can you do", "options", "capabilities", "what are you capable of"],
+  "keywords_combine": "any",
+  "subject": "Re: OutOfRouteBuddy",
+  "body": "Hi,\n\nI'm Jarvey, the Human-in-the-Loop Manager for OutOfRouteBuddy. Here's what I can help with:\n\n{{capability_menu}}\n\nReply with a number or describe what you need.\n\n— Jarvey",
+  "fetcher": "capability_menu",
+  "fetcher_fallback": "1. Roadmap status 2. Recent changes 3. Prioritize a feature 4. Where is X defined? 5. Trip recovery 6. App version 7. Assign work 8. Save a note 9. Send to coworker/family 10. Something else"
+}

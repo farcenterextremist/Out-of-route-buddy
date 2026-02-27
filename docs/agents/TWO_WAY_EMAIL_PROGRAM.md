@@ -17,7 +17,7 @@
 
 - **Sending (agents → user):** Working. Scripts: `send_email.py`, `agent_email.py send`, `send_phase_completion_email.py`. Human-in-the-Loop and Coordinator use these.
 - **Reading (user → agents):** Working when agents are running. Scripts: `agent_email.py read`, `read_replies.py`; output in `last_reply.txt` or JSON. User must say “I replied” or “check email” for the agent to run read.
-- **Gap:** User has to **ask** for emails (agents don’t send enough proactively). User can’t yet “just email and have the team pick it up” without starting a session and asking to check email.
+- **Gap (partially addressed):** User has to **ask** for emails unless automatic responses are enabled. **Automatic responses:** `scripts/coordinator-email/check_and_respond.py` reads the inbox and sends a short auto-reply to new replies (template-based). Schedule it (e.g. every 15–30 min) so the user gets a reply without starting a session. See that folder's README. Otherwise user has to **ask** for emails (agents don’t send enough proactively). User can’t yet “just email and have the team pick it up” without starting a session and asking to check email.
 
 ---
 

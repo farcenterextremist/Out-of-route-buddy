@@ -6,33 +6,71 @@
 
 ---
 
-## Status: deferred
+## Status: implemented (2025-02)
 
-**Implementation of `loadOfflineStorage()` and `saveOfflineStorage()` is formally deferred.** In-memory offline behavior remains; persistence across app restart will be implemented when offline-across-restart is a product requirement. See Implementation checklist in `docs/agents/CURRENT_WIRING_PLAN.md`.
+**Implementation complete.** `loadOfflineStorage()` and `saveOfflineStorage()` use DataStore + Gson. Offline trips and sync state survive app restart.
+
+---
+
+## Audit (Phase 1d — 2025-02)
+
+### OfflineStorage schema
+
+- **OfflineStorage:** trips (Map), analytics (List), settings (Map), lastBackup, storageSize, tripCount, analyticsCount
+- **OfflineTrip:** id, localId, tripData (Map), gpsData (Map?), timestamp, syncStatus, conflictResolution, retryCount, lastSyncAttempt
+- **OfflineAnalytics:** id, event, parameters (Map), timestamp, syncStatus, retryCount
+
+### Call sites
+
+- **OfflineDataManager** (init): `loadOfflineStorage()` on startup
+- **saveTripOffline, saveAnalyticsOffline, updateTripSyncStatus, resolveTripConflict, cleanupOldestTrips, cleanupOldestAnalytics, clearOfflineData, clearAllOfflineData:** all call `saveOfflineStorage()` after mutation
+- **Consumers:** OfflineSyncService, OfflineSyncCoordinator, OfflineServiceCoordinator
+
+### Persistence format proposal
+
+| Option | Pros | Cons |
+|--------|------|------|
+| **DataStore (JSON)** | Simple; handles nested maps/dates; atomic; no schema migration for OfflineStorage structure | Need JSON serialization (kotlinx.serialization or Gson) |
+| **Room** | Already in project; transactional | Requires new entities for OfflineTrip/OfflineAnalytics; schema changes need migrations; maps are awkward |
+| **SharedPreferences** | No new deps | Size limits; not ideal for complex nested data |
+
+**Recommendation:** **DataStore** with JSON (kotlinx.serialization). Store `OfflineStorage` as a single JSON blob. Version the format (e.g. `offline_storage_v1`) for future migration.
+
+### Room migration tests
+
+- **Current:** No explicit migration tests. `TripDaoInMemoryTest` and `TestDatabaseModule` use in-memory DB (no migrations run).
+- **Recommendation:** Add `AppDatabaseMigrationTest` using `Room.inMemoryDatabaseBuilder` with `createFromAsset` or `addMigrations` to verify MIGRATION_1_2 runs without error. See `androidx.room.testing.MigrationTestHelper` for instrumented tests.
 
 ---
 
 ## Current state
 
-- **In-memory only:** `OfflineDataManager` keeps trips and analytics in a `MutableStateFlow<OfflineStorage>`. `loadOfflineStorage()` and `saveOfflineStorage()` are stubs (TODO: implement actual loading/saving to SharedPreferences, SQLite, or DataStore).
-- **Effect:** On process death or app restart, offline trips and pending sync state are lost. In-memory operations (saveTripOffline, updateTripSyncStatus, etc.) work within a session.
+- **In-memory only:** `OfflineDataManager` keeps trips and analytics in a `MutableStateFlow<OfflineStorage>`. `loadOfflineStorage()` and `saveOfflineStorage()` are stubs (TODO: implement actual loading/saving).
+- **Effect:** On process death or app restart, offline trips and pending sync state are lost. In-memory operations work within a session.
 
 ---
 
 ## Intended behavior (for implementation)
 
-1. **Load on init:** On app start, read persisted offline storage from disk (e.g. JSON in DataStore or rows in Room) and set `_offlineStorage.value`.
-2. **Save on change:** After any mutation (saveTripOffline, updateTripSyncStatus, cleanup, etc.), persist the current `OfflineStorage` (or delta) to disk.
-3. **Format:** Use a stable, versioned format so we can migrate later. Prefer DataStore or Room for robustness.
+1. **Load on init:** On app start, read persisted offline storage from DataStore (JSON) and set `_offlineStorage.value`.
+2. **Save on change:** After any mutation, persist the current `OfflineStorage` to DataStore.
+3. **Format:** Versioned JSON (e.g. `offline_storage_v1`). Use kotlinx.serialization for OfflineStorage, OfflineTrip, OfflineAnalytics.
 
 ---
 
-## Acceptance
+## Acceptance criteria (Design scope)
 
-- Trips saved offline survive app restart.
-- Pending/failed sync counts and sync status survive restart.
-- No data loss on normal process death.
+1. **Trips saved offline survive app restart.** User saves a trip while offline; kills app; reopens; trip is still in offline queue.
+2. **Pending/failed sync counts and sync status survive restart.** SyncStatus (PENDING, FAILED, etc.) and retryCount persist.
+3. **No data loss on normal process death.** No corruption or partial writes on crash.
+4. **Respect Known Truths.** OfflineDataManager is for offline queue/sync only; does not bypass Clear semantics or create a second source for monthly stats/calendar.
+
+## Migration strategy
+
+- **v1 format:** Single JSON blob keyed `offline_storage_v1`. If format changes, add `offline_storage_v2` and migration logic in load.
+- **Backward compatibility:** If load fails (corrupt/missing), start with empty OfflineStorage; log warning.
+- **CI:** OfflineDataManagerPersistenceTest runs in `.github/workflows/android-tests.yml` via `./gradlew testDebugUnitTest`.
 
 ---
 
-*When implementing, remove the TODOs in `loadOfflineStorage()` and `saveOfflineStorage()` and add tests for load/save round-trip.*
+*When implementing, remove the TODOs in `loadOfflineStorage()` and `saveOfflineStorage()`, add DataStore + JSON serialization, and add tests for load/save round-trip.*
