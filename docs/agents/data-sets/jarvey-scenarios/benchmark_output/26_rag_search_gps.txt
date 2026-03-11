@@ -1,9 +1,0 @@
-You asked about recent project changes. 
-
-* No curated timeline entries yet; I can summarize once the team adds phase completions.
- 
-However, I did find some relevant information in our `docs/technical/WIRING_MAP.md`. Specifically, it explains how GPS data is integrated into the app.
-
-Is there anything else you'd like me to clarify about this or would you like a summary of recent changes?
-
-— Jarvey

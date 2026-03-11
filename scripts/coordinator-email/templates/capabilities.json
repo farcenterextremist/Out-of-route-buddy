@@ -1,9 +1,0 @@
-{
-  "key": "capabilities",
-  "priority": 75,
-  "keywords": ["what can you do", "capabilities", "help", "what are you", "what do you do"],
-  "keywords_combine": "any",
-  "subject": "Re: OutOfRouteBuddy",
-  "body": "Hi,\n\nI'm Jarvey, the Human-in-the-Loop Manager for OutOfRouteBuddy. I can:\n\n• Recent updates — what changed, timeline, project history\n• Roadmap — what's next, priorities, next steps\n• Version — current app version and build\n• Thanks / acknowledgment — when you reply \"thanks\" or \"got it\"\n• Weekly digest — set up a weekly Board summary\n• Priorities — note your preferred order (e.g. 1=Auto drive, 2=Reports)\n\nAsk me about any of these, or send a specific question about the project. For complex or multi-part questions, I'll use the full context to reply.\n\n— Jarvey",
-  "fetcher": null
-}

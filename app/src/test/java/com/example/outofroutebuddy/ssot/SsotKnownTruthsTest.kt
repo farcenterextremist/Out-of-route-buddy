@@ -19,6 +19,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.runTest
@@ -77,25 +79,24 @@ class SsotKnownTruthsTest {
     }
 
     @Test
-    fun `SSOT - End trip inserts into repository`() = runTest {
-        // Known Truth: "Only End trip writes to the trip store."
+    fun `SSOT - End trip inserts into repository`() = runTest(testDispatcher) {
+        // Known Truth: "Only End trip writes to the trip store." ViewModel persists via TripStatePersistence.saveCompletedTrip.
         val mockRepo = mockk<TripRepository>(relaxed = true)
-        coEvery { mockRepo.insertTrip(any()) } returns "trip-123"
-        coEvery { mockRepo.getMonthlyTripStatistics() } returns TripStatistics(
-            totalTrips = 1,
-            totalActualMiles = 125.0,
-            totalOorMiles = 0.0,
-            avgOorPercentage = 0.0
-        )
+        coEvery { mockRepo.getMonthlyTripStatistics() } returns TripStatistics(totalTrips = 1, totalActualMiles = 125.0, totalOorMiles = 0.0, avgOorPercentage = 0.0)
+        coEvery { mockRepo.getTripStatistics(any(), any()) } returns TripStatistics()
+        coEvery { mockRepo.getTripsByDateRange(any(), any()) } returns flowOf(emptyList())
 
-        viewModel = createViewModel(mockRepository = mockRepo)
+        val mockPersistence = mockk<TripStatePersistence>(relaxed = true)
+        coEvery { mockPersistence.saveCompletedTrip(any(), any(), any(), any(), any()) } returns 123L
+
+        viewModel = createViewModel(mockRepository = mockRepo, mockTripStatePersistence = mockPersistence)
 
         viewModel.calculateTrip(100.0, 25.0, 125.0)
-        delay(100)
+        advanceUntilIdle()
 
         viewModel.endTrip()
-        testDispatcher.scheduler.advanceUntilIdle()
-        coVerify(timeout = 1000) { mockRepo.insertTrip(any()) }
+        advanceUntilIdle()
+        coVerify(atLeast = 1) { mockPersistence.saveCompletedTrip(any(), any(), any(), any(), any()) }
     }
 
     // Recovery precedence (1) recoveredTripState (2) TripPersistenceManager (3) inactive is verified by:
@@ -104,6 +105,7 @@ class SsotKnownTruthsTest {
 
     private fun createViewModel(
         mockRepository: TripRepository = mockk(relaxed = true),
+        mockTripStatePersistence: TripStatePersistence = mockk(relaxed = true),
         mockTripPersistenceManager: TripPersistenceManager = mockk(relaxed = true) {
             every { loadSavedTripState() } returns null
         },
@@ -138,7 +140,7 @@ class SsotKnownTruthsTest {
             tripRepository = mockRepository,
             preferencesManager = mockPrefs,
             tripStateManager = mockTripStateManager,
-            tripStatePersistence = mockk(relaxed = true),
+            tripStatePersistence = mockTripStatePersistence,
             tripPersistenceManager = mockTripPersistenceManager,
             backgroundSyncService = mockk(relaxed = true),
             optimizedGpsDataFlow = mockk(relaxed = true),

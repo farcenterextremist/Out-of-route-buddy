@@ -1,0 +1,88 @@
+{
+  "description": "EnronSR-style benchmark cases for evaluating Jarvey email reply quality. Format and relevance checks only; no human reference required. See run_jarvey_enronsr_benchmark.py.",
+  "source": "Inspired by EnronSR (AAAI ICWSM) and Humanual-Email; cases are project-agnostic reply-quality checks.",
+  "cases": [
+    {
+      "id": "status_request",
+      "subject": "Re: OutOfRouteBuddy",
+      "body": "What's the status on the project?",
+      "checks": [
+        { "type": "has_signoff", "value": "jarvey", "dimension": "signoff" },
+        { "type": "min_length", "value": 80, "dimension": "length" },
+        { "type": "no_code", "value": true, "dimension": "no_code" },
+        { "type": "must_contain_any", "value": ["status", "next", "roadmap", "progress", "update"], "dimension": "relevance" }
+      ]
+    },
+    {
+      "id": "thanks_ack",
+      "subject": "Re: OutOfRouteBuddy",
+      "body": "Thanks, that works.",
+      "checks": [
+        { "type": "has_signoff", "value": "jarvey", "dimension": "signoff" },
+        { "type": "no_code", "value": true, "dimension": "no_code" },
+        { "type": "max_length", "value": 600, "dimension": "length" }
+      ]
+    },
+    {
+      "id": "recent_changes",
+      "subject": "Re: OutOfRouteBuddy",
+      "body": "Can you send me a summary of recent changes?",
+      "checks": [
+        { "type": "has_signoff", "value": "jarvey", "dimension": "signoff" },
+        { "type": "no_code", "value": true, "dimension": "no_code" },
+        { "type": "must_not_match_regex", "value": "[a-f0-9]{7,}", "dimension": "safety" },
+        { "type": "min_length", "value": 100, "dimension": "length" }
+      ]
+    },
+    {
+      "id": "who_owns",
+      "subject": "Re: OutOfRouteBuddy",
+      "body": "Who owns the emulator?",
+      "checks": [
+        { "type": "has_signoff", "value": "jarvey", "dimension": "signoff" },
+        { "type": "no_code", "value": true, "dimension": "no_code" },
+        { "type": "must_contain_any", "value": ["ui", "ux", "front-end", "frontend", "emulator"], "dimension": "relevance" }
+      ]
+    },
+    {
+      "id": "vague_help",
+      "subject": "Re: OutOfRouteBuddy",
+      "body": "Something is broken.",
+      "checks": [
+        { "type": "has_signoff", "value": "jarvey", "dimension": "signoff" },
+        { "type": "no_code", "value": true, "dimension": "no_code" },
+        { "type": "must_not_contain_any", "value": ["scheduling a meeting", "detailed report", "I'll set up a call"], "dimension": "safety" }
+      ]
+    },
+    {
+      "id": "code_request",
+      "subject": "Re: OutOfRouteBuddy",
+      "body": "Write me a function to export trips to CSV.",
+      "checks": [
+        { "type": "has_signoff", "value": "jarvey", "dimension": "signoff" },
+        { "type": "no_code", "value": true, "dimension": "no_code" },
+        { "type": "must_contain_any", "value": ["assign", "back-end", "engineer", "follow up"], "dimension": "relevance" }
+      ]
+    },
+    {
+      "id": "version_request",
+      "subject": "Re: OutOfRouteBuddy",
+      "body": "What version is the app?",
+      "checks": [
+        { "type": "has_signoff", "value": "jarvey", "dimension": "signoff" },
+        { "type": "no_code", "value": true, "dimension": "no_code" },
+        { "type": "must_contain_any", "value": ["version", "1.0", "build"], "dimension": "relevance" }
+      ]
+    },
+    {
+      "id": "multi_question",
+      "subject": "Re: OutOfRouteBuddy",
+      "body": "What's next? Also, who owns the reports screen?",
+      "checks": [
+        { "type": "has_signoff", "value": "jarvey", "dimension": "signoff" },
+        { "type": "no_code", "value": true, "dimension": "no_code" },
+        { "type": "min_length", "value": 150, "dimension": "length" }
+      ]
+    }
+  ]
+}

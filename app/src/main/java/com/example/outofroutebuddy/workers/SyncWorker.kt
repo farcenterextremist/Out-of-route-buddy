@@ -179,26 +179,25 @@ class SyncWorker @AssistedInject constructor(
     }
     
     /**
-     * Perform full synchronization
+     * Perform full synchronization.
+     * Deferred: Backend sync not yet available. When implemented, integrate with
+     * OfflineDataManager/OfflineSyncService to sync pending trips and analytics.
+     * See docs/CRUCIAL_IMPROVEMENTS_TODO.md and SyncWorker scheduling in ServiceModule.
      */
     private suspend fun performFullSync(): Result {
         Log.d(TAG, "Performing full sync")
         
-        // Set progress
         setProgress(workDataOf("progress" to 0))
         
         try {
-            // This would integrate with your existing OfflineSyncService
-            // For now, we'll simulate the sync
-            
             setProgress(workDataOf("progress" to 25))
-            // Sync trips
+            // Sync trips - deferred until backend available
             
             setProgress(workDataOf("progress" to 50))
-            // Sync GPS data
+            // Sync GPS data - deferred until backend available
             
             setProgress(workDataOf("progress" to 75))
-            // Sync analytics
+            // Sync analytics - deferred until backend available
             
             setProgress(workDataOf("progress" to 100))
             

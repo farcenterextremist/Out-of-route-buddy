@@ -45,8 +45,7 @@
 
 ## Current state
 
-- **In-memory only:** `OfflineDataManager` keeps trips and analytics in a `MutableStateFlow<OfflineStorage>`. `loadOfflineStorage()` and `saveOfflineStorage()` are stubs (TODO: implement actual loading/saving).
-- **Effect:** On process death or app restart, offline trips and pending sync state are lost. In-memory operations work within a session.
+- **Persistence:** `OfflineDataManager` uses DataStore + Gson for `loadOfflineStorage()` and `saveOfflineStorage()`. Load on init; save after every mutation. Offline trips and sync state survive app restart. **Verified (Weakest Areas Plan Phase 5.1):** Call sites — init, saveTripOffline, saveAnalyticsOffline, updateTripSyncStatus, resolveTripConflict, cleanupOldestTrips, cleanupOldestAnalytics, clearOfflineData; consumers — OfflineSyncService, OfflineSyncCoordinator, OfflineServiceCoordinator.
 
 ---
 

@@ -748,6 +748,7 @@ open class LocationValidationService {
      * @param trafficMode Whether we're in traffic mode
      * @return Adapted accuracy threshold
      */
+    @Suppress("UNUSED_PARAMETER")
     fun adaptGpsAccuracy(_baseAccuracy: Float, trafficMode: Boolean): Float {
         if (!GPS_ACCURACY_ADAPTATION_ENABLED) {
             return if (trafficMode) TRAFFIC_GPS_ACCURACY_THRESHOLD else NORMAL_GPS_ACCURACY_THRESHOLD
@@ -1467,6 +1468,7 @@ open class LocationValidationService {
     /**
      * ✅ NEW: Track analytics for traffic mode distance calculations
      */
+    @Suppress("UNUSED_PARAMETER")
     private fun trackTrafficModeAnalytics(location: Location, distance: Float, _trafficMode: Boolean) {
         if (!TRAFFIC_ANALYTICS_ENABLED) return
         
@@ -1633,6 +1635,7 @@ open class LocationValidationService {
     /**
      * Determine the appropriate traffic state based on speed and pattern
      */
+    @Suppress("UNUSED_PARAMETER")
     private fun determineTrafficState(currentSpeed: Float, _pattern: TrafficPattern): TrafficState {
         return when {
             currentSpeed >= FLOWING_SPEED_THRESHOLD -> TrafficState.FLOWING

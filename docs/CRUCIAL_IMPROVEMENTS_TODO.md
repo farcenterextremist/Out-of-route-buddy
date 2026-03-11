@@ -20,6 +20,7 @@
   - `loadOfflineStorage()` — implement actual loading from local storage (SharedPreferences, Room, or existing DB).
   - `saveOfflineStorage()` — implement actual saving to local storage.
 - Currently these only log; offline trips are not persisted across app restarts. Either implement or document as "future phase" and add a brief to `docs/product/` so Design and QA are aligned.
+- **SyncWorker / backend sync (Codebase Audit improvement 5):** Full sync and offline backend upload are **deferred until backend is available**. Single reference: `SyncWorker.performFullSync()` (see in-code KDoc) and [docs/technical/OFFLINE_PERSISTENCE.md](technical/OFFLINE_PERSISTENCE.md). No behavioral change until backend exists.
 
 **Artifacts:** Implementation in `OfflineDataManager.kt` and/or `docs/product/FEATURE_BRIEF_offline_persistence.md`.
 
@@ -35,9 +36,10 @@
 
 ## 4. Trip history navigation — **Front-end Engineer** (with Back-end if data needed)
 
-- **TripHistoryByDateDialog:** TODO "Navigate to trip details if needed" (line 108). If trip details screen exists, wire the navigation; otherwise add to UI/UX backlog for a "trip detail" screen.
+- **TripHistoryByDateDialog / TripHistoryStatCardAdapter:** TripDetailsFragment exists. Navigation from history list (e.g. tap on stat card) to TripDetailsFragment is **not wired** (adapter comment: "Tap to expand/collapse metadata; no navigation to TripDetailsFragment"). Wire navigation when product prioritizes trip-detail-from-history, or keep on UI/UX backlog.
+- **Status (Codebase Audit improvement 5):** Documented here as the single source for "trip history → details" status. Wiring deferred to UI/UX backlog until product prioritizes.
 
-**Artifacts:** Navigation wiring in `TripHistoryByDateDialog.kt` or handoff to UI/UX for flow.
+**Artifacts:** Navigation wiring in `TripHistoryByDateDialog.kt` / adapter or handoff to UI/UX for flow.
 
 ---
 
@@ -83,6 +85,7 @@
 ## 9. Statistics section: monthly only (user preference) — **UI/UX, Front-end, Back-end, QA**
 
 - **User request:** Remove weekly and yearly statistics from the statistics section; keep **monthly only**.
+- **Weakest Areas Plan Phase 5.4:** Documented here; implementation deferred until UI change is approved (no unwarranted UI changes). When implementing: ViewModel load only monthly; remove/deprecate getWeeklyTripStatistics/getYearlyTripStatistics; update tests per below.
 - **UI/UX Specialist:** Update the statistics section spec: one aggregate view (monthly). Remove any wireframe/spec for weekly or yearly tabs/labels. Document in `docs/ux/` or a short note so Front-end and QA align.
 - **Front-end Engineer:** In `TripInputViewModel.kt`, load only monthly statistics (remove `weeklyDeferred` / `yearlyDeferred` and `weeklyStatistics` / `yearlyStatistics` from UI state). Update any layout or strings that show "Weekly" / "Yearly" (e.g. statistics row, period picker) to show only monthly. Ref: `TripInputViewModel.kt` (lines ~231–244, ~1012–1014), `presentation/viewmodel/`, `res/` if any statistics labels exist.
 - **Back-end Engineer:** In `TripRepository` interface and `DomainTripRepositoryAdapter`, remove or deprecate `getWeeklyTripStatistics()` and `getYearlyTripStatistics()`; keep `getMonthlyTripStatistics()`. Implementations in `data/repository/` and any callers (besides ViewModel) must be updated. Ref: `domain/repository/TripRepository.kt`, `data/repository/DomainTripRepositoryAdapter.kt`.

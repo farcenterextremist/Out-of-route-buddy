@@ -1,10 +1,10 @@
 # Agent Aptitude Test — Automation
 
-This folder contains scripts and the prompt manifest for running the **agent aptitude test** for all 13 agents (26 prompts), collecting responses so you can **read the output**, scoring via the markdown scorecard, and generating a **training priority report** to see which agents need more training or data injection.
+This folder contains scripts and the prompt manifest for running the **agent aptitude test** for all 12 agents (24 prompts), collecting responses so you can **read the output**, scoring via the markdown scorecard, and generating a **training priority report** to see which agents need more training or data injection.
 
 ## Purpose
 
-- Run all 26 prompts (13 agents × 2 each: Simple and Semi-simple).
+- Run all 24 prompts (12 agents × 2 each: Simple and Semi-simple).
 - Save every agent response in readable markdown files under `docs/agents/data-sets/aptitude-responses/`.
 - Score each response (1–5 on Scope, Data set, Output, Handoff, Voice) in the markdown scorecard.
 - Produce a **training priority report** that ranks agents and recommends training vs data injection per agent.
@@ -31,17 +31,17 @@ python generate_response_collection.py
 
 **Output:**
 
-- **26 response files** in `docs/agents/data-sets/aptitude-responses/`:  
-  `01_coordinator_simple.md` … `26_blue_team_semi_simple.md`.  
+- **24 response files** in `docs/agents/data-sets/aptitude-responses/`:  
+  `01_coordinator_simple.md` … `24_blue_team_semi_simple.md`.  
   Each file contains the prompt (copy-paste ready), “Look for” criteria for scoring, and an empty **Response** section.
-- **Runbook** at `docs/agents/AGENT_APTITUDE_RUNBOOK.md`: 26 steps in order; each step says which agent to invoke, which role card to use, the prompt, and the path to the response file.
+- **Runbook** at `docs/agents/AGENT_APTITUDE_RUNBOOK.md`: 24 steps in order; each step says which agent to invoke, which role card to use, the prompt, and the path to the response file.
 
 Optional: `--base-dir /path/to/repo` to override the repo root.
 
 ## Step 2 — Run prompts and collect responses
 
 1. Open `docs/agents/AGENT_APTITUDE_RUNBOOK.md`.
-2. For each step (1–26):
+2. For each step:
    - In Cursor, invoke the agent (e.g. “Act as the Back-end Engineer; use docs/agents/roles/backend-engineer.md”).
    - Paste the prompt from the runbook or from the corresponding file in `docs/agents/data-sets/aptitude-responses/`.
    - Copy the agent’s reply and paste it into the **Response** section of that same response file.
@@ -104,7 +104,7 @@ Open the report to see:
 
 | File | Description |
 |------|--------------|
-| `scripts/agent-aptitude/prompt_manifest.json` | Source of truth for all 13 agents and their two prompts + “look for” text. |
+| `scripts/agent-aptitude/prompt_manifest.json` | Source of truth for all 12 agents and their two prompts + “look for” text. |
 | `scripts/agent-aptitude/generate_response_collection.py` | Generates the 26 response files and the runbook. |
 | `scripts/agent-aptitude/score_from_responses.py` | LLM-assisted scoring: reads response files, suggests 1–5 scores, fills a scorecard (requires `OPENAI_API_KEY`). |
 | `scripts/agent-aptitude/report_from_scorecard.py` | Parses the filled scorecard and writes the training priority report (use `-o path` for dated reports). |

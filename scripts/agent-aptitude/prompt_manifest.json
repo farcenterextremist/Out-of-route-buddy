@@ -2,11 +2,11 @@
   {
     "agent_id": "coordinator",
     "display_name": "Master Branch Coordinator",
-    "role_card_path": "docs/agents/coordinator-instructions.md",
+    "role_card_path": "docs/agents/team-structure.md",
     "simple_prompt": "We need to add a new 'Export trip to PDF' button on the trip history screen. Who should do what? Assign work.",
     "semi_simple_prompt": "The user asked: 'Should we support dark mode for the statistics calendar?' You don't know the answer. What do you do, and which role(s) do you involve?",
-    "simple_look_for": "Correct assignment to Front-end/Back-end/UI/UX, handoff to Human-in-the-Loop when the user must decide.",
-    "semi_simple_look_for": "Correct assignment to Front-end/Back-end/UI/UX, handoff to Human-in-the-Loop when the user must decide."
+    "simple_look_for": "Correct assignment to Front-end/Back-end/UI/UX and a clear summary of any decision the user must make.",
+    "semi_simple_look_for": "Correct assignment to Front-end/Back-end/UI/UX and a clear summary of any decision the user must make."
   },
   {
     "agent_id": "design_creative",
@@ -76,9 +76,9 @@
     "display_name": "Email Editor / Market Guru",
     "role_card_path": "docs/agents/roles/email-editor-market-guru.md",
     "simple_prompt": "Draft a one-line subject and one-sentence body for an email to the user: 'Statistics section refactor is done, please review.'",
-    "semi_simple_prompt": "The Coordinator wants to ask the user to choose between two feature priorities. Draft a short email (subject + 2–3 sentences) that the Human-in-the-Loop Manager could send.",
-    "simple_look_for": "No send logic; clear copy; handoff to HITL for sending.",
-    "semi_simple_look_for": "No send logic; clear copy; handoff to HITL for sending."
+    "semi_simple_prompt": "The Coordinator wants to ask the user to choose between two feature priorities. Draft a short email (subject + 2–3 sentences) the team could send.",
+    "simple_look_for": "No send logic; clear copy; focused on wording only.",
+    "semi_simple_look_for": "No send logic; clear copy; focused on wording only."
   },
   {
     "agent_id": "file_organizer",
@@ -88,15 +88,6 @@
     "semi_simple_prompt": "We have new docs for the Purple Team (Red/Blue). Propose where they should go and one naming convention for future exercise logs.",
     "simple_look_for": "docs/ structure; no content authoring; handoff to Coordinator or user for approval.",
     "semi_simple_look_for": "docs/ structure; no content authoring; handoff to Coordinator or user for approval."
-  },
-  {
-    "agent_id": "human_in_the_loop",
-    "display_name": "Human-in-the-Loop Manager",
-    "role_card_path": "docs/agents/roles/human-in-the-loop-manager.md",
-    "simple_prompt": "What script do you use to send email to the user, and where is it?",
-    "semi_simple_prompt": "The Coordinator says: 'Email the user that the Help & Info dialog fix is deployed and ask them to confirm it looks good on their device.' Draft the subject and body you'd send (you don't have to run the script).",
-    "simple_look_for": "scripts/coordinator-email/, send_email.py or README; draft only; no product decisions.",
-    "semi_simple_look_for": "scripts/coordinator-email/, send_email.py or README; draft only; no product decisions."
   },
   {
     "agent_id": "red_team",

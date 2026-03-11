@@ -1,7 +1,0 @@
-This is a round-trip test from the coordinator.
-
-Please reply to this email with the word "pickle" so we can verify that read_replies.py can receive your reply.
-
-After you reply, we'll run the read_replies script and confirm your message was received.
-
-— OutOfRouteBuddy Coordinator

@@ -50,6 +50,21 @@ class ApplicationInitializationTest {
             assertNull("No database errors", app.getDatabaseError())
         }
     }
+
+    /** H1: When setDatabaseUnhealthy is called, app reports unhealthy and getDatabaseError returns the exception. */
+    @Test
+    fun testSetDatabaseUnhealthy_reportsUnhealthy() {
+        val app = context as? OutOfRouteApplication
+        assertNotNull("Should be OutOfRouteApplication", app)
+        if (app == null) return
+        val testException = Exception("Database check failed")
+        app.setDatabaseUnhealthy(testException)
+        assertFalse("Application should be unhealthy after setDatabaseUnhealthy", app.isHealthy())
+        assertNotNull("getDatabaseError should return the set exception", app.getDatabaseError())
+        assertEquals("Exception message should match", "Database check failed", app.getDatabaseError()?.message)
+        // Restore so other tests are not affected (companion is process-wide)
+        app.setDatabaseUnhealthy(null)
+    }
     
     @Test
     fun testThemeAppliedOnStartup() {

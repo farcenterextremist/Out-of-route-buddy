@@ -15,12 +15,12 @@ Each variable is scored 1–5 (1 = critical gaps, 5 = exemplary). Weights sum to
 
 | Variable | Weight | Grade (1–5) | Notes |
 |----------|--------|-------------|-------|
-| **Secrets Management** | 15% | 4 | `.env` gitignored; `google-services.json` committed (acceptable if GCP-restricted); coordinator scripts use env vars |
+| **Secrets Management** | 15% | 4 | Local secret files are gitignored; `google-services.json` is committed only with GCP restrictions in place |
 | **Data Protection** | 20% | 3 | Room DB in app-private storage; SharedPreferences unencrypted; StandaloneOfflineService stores AES key in prefs (weak) |
 | **Permissions** | 10% | 5 | Minimal, justified (location, foreground service, notifications); runtime requests |
-| **Input Validation** | 15% | 5 | Trip init, InputValidator, ValidationFramework, TripRepository validation; sync service key allowlist + 64KB limit |
-| **Network Security** | 10% | 5 | No remote PII transmission; sync service local-only (127.0.0.1); HTTPS for connectivity check |
-| **Audit Logging** | 10% | 4 | TripInsertAudit, TripExportAudit, TripDeleteAudit, SyncServiceAudit; PII logging policy documented |
+| **Input Validation** | 15% | 5 | Trip init, InputValidator, ValidationFramework, and repository validation are in place |
+| **Network Security** | 10% | 5 | No remote PII transmission in the core app; HTTPS-only guidance remains for future back-end work |
+| **Audit Logging** | 10% | 4 | TripInsertAudit, TripExportAudit, and TripDeleteAudit exist; PII logging policy is documented |
 | **Authentication** | 5% | N/A | No user accounts; local-only app — reduces attack surface |
 | **Dependency Security** | 10% | 4 | Official repos; Firebase BOM; no known vulnerable deps in scan; regular updates recommended |
 | **Documentation** | 5% | 5 | SECURITY_NOTES, SECURITY_PLAN, Purple Team artifacts |
@@ -41,10 +41,9 @@ Each variable is scored 1–5 (1 = critical gaps, 5 = exemplary). Weights sum to
 **OutOfRouteBuddy project stack:**
 
 - **Android app:** Kotlin (primary) + Java — no TypeScript
-- **Phone emulator:** Vanilla JavaScript (HTML/CSS/JS) — no TypeScript
-- **Scripts:** Python (coordinator-email, agent-aptitude, emulator-sync-service)
+- **Scripts:** Python utility scripts and agent-aptitude tooling
 
-**Decision:** TypeScript is **not used** and **not needed** for this project. The Android app uses Kotlin (which already provides strong typing). The phone emulator is a small static tool (~4 JS files) where plain JavaScript is sufficient. Adding TypeScript would add build tooling (tsc, webpack/vite) without meaningful benefit for the current scope.
+**Decision:** TypeScript is **not used** and **not needed** for this project. The Android app uses Kotlin, which already provides strong typing. Adding TypeScript would add build tooling without meaningful benefit for the current scope.
 
 ---
 

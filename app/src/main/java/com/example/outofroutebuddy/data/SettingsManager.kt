@@ -53,6 +53,32 @@ class SettingsManager @Inject constructor(
     // Advanced Settings
     fun isBatteryOptimizationEnabled(): Boolean = prefs.getBoolean("battery_optimization", true)
     fun setBatteryOptimizationEnabled(enabled: Boolean) = prefs.edit {putBoolean("battery_optimization", enabled)}
+
+    /** GPS preset: power_save (30s, low accuracy), balanced (10s, high), high_accuracy (5s, high). Applied on next trip/service read. */
+    fun getGpsPreset(): String = prefs.getString("gps_preset", "balanced") ?: "balanced"
+    fun setGpsPreset(preset: String) {
+        prefs.edit {
+                putString("gps_preset", preset)
+                when (preset) {
+                    "power_save" -> {
+                        putInt("gps_update_frequency", 30)
+                        putBoolean("high_accuracy_mode", false)
+                    }
+                    "high_accuracy" -> {
+                        putInt("gps_update_frequency", 5)
+                        putBoolean("high_accuracy_mode", true)
+                    }
+                    else -> { // balanced
+                        putInt("gps_update_frequency", 10)
+                        putBoolean("high_accuracy_mode", true)
+                    }
+                }
+            }
+    }
+
+    /** Debug only: verbose logging flag (no PII in logs). Gated by BuildConfig.DEBUG in UI. */
+    fun isVerboseLoggingEnabled(): Boolean = prefs.getBoolean("verbose_logging", false)
+    fun setVerboseLoggingEnabled(enabled: Boolean) = prefs.edit { putBoolean("verbose_logging", enabled) }
     
     /**
      * Convert miles to the user's preferred unit

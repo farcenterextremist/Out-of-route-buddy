@@ -3,6 +3,7 @@ package com.example.outofroutebuddy.data
 import android.content.Context
 import android.content.SharedPreferences
 import androidx.core.content.edit
+import com.example.outofroutebuddy.util.AppLogger
 import com.example.outofroutebuddy.domain.models.PeriodMode
 
 /**
@@ -24,6 +25,7 @@ class PreferencesManager(context: Context) {
         private const val KEY_LAST_LOADED_MILES = "last_loaded_miles"
         private const val KEY_LAST_BOUNCE_MILES = "last_bounce_miles"
         private const val KEY_TRIP_ACTIVE = "trip_active"
+        private const val KEY_LAST_AUTO_PRUNE_TIMESTAMP_MS = "last_auto_prune_timestamp_ms"
     }
 
     /**
@@ -36,14 +38,19 @@ class PreferencesManager(context: Context) {
     }
 
     /**
-     * Get the saved period mode, defaulting to STANDARD if not set
+     * Get the saved period mode, defaulting to STANDARD if not set or invalid.
+     * L1: Logs at debug when using default (no saved preference); logs at warn when value invalid.
      */
     fun getPeriodMode(): PeriodMode {
-        val modeName = sharedPreferences.getString(KEY_PERIOD_MODE, PeriodMode.STANDARD.name)
+        val modeName = sharedPreferences.getString(KEY_PERIOD_MODE, null)
+        if (modeName.isNullOrEmpty()) {
+            AppLogger.d(TAG, "Using default period mode (no saved preference)")
+            return PeriodMode.STANDARD
+        }
         return try {
-            PeriodMode.valueOf(modeName ?: PeriodMode.STANDARD.name)
+            PeriodMode.valueOf(modeName)
         } catch (e: IllegalArgumentException) {
-            android.util.Log.w(TAG, "Invalid period mode '$modeName', defaulting to STANDARD", e)
+            AppLogger.w(TAG, "Invalid period mode '$modeName', defaulting to STANDARD", e)
             PeriodMode.STANDARD
         }
     }
@@ -101,6 +108,23 @@ class PreferencesManager(context: Context) {
      */
     fun isTripActive(): Boolean {
         return sharedPreferences.getBoolean(KEY_TRIP_ACTIVE, false)
+    }
+
+    /**
+     * Save last successful automatic prune run timestamp (epoch millis).
+     */
+    fun saveLastAutoPruneTimestamp(timestampMs: Long) {
+        sharedPreferences.edit {
+            putLong(KEY_LAST_AUTO_PRUNE_TIMESTAMP_MS, timestampMs)
+        }
+    }
+
+    /**
+     * Get last successful automatic prune run timestamp.
+     * Returns 0L when never run.
+     */
+    fun getLastAutoPruneTimestamp(): Long {
+        return sharedPreferences.getLong(KEY_LAST_AUTO_PRUNE_TIMESTAMP_MS, 0L)
     }
 
     /**

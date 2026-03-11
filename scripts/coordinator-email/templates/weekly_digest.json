@@ -1,9 +1,0 @@
-{
-  "key": "weekly_digest",
-  "priority": 100,
-  "keywords": ["weekly", "board|digest|summary|meeting"],
-  "keywords_combine": "and",
-  "subject": "Re: OutOfRouteBuddy — weekly Board digest",
-  "body": "Hi,\n\nWe'll set up a weekly Board Meeting short summary of what everyone has completed and email it to you each week. You'll get one email per week with a brief round-up from the team.\n\nIf you'd like a different day or format, just reply and we'll adjust.\n\n— Jarvey",
-  "fetcher": null
-}

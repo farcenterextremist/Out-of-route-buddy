@@ -33,6 +33,20 @@ So: **crash snapshot wins over full persistence** when both exist (e.g. after a 
 
 ---
 
+## Process death and recovery (Blind Spot Plan §2)
+
+**When the process is killed** (e.g. app in background, system reclaims memory):
+
+- **What is restored:** On next launch, `OutOfRouteApplication` and `TripInputViewModel.loadInitialData()` run. If the process was killed during an active trip:
+  - **Crash path:** If `TripCrashRecoveryManager` had written a 30-second snapshot before kill, `recoveredTripState` is set and the crash-recovery path restores UI and trip state; `clearRecoveredState()` is called so it is consumed once.
+  - **Persistence path:** If no crash snapshot (or it was cleared), `TripPersistenceManager.loadSavedTripState()` is used. If it returns a saved state (within 24h recovery window), the ViewModel restores trip state, syncs TripStateManager, and the user sees the trip as active; MainActivity may show the recovery dialog (TripRecoveryDialog) so the user can "Continue trip" or "Start new trip."
+- **What the user sees:** After process death and relaunch, the user either lands on the main screen with the trip already restored (no dialog) or sees the recovery dialog offering "Continue trip" or "Start new trip." No second prompt for the same recovery.
+- **Rotation / configuration change:** Activities do not use `android:configChanges`; rotation recreates the Activity. ViewModel survives (process is not killed), so trip state is preserved. This is intentional; ViewModel + saved instance state (navigation state in MainActivity) handle configuration change.
+
+**Testing:** Process kill during an active trip is not yet covered by an automated test. Manual test: start a trip, send app to background, then force-stop the app (or use "Don't keep activities"); relaunch and confirm recovery dialog or restored trip state.
+
+---
+
 ## No double prompt
 
 - Recovered state is consumed once: crash path clears `recoveredTripState`; persistence path does not show a second “recover?” if the user already continued from crash recovery. The recovery dialog (e.g. TripRecoveryDialog) is driven by MainActivity / persistence, not by crash recovery; ViewModel restore happens in `loadInitialData()` before the user sees the main UI, so the user is not asked twice for the same trip.

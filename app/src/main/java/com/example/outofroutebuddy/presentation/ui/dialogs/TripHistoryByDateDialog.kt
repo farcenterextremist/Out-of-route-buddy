@@ -1,23 +1,20 @@
 package com.example.outofroutebuddy.presentation.ui.dialogs
 
 import android.app.Dialog
-import android.content.Context
+import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
-import android.widget.TextView
-import androidx.core.os.bundleOf
 import androidx.fragment.app.DialogFragment
+import androidx.navigation.fragment.NavHostFragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
-import androidx.navigation.Navigation
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.example.outofroutebuddy.R
 import com.example.outofroutebuddy.databinding.DialogTripHistoryByDateBinding
 import com.google.android.material.snackbar.Snackbar
-import com.example.outofroutebuddy.presentation.ui.history.TripHistoryAdapter
+import com.example.outofroutebuddy.domain.models.Trip
+import com.example.outofroutebuddy.presentation.ui.history.TripHistoryStatCardAdapter
 import com.example.outofroutebuddy.presentation.ui.history.TripHistoryByDateViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
@@ -28,7 +25,10 @@ import java.util.*
  * ✅ NEW: Trip History By Date Dialog
  *
  * Displays trip history for a specific date selected from the calendar.
- * Shows all trips that occurred on that date in a scrollable list.
+ * Data flow: Calendar date click → onHistoryDateClicked → showTripHistoryForDate(date)
+ * → TripHistoryByDateDialog.newInstance(selectedDate) → viewModel.loadTripsForDate(selectedDate)
+ * → repository.getTripsOverlappingDay(startOfDay, endOfDay) → adapter.submitList(trips).
+ * Midnight-spanning trips appear on both days; overlap is handled by the repository.
  */
 @AndroidEntryPoint
 class TripHistoryByDateDialog : DialogFragment() {
@@ -36,6 +36,8 @@ class TripHistoryByDateDialog : DialogFragment() {
     companion object {
         private const val TAG = "TripHistoryByDateDialog"
         private const val ARG_SELECTED_DATE = "selected_date"
+        /** Request key used when a trip was deleted so the calendar can refresh its dots. */
+        const val REQUEST_KEY_DAY_TRIP_DELETED = "trip_history_day_trip_deleted"
         
         fun newInstance(selectedDate: Date): TripHistoryByDateDialog {
             val dialog = TripHistoryByDateDialog()
@@ -51,13 +53,18 @@ class TripHistoryByDateDialog : DialogFragment() {
         get() = _binding ?: throw IllegalStateException("Binding accessed before onCreateView or after onDestroyView")
     
     private val viewModel: TripHistoryByDateViewModel by viewModels()
-    private lateinit var adapter: TripHistoryAdapter
+    private lateinit var adapter: TripHistoryStatCardAdapter
     private lateinit var selectedDate: Date
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         arguments?.let { args ->
-            selectedDate = args.getSerializable(ARG_SELECTED_DATE) as Date
+            selectedDate = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                args.getSerializable(ARG_SELECTED_DATE, java.util.Date::class.java)!!
+            } else {
+                @Suppress("DEPRECATION")
+                args.getSerializable(ARG_SELECTED_DATE) as java.util.Date
+            }
         }
     }
     
@@ -84,6 +91,8 @@ class TripHistoryByDateDialog : DialogFragment() {
         setupRecyclerView()
         observeTrips()
         observeDeleteError()
+        observeDeleteSuccess()
+        observeLoadError()
 
         // Load trips for the selected date
         viewModel.loadTripsForDate(selectedDate)
@@ -96,16 +105,20 @@ class TripHistoryByDateDialog : DialogFragment() {
     }
 
     private fun setupViews() {
-        // ✅ EDGE CASE: Format and display the selected date with proper error handling
+        // Title: date only (e.g. "March 02, 2026"), centered in layout
         try {
-            val dateFormat = SimpleDateFormat("MMM dd, yyyy", Locale.US)
-            binding.dateTitleText.text = "Trips for ${dateFormat.format(selectedDate)}"
+            val dateFormat = SimpleDateFormat("MMMM dd, yyyy", Locale.US)
+            binding.dateTitleText.text = dateFormat.format(selectedDate)
         } catch (e: Exception) {
-            // ✅ EDGE CASE: If date formatting fails, show fallback
-            binding.dateTitleText.text = "Trips for selected date"
+            binding.dateTitleText.text = "Selected date"
             android.util.Log.e(TAG, "Error formatting date", e)
         }
-        
+
+        // Back button: dismiss dialog to return to calendar
+        binding.backButton.setOnClickListener {
+            dismiss()
+        }
+
         // Close button
         binding.closeButton.setOnClickListener {
             dismiss()
@@ -113,19 +126,17 @@ class TripHistoryByDateDialog : DialogFragment() {
     }
     
     private fun setupRecyclerView() {
-        adapter = TripHistoryAdapter(
+        adapter = TripHistoryStatCardAdapter(
+            onDeleteClick = { trip -> showDeleteConfirmation(trip) },
             onTripClick = { trip ->
                 dismiss()
-                try {
-                    val navController = Navigation.findNavController(requireActivity(), R.id.nav_host_fragment)
-                    navController.navigate(R.id.tripDetailsFragment, bundleOf("tripId" to trip.id))
-                } catch (e: Exception) {
-                    android.util.Log.e(TAG, "Failed to navigate to trip details", e)
-                }
+                val navController = (requireActivity().supportFragmentManager.findFragmentById(com.example.outofroutebuddy.R.id.nav_host_fragment) as? NavHostFragment)?.navController
+                navController?.navigate(
+                    com.example.outofroutebuddy.R.id.tripDetailsFragment,
+                    Bundle().apply { putString("tripId", trip.id) }
+                )
             },
-            onDeleteClick = { trip ->
-                viewModel.deleteTrip(trip)
-            }
+            viewingDate = selectedDate,
         )
         
         binding.tripListRecyclerView.apply {
@@ -142,6 +153,46 @@ class TripHistoryByDateDialog : DialogFragment() {
         }
     }
 
+    private fun observeDeleteSuccess() {
+        lifecycleScope.launch {
+            viewModel.deleteSuccess.collect { message ->
+                parentFragmentManager.setFragmentResult(REQUEST_KEY_DAY_TRIP_DELETED, Bundle())
+                view?.let { Snackbar.make(it, message, Snackbar.LENGTH_SHORT).show() }
+            }
+        }
+    }
+
+    private fun showDeleteConfirmation(trip: Trip) {
+        val dialog = androidx.appcompat.app.AlertDialog.Builder(requireContext())
+            .setTitle("Delete Trip")
+            .setMessage("Are you sure you want to delete? Trip will be lost forever.")
+            .setNegativeButton("Cancel", null)
+            .setPositiveButton("Delete") { _, _ ->
+                viewModel.deleteTrip(trip)
+            }
+            .create()
+        dialog.setOnShowListener {
+            val isDarkMode = (resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK) ==
+                android.content.res.Configuration.UI_MODE_NIGHT_YES
+            if (isDarkMode) {
+                val white = android.graphics.Color.WHITE
+                dialog.findViewById<android.widget.TextView>(android.R.id.message)?.setTextColor(white)
+                dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_POSITIVE)?.setTextColor(white)
+                dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_NEGATIVE)?.setTextColor(white)
+            }
+        }
+        dialog.show()
+    }
+
+    /** Show snackbar when repository load fails (D1 wiring). */
+    private fun observeLoadError() {
+        lifecycleScope.launch {
+            viewModel.loadError.collect { message ->
+                view?.let { Snackbar.make(it, message, Snackbar.LENGTH_LONG).show() }
+            }
+        }
+    }
+
     private fun observeTrips() {
         lifecycleScope.launch {
             viewModel.trips.collect { trips ->
@@ -153,7 +204,7 @@ class TripHistoryByDateDialog : DialogFragment() {
                     binding.tripListRecyclerView.visibility = View.GONE
                     // Update empty state message
                     try {
-                        val dateFormat = SimpleDateFormat("MMM dd, yyyy", Locale.US)
+                        val dateFormat = SimpleDateFormat("MMMM dd, yyyy", Locale.US)
                         binding.emptyStateText.text = "No trips found for ${dateFormat.format(selectedDate)}."
                     } catch (e: Exception) {
                         binding.emptyStateText.text = "No trips found for this date."

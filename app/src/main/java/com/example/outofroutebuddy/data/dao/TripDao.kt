@@ -26,14 +26,14 @@ interface TripDao {
     /**
      * Get all trips from the database
      */
-    @Query("SELECT * FROM trips ORDER BY date DESC")
+    @Query("SELECT * FROM trips ORDER BY date ASC, id ASC")
     fun getAllTrips(): Flow<List<TripEntity>>
 
     /**
-     * Get a specific trip by ID
+     * Get a specific trip by ID (suspend to avoid blocking main thread).
      */
     @Query("SELECT * FROM trips WHERE id = :tripId")
-    fun getTripById(tripId: Long): TripEntity?
+    suspend fun getTripById(tripId: Long): TripEntity?
 
     /**
      * Update an existing trip
@@ -50,13 +50,13 @@ interface TripDao {
     /**
      * Get trips from a specific date onwards
      */
-    @Query("SELECT * FROM trips WHERE date >= :startDate ORDER BY date DESC")
+    @Query("SELECT * FROM trips WHERE date >= :startDate ORDER BY date ASC, id ASC")
     fun getTripsFromDate(startDate: Date): List<TripEntity>
 
     /**
      * Get trips for a specific date
      */
-    @Query("SELECT * FROM trips WHERE date >= :startOfDay AND date < :endOfDay ORDER BY date DESC")
+    @Query("SELECT * FROM trips WHERE date >= :startOfDay AND date < :endOfDay ORDER BY date ASC, id ASC")
     fun getTripsForDate(
         startOfDay: Date,
         endOfDay: Date,
@@ -65,10 +65,47 @@ interface TripDao {
     /**
      * Get trips for a date range
      */
-    @Query("SELECT * FROM trips WHERE date >= :startDate AND date <= :endDate ORDER BY date DESC")
+    @Query("SELECT * FROM trips WHERE date >= :startDate AND date <= :endDate ORDER BY date ASC, id ASC")
     fun getTripsForDateRange(
         startDate: Date,
         endDate: Date,
+    ): List<TripEntity>
+
+    /**
+     * Get trips overlapping a single day (supports midnight-spanning trips).
+     * - Trips with tripStartTime and tripEndTime: included if day overlaps [start, end)
+     * - Trips with null tripStartTime/tripEndTime: included if date falls in day (backward compat)
+     */
+    @Query("""
+        SELECT * FROM trips WHERE
+        ((tripStartTime IS NOT NULL AND tripEndTime IS NOT NULL)
+         AND (tripStartTime < :endOfDay AND tripEndTime > :startOfDay))
+        OR
+        ((tripStartTime IS NULL OR tripEndTime IS NULL)
+         AND (date >= :startOfDay AND date < :endOfDay))
+        ORDER BY date ASC, id ASC
+    """)
+    fun getTripsOverlappingDay(
+        startOfDay: Date,
+        endOfDay: Date,
+    ): List<TripEntity>
+
+    /**
+     * Get trips overlapping an arbitrary range [rangeStart, rangeEnd) (supports midnight-spanning trips).
+     * Uses half-open end semantics to avoid double-including exact boundary starts in adjacent ranges.
+     */
+    @Query("""
+        SELECT * FROM trips WHERE
+        ((tripStartTime IS NOT NULL AND tripEndTime IS NOT NULL)
+         AND (tripStartTime < :rangeEnd AND tripEndTime > :rangeStart))
+        OR
+        ((tripStartTime IS NULL OR tripEndTime IS NULL)
+         AND (date >= :rangeStart AND date < :rangeEnd))
+        ORDER BY date ASC, id ASC
+    """)
+    fun getTripsOverlappingRange(
+        rangeStart: Date,
+        rangeEnd: Date,
     ): List<TripEntity>
 
     /**

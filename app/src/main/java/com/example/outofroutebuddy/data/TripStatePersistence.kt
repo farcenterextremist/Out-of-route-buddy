@@ -1,6 +1,6 @@
 package com.example.outofroutebuddy.data
 
-import android.util.Log
+import com.example.outofroutebuddy.util.AppLogger
 import com.example.outofroutebuddy.data.repository.TripRepository
 import com.example.outofroutebuddy.domain.models.Trip as DomainTrip
 import com.example.outofroutebuddy.domain.models.TripStatus
@@ -12,14 +12,15 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.util.Date
+import java.util.TimeZone
 import com.example.outofroutebuddy.utils.extensions.isToday
 
 /**
- * ✅ NEW: Database-backed State Persistence
- *
- * This class handles automatic saving and recovery of trip state
- * to/from the database, ensuring data persistence across app restarts.
+ * Database-backed state persistence for trip draft/active state and recovery.
+ * Coordinates with [TripStateManager] and [TripPersistenceManager]; [saveCompletedTrip] is the single
+ * persistence path when user ends a trip (R1). See [ARCHITECTURE.md](../../../docs/ARCHITECTURE.md).
  */
 class TripStatePersistence(
     private val repository: TripRepository,
@@ -53,60 +54,68 @@ class TripStatePersistence(
                 try {
                     kotlinx.coroutines.delay(AUTO_SAVE_INTERVAL_MS)
 
+                    // R2: autoSaveTripState removed - was no-op; TripPersistenceManager handles auto-save
                     if (tripStateManager.isTripActive()) {
-                        autoSaveTripState()
+                        // Future: persist draft state to TripPersistenceManager if needed
                     }
                 } catch (e: Exception) {
-                    Log.e(TAG, "Auto-save failed", e)
+                    AppLogger.e(TAG, "Auto-save failed", e)
                 }
             }
         }
     }
 
     /**
-     * Auto-save trip state. No-op: TripPersistenceManager handles auto-save.
-     * Kept for API compatibility; see CODE_QUALITY_NOTES.md.
+     * Wired to trip-end flow (TripInputViewModel.endTrip). Saves completed trip with GPS metadata. R1.
+     * Uses [tripStateManager] for loaded/bounce/actual miles and GPS metadata; single insert via data repository.
      */
-    private suspend fun autoSaveTripState() {
-        // No-op; kept for API compatibility.
-    }
+    suspend fun saveCompletedTrip(
+        actualMiles: Double,
+        loadedMiles: Double? = null,
+        bounceMiles: Double? = null,
+        tripStartTime: Date? = null,
+        tripEndTime: Date? = null,
+    ): Long {
+        return withContext(Dispatchers.IO) {
+            try {
+                val currentState = tripStateManager.getCurrentState()
+                val gpsMetadata = tripStateManager.getGpsMetadataForStorage().toMutableMap()
 
-    /**
-     * Save completed trip to database with GPS metadata.
-     * Currently unused: TripInputViewModel.endTrip() uses domain TripRepository.insertTrip(trip) instead.
-     * Use this when saving with GPS metadata is required, or remove if not needed.
-     */
-    suspend fun saveCompletedTrip(actualMiles: Double): Long {
-        return try {
-            val currentState = tripStateManager.getCurrentState()
-            val gpsMetadata = tripStateManager.getGpsMetadataForStorage()
+                // Calculate trip metrics
+                val resolvedLoadedMiles = loadedMiles ?: (currentState.loadedMiles.toDoubleOrNull() ?: 0.0)
+                val resolvedBounceMiles = bounceMiles ?: (currentState.bounceMiles.toDoubleOrNull() ?: 0.0)
+                val resolvedStartTime = tripStartTime ?: (gpsMetadata["tripStartTime"] as? Date) ?: currentState.startTime ?: Date()
+                val resolvedEndTime = tripEndTime ?: (gpsMetadata["tripEndTime"] as? Date) ?: Date()
 
-            // Calculate trip metrics
-            val loadedMiles = currentState.loadedMiles.toDoubleOrNull() ?: 0.0
-            val bounceMiles = currentState.bounceMiles.toDoubleOrNull() ?: 0.0
+                gpsMetadata["tripStartTime"] = resolvedStartTime
+                gpsMetadata["tripEndTime"] = resolvedEndTime
+                // Store timezone where trip was recorded so we can show it when user is in a different zone
+                gpsMetadata["tripTimeZoneId"] = TimeZone.getDefault().id
 
-            // Create trip entity (data layer Trip for repository)
-            val dataTrip = DataTrip(
-                id = 0L,
-                date = Date(),
-                loadedMiles = loadedMiles,
-                bounceMiles = bounceMiles,
-                actualMiles = actualMiles,
-            )
+                // Create trip entity (data layer Trip for repository)
+                val dataTrip = DataTrip(
+                    id = 0L,
+                    date = resolvedEndTime,
+                    loadedMiles = resolvedLoadedMiles,
+                    bounceMiles = resolvedBounceMiles,
+                    actualMiles = actualMiles,
+                )
 
-            // Save to database with GPS metadata
-            val tripId = repository.insertTrip(dataTrip, gpsMetadata)
+                // Save to database with GPS metadata
+                val tripId = repository.insertTrip(dataTrip, gpsMetadata)
 
-            Log.d(TAG, "Saved completed trip to database with ID: $tripId")
-            tripId
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to save completed trip", e)
-            throw e
+                AppLogger.d(TAG, "Saved completed trip to database")
+                tripId
+            } catch (e: Exception) {
+                AppLogger.e(TAG, "Failed to save completed trip", e)
+                throw e
+            }
         }
     }
 
     /**
-     * ✅ NEW: Recover trip state from database
+     * Look for an incomplete trip from today and return true if one was found (recovery hint).
+     * @return true if recent incomplete trip exists
      */
     suspend fun recoverTripState(): Boolean {
         return try {
@@ -122,36 +131,16 @@ class TripStatePersistence(
                 val mostRecent = recentTrips.maxByOrNull { trip -> trip.date }
                 if (mostRecent != null) {
                     // Recover state from the most recent incomplete trip
-                    Log.d(TAG, "Recovering trip state from database: ${mostRecent.id}")
+                    AppLogger.d(TAG, "Recovering trip state from database")
                     return true
                 }
             }
 
             false
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to recover trip state", e)
+            AppLogger.e(TAG, "Failed to recover trip state", e)
             false
         }
-    }
-
-    /**
-     * ✅ FIXED: Create temporary trip from current state
-     * Avoids validation errors by not creating invalid Trip objects during auto-save
-     */
-    private fun createTempTripFromState(state: TripStateManager.TripState): DomainTrip {
-        val loadedMiles = state.loadedMiles.toDoubleOrNull() ?: 0.0
-        val bounceMiles = state.bounceMiles.toDoubleOrNull() ?: 0.0
-
-        // For auto-save, we need to avoid validation errors
-        // Use minimum actual miles to pass validation, but mark as temporary
-        val actualMiles = 0.1 // Minimum required by validation
-
-        return DomainTrip(
-            startTime = Date(),
-            loadedMiles = loadedMiles,
-            bounceMiles = bounceMiles,
-            actualMiles = actualMiles,
-        )
     }
 
     /**
@@ -160,9 +149,9 @@ class TripStatePersistence(
     suspend fun cleanupTempTrips() {
         try {
             // Temporary trip cleanup - currently not needed as auto-save is handled by TripPersistenceManager
-            Log.d(TAG, "Cleaned up temporary trip records")
+            AppLogger.d(TAG, "Cleaned up temporary trip records")
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to cleanup temporary trips", e)
+            AppLogger.e(TAG, "Failed to cleanup temporary trips", e)
         }
     }
 
@@ -173,24 +162,26 @@ class TripStatePersistence(
 
     /**
      * ✅ NEW: Force save current state
+     * R2: Replaced removed autoSaveTripState() with saveTripState() - TripPersistenceManager handles persistence
      */
     suspend fun forceSave() {
         if (tripStateManager.isTripActive()) {
-            autoSaveTripState()
+            saveTripState(tripStateManager.getCurrentState())
         }
     }
 
     // ==================== NEW: VIEWMODEL INTEGRATION METHODS ====================
 
     /**
-     * ✅ IMPLEMENTED: Save trip state for ViewModel using TripPersistenceManager
+     * Save current trip state to [TripPersistenceManager] for recovery. Call when trip is active.
+     * @param tripState Current state from [TripStateManager]
      */
     fun saveTripState(tripState: TripStateManager.TripState) {
         try {
-            Log.d(TAG, "Saving trip state for ViewModel: isActive=${tripState.isActive}")
+            AppLogger.d(TAG, "Saving trip state for ViewModel: isActive=${tripState.isActive}")
             
             if (!tripState.isActive) {
-                Log.d(TAG, "Trip is not active, skipping save")
+                AppLogger.d(TAG, "Trip is not active, skipping save")
                 return
             }
             
@@ -243,23 +234,24 @@ class TripStatePersistence(
             )
             
             lastSaveTime = System.currentTimeMillis()
-            Log.d(TAG, "Trip state saved successfully to persistence")
+            AppLogger.d(TAG, "Trip state saved successfully to persistence")
             
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to save trip state", e)
+            AppLogger.e(TAG, "Failed to save trip state", e)
         }
     }
 
     /**
-     * ✅ IMPLEMENTED: Load trip state for ViewModel from TripPersistenceManager
+     * Load persisted trip state from [TripPersistenceManager], or null if none.
+     * @return Restored [TripStateManager.TripState] or null
      */
     fun loadTripState(): TripStateManager.TripState? {
         return try {
-            Log.d(TAG, "Loading trip state for ViewModel")
+            AppLogger.d(TAG, "Loading trip state for ViewModel")
             
             val savedState = tripPersistenceManager.loadSavedTripState()
             if (savedState == null) {
-                Log.d(TAG, "No saved trip state found")
+                AppLogger.d(TAG, "No saved trip state found")
                 return null
             }
             
@@ -288,21 +280,22 @@ class TripStatePersistence(
                 lastUpdated = savedState.recoveryTime
             )
             
-            Log.d(TAG, "Trip state loaded successfully: isActive=${tripState.isActive}")
+            AppLogger.d(TAG, "Trip state loaded successfully: isActive=${tripState.isActive}")
             tripState
             
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to load trip state", e)
+            AppLogger.e(TAG, "Failed to load trip state", e)
             null
         }
     }
 
     /**
-     * ✅ IMPLEMENTED: Restore trip state for ViewModel to TripStateManager
+     * Restore trip state by saving to persistence (ViewModel can then load and apply).
+     * @param tripState State to restore
      */
     fun restoreTripState(tripState: TripStateManager.TripState) {
         try {
-            Log.d(TAG, "Restoring trip state for ViewModel: isActive=${tripState.isActive}")
+            AppLogger.d(TAG, "Restoring trip state for ViewModel: isActive=${tripState.isActive}")
             
             // Restore state to TripStateManager by updating its internal state
             // Note: TripStateManager uses a StateFlow, so we need to update it directly
@@ -313,9 +306,9 @@ class TripStatePersistence(
             // The ViewModel should call loadTripState() and then update TripStateManager
             saveTripState(tripState)
             
-            Log.d(TAG, "Trip state restored successfully")
+            AppLogger.d(TAG, "Trip state restored successfully")
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to restore trip state", e)
+            AppLogger.e(TAG, "Failed to restore trip state", e)
         }
     }
 } 

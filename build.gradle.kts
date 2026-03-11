@@ -7,10 +7,10 @@ plugins {
     alias(libs.plugins.kotlin.android) apply false
     alias(libs.plugins.navigation.safeargs) apply false
     alias(libs.plugins.detekt) apply false
-    id("com.google.firebase.crashlytics") version "2.9.9" apply false
-    id("com.google.dagger.hilt.android") version "2.48.1" apply false
-    id("com.google.devtools.ksp") version "1.8.22-1.0.11" apply false
-    id("com.google.gms.google-services") version "4.4.0" apply false
+    alias(libs.plugins.firebase.crashlytics) apply false
+    alias(libs.plugins.hilt.android) apply false
+    alias(libs.plugins.ksp) apply false
+    alias(libs.plugins.google.services) apply false
 }
 
 // Force consistent Kotlin version across all modules and dependencies
@@ -18,7 +18,7 @@ subprojects {
     configurations.all {
         resolutionStrategy.eachDependency {
             if (requested.group == "org.jetbrains.kotlin") {
-                useVersion("1.9.22")
+                useVersion(libs.versions.kotlin.get())
                 because("Force consistent Kotlin version to avoid metadata mismatch")
             }
         }

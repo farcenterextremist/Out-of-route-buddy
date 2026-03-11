@@ -1,7 +1,0 @@
-You asked about persistence and Room.
-
-* Persistence is owned by the Back-end Engineer.
-* Room is a data storage solution used within the App's persistence layer, specifically managed by the Back-end Engineer as part of their responsibilities. 
-* The Back-end Engineer will be assigned to implement this further.
-
-— Jarvey

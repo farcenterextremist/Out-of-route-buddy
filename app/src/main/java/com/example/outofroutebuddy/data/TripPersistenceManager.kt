@@ -1,7 +1,7 @@
 package com.example.outofroutebuddy.data
 
 import android.content.Context
-import android.util.Log
+import com.example.outofroutebuddy.util.AppLogger
 import com.example.outofroutebuddy.domain.models.GpsMetadata
 import com.example.outofroutebuddy.domain.models.Trip
 import com.example.outofroutebuddy.domain.models.TripStatus
@@ -59,7 +59,7 @@ class TripPersistenceManager @Inject constructor(
         gpsMetadata: GpsMetadata? = null
     ) {
         try {
-            Log.d(TAG, "Saving active trip state for recovery")
+            AppLogger.d(TAG,"Saving active trip state for recovery")
             
             val prefs = context.getSharedPreferences("trip_persistence", Context.MODE_PRIVATE)
             val editor = prefs.edit()
@@ -91,13 +91,13 @@ class TripPersistenceManager @Inject constructor(
             val success = editor.commit()
             
             if (success) {
-                Log.d(TAG, "Trip state saved successfully: tripId=${trip.id}, actualMiles=$actualMiles")
+                AppLogger.d(TAG,"Trip state saved successfully")
             } else {
-                Log.e(TAG, "Failed to save trip state: commit() returned false")
+                AppLogger.e(TAG, "Failed to save trip state: commit() returned false")
             }
             
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to save active trip state", e)
+            AppLogger.e(TAG, "Failed to save active trip state", e)
         }
     }
 
@@ -106,13 +106,13 @@ class TripPersistenceManager @Inject constructor(
      */
     fun loadSavedTripState(): SavedTripState? {
         return try {
-            Log.d(TAG, "Loading saved trip state for recovery")
+            AppLogger.d(TAG,"Loading saved trip state for recovery")
             
             val prefs = context.getSharedPreferences("trip_persistence", Context.MODE_PRIVATE)
             
             // Check if recovery is available
             if (!prefs.getBoolean(KEY_TRIP_RECOVERY_AVAILABLE, false)) {
-                Log.d(TAG, "No trip recovery data available")
+                AppLogger.d(TAG,"No trip recovery data available")
                 return null
             }
             
@@ -121,7 +121,7 @@ class TripPersistenceManager @Inject constructor(
             val currentTime = System.currentTimeMillis()
             
             if (currentTime - startTime > RECOVERY_TIMEOUT_MS) {
-                Log.d(TAG, "Trip recovery data expired, clearing")
+                AppLogger.d(TAG,"Trip recovery data expired, clearing")
                 clearSavedTripState()
                 return null
             }
@@ -129,7 +129,7 @@ class TripPersistenceManager @Inject constructor(
             // Load trip data
             val tripJson = prefs.getString(KEY_ACTIVE_TRIP, null)
             if (tripJson == null) {
-                Log.w(TAG, "No trip data found in recovery")
+                AppLogger.w(TAG, "No trip data found in recovery")
                 return null
             }
             
@@ -156,11 +156,11 @@ class TripPersistenceManager @Inject constructor(
                 recoveryTime = Date(currentTime)
             )
             
-            Log.d(TAG, "Trip state loaded successfully: tripId=${trip.id}, actualMiles=$actualMiles")
+            AppLogger.d(TAG,"Trip state loaded successfully")
             savedState
             
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to load saved trip state", e)
+            AppLogger.e(TAG, "Failed to load saved trip state", e)
             null
         }
     }
@@ -170,7 +170,7 @@ class TripPersistenceManager @Inject constructor(
      */
     fun clearSavedTripState() {
         try {
-            Log.d(TAG, "Clearing saved trip state")
+            AppLogger.d(TAG, "Clearing saved trip state")
             
             val prefs = context.getSharedPreferences("trip_persistence", Context.MODE_PRIVATE)
             val editor = prefs.edit()
@@ -188,13 +188,13 @@ class TripPersistenceManager @Inject constructor(
             val success = editor.commit()
             
             if (success) {
-                Log.d(TAG, "Trip state cleared successfully")
+                AppLogger.d(TAG, "Trip state cleared successfully")
             } else {
-                Log.e(TAG, "Failed to clear trip state: commit() returned false")
+                AppLogger.e(TAG, "Failed to clear trip state: commit() returned false")
             }
             
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to clear saved trip state", e)
+            AppLogger.e(TAG, "Failed to clear saved trip state", e)
         }
     }
 
@@ -213,7 +213,7 @@ class TripPersistenceManager @Inject constructor(
                 val isValid = currentTime - startTime <= RECOVERY_TIMEOUT_MS
                 
                 if (!isValid) {
-                    Log.d(TAG, "Recovery data expired, clearing")
+                    AppLogger.d(TAG, "Recovery data expired, clearing")
                     clearSavedTripState()
                     return false
                 }
@@ -221,7 +221,7 @@ class TripPersistenceManager @Inject constructor(
             
             isAvailable
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to check recovery availability", e)
+            AppLogger.e(TAG, "Failed to check recovery availability", e)
             false
         }
     }
@@ -246,13 +246,13 @@ class TripPersistenceManager @Inject constructor(
             val success = editor.commit()
             
             if (success) {
-                Log.d(TAG, "Trip progress updated: actualMiles=$actualMiles")
+                AppLogger.d(TAG, "Trip progress updated")
             } else {
-                Log.e(TAG, "Failed to update trip progress: commit() returned false")
+                AppLogger.e(TAG, "Failed to update trip progress: commit() returned false")
             }
             
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to update trip progress", e)
+            AppLogger.e(TAG, "Failed to update trip progress", e)
         }
     }
 

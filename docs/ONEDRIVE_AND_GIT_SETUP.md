@@ -67,7 +67,7 @@ The project is already a **Git repo** (on branch `master`). Use Git to save hist
 ### Step 1 — Create the repo on GitHub
 
 1. Go to [github.com/new](https://github.com/new) and sign in (with Brandonfrey2work@gmail.com or your GitHub account).
-2. **Repository name:** `OutofRoutebuddy` (or `OutOfRoutebuddy`).
+2. **Repository name:** `OutofRoutebuddy` (or `OutOfRouteBuddy`).
 3. **Public.** Do **not** check “Add a README” or “Add .gitignore” — the project already has them.
 4. Click **Create repository.**
 
@@ -104,8 +104,6 @@ These stay local and are **not** committed (so they don’t go to GitHub or othe
 
 - `local.properties` (SDK path)
 - `build/`, `.gradle/` (build output and cache)
-- `scripts/coordinator-email/.env` (your email credentials)
-- `scripts/coordinator-email/last_reply.txt` (reply cache)
 - `.idea/` workspace files
 
 So: **OneDrive** can sync the whole folder (including those files) between machines. **Git** syncs only tracked files and history. If you use GitHub, the desktop clone won’t have `.env` or `local.properties` until you add them locally (or copy from the other machine); that’s intentional for secrets and machine-specific paths.

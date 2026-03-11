@@ -1,34 +1,22 @@
-# Failing or ignored tests — tracking
+# Failing or ignored tests
 
-**Owner:** QA Engineer  
-**Purpose:** Document known failing or ignored tests and plan to fix or adjust.  
-**Related:** 25-point #17, `docs/agents/APP_IMPROVEMENT_25_POINT_BRAINSTORM.md`, [TEST_STRATEGY.md](./TEST_STRATEGY.md), [TEST_FAILURES_DOCUMENTATION.md](../../TEST_FAILURES_DOCUMENTATION.md).
+**Purpose:** Single place to track tests that are currently ignored, deferred, or failing with reason and owner. Each row must have a clear one-line reason (why the test is ignored or deferred) and an owner. See [TEST_STRATEGY.md](./TEST_STRATEGY.md) for quality gates and when to fix or document.
 
----
-
-## Tests to fix or document
-
-| Test (class or name) | Status | Action |
-|---------------------|--------|--------|
-| **TripInputViewModelIntegrationTest** | Failing or flaky | Fix or document in TEST_STRATEGY; mark with @Ignore only if documented here. |
-| **TripHistoryByDateViewModelTest** | Failing or flaky | Same as above. |
-| **LocationValidationServiceTest** | Failing or flaky | Same as above. |
-| **ThemeScreenshotTest** | Failing or flaky | Same as above; screenshot tests often need stable environment. |
-
----
-
-## How to update this doc
-
-1. Run `.\gradlew.bat test` (or `./gradlew test`) and note any failing tests.
-2. Add or update the row: status (e.g. "Fail", "Ignore") and planned action (fix, document, or ignore with reason).
-3. When a test is fixed, remove it from the table or set status to "Fixed" and date.
+| Test class | Reason | Owner | Fix by / deferred until |
+|------------|--------|--------|--------------------------|
+| **TripInputViewModelIntegrationTest** | Dispatcher conflict with Dispatchers.IO in ViewModel; one test was previously ignored. | QA | **Status:** TestDispatcher/ioDispatcher injection applied; suite runs. If any test is re-ignored, add @Ignore with reason here. **Fix by:** N/A (resolved). |
+| **TripHistoryByDateViewModelTest** | Previously incomplete; required Application context and repository setup. | QA | **Status:** Implemented with Robolectric + ApplicationProvider + mock TripRepository. **Fix by:** N/A (resolved). |
+| **LocationValidationServiceTest** | One test ignored: `validateVehicleLocation with good vehicle data returns Valid` (validation framework issue). Remaining work: instrumented tests, heavy-traffic steps. | QA | @Ignore added with reason. **Fix by:** Fix assertion, move to instrumented suite, or keep deferred (triage in backlog). |
+| **ThemeScreenshotTest** | Screenshot tests deferred until Paparazzi is configured. | QA / Front-end | **Fix by:** Add Paparazzi (`com.squareup.paparazzi`) and enable test, or keep deferred. See docs/qa/TEST_STRATEGY.md. **Accepted until:** Paparazzi is added to the project. |
+| **OfflineDataManagerPersistenceTest** | Previously flaky because `OfflineDataManager` could race async startup load vs. save in Robolectric. | QA / Back-end | **Status:** Fixed by serializing persistence work, merging startup load with in-memory state, and replacing sleeps with explicit idle waits; targeted test now runs. **Fix by:** N/A (resolved). |
+| **TripRecoveryResumeRobolectricTest** | Ignored because recovery flow depends on real Application/Service state; Robolectric does not reliably update service state. | QA / Back-end | @Ignore added with reason. **Fix by:** Keep covered by instrumented recovery tests or rework service-state injection for Robolectric. |
+| **MainActivityRobolectricTest** (`continueTrip_fromRecovery_usesActivityScopedViewModel_andStartsService`) | Ignored because recovery flow races with Robolectric looper and overlay/service startup. | QA / Front-end | @Ignore added with reason. **Fix by:** Keep covered by instrumented recovery flow or stabilize looper/service wiring in test harness. |
+| **OutOfRouteApplicationTest** (`application_isHealthy_afterInit_returnsTrue`, `application_getDatabaseError_beforeAnyFailure_returnsNull`) | Ignored because Hilt tests run with `HiltTestApplication`, not the concrete `OutOfRouteApplication`. Covered by instrumented `ApplicationInitializationTest`. | QA / Platform | @Ignore added with reason. **Fix by:** Keep covered by instrumented suite or add non-Hilt integration test path. |
+| **PerformanceTestSuite** (`validationPerformance batch validation should maintain performance`) | Flaky; may fail on slower CI/machines due to timing thresholds. | QA / Performance | **Fix by:** Relax timing threshold, add @Ignore with reason, or move to separate performance suite. |
 
 ---
 
-## TEST_STRATEGY / test plan
+## References
 
-When updating test strategy or test plans, reference this file for “known issues” and point to it from `docs/qa/README.md`.
-
----
-
-*Goal: No silent failures; every failing or ignored test is documented and has an owner/action.*
+- [CRUCIAL_IMPROVEMENTS_TODO.md](../CRUCIAL_IMPROVEMENTS_TODO.md) section 5 — test health items.
+- [TEST_STRATEGY.md](./TEST_STRATEGY.md) — deferred tests subsection.

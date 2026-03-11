@@ -3,7 +3,6 @@
 
 $ErrorActionPreference = "SilentlyContinue"
 $required = @()
-$optional = @()
 
 Write-Host "`n=== OutOfRouteBuddy - Required Installs Check ===" -ForegroundColor Cyan
 Write-Host ""
@@ -83,8 +82,8 @@ if ($gitExe) {
     $required += "Git"
 }
 
-# --- 5. Python (for coordinator-email scripts) ---
-Write-Host "`n[5] Python (optional - for scripts/coordinator-email)" -ForegroundColor Yellow
+# --- 5. Python (for utility scripts) ---
+Write-Host "`n[5] Python (optional - for utility scripts)" -ForegroundColor Yellow
 $pyExe = Get-Command python -ErrorAction SilentlyContinue
 if (-not $pyExe) { $pyExe = Get-Command py -ErrorAction SilentlyContinue }
 if (-not $pyExe -and $env:USERPROFILE) {
@@ -97,7 +96,7 @@ if ($pyExe) {
         Write-Host "    OK - $pv" -ForegroundColor Green
     } catch { Write-Host "    OK - Python found at $($pyExe.Source)" -ForegroundColor Green }
 } else {
-    Write-Host "    Not found in PATH - Install if you use scripts/coordinator-email (Python 3.6+)." -ForegroundColor DarkYellow
+    Write-Host "    Not found in PATH - Install if you use Python utility scripts in this repo." -ForegroundColor DarkYellow
 }
 
 # --- Summary and download links ---

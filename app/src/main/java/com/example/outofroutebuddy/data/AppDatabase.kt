@@ -17,8 +17,8 @@ import com.example.outofroutebuddy.data.util.DateConverter
  */
 @Database(
     entities = [TripEntity::class],
-    version = 2,
-    exportSchema = false,
+    version = 4,
+    exportSchema = true,
 )
 @TypeConverters(DateConverter::class)
 abstract class AppDatabase : RoomDatabase() {
@@ -43,8 +43,10 @@ abstract class AppDatabase : RoomDatabase() {
                         AppDatabase::class.java,
                         "outofroutebuddy_database",
                     )
-                        .addMigrations(MIGRATION_1_2)
+                        .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
                         .addCallback(DatabaseHealthCheck.IntegrityCheckCallback()) // ✅ NEW (#4)
+                        // DB1 (PROJECT_AUDIT): fallbackToDestructiveMigration kept until migration test coverage exists.
+                        // Prevents app crash on migration failure; may cause data loss. Add migration test when schema v2 exists (T4 in COVERAGE_SCORE_AND_CRITICAL_AREAS).
                         .fallbackToDestructiveMigration()
                         .build()
                 INSTANCE = instance
@@ -52,7 +54,8 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
-        private val MIGRATION_1_2 =
+        /** T4: internal so migration tests can run MIGRATION_1_2 */
+        internal val MIGRATION_1_2 =
             object : Migration(1, 2) {
                 override fun migrate(db: SupportSQLiteDatabase) {
                     // Add new GPS metadata columns with default values
@@ -75,6 +78,26 @@ abstract class AppDatabase : RoomDatabase() {
                     db.execSQL("ALTER TABLE trips ADD COLUMN lastLocationLat REAL DEFAULT 0.0")
                     db.execSQL("ALTER TABLE trips ADD COLUMN lastLocationLng REAL DEFAULT 0.0")
                     db.execSQL("ALTER TABLE trips ADD COLUMN lastLocationTime INTEGER")
+                }
+            }
+
+        /** Migration 2→3: add trip timezone for display when user is in a different zone. */
+        internal val MIGRATION_2_3 =
+            object : Migration(2, 3) {
+                override fun migrate(db: SupportSQLiteDatabase) {
+                    db.execSQL("ALTER TABLE trips ADD COLUMN tripTimeZoneId TEXT")
+                }
+            }
+
+        /** Migration 3→4: add extended GPS metadata (interstate/back roads, truck stops). */
+        internal val MIGRATION_3_4 =
+            object : Migration(3, 4) {
+                override fun migrate(db: SupportSQLiteDatabase) {
+                    db.execSQL("ALTER TABLE trips ADD COLUMN interstatePercent REAL DEFAULT 0.0")
+                    db.execSQL("ALTER TABLE trips ADD COLUMN interstateMinutes INTEGER DEFAULT 0")
+                    db.execSQL("ALTER TABLE trips ADD COLUMN backRoadsPercent REAL DEFAULT 0.0")
+                    db.execSQL("ALTER TABLE trips ADD COLUMN backRoadsMinutes INTEGER DEFAULT 0")
+                    db.execSQL("ALTER TABLE trips ADD COLUMN truckStopsVisited INTEGER DEFAULT 0")
                 }
             }
     }

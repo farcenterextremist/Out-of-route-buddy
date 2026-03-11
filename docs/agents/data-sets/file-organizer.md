@@ -3,7 +3,7 @@
 ## Consumes (reads / references)
 
 - **Known truths & SSOT:** `docs/agents/KNOWN_TRUTHS_AND_SINGLE_SOURCE_OF_TRUTH.md` — file/layer ownership and related doc links; keep this doc linked and in sync when reorganizing.
-- **Repo tree:** Top-level folders (`app/`, `docs/`, `scripts/`, `phone-emulator/`, etc.); naming patterns. No deep code.
+- **Repo tree:** Top-level folders (`app/`, `docs/`, `scripts/`, etc.); naming patterns. No deep code.
 
 ## Produces (writes / owns)
 

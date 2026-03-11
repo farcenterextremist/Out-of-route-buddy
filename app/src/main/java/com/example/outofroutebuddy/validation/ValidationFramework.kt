@@ -847,22 +847,11 @@ object ValidationFramework {
         /**
          * ✅ NEW: Validate database entity before insertion
          */
+        @Suppress("CONDITION_ALWAYS_FALSE") // date is non-null in TripEntity; check kept for defensive validation
         fun validateTripEntity(tripEntity: TripEntity): ValidationResult {
-            
             val errors = mutableListOf<ValidationError>()
             
-            // Validate required fields
-            if (tripEntity.date == null) {
-                errors.add(ValidationError(
-                    field = "Trip Date",
-                    value = null,
-                    rule = "required",
-                    message = "Trip date is required",
-                    severity = ErrorHandler.ErrorSeverity.HIGH
-                ))
-            }
-            
-            // Validate mile values
+            // TripEntity.date is non-null; no need to validate for null. Other required-field checks below.
             if (tripEntity.loadedMiles < 0) {
                 errors.add(ValidationError(
                     field = "Loaded Miles",

@@ -64,4 +64,4 @@ For every Blue Team check or fix, produce a short structured block:
 
 - Relevant defenses: Android app (permissions, storage, exports), trip data access, GPS/location usage, sync/backend if any, logging and error handling that could indicate abuse.
 - Align with **Security Specialist** role for existing controls and threat model (`docs/security/`, `docs/agents/data-sets/security.md`).
-- Implementation of Blue’s fixes may be handed off to **Back-end Engineer**, **Front-end Engineer**, or **DevOps** as appropriate; Blue documents the requirement and, if needed, the Human-in-the-Loop Manager can notify the user.
+- Implementation of Blue’s fixes may be handed off to **Back-end Engineer**, **Front-end Engineer**, or **DevOps** as appropriate; Blue documents the requirement and summarizes user-facing impact when relevant.

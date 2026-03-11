@@ -2,7 +2,7 @@
 
 **Owner:** DevOps  
 **Purpose:** Capture deprecations and warnings when moving to or running with Gradle 9.  
-**Related:** 25-point #14, `docs/agents/APP_IMPROVEMENT_25_POINT_BRAINSTORM.md`.
+**Related:** 25-point #14, `docs/archive/APP_IMPROVEMENT_25_POINT_BRAINSTORM.md`.
 
 ---
 

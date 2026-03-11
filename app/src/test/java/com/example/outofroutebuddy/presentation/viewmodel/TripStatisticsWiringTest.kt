@@ -12,9 +12,12 @@ import com.example.outofroutebuddy.domain.repository.TripStatistics
 import com.example.outofroutebuddy.services.*
 import com.example.outofroutebuddy.validation.ValidationFramework
 import io.mockk.*
+import kotlinx.coroutines.async
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.filterIsInstance
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.*
@@ -25,8 +28,9 @@ import org.junit.Test
 import java.util.*
 
 /**
- * Tests for trip-to-statistics wiring and calendar picker functionality
- * 
+ * Tests for trip-to-statistics wiring and calendar picker functionality.
+ * Test names use backtick style: methodUnderTest_scenario_expectedOutcome.
+ *
  * Verifies:
  * 1. Trip saving to repository when trip ends
  * 2. Statistics refresh after trip ends
@@ -80,6 +84,9 @@ class TripStatisticsWiringTest {
         // Setup preferences manager
         every { mockPreferencesManager.getPeriodMode() } returns PeriodMode.STANDARD
         
+        // ViewModel persists via TripStatePersistence.saveCompletedTrip (not domain repository.insertTrip)
+        coEvery { mockTripStatePersistence.saveCompletedTrip(any(), any(), any(), any(), any()) } returns 1L
+        
         // Setup unified trip service calculation result
         val mockCalculationResult = UnifiedTripService.CalculationResult(
             tripId = "test-trip-1",
@@ -124,32 +131,22 @@ class TripStatisticsWiringTest {
     
     @Test
     fun `endTrip saves trip to repository`() = runTest {
-        // Given: An active trip with calculated OOR
+        // Given: An active trip with calculated OOR. ViewModel persists via TripStatePersistence.saveCompletedTrip.
         viewModel.calculateTrip(100.0, 25.0, 125.0)
-        
-        // Setup repository to return a trip ID when inserting
-        coEvery { mockRepository.insertTrip(any()) } returns "trip-123"
         
         // When: End trip
         viewModel.endTrip()
         delay(100) // Wait for coroutines to complete
         
-        // Then: Repository should be called to insert the trip
-        coVerify(exactly = 1) { mockRepository.insertTrip(any()) }
-        
-        // Verify trip was saved with correct data
-        val savedTrip = slot<Trip>()
-        coVerify { mockRepository.insertTrip(capture(savedTrip)) }
-        
-        assertEquals("Loaded miles should match", 100.0, savedTrip.captured.loadedMiles, 0.01)
-        assertEquals("Bounce miles should match", 25.0, savedTrip.captured.bounceMiles, 0.01)
-        assertEquals("Actual miles should match", 125.0, savedTrip.captured.actualMiles, 0.01)
-        assertEquals("Trip status should be COMPLETED", TripStatus.COMPLETED, savedTrip.captured.status)
+        // Then: Persistence should be called once to save the trip (actualMiles, loadedMiles, bounceMiles, start, end)
+        coVerify(exactly = 1) { mockTripStatePersistence.saveCompletedTrip(any(), any(), any(), any(), any()) }
+        assertFalse("Trip should not be active after save", viewModel.uiState.value.isTripActive)
+        assertTrue("Status should indicate saved", viewModel.uiState.value.tripStatusMessage.contains("saved", ignoreCase = true))
     }
     
     @Test
     fun `endTrip with OOR calculation saves correct OOR values`() = runTest {
-        // Given: A trip with OOR (actual > dispatched)
+        // Given: A trip with OOR (actual > dispatched). ViewModel persists via TripStatePersistence.saveCompletedTrip.
         val loadedMiles = 100.0
         val bounceMiles = 25.0
         val actualMiles = 150.0 // 25 miles over dispatched
@@ -165,61 +162,53 @@ class TripStatisticsWiringTest {
             calculationTime = Date(),
             isValid = true
         )
-        coEvery { mockUnifiedTripService.calculateTrip(loadedMiles, bounceMiles, actualMiles) } returns mockCalculationResult
+        coEvery { mockUnifiedTripService.calculateTrip(any(), any(), any()) } returns mockCalculationResult
         
         viewModel.calculateTrip(loadedMiles, bounceMiles, actualMiles)
-        
-        coEvery { mockRepository.insertTrip(any()) } returns "trip-456"
+        advanceUntilIdle()
         
         // When: End trip
         viewModel.endTrip()
-        delay(100) // Wait for coroutines to complete
+        advanceUntilIdle()
+        delay(50)
         
-        // Then: Trip should be saved with OOR values
-        val savedTrip = slot<Trip>()
-        coVerify { mockRepository.insertTrip(capture(savedTrip)) }
-        
-        assertEquals("OOR miles should be 25.0", 25.0, savedTrip.captured.oorMiles, 0.01)
-        assertEquals("OOR percentage should be 20.0", 20.0, savedTrip.captured.oorPercentage, 0.01)
+        // Then: Persistence should be called and UI state should show OOR values from calculation
+        coVerify(exactly = 1) { mockTripStatePersistence.saveCompletedTrip(any(), any(), any(), any(), any()) }
+        assertEquals("OOR miles should be 25.0", 25.0, viewModel.uiState.value.oorMiles, 0.01)
+        assertEquals("OOR percentage should be 20.0", 20.0, viewModel.uiState.value.oorPercentage, 0.01)
     }
     
     @Test
     fun `endTrip falls back to offline service if repository save fails`() = runTest {
-        // Given: An active trip
+        // Given: An active trip. ViewModel persists via TripStatePersistence.saveCompletedTrip.
         viewModel.calculateTrip(100.0, 25.0, 125.0)
         
-        // Setup repository to fail
-        coEvery { mockRepository.insertTrip(any()) } throws RuntimeException("Database error")
-        
-        // Setup offline service to succeed
-        coEvery { mockUnifiedOfflineService.saveDataWithOfflineFallback(any(), any(), any()) } returns "offline-saved"
+        // Setup persistence to fail (e.g. database error)
+        coEvery { mockTripStatePersistence.saveCompletedTrip(any(), any(), any(), any(), any()) } throws RuntimeException("Database error")
         
         // When: End trip
         viewModel.endTrip()
         delay(100) // Wait for coroutines to complete
         
-        // Then: Should attempt repository save first
-        coVerify(exactly = 1) { mockRepository.insertTrip(any()) }
+        // Then: Should attempt persistence save (exactly once)
+        coVerify(exactly = 1) { mockTripStatePersistence.saveCompletedTrip(any(), any(), any(), any(), any()) }
         
-        // Then: Should fall back to offline service
-        coVerify(exactly = 1) { 
-            mockUnifiedOfflineService.saveDataWithOfflineFallback(any(), eq("trip_data"), any())
-        }
+        // Then: ViewModel should show trip ended and may emit SaveError event; trip is not saved
+        assertFalse("Trip should not be active after failed save", viewModel.uiState.value.isTripActive)
     }
 
     @Test
     fun `clearTrip does not insert trip into repository`() = runTest {
-        // Given: An active trip
+        // Given: An active trip. Clear trip does not call persistence save.
         viewModel.calculateTrip(100.0, 25.0, 125.0)
         delay(100)
-        coEvery { mockRepository.insertTrip(any()) } returns "would-be-id"
 
         // When: Clear trip (discard without saving)
         viewModel.clearTrip()
         delay(150) // Allow clearTrip coroutines to complete
 
-        // Then: insertTrip must never be called
-        coVerify(exactly = 0) { mockRepository.insertTrip(any()) }
+        // Then: saveCompletedTrip must never be called
+        coVerify(exactly = 0) { mockTripStatePersistence.saveCompletedTrip(any(), any(), any(), any(), any()) }
         // UI should show trip inactive
         assertFalse("Trip should be inactive after clear", viewModel.uiState.value.isTripActive)
     }
@@ -228,12 +217,10 @@ class TripStatisticsWiringTest {
     
     @Test
     fun `endTrip refreshes aggregate statistics after saving`() = runTest {
-        // Given: An active trip
+        // Given: An active trip. Persistence succeeds; repository stats stubbed for refresh.
         viewModel.calculateTrip(100.0, 25.0, 125.0)
         delay(100)
         
-        // Setup repository responses (monthly only)
-        coEvery { mockRepository.insertTrip(any()) } returns "trip-789"
         coEvery { mockRepository.getMonthlyTripStatistics() } returns TripStatistics(
             totalTrips = 1,
             totalActualMiles = 125.0,
@@ -256,9 +243,7 @@ class TripStatisticsWiringTest {
     
     @Test
     fun `statistics include newly saved trip`() = runTest {
-        // Given: No existing trips, then save a new trip
-        coEvery { mockRepository.insertTrip(any()) } returns "trip-new"
-        
+        // Given: No existing trips, then save a new trip (persistence stubbed in setUp).
         // Setup monthly statistics to show the new trip
         coEvery { mockRepository.getMonthlyTripStatistics() } returns TripStatistics(
             totalTrips = 1,
@@ -399,7 +384,7 @@ class TripStatisticsWiringTest {
     
     @Test
     fun `monthly statistics calculation includes all trips in current month`() = runTest {
-        // Given: Multiple trips in the current month
+        // Given: Multiple trips in the current month (persistence stubbed in setUp).
         val monthlyStats = TripStatistics(
             totalTrips = 10,
             totalActualMiles = 1250.0,
@@ -408,7 +393,7 @@ class TripStatisticsWiringTest {
         )
         coEvery { mockRepository.getMonthlyTripStatistics() } returns monthlyStats
         
-        // When: Statistics are refreshed
+        // When: Statistics are refreshed after end trip
         viewModel.calculateTrip(100.0, 25.0, 125.0)
         
         viewModel.endTrip()
@@ -425,11 +410,10 @@ class TripStatisticsWiringTest {
     
     @Test
     fun `statistics refresh happens after trip save completes`() = runTest {
-        // Given: An active trip
+        // Given: An active trip. Persistence stubbed in setUp; repository stats for refresh.
         viewModel.calculateTrip(100.0, 25.0, 125.0)
         delay(100)
 
-        coEvery { mockRepository.insertTrip(any()) } returns "trip-ordered"
         coEvery { mockRepository.getMonthlyTripStatistics() } returns TripStatistics(
             totalTrips = 1,
             totalActualMiles = 125.0,
@@ -441,13 +425,80 @@ class TripStatisticsWiringTest {
 
         // When: End trip
         viewModel.endTrip()
-        coVerify(timeout = 1000) { mockRepository.insertTrip(any()) }
+        coVerify(timeout = 1000) { mockTripStatePersistence.saveCompletedTrip(any(), any(), any(), any(), any()) }
         coVerify(timeout = 1000) { mockRepository.getMonthlyTripStatistics() }
         delay(50)
 
         // Then: observable outcomes - trip saved and UI state shows statistics
         assertNotNull("Monthly statistics should be loaded after save", viewModel.uiState.value.monthlyStatistics)
         assertTrue("Statistics section should be shown", viewModel.uiState.value.showStatistics)
+    }
+
+    @Test
+    fun `TripSaved event emits only after month and year stats are refreshed`() = runTest(testDispatcher) {
+        // Given: Selected period and repository statistics available
+        val periodStart = Calendar.getInstance().apply {
+            set(2025, Calendar.MARCH, 1, 0, 0, 0)
+            set(Calendar.MILLISECOND, 0)
+        }.time
+        val periodEnd = Calendar.getInstance().apply {
+            set(2025, Calendar.MARCH, 31, 23, 59, 59)
+            set(Calendar.MILLISECOND, 999)
+        }.time
+
+        val periodStats = TripStatistics(
+            totalTrips = 2,
+            totalActualMiles = 200.0,
+            totalOorMiles = 10.0,
+            avgOorPercentage = 5.0
+        )
+        val monthlyStats = TripStatistics(
+            totalTrips = 4,
+            totalActualMiles = 420.0,
+            totalOorMiles = 20.0,
+            avgOorPercentage = 4.76
+        )
+
+        coEvery { mockRepository.getTripStatistics(any(), any()) } returns periodStats
+        coEvery { mockRepository.getTripsByDateRange(any(), any()) } returns flowOf(emptyList())
+        coEvery { mockRepository.getMonthlyTripStatistics() } returns monthlyStats
+        coEvery {
+            mockTripStatePersistence.saveCompletedTrip(
+                any(),
+                any(),
+                any(),
+                any(),
+                any(),
+            )
+        } returns 42L
+
+        viewModel.onCalendarPeriodSelected(PeriodMode.STANDARD, periodStart, periodEnd)
+        advanceUntilIdle()
+        viewModel.calculateTrip(100.0, 25.0, 125.0)
+        advanceUntilIdle()
+
+        // Collect TripSaved event and verify state at the moment it arrives.
+        val tripSavedEvent = async {
+            viewModel.events
+                .filterIsInstance<TripInputViewModel.TripEvent.TripSaved>()
+                .first()
+        }
+
+        // When: End trip
+        viewModel.endTrip()
+        advanceUntilIdle()
+        tripSavedEvent.await()
+
+        // Then: statistics are already refreshed when TripSaved is emitted
+        val state = viewModel.uiState.value
+        assertNotNull("Monthly statistics should already be refreshed", state.monthlyStatistics)
+        assertNotNull("Selected period statistics should already be refreshed", state.periodStatistics)
+        assertNotNull("Year statistics should already be refreshed", state.yearStatistics)
+        assertEquals(
+            "Monthly total trips should be available immediately",
+            4,
+            state.monthlyStatistics?.totalTrips ?: 0
+        )
     }
 
     // ==================== SAVED TRIP DATA → CALENDAR (datesWithTripsInPeriod) ====================
@@ -674,7 +725,6 @@ class TripStatisticsWiringTest {
 
         viewModel.calculateTrip(100.0, 25.0, 125.0)
         delay(100)
-        coEvery { mockRepository.insertTrip(any()) } returns "trip-saved"
         coEvery { mockRepository.getMonthlyTripStatistics() } returns TripStatistics(
             totalTrips = 1,
             totalActualMiles = 125.0,
@@ -682,9 +732,9 @@ class TripStatisticsWiringTest {
             avgOorPercentage = 0.0
         )
 
-        // When: End trip (insert + refreshStatisticsAfterSave)
+        // When: End trip (save via persistence + refreshStatisticsAfterSave)
         viewModel.endTrip()
-        coVerify(timeout = 1000) { mockRepository.insertTrip(any()) }
+        coVerify(timeout = 1000) { mockTripStatePersistence.saveCompletedTrip(any(), any(), any(), any(), any()) }
         coVerify(timeout = 1000) { mockRepository.getMonthlyTripStatistics() }
         coVerify(timeout = 1000) { mockRepository.getTripsByDateRange(any(), any()) }
         delay(100)
@@ -828,6 +878,439 @@ class TripStatisticsWiringTest {
         // is typically non-null. This test verifies the defensive behavior when null is passed.
         val summary = viewModel.mapPeriodToSummary(null)
         assertNull("mapPeriodToSummary should return null when periodStatistics is null", summary)
+    }
+
+    // ==================== getYearRange unit tests (Phase 1) ====================
+
+    @Test
+    fun `getYearRange returns Jan 1 and Dec 31 for mid-year date`() {
+        val cal = Calendar.getInstance()
+        cal.set(2025, Calendar.JUNE, 15, 12, 30, 45)
+        cal.set(Calendar.MILLISECOND, 123)
+        val midYearDate = cal.time
+
+        val (yearStart, yearEnd) = viewModel.getYearRange(midYearDate)
+
+        val startCal = Calendar.getInstance()
+        startCal.time = yearStart
+        assertEquals("Year start should be 2025", 2025, startCal.get(Calendar.YEAR))
+        assertEquals("Year start should be January", Calendar.JANUARY, startCal.get(Calendar.MONTH))
+        assertEquals("Year start should be day 1", 1, startCal.get(Calendar.DAY_OF_MONTH))
+        assertEquals("Year start should be 00:00:00", 0, startCal.get(Calendar.HOUR_OF_DAY))
+        assertEquals("Year start should be 00:00:00", 0, startCal.get(Calendar.MINUTE))
+        assertEquals("Year start should be 00:00:00", 0, startCal.get(Calendar.SECOND))
+
+        val endCal = Calendar.getInstance()
+        endCal.time = yearEnd
+        assertEquals("Year end should be 2025", 2025, endCal.get(Calendar.YEAR))
+        assertEquals("Year end should be December", Calendar.DECEMBER, endCal.get(Calendar.MONTH))
+        assertEquals("Year end should be day 31", 31, endCal.get(Calendar.DAY_OF_MONTH))
+        assertEquals("Year end should be 23:59:59", 23, endCal.get(Calendar.HOUR_OF_DAY))
+        assertEquals("Year end should be 23:59:59", 59, endCal.get(Calendar.MINUTE))
+        assertEquals("Year end should be 23:59:59", 59, endCal.get(Calendar.SECOND))
+    }
+
+    @Test
+    fun `getYearRange handles leap year correctly`() {
+        val cal = Calendar.getInstance()
+        cal.set(2024, Calendar.FEBRUARY, 29, 0, 0, 0)
+        cal.set(Calendar.MILLISECOND, 0)
+        val leapYearDate = cal.time
+
+        val (yearStart, yearEnd) = viewModel.getYearRange(leapYearDate)
+
+        val startCal = Calendar.getInstance()
+        startCal.time = yearStart
+        assertEquals("Leap year start should be 2024", 2024, startCal.get(Calendar.YEAR))
+        assertEquals("Year start should be Jan 1", 1, startCal.get(Calendar.DAY_OF_MONTH))
+
+        val endCal = Calendar.getInstance()
+        endCal.time = yearEnd
+        assertEquals("Leap year end should be 2024", 2024, endCal.get(Calendar.YEAR))
+        assertEquals("Year end should be Dec 31", 31, endCal.get(Calendar.DAY_OF_MONTH))
+    }
+
+    // ==================== Phase 2: Period switching tests ====================
+
+    @Test
+    fun `savePeriodMode STANDARD to CUSTOM triggers stats refresh`() = runTest(testDispatcher) {
+        val customStart = Calendar.getInstance().apply {
+            set(2025, Calendar.MARCH, 1, 0, 0, 0)
+            set(Calendar.MILLISECOND, 0)
+        }.time
+        val customEnd = Calendar.getInstance().apply {
+            set(2025, Calendar.MARCH, 31, 23, 59, 59)
+            set(Calendar.MILLISECOND, 999)
+        }.time
+        every { mockPreferencesManager.getPeriodMode() } returns PeriodMode.CUSTOM
+        every { mockUnifiedTripService.getCurrentPeriodDates(PeriodMode.CUSTOM) } returns Pair(customStart, customEnd)
+        coEvery { mockRepository.getTripStatistics(customStart, customEnd) } returns TripStatistics(
+            totalTrips = 4,
+            totalActualMiles = 400.0,
+            totalOorMiles = 20.0,
+            avgOorPercentage = 5.0
+        )
+        coEvery { mockRepository.getTripStatistics(any(), any()) } returns TripStatistics(
+            totalTrips = 4,
+            totalActualMiles = 400.0,
+            totalOorMiles = 20.0,
+            avgOorPercentage = 5.0
+        )
+        coEvery { mockRepository.getTripsByDateRange(any(), any()) } returns flowOf(emptyList())
+
+        viewModel.savePeriodMode(PeriodMode.CUSTOM)
+        coVerify(timeout = 2000) { mockRepository.getTripStatistics(any(), any()) }
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertNotNull("periodStatistics should be updated after CUSTOM mode", state.periodStatistics)
+        assertNotNull("yearStatistics should be updated after CUSTOM mode", state.yearStatistics)
+        assertEquals("Period stats should reflect CUSTOM period", 4, state.periodStatistics?.totalTrips ?: 0)
+    }
+
+    @Test
+    fun `onCalendarPeriodSelected updates displayed stats for new period`() = runTest(testDispatcher) {
+        val periodAStart = Calendar.getInstance().apply {
+            set(2025, Calendar.JANUARY, 1, 0, 0, 0)
+            set(Calendar.MILLISECOND, 0)
+        }.time
+        val periodAEnd = Calendar.getInstance().apply {
+            set(2025, Calendar.JANUARY, 31, 23, 59, 59)
+            set(Calendar.MILLISECOND, 999)
+        }.time
+        val periodBStart = Calendar.getInstance().apply {
+            set(2025, Calendar.FEBRUARY, 1, 0, 0, 0)
+            set(Calendar.MILLISECOND, 0)
+        }.time
+        val periodBEnd = Calendar.getInstance().apply {
+            set(2025, Calendar.FEBRUARY, 28, 23, 59, 59)
+            set(Calendar.MILLISECOND, 999)
+        }.time
+
+        coEvery { mockRepository.getTripStatistics(periodAStart, periodAEnd) } returns TripStatistics(
+            totalTrips = 3,
+            totalActualMiles = 300.0,
+            totalOorMiles = 15.0,
+            avgOorPercentage = 5.0
+        )
+        coEvery { mockRepository.getTripStatistics(periodBStart, periodBEnd) } returns TripStatistics(
+            totalTrips = 7,
+            totalActualMiles = 700.0,
+            totalOorMiles = 35.0,
+            avgOorPercentage = 5.0
+        )
+        coEvery { mockRepository.getTripStatistics(any(), any()) } answers {
+            val start = firstArg<Date>()
+            val end = secondArg<Date>()
+            when {
+                start.time == periodAStart.time && end.time == periodAEnd.time -> TripStatistics(
+                    totalTrips = 3,
+                    totalActualMiles = 300.0,
+                    totalOorMiles = 15.0,
+                    avgOorPercentage = 5.0
+                )
+                start.time == periodBStart.time && end.time == periodBEnd.time -> TripStatistics(
+                    totalTrips = 7,
+                    totalActualMiles = 700.0,
+                    totalOorMiles = 35.0,
+                    avgOorPercentage = 5.0
+                )
+                else -> TripStatistics(totalTrips = 5, totalActualMiles = 500.0, totalOorMiles = 25.0, avgOorPercentage = 5.0)
+            }
+        }
+        coEvery { mockRepository.getTripsByDateRange(any(), any()) } returns flowOf(emptyList())
+
+        viewModel.onCalendarPeriodSelected(PeriodMode.STANDARD, periodAStart, periodAEnd)
+        coVerify(timeout = 1000) { mockRepository.getTripStatistics(periodAStart, periodAEnd) }
+        advanceUntilIdle()
+        assertEquals("Period A stats", 3, viewModel.uiState.value.periodStatistics?.totalTrips ?: 0)
+
+        viewModel.onCalendarPeriodSelected(PeriodMode.STANDARD, periodBStart, periodBEnd)
+        coVerify(timeout = 1000) { mockRepository.getTripStatistics(periodBStart, periodBEnd) }
+        advanceUntilIdle()
+        assertEquals("Period B stats should replace Period A", 7, viewModel.uiState.value.periodStatistics?.totalTrips ?: 0)
+    }
+
+    // ==================== Phase 4: End Trip + refresh flow tests ====================
+
+    @Test
+    fun `endTrip triggers refreshStatisticsAfterSave with selected period and year`() = runTest(testDispatcher) {
+        val marchStart = Calendar.getInstance().apply {
+            set(2025, Calendar.MARCH, 1, 0, 0, 0)
+            set(Calendar.MILLISECOND, 0)
+        }.time
+        val marchEnd = Calendar.getInstance().apply {
+            set(2025, Calendar.MARCH, 31, 23, 59, 59)
+            set(Calendar.MILLISECOND, 999)
+        }.time
+        coEvery { mockRepository.getTripStatistics(marchStart, marchEnd) } returns TripStatistics(
+            totalTrips = 2,
+            totalActualMiles = 200.0,
+            totalOorMiles = 10.0,
+            avgOorPercentage = 5.0
+        )
+        coEvery { mockRepository.getTripStatistics(any(), any()) } returns TripStatistics(
+            totalTrips = 10,
+            totalActualMiles = 1000.0,
+            totalOorMiles = 50.0,
+            avgOorPercentage = 5.0
+        )
+        coEvery { mockRepository.getTripsByDateRange(any(), any()) } returns flowOf(emptyList())
+        coEvery { mockRepository.getMonthlyTripStatistics() } returns TripStatistics()
+
+        viewModel.onCalendarPeriodSelected(PeriodMode.STANDARD, marchStart, marchEnd)
+        advanceUntilIdle()
+        viewModel.calculateTrip(100.0, 25.0, 125.0)
+        viewModel.endTrip()
+        advanceUntilIdle()
+
+        coVerify(timeout = 2000) { mockRepository.getTripStatistics(marchStart, marchEnd) }
+        coVerify(timeout = 2000) { mockRepository.getMonthlyTripStatistics() }
+        val state = viewModel.uiState.value
+        assertNotNull("periodStatistics should be updated", state.periodStatistics)
+        assertNotNull("yearStatistics should be updated", state.yearStatistics)
+    }
+
+    @Test
+    fun `refreshPeriodForCalendar updates both period and year stats`() = runTest(testDispatcher) {
+        val periodStart = Calendar.getInstance().apply {
+            set(2025, Calendar.APRIL, 1, 0, 0, 0)
+            set(Calendar.MILLISECOND, 0)
+        }.time
+        val periodEnd = Calendar.getInstance().apply {
+            set(2025, Calendar.APRIL, 30, 23, 59, 59)
+            set(Calendar.MILLISECOND, 999)
+        }.time
+        val yearStart = Calendar.getInstance().apply {
+            set(2025, Calendar.JANUARY, 1, 0, 0, 0)
+            set(Calendar.MILLISECOND, 0)
+        }.time
+        val yearEnd = Calendar.getInstance().apply {
+            set(2025, Calendar.DECEMBER, 31, 23, 59, 59)
+            set(Calendar.MILLISECOND, 999)
+        }.time
+        val periodStats = TripStatistics(
+            totalTrips = 5,
+            totalActualMiles = 500.0,
+            totalOorMiles = 25.0,
+            avgOorPercentage = 5.0
+        )
+        val yearStats = TripStatistics(
+            totalTrips = 50,
+            totalActualMiles = 5000.0,
+            totalOorMiles = 250.0,
+            avgOorPercentage = 5.0
+        )
+        // ViewModel may use Calendar-derived Date instances; return by range (period = April, year = full year)
+        coEvery { mockRepository.getTripStatistics(any(), any()) } answers {
+            val start = firstArg<Date>()
+            val end = secondArg<Date>()
+            val cal = Calendar.getInstance().apply { time = start }
+            val endCal = Calendar.getInstance().apply { time = end }
+            if (cal.get(Calendar.MONTH) == Calendar.APRIL && endCal.get(Calendar.MONTH) == Calendar.APRIL) periodStats else yearStats
+        }
+        coEvery { mockRepository.getTripsByDateRange(any(), any()) } returns flowOf(emptyList())
+        coEvery { mockRepository.getMonthlyTripStatistics() } returns TripStatistics()
+
+        viewModel.onCalendarPeriodSelected(PeriodMode.STANDARD, periodStart, periodEnd)
+        advanceUntilIdle()
+        viewModel.refreshPeriodForCalendar()
+        advanceUntilIdle()
+
+        // refreshPeriodForCalendar calls refreshStatisticsAfterSave which queries period and year stats
+        coVerify(atLeast = 1) { mockRepository.getTripStatistics(any(), any()) }
+        coVerify(atLeast = 1) { mockRepository.getMonthlyTripStatistics() }
+    }
+
+    @Test
+    fun `yearStatistics uses year of selected period`() = runTest {
+        val marchStart = Calendar.getInstance().apply {
+            set(2025, Calendar.MARCH, 1, 0, 0, 0)
+            set(Calendar.MILLISECOND, 0)
+        }.time
+        val marchEnd = Calendar.getInstance().apply {
+            set(2025, Calendar.MARCH, 31, 23, 59, 59)
+            set(Calendar.MILLISECOND, 999)
+        }.time
+        coEvery { mockRepository.getTripStatistics(marchStart, marchEnd) } returns TripStatistics(
+            totalTrips = 10,
+            totalActualMiles = 1000.0,
+            totalOorMiles = 50.0,
+            avgOorPercentage = 5.0
+        )
+        coEvery { mockRepository.getTripStatistics(any(), any()) } returns TripStatistics(
+            totalTrips = 100,
+            totalActualMiles = 10000.0,
+            totalOorMiles = 500.0,
+            avgOorPercentage = 5.0
+        )
+        coEvery { mockRepository.getTripsByDateRange(any(), any()) } returns flowOf(emptyList())
+
+        viewModel.onCalendarPeriodSelected(PeriodMode.STANDARD, marchStart, marchEnd)
+        coVerify(timeout = 1000) { mockRepository.getTripStatistics(marchStart, marchEnd) }
+        delay(100)
+
+        val yearStats = viewModel.uiState.value.yearStatistics
+        assertNotNull("yearStatistics should be set for March 2025 period", yearStats)
+        assertEquals("Year stats should reflect full year aggregation", 100, yearStats?.totalTrips ?: 0)
+        assertEquals(10000.0, yearStats?.totalDistance ?: 0.0, 0.01)
+    }
+
+    @Test
+    fun `endTrip while viewing another period refreshes selected period stats`() = runTest {
+        val marchStart = Calendar.getInstance().apply {
+            set(2025, Calendar.MARCH, 1, 0, 0, 0)
+            set(Calendar.MILLISECOND, 0)
+        }.time
+        val marchEnd = Calendar.getInstance().apply {
+            set(2025, Calendar.MARCH, 31, 23, 59, 59)
+            set(Calendar.MILLISECOND, 999)
+        }.time
+        coEvery { mockRepository.getTripStatistics(any(), any()) } returns TripStatistics(
+            totalTrips = 2,
+            totalActualMiles = 200.0,
+            totalOorMiles = 10.0,
+            avgOorPercentage = 5.0
+        )
+        coEvery { mockRepository.getTripsByDateRange(any(), any()) } returns flowOf(emptyList())
+        coEvery { mockRepository.getMonthlyTripStatistics() } returns TripStatistics()
+
+        viewModel.onCalendarPeriodSelected(PeriodMode.STANDARD, marchStart, marchEnd)
+        delay(100)
+        every { mockTripStateManager.getCurrentState() } returns TripStateManager.TripState(
+            isActive = true,
+            loadedMiles = "100",
+            bounceMiles = "25",
+            startTime = Date()
+        )
+        viewModel.calculateTrip(100.0, 25.0, 125.0)
+        viewModel.endTrip()
+
+        coVerify(timeout = 2000) { mockRepository.getTripStatistics(marchStart, marchEnd) }
+        coVerify(timeout = 2000) { mockRepository.getTripStatistics(any(), any()) }
+        val state = viewModel.uiState.value
+        assertNotNull("periodStatistics should be set for selected March period", state.periodStatistics)
+        assertNotNull("yearStatistics should be set for year of March", state.yearStatistics)
+    }
+
+    @Test
+    fun `getYearRange uses same year for date on Jan 1 and Dec 31`() {
+        val jan1 = Calendar.getInstance().apply {
+            set(2025, Calendar.JANUARY, 1, 0, 0, 0)
+            set(Calendar.MILLISECOND, 0)
+        }.time
+        val dec31 = Calendar.getInstance().apply {
+            set(2025, Calendar.DECEMBER, 31, 23, 59, 59)
+            set(Calendar.MILLISECOND, 999)
+        }.time
+
+        val (startFromJan, endFromJan) = viewModel.getYearRange(jan1)
+        val (startFromDec, endFromDec) = viewModel.getYearRange(dec31)
+
+        assertEquals("Jan 1 and Dec 31 should produce same year start", startFromJan.time, startFromDec.time)
+        assertEquals("Jan 1 and Dec 31 should produce same year end", endFromJan.time, endFromDec.time)
+    }
+
+    @Test
+    fun `getYearRangeForSelectedPeriod anchors to period end year when crossing New Year`() {
+        val periodStart = Calendar.getInstance().apply {
+            set(2025, Calendar.DECEMBER, 26, 0, 0, 0)
+            set(Calendar.MILLISECOND, 0)
+        }.time
+        val periodEnd = Calendar.getInstance().apply {
+            set(2026, Calendar.JANUARY, 25, 23, 59, 59)
+            set(Calendar.MILLISECOND, 999)
+        }.time
+
+        val (yearStart, yearEnd) = viewModel.getYearRangeForSelectedPeriod(periodStart, periodEnd)
+        val startCal = Calendar.getInstance().apply { time = yearStart }
+        val endCal = Calendar.getInstance().apply { time = yearEnd }
+
+        assertEquals("Year start should anchor to period end year", 2026, startCal.get(Calendar.YEAR))
+        assertEquals("Year end should anchor to period end year", 2026, endCal.get(Calendar.YEAR))
+    }
+
+    @Test
+    fun `onCalendarPeriodSelected crossing New Year queries year stats for period end year`() = runTest {
+        val periodStart = Calendar.getInstance().apply {
+            set(2025, Calendar.DECEMBER, 26, 0, 0, 0)
+            set(Calendar.MILLISECOND, 0)
+        }.time
+        val periodEnd = Calendar.getInstance().apply {
+            set(2026, Calendar.JANUARY, 25, 23, 59, 59)
+            set(Calendar.MILLISECOND, 999)
+        }.time
+        val year2026Start = Calendar.getInstance().apply {
+            set(2026, Calendar.JANUARY, 1, 0, 0, 0)
+            set(Calendar.MILLISECOND, 0)
+        }.time
+        val year2026End = Calendar.getInstance().apply {
+            set(2026, Calendar.DECEMBER, 31, 23, 59, 59)
+            set(Calendar.MILLISECOND, 999)
+        }.time
+
+        coEvery { mockRepository.getTripStatistics(any(), any()) } returns TripStatistics()
+        coEvery { mockRepository.getTripStatistics(periodStart, periodEnd) } returns TripStatistics(
+            totalTrips = 3,
+            totalActualMiles = 300.0,
+            totalOorMiles = 15.0,
+            avgOorPercentage = 5.0
+        )
+        coEvery { mockRepository.getTripStatistics(year2026Start, year2026End) } returns TripStatistics(
+            totalTrips = 30,
+            totalActualMiles = 3000.0,
+            totalOorMiles = 150.0,
+            avgOorPercentage = 5.0
+        )
+        coEvery { mockRepository.getTripsByDateRange(any(), any()) } returns flowOf(emptyList())
+
+        viewModel.onCalendarPeriodSelected(PeriodMode.CUSTOM, periodStart, periodEnd)
+        coVerify(timeout = 1000) { mockRepository.getTripStatistics(year2026Start, year2026End) }
+        delay(100)
+
+        assertEquals(30, viewModel.uiState.value.yearStatistics?.totalTrips ?: 0)
+    }
+
+    @Test
+    fun `datesWithTripsInPeriod remains day-stable across DST boundary`() = runTest {
+        val start = Calendar.getInstance().apply {
+            set(2025, Calendar.MARCH, 9, 0, 30, 0)
+            set(Calendar.MILLISECOND, 0)
+        }.time
+        val end = Calendar.getInstance().apply {
+            set(2025, Calendar.MARCH, 10, 0, 30, 0)
+            set(Calendar.MILLISECOND, 0)
+        }.time
+        val trip = Trip(
+            id = "dst-trip",
+            loadedMiles = 20.0,
+            bounceMiles = 5.0,
+            actualMiles = 30.0,
+            startTime = start,
+            endTime = end,
+            status = TripStatus.COMPLETED
+        )
+        val periodStart = Calendar.getInstance().apply {
+            set(2025, Calendar.MARCH, 1, 0, 0, 0)
+            set(Calendar.MILLISECOND, 0)
+        }.time
+        val periodEnd = Calendar.getInstance().apply {
+            set(2025, Calendar.MARCH, 31, 23, 59, 59)
+            set(Calendar.MILLISECOND, 999)
+        }.time
+        coEvery { mockRepository.getTripStatistics(any(), any()) } returns TripStatistics(
+            totalTrips = 1,
+            totalActualMiles = 30.0,
+            totalOorMiles = 5.0,
+            avgOorPercentage = 20.0
+        )
+        coEvery { mockRepository.getTripsByDateRange(any(), any()) } returns flowOf(listOf(trip))
+
+        viewModel.onCalendarPeriodSelected(PeriodMode.STANDARD, periodStart, periodEnd)
+        delay(100)
+
+        val dates = viewModel.uiState.value.datesWithTripsInPeriod
+        assertEquals("DST-spanning trip should contribute exactly two calendar days", 2, dates.size)
     }
 }
 

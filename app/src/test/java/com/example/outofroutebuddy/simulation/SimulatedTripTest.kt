@@ -1,5 +1,6 @@
 package com.example.outofroutebuddy.simulation
 
+import com.example.outofroutebuddy.OutOfRouteApplication
 import com.example.outofroutebuddy.data.PreferencesManager
 import com.example.outofroutebuddy.data.StateCache
 import com.example.outofroutebuddy.data.TripStateManager
@@ -8,7 +9,12 @@ import com.example.outofroutebuddy.domain.repository.TripRepository
 import com.example.outofroutebuddy.presentation.viewmodel.TripInputViewModel
 import com.example.outofroutebuddy.services.*
 import com.example.outofroutebuddy.validation.ValidationFramework
+import io.mockk.Runs
+import io.mockk.every
+import io.mockk.just
 import io.mockk.mockk
+import io.mockk.mockkObject
+import io.mockk.unmockkObject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -45,23 +51,35 @@ class SimulatedTripTest {
     private lateinit var mockGpsService: MockGpsSynchronizationService
     private lateinit var mockUnifiedLocationService: UnifiedLocationService
     private lateinit var mockGpsFlow: MutableStateFlow<UnifiedLocationService.RealTimeGpsData>
-    
+    private lateinit var mockTripMetricsFlow: MutableStateFlow<TripMetrics>
+
     private val testDispatcher = StandardTestDispatcher()
 
     @Before
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
 
-        // Create mock services
+        mockkObject(TripTrackingService.Companion)
+        mockTripMetricsFlow = MutableStateFlow(TripMetrics(0.0, 0.0))
+        every { TripTrackingService.tripMetrics } returns mockTripMetricsFlow
+        every { TripTrackingService.driveState } returns MutableStateFlow(DriveState.DRIVING)
+        every { TripTrackingService.startService(any(), any(), any()) } just Runs
+        every { TripTrackingService.stopService(any()) } just Runs
+        every { TripTrackingService.canShowTripNotifications(any()) } returns true
+        every { TripTrackingService.pauseService(any()) } just Runs
+        every { TripTrackingService.resumeService(any()) } just Runs
+
         val mockRepository = mockk<TripRepository>(relaxed = true)
         val mockPreferencesManager = mockk<PreferencesManager>(relaxed = true)
         val mockTripStateManager = mockk<TripStateManager>(relaxed = true)
         val mockTripStatePersistence = mockk<TripStatePersistence>(relaxed = true)
+        io.mockk.coEvery { mockTripStatePersistence.saveCompletedTrip(any(), any(), any(), any(), any()) } returns 1L
         val mockStateCache = mockk<StateCache>(relaxed = true)
         val mockBackgroundSyncService = mockk<BackgroundSyncService>(relaxed = true)
         val mockOptimizedGpsDataFlow = mockk<OptimizedGpsDataFlow>(relaxed = true)
         val mockValidationFramework = mockk<ValidationFramework>(relaxed = true)
-        val mockApplication = mockk<android.app.Application>(relaxed = true)
+        val mockApplication = mockk<OutOfRouteApplication>(relaxed = true)
+        io.mockk.every { (mockApplication as OutOfRouteApplication).isHealthy() } returns true
         mockUnifiedLocationService = mockk<UnifiedLocationService>(relaxed = true)
         val mockUnifiedTripService = mockk<UnifiedTripService>(relaxed = true)
         val mockUnifiedOfflineService = mockk<UnifiedOfflineService>(relaxed = true)
@@ -135,6 +153,7 @@ class SimulatedTripTest {
 
     @After
     fun tearDown() {
+        unmockkObject(TripTrackingService.Companion)
         Dispatchers.resetMain()
     }
 
@@ -163,24 +182,22 @@ class SimulatedTripTest {
         println("   ✓ Trip started successfully")
         println("   ✓ GPS initialized at 0.0 miles")
         
-        // STEP 2: GPS starts tracking - driver drives 10 miles
         println("\n📍 STEP 2: Driving - GPS emits 10 miles...")
+        mockTripMetricsFlow.value = TripMetrics(10.0, 0.0)
         mockGpsService.emitDistance(10.0)
         testDispatcher.scheduler.advanceUntilIdle()
-        
         assertEquals("ActualMiles should update to 10", 10.0, viewModel.uiState.value.actualMiles, 0.01)
         println("   ✓ GPS updated: ${viewModel.uiState.value.actualMiles} miles")
-        
-        // STEP 3: Driver continues - GPS emits 25 miles
+
         println("\n📍 STEP 3: Continuing - GPS emits 25 miles...")
+        mockTripMetricsFlow.value = TripMetrics(25.0, 0.0)
         mockGpsService.emitDistance(25.0)
         testDispatcher.scheduler.advanceUntilIdle()
-        
         assertEquals("ActualMiles should update to 25", 25.0, viewModel.uiState.value.actualMiles, 0.01)
         println("   ✓ GPS updated: ${viewModel.uiState.value.actualMiles} miles")
-        
-        // STEP 4: Driver completes route - GPS emits 50 miles (exactly on route)
+
         println("\n📍 STEP 4: Completing route - GPS emits 50 miles...")
+        mockTripMetricsFlow.value = TripMetrics(50.0, 0.0)
         mockGpsService.emitDistance(50.0)
         testDispatcher.scheduler.advanceUntilIdle()
         
@@ -243,6 +260,7 @@ class SimulatedTripTest {
         
         println("\n📍 GPS Tracking Progress:")
         progressPoints.forEach { distance ->
+            mockTripMetricsFlow.value = TripMetrics(distance, 0.0)
             mockGpsService.emitDistance(distance)
             testDispatcher.scheduler.advanceUntilIdle()
             
@@ -304,6 +322,7 @@ class SimulatedTripTest {
         println("\n📍 GPS Tracking:")
         val checkpoints = listOf(20.0, 40.0, 60.0, 80.0)
         checkpoints.forEach { distance ->
+            mockTripMetricsFlow.value = TripMetrics(distance, 0.0)
             mockGpsService.emitDistance(distance)
             testDispatcher.scheduler.advanceUntilIdle()
             println("   → $distance miles")
@@ -351,7 +370,7 @@ class SimulatedTripTest {
             testDispatcher.scheduler.advanceUntilIdle()
             assertTrue("Trip $index should be active", viewModel.uiState.value.isTripActive)
             
-            // Simulate GPS to final distance
+            mockTripMetricsFlow.value = TripMetrics(actual, 0.0)
             mockGpsService.emitDistance(actual)
             testDispatcher.scheduler.advanceUntilIdle()
             assertEquals("Trip $index actual miles", actual, viewModel.uiState.value.actualMiles, 0.01)
@@ -398,27 +417,26 @@ class SimulatedTripTest {
         viewModel.calculateTrip(loadedMiles, bounceMiles, 0.0)
         testDispatcher.scheduler.advanceUntilIdle()
         
-        // Drive to 30 miles
         println("\n📍 Driving to 30 miles...")
+        mockTripMetricsFlow.value = TripMetrics(30.0, 0.0)
         mockGpsService.emitDistance(30.0)
         testDispatcher.scheduler.advanceUntilIdle()
         assertEquals("Should be at 30 miles", 30.0, viewModel.uiState.value.actualMiles, 0.01)
         println("   → Current distance: 30 miles")
-        
-        // Pause (simulate driver stopping for break)
+
         println("\n⏸️  Pausing trip (driver takes break)...")
         val distanceAtPause = viewModel.uiState.value.actualMiles
         println("   Distance at pause: $distanceAtPause miles")
-        
-        // Resume and continue to 60 miles
+
         println("\n▶️  Resuming trip...")
+        mockTripMetricsFlow.value = TripMetrics(60.0, 0.0)
         mockGpsService.emitDistance(60.0)
         testDispatcher.scheduler.advanceUntilIdle()
         assertEquals("Should be at 60 miles", 60.0, viewModel.uiState.value.actualMiles, 0.01)
         println("   → Current distance: 60 miles")
-        
-        // Complete trip at 120 miles
+
         println("\n📍 Completing trip...")
+        mockTripMetricsFlow.value = TripMetrics(120.0, 0.0)
         mockGpsService.emitDistance(120.0)
         testDispatcher.scheduler.advanceUntilIdle()
         
@@ -460,6 +478,7 @@ class SimulatedTripTest {
         // Simulate GPS going way over
         println("\n📍 GPS Tracking (driver getting lost):")
         listOf(50.0, 100.0, 150.0, 200.0).forEach { distance ->
+            mockTripMetricsFlow.value = TripMetrics(distance, 0.0)
             mockGpsService.emitDistance(distance)
             testDispatcher.scheduler.advanceUntilIdle()
             
@@ -505,6 +524,7 @@ class SimulatedTripTest {
         )
         
         updates.forEach { (distance, milestone) ->
+            mockTripMetricsFlow.value = TripMetrics(distance, 0.0)
             mockGpsService.emitDistance(distance)
             testDispatcher.scheduler.advanceUntilIdle()
             

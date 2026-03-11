@@ -2,7 +2,7 @@
 
 **Owner:** Front-end Engineer  
 **Purpose:** Verify Trip and History screens respect dark theme (no white flashes or wrong contrast).  
-**Related:** 25-point #10, `docs/agents/APP_IMPROVEMENT_25_POINT_BRAINSTORM.md`.
+**Related:** 25-point #10, `docs/archive/APP_IMPROVEMENT_25_POINT_BRAINSTORM.md`.
 
 ---
 

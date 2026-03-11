@@ -1,0 +1,22 @@
+---
+description: "2-hour improvement loop — routine. Research first, tier tasks, get approval for Medium/Heavy, then execute."
+globs: 
+alwaysApply: false
+---
+
+# 2-Hour Improvement Loop — Trigger
+
+When the user says **GO** (or "start 2 hour loop", "run improvement loop"):
+
+1. **Phase 0 — Autonomy:** If user wants no human intervention, ensure they've done one-time setup per `docs/automation/AUTONOMOUS_LOOP_SETUP.md` (Run Everything or add `cd c:\Users\brand\OutofRoutebuddy` to Command Allowlist).
+2. **Phase 0 — Research:** Read: latest `docs/automation/*_LOOP_SUMMARY_*.md`, `docs/CRUCIAL_IMPROVEMENTS_TODO.md`, `docs/REDUNDANT_DEAD_CODE_REPORT.md`, `docs/qa/FAILING_OR_IGNORED_TESTS.md`, `docs/security/SECURITY_NOTES.md`, `docs/automation/LOOP_TIERING.md`.
+3. **Phase 0.1b — Tiering & approval gate:** Per `docs/automation/LOOP_TIERING.md`, classify tasks as Light/Medium/Heavy. **If any Medium or Heavy tasks exist:**
+   - **Prompt:** "Hold up. Would you like me to implement these medium or heavy tasks?"
+   - List Medium and Heavy tasks.
+   - **Wait for user response** (e.g. "Light and medium only", "Implement all", "Light only").
+   - Execute only tasks in the approved scope.
+4. **Phase 0.3 — Self-improvement:** Follow `docs/automation/CURSOR_SELF_IMPROVEMENT.md` (safe web, context refresh, research 1 item). Drastic changes → suggest, don't implement.
+5. **Execute:** Follow `docs/automation/2_HOUR_IMPROVEMENT_LOOP_ROUTINE.md` phases 1–4 (only within approved scope).
+6. **Summary:** Write `docs/automation/2_HOUR_LOOP_SUMMARY_<date>.md` with what was done, self-improvement section, and suggested next steps.
+
+**Routine:** Repeat every 1–2 weeks or pre-release.

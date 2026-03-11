@@ -3,9 +3,16 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.detekt)
     id("kotlin-kapt")
-    id("com.google.dagger.hilt.android") version "2.48.1"
-    id("com.google.gms.google-services")
+    alias(libs.plugins.hilt.android)
+    alias(libs.plugins.google.services)
     id("jacoco")
+}
+
+// DB2: Room schema export for migration tracking
+kapt {
+    arguments {
+        arg("room.schemaLocation", "$projectDir/schemas")
+    }
 }
 
 android {
@@ -16,8 +23,8 @@ android {
         applicationId = "com.example.outofroutebuddy"
         minSdk = 24
         targetSdk = 34
-        versionCode = 2
-        versionName = "1.0.2"
+        versionCode = 3
+        versionName = "1.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -30,7 +37,8 @@ android {
             enableUnitTestCoverage = true
         }
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
@@ -49,12 +57,14 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        // CFG1: Aligned with root build.gradle.kts (Java 17)
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+        isCoreLibraryDesugaringEnabled = true
     }
 
     kotlinOptions {
-        jvmTarget = "1.8"
+        jvmTarget = "17"
         freeCompilerArgs +=
             listOf(
                 "-Xjvm-default=all",
@@ -64,9 +74,8 @@ android {
 
     lint {
         checkReleaseBuilds = true
-        // abortOnError false: allows build to succeed while addressing lint issues; set true when
-        // all lint issues are resolved for stricter CI (e.g. ./gradlew lint must pass).
-        abortOnError = false
+        // CFG3: abortOnError true so lint is a hard gate; fix or suppress issues (see TEST_STRATEGY).
+        abortOnError = true
         disable +=
             setOf(
                 "ObsoleteLintCustomCheck",
@@ -85,6 +94,10 @@ android {
             isReturnDefaultValues = true
         }
     }
+    // T4: Expose schema dir to androidTest so MigrationTestHelper finds 1.json, 2.json
+    sourceSets {
+        getByName("androidTest").assets.srcDirs("$projectDir/schemas")
+    }
 }
 
 detekt {
@@ -93,6 +106,7 @@ detekt {
 }
 
 dependencies {
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
     // Core Android dependencies
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
@@ -181,6 +195,7 @@ dependencies {
     androidTestImplementation(libs.test.rules)
     androidTestImplementation(libs.test.core)
     androidTestImplementation(libs.test.core.ktx)
+    androidTestImplementation("androidx.room:room-testing:${libs.versions.room.get()}")
 
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
@@ -190,7 +205,7 @@ dependencies {
 // Optimize Kotlin compilation
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
     kotlinOptions {
-        jvmTarget = "1.8"
+        jvmTarget = "17"
     }
 }
 
@@ -220,6 +235,40 @@ tasks.register<org.gradle.api.tasks.GradleBuild>("connectedSmoke") {
 jacoco {
     toolVersion = "0.8.10"
 }
+
+// Shared file filter for all JaCoCo reports and verification (excludes generated/Android/DI code)
+val jacocoFileFilter = listOf(
+    "**/R.class",
+    "**/R\$*.class",
+    "**/BuildConfig.*",
+    "**/Manifest*.*",
+    "**/Manifest\$*.class",
+    "**/*Test*.*",
+    "**/*Tests*.*",
+    "**/test/**",
+    "**/androidTest/**",
+    "android/**/*.*",
+    "androidx/**/*.*",
+    "**/databinding/**",
+    "**/DataBinderMapper*.*",
+    "**/DataBindingComponent*.*",
+    "**/di/**",
+    "**/*_Factory.*",
+    "**/*_MembersInjector.*",
+    "**/*Module*.*",
+    "**/*Dagger*.*",
+    "**/*Hilt*.*",
+    "**/hilt_aggregated_deps/**",
+    "**/dagger/**",
+    "**/generated/**",
+    "**/build/**",
+    "**/tmp/**",
+    "**/*Dao_Impl*.*",
+    "**/*Database_Impl*.*",
+    "**/*RoomDatabase*.*",
+    "**/*Worker*.*",
+    "**/*WorkManager*.*"
+)
 
 // Enhanced Test Configuration with JaCoCo
 tasks.withType<Test> {
@@ -260,54 +309,8 @@ tasks.register<JacocoReport>("jacocoTestReport") {
         csv.required.set(true)
     }
 
-    // Advanced file filtering for accurate coverage
-    val fileFilter = listOf(
-        // Android generated files
-        "**/R.class",
-        "**/R$*.class",
-        "**/BuildConfig.*",
-        "**/Manifest*.*",
-        "**/Manifest$*.class",
-        
-        // Test files
-        "**/*Test*.*",
-        "**/*Tests*.*",
-        "**/test/**",
-        "**/androidTest/**",
-        
-        // Android framework
-        "android/**/*.*",
-        "androidx/**/*.*",
-        
-        // Data binding
-        "**/databinding/**",
-        "**/DataBinderMapper*.*",
-        "**/DataBindingComponent*.*",
-        
-        // Dependency injection (Hilt/Dagger)
-        "**/di/**",
-        "**/*_Factory.*",
-        "**/*_MembersInjector.*",
-        "**/*Module*.*",
-        "**/*Dagger*.*",
-        "**/*Hilt*.*",
-        "**/hilt_aggregated_deps/**",
-        "**/dagger/**",
-        
-        // Generated code
-        "**/generated/**",
-        "**/build/**",
-        "**/tmp/**",
-        
-        // Room database
-        "**/*Dao_Impl*.*",
-        "**/*Database_Impl*.*",
-        "**/*RoomDatabase*.*",
-        
-        // WorkManager
-        "**/*Worker*.*",
-        "**/*WorkManager*.*"
-    )
+    // Advanced file filtering for accurate coverage (shared filter)
+    val fileFilter = jacocoFileFilter
 
     val debugTree = fileTree("${layout.buildDirectory.get()}/tmp/kotlin-classes/debug") {
         exclude(fileFilter)
@@ -334,22 +337,7 @@ tasks.register<JacocoReport>("jacocoAndroidTestReport") {
         csv.required.set(true)
     }
 
-    val fileFilter = listOf(
-        "**/R.class",
-        "**/R$*.class",
-        "**/BuildConfig.*",
-        "**/Manifest*.*",
-        "**/*Test*.*",
-        "android/**/*.*",
-        "**/databinding/**",
-        "**/di/**",
-        "**/*_Factory.*",
-        "**/*_MembersInjector.*",
-        "**/*Module*.*",
-        "**/*Dagger*.*",
-        "**/*Hilt*.*",
-        "**/hilt_aggregated_deps/**"
-    )
+    val fileFilter = jacocoFileFilter
 
     val debugTree = fileTree("${layout.buildDirectory.get()}/tmp/kotlin-classes/debug") {
         exclude(fileFilter)
@@ -376,22 +364,7 @@ tasks.register<JacocoReport>("jacocoCombinedReport") {
         csv.required.set(true)
     }
 
-    val fileFilter = listOf(
-        "**/R.class",
-        "**/R$*.class",
-        "**/BuildConfig.*",
-        "**/Manifest*.*",
-        "**/*Test*.*",
-        "android/**/*.*",
-        "**/databinding/**",
-        "**/di/**",
-        "**/*_Factory.*",
-        "**/*_MembersInjector.*",
-        "**/*Module*.*",
-        "**/*Dagger*.*",
-        "**/*Hilt*.*",
-        "**/hilt_aggregated_deps/**"
-    )
+    val fileFilter = jacocoFileFilter
 
     val debugTree = fileTree("${layout.buildDirectory.get()}/tmp/kotlin-classes/debug") {
         exclude(fileFilter)
@@ -445,22 +418,7 @@ tasks.register<JacocoCoverageVerification>("jacocoCoverageVerification") {
         }
     }
 
-    val fileFilter = listOf(
-        "**/R.class",
-        "**/R$*.class",
-        "**/BuildConfig.*",
-        "**/Manifest*.*",
-        "**/*Test*.*",
-        "android/**/*.*",
-        "**/databinding/**",
-        "**/di/**",
-        "**/*_Factory.*",
-        "**/*_MembersInjector.*",
-        "**/*Module*.*",
-        "**/*Dagger*.*",
-        "**/*Hilt*.*",
-        "**/hilt_aggregated_deps/**"
-    )
+    val fileFilter = jacocoFileFilter
 
     val debugTree = fileTree("${layout.buildDirectory.get()}/tmp/kotlin-classes/debug") {
         exclude(fileFilter)
@@ -504,6 +462,34 @@ tasks.register("coverageCheck") {
     doLast {
         println("✅ Coverage verification completed")
         println("📊 Check build/reports/jacoco/jacocoTestReport/ for detailed reports")
+    }
+}
+
+// Full JaCoCo suite: run unit tests, generate report, verify thresholds (single entry point for CI/local).
+// "Full gate" = use this when you want to enforce coverage thresholds; fails if below 70% line / 60% branch.
+tasks.register("jacocoSuite") {
+    dependsOn("jacocoCoverageVerification")
+    group = "Verification"
+    description = "Full JaCoCo suite: unit tests + coverage report + threshold verification"
+
+    doLast {
+        // Use relative path to avoid configuration-cache serialization of Gradle script objects
+        println("✅ JaCoCo suite finished: tests run, report generated, thresholds checked")
+        println("📊 HTML report: app/build/reports/jacoco/jacocoTestReport/html/index.html")
+        println("   XML: app/build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml")
+        println("   CSV: app/build/reports/jacoco/jacocoTestReport/jacocoTestReport.csv")
+    }
+}
+
+// Run unit tests and generate coverage report only (no threshold verification).
+// "Quick check" = use when jacocoSuite fails due to thresholds; CI may use this as the passing gate until coverage is raised. See docs/qa/JACOCO_SUITE.md.
+tasks.register("jacocoSuiteTestsOnly") {
+    dependsOn("jacocoTestReport")
+    group = "Verification"
+    description = "Unit tests + coverage report only (no verification). Use jacocoSuite for full gate."
+    doLast {
+        println("✅ Tests and report finished (thresholds not checked). Run jacocoSuite for full verification.")
+        println("📊 HTML report: app/build/reports/jacoco/jacocoTestReport/html/index.html")
     }
 }
 

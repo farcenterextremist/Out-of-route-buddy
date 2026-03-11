@@ -15,10 +15,10 @@ import java.util.Date
 import java.util.Locale
 
 /**
- * Placeholder Trip Details screen - CRUCIAL #4 navigation plumbing.
+ * Trip Details screen – CRUCIAL §4 (docs/CRUCIAL_IMPROVEMENTS_TODO.md).
  *
- * Displays basic trip info (id, miles, OOR, date) loaded from TripRepository.
- * Full design can be added later.
+ * Placeholder UI: displays basic trip info (id, miles, OOR, date) loaded from TripRepository.
+ * Navigation from history list is not yet wired; full design can be added later.
  */
 @AndroidEntryPoint
 class TripDetailsFragment : Fragment() {

@@ -1,9 +1,0 @@
-{
-  "key": "priority",
-  "priority": 70,
-  "keywords": ["priorit(y|ize|ies)", "\\border\\b"],
-  "keywords_combine": "any",
-  "subject": "Re: OutOfRouteBuddy — priorities",
-  "body": "Hi,\n\nWe've noted your priorities. We'll align the roadmap and next work accordingly. If you want to lock in a specific order (e.g. 1=Auto drive, 2=Reports), reply with the numbers and we'll update.\n\n— Jarvey",
-  "fetcher": null
-}

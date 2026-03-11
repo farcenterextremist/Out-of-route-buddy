@@ -1,72 +1,45 @@
 # Making Python available
 
-Several project scripts need Python (sync service, coordinator email, emulator server). Use one of the options below so `python` works in your environment.
+Some utility scripts in this repo use Python. Use one of the options below so `python` works in your environment.
 
 ---
 
-## Option 1: Add Python to PATH permanently (recommended)
+## Option 1: Add Python to PATH permanently
 
-Run this **once** from the repo root (PowerShell):
+Run this once from the repo root:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File scripts\ensure_python_on_path.ps1
 ```
 
-The script looks for Python in standard install locations (e.g. `%LocalAppData%\Programs\Python\Python312`) and adds that folder to your **user** PATH. Open a **new** terminal (or restart Cursor) afterward so `python` is available everywhere.
+Open a new terminal afterward so the updated PATH is picked up.
 
 ---
 
-## Option 2: Install Python and check “Add to PATH”
+## Option 2: Install Python and check "Add Python to PATH"
 
 1. Download [Python from python.org](https://www.python.org/downloads/).
-2. Run the installer and **check “Add Python to PATH”** at the bottom.
-3. Finish installation and open a new terminal.
-
-Then `python` (and `pip`) work in any new command prompt or PowerShell window.
+2. Run the installer and check **Add Python to PATH**.
+3. Open a new terminal when installation finishes.
 
 ---
 
-## Option 3: Use the project’s Python resolver (current session only)
+## Option 3: Set Python for the current shell only
 
-Batch files in this repo already resolve Python from common locations (e.g. `scripts\emulator-sync-service\start_sync_service.bat`, `scripts\start_emulator_server.bat`). They try:
-
-- `%LocalAppData%\Programs\Python\Python312\python.exe` (and 311, 310, 39)
-- `%ProgramFiles%\Python312\python.exe` (and 311)
-- then `python` on PATH
-
-So the **desktop shortcut** and **launch_emulator.bat** should find Python without PATH if it’s installed in one of those folders.
-
-To make `python` available in **your** current session from repo root:
+From the repo root:
 
 ```bat
 call scripts\set_python_env.bat
 ```
 
-Then `%PYTHON%` is set and Python’s directory is prepended to PATH for that command window. Use `"%PYTHON%"` in your own batch files if you call them from that window.
+This sets `%PYTHON%` and prepends Python's directory to PATH for the current command window.
 
 ---
 
 ## Verify
 
-In a **new** terminal (after Option 1 or 2):
-
 ```bat
 python --version
 ```
 
-You should see something like `Python 3.12.x`. Then you can run e.g.:
-
-```bat
-python scripts/coordinator-email/send_email.py "Test" "Body"
-```
-
----
-
-## If Python is in a different folder
-
-Edit the path in:
-
-- **scripts\emulator-sync-service\start_sync_service.bat** — set `PYTHON=` to your `python.exe` path.
-- **scripts\start_emulator_server.bat** — same.
-
-Or add that folder to your user PATH (Option 1 or 2) so no script edits are needed.
+You should see something like `Python 3.12.x`.

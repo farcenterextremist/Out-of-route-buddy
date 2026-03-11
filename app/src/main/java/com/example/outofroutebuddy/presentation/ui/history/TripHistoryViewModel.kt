@@ -5,6 +5,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.outofroutebuddy.domain.models.Trip
 import com.example.outofroutebuddy.domain.repository.TripRepository
+import com.example.outofroutebuddy.util.AppLogger
 import com.example.outofroutebuddy.util.TripExporter
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -14,8 +15,10 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.launch
 import java.util.Date
 import javax.inject.Inject
+import javax.inject.Named
 
 /**
  * ✅ Trip History ViewModel
@@ -25,7 +28,8 @@ import javax.inject.Inject
 @HiltViewModel
 class TripHistoryViewModel @Inject constructor(
     application: Application,
-    private val repository: TripRepository
+    private val repository: TripRepository,
+    @Named("repositoryLoadErrors") private val repositoryLoadErrors: kotlinx.coroutines.flow.Flow<String>,
 ) : AndroidViewModel(application) {
     
     private val tripExporter = TripExporter(application)
@@ -42,7 +46,14 @@ class TripHistoryViewModel @Inject constructor(
     private val _deleteError = MutableSharedFlow<String>(extraBufferCapacity = 1)
     val deleteError: SharedFlow<String> = _deleteError.asSharedFlow()
 
+    /** Repository load failures (e.g. getAllTrips). UI should show snackbar (D1). */
+    private val _loadError = MutableSharedFlow<String>(extraBufferCapacity = 1)
+    val loadError: SharedFlow<String> = _loadError.asSharedFlow()
+
     init {
+        viewModelScope.launch {
+            repositoryLoadErrors.collect { msg -> _loadError.emit(msg) }
+        }
         loadTrips()
     }
     
@@ -53,7 +64,7 @@ class TripHistoryViewModel @Inject constructor(
                 var initialLoadDone = false
                 repository.getAllTrips().collect { tripList ->
                     if (!testModeOverride) {
-                        _trips.value = tripList.sortedByDescending { (it.endTime ?: it.startTime)?.time ?: 0L }
+                        _trips.value = tripList.sortedBy { (it.endTime ?: it.startTime)?.time ?: 0L }
                     }
                     if (!initialLoadDone) {
                         initialLoadDone = true
@@ -61,7 +72,7 @@ class TripHistoryViewModel @Inject constructor(
                     }
                 }
             } catch (e: Exception) {
-                android.util.Log.e(TAG, "Error loading trips", e)
+                AppLogger.e(TAG, "Error loading trips", e)
                 _isLoading.value = false
             }
         }
@@ -72,15 +83,15 @@ class TripHistoryViewModel @Inject constructor(
             try {
                 // Blue Team remediation: audit trail for delete (Purple exercise)
                 val deleted = repository.deleteTrip(trip)
-                android.util.Log.w(TAG_DELETE_AUDIT, "delete_attempted trip_id=${trip.id} result=${deleted}")
+                AppLogger.w(TAG_DELETE_AUDIT, "delete_attempted result=$deleted")
                 if (deleted) {
-                    android.util.Log.d(TAG, "Trip deleted: ${trip.id}")
+                    AppLogger.d(TAG, "Trip deleted")
                 } else {
                     _deleteError.emit("Failed to delete trip")
                 }
             } catch (e: Exception) {
-                android.util.Log.w(TAG_DELETE_AUDIT, "delete_attempted trip_id=${trip.id} result=exception")
-                android.util.Log.e(TAG, "Error deleting trip", e)
+                AppLogger.w(TAG_DELETE_AUDIT, "delete_attempted result=exception")
+                AppLogger.e(TAG, "Error deleting trip", e)
                 _deleteError.emit("Failed to delete trip: ${e.message ?: "Unknown error"}")
             }
         }
@@ -91,17 +102,17 @@ class TripHistoryViewModel @Inject constructor(
             try {
                 val allTrips = _trips.value
                 if (allTrips.isEmpty()) {
-                    android.util.Log.w(TAG, "No trips to export")
+                    AppLogger.w(TAG, "No trips to export")
                     return@launch
                 }
                 // Blue Team remediation: audit trail for export (Purple exercise)
-                android.util.Log.w(TAG_EXPORT_AUDIT, "export_requested format=csv trip_count=${allTrips.size}")
+                AppLogger.w(TAG_EXPORT_AUDIT, "export_requested format=csv trip_count=${allTrips.size}")
                 // Export to CSV
                 val csvFile = tripExporter.exportToCSV(allTrips)
                 tripExporter.shareFile(csvFile, "text/csv")
-                android.util.Log.d(TAG, "Exported ${allTrips.size} trips to CSV")
+                AppLogger.d(TAG, "Exported ${allTrips.size} trips to CSV")
             } catch (e: Exception) {
-                android.util.Log.e(TAG, "Error exporting trips", e)
+                AppLogger.e(TAG, "Error exporting trips", e)
             }
         }
     }
@@ -111,17 +122,17 @@ class TripHistoryViewModel @Inject constructor(
             try {
                 val allTrips = _trips.value
                 if (allTrips.isEmpty()) {
-                    android.util.Log.w(TAG, "No trips to export")
+                    AppLogger.w(TAG, "No trips to export")
                     return@launch
                 }
                 // Blue Team remediation: audit trail for export (Purple exercise)
-                android.util.Log.w(TAG_EXPORT_AUDIT, "export_requested format=report trip_count=${allTrips.size}")
+                AppLogger.w(TAG_EXPORT_AUDIT, "export_requested format=report trip_count=${allTrips.size}")
                 // Export to PDF/Report
                 val pdfFile = tripExporter.exportToPDF(allTrips)
                 tripExporter.shareFile(pdfFile, "text/plain")
-                android.util.Log.d(TAG, "Exported ${allTrips.size} trips to report")
+                AppLogger.d(TAG, "Exported ${allTrips.size} trips to report")
             } catch (e: Exception) {
-                android.util.Log.e(TAG, "Error exporting to PDF", e)
+                AppLogger.e(TAG, "Error exporting to PDF", e)
             }
         }
     }
@@ -134,9 +145,9 @@ class TripHistoryViewModel @Inject constructor(
                     val tripTime = (trip.endTime ?: trip.startTime)?.time ?: 0L
                     tripTime in startDate..endDate
                 }
-                _trips.value = filtered.sortedByDescending { (it.endTime ?: it.startTime)?.time ?: 0L }
+                _trips.value = filtered.sortedBy { (it.endTime ?: it.startTime)?.time ?: 0L }
             } catch (e: Exception) {
-                android.util.Log.e(TAG, "Error filtering trips", e)
+                AppLogger.e(TAG, "Error filtering trips", e)
             }
         }
     }

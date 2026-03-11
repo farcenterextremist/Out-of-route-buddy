@@ -244,7 +244,7 @@ open class UnifiedLocationService(
                 return ValidationResult.Invalid("GPS circuit breaker open", ValidationSeverity.WARNING)
             }
             
-            Log.d(TAG, "Processing location update: lat=${location.latitude}, lng=${location.longitude}")
+            Log.d(TAG, "Processing location update (coordinates redacted per SECURITY_NOTES)")
             
             // Validate location
             val validationResult = validateLocation(location)

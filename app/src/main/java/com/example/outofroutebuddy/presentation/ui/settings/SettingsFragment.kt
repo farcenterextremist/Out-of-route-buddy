@@ -1,7 +1,11 @@
 package com.example.outofroutebuddy.presentation.ui.settings
 
 import android.content.Context
+import android.content.Intent
+import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -10,6 +14,7 @@ import androidx.appcompat.app.AppCompatDelegate
 import androidx.fragment.app.Fragment
 import androidx.preference.ListPreference
 import androidx.preference.Preference
+import androidx.preference.PreferenceCategory
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.SwitchPreferenceCompat
 import androidx.fragment.app.activityViewModels
@@ -18,13 +23,19 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.ViewModelProvider
 import com.example.outofroutebuddy.R
-import com.example.outofroutebuddy.core.config.BuildConfig
+import com.example.outofroutebuddy.BuildConfig
+import com.example.outofroutebuddy.core.config.BuildConfig as CoreBuildConfig
+import com.example.outofroutebuddy.data.SettingsManager
 import com.example.outofroutebuddy.presentation.viewmodel.DataManagementViewModel
 import com.example.outofroutebuddy.presentation.viewmodel.TripInputViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import android.widget.Toast
+import java.io.File
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 /**
  * ✅ Settings Fragment
@@ -39,6 +50,9 @@ import android.widget.Toast
 @AndroidEntryPoint
 class SettingsFragment : PreferenceFragmentCompat() {
     
+    @javax.inject.Inject
+    lateinit var settingsManager: SettingsManager
+
     // ✅ FIX: Access ViewModel via activity scope to ensure it survives config changes
     private val tripInputViewModel: TripInputViewModel by activityViewModels()
     private val dataManagementViewModel: DataManagementViewModel by activityViewModels()
@@ -47,7 +61,14 @@ class SettingsFragment : PreferenceFragmentCompat() {
         // Use the same SharedPreferences file as SettingsManager
         preferenceManager.sharedPreferencesName = "app_settings"
         setPreferencesFromResource(R.xml.preferences, rootKey)
-        
+
+        // Phase 3.2: Hide Developer category in release builds
+        if (!BuildConfig.DEBUG) {
+            findPreference<PreferenceCategory>("developer_category")?.let {
+                preferenceScreen.removePreference(it)
+            }
+        }
+
         // Ensure theme preference shows the correct current value
         syncThemePreferenceDisplay()
         
@@ -58,6 +79,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
         super.onResume()
         // Refresh theme display when returning to Settings (e.g. after changing theme elsewhere)
         syncThemePreferenceDisplay()
+        logAutoPruneScheduleDebug()
     }
     
     /**
@@ -111,6 +133,14 @@ class SettingsFragment : PreferenceFragmentCompat() {
             updateGpsFrequency(frequency)
             true
         }
+
+        // GPS preset: applies both gps_update_frequency and high_accuracy_mode
+        findPreference<ListPreference>("gps_preset")?.setOnPreferenceChangeListener { _, newValue ->
+            val preset = newValue as? String ?: "balanced"
+            settingsManager.setGpsPreset(preset)
+            android.util.Log.d(TAG, "GPS preset changed to: $preset")
+            true
+        }
         
         // Distance Units preference
         findPreference<ListPreference>("distance_units")?.setOnPreferenceChangeListener { _, _ ->
@@ -130,11 +160,37 @@ class SettingsFragment : PreferenceFragmentCompat() {
             // This will be checked when app launches
             true
         }
+
+        // Trip-ended overlay permission: open system overlay settings
+        findPreference<Preference>("overlay_permission")?.setOnPreferenceClickListener {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                val intent = Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION).apply {
+                    data = Uri.parse("package:${requireContext().packageName}")
+                }
+                startActivity(intent)
+            }
+            true
+        }
         
-        // About preference - show version information
-        findPreference<Preference>("about")?.setOnPreferenceClickListener {
-            android.util.Log.d(TAG, "About preference clicked")
-            showAboutDialog()
+        // About preference - show version in summary (120_MINUTE_IMPROVEMENT_LOOP: useful info)
+        findPreference<Preference>("about")?.let { pref ->
+            pref.summary = "Version ${BuildConfig.VERSION_NAME}"
+            pref.setOnPreferenceClickListener {
+                android.util.Log.d(TAG, "About preference clicked")
+                showAboutDialog()
+                true
+            }
+        }
+
+        // Advanced: Clear cache (export/temp files in app cache dir; not Room DB or SharedPreferences)
+        findPreference<Preference>("clear_cache")?.setOnPreferenceClickListener {
+            clearAppCache()
+            true
+        }
+
+        // Developer (debug only): Export app logs — share log file if app writes one; else show message
+        findPreference<Preference>("export_app_logs")?.setOnPreferenceClickListener {
+            exportAppLogsIfAvailable()
             true
         }
 
@@ -191,6 +247,28 @@ class SettingsFragment : PreferenceFragmentCompat() {
         // Update notification channel settings
         android.util.Log.d(TAG, "Notifications enabled: $enabled")
     }
+
+    /**
+     * Debug-only diagnostic log for automatic trip pruning schedule.
+     * No UI changes; this is Logcat visibility for maintenance and validation.
+     */
+    private fun logAutoPruneScheduleDebug() {
+        if (!BuildConfig.DEBUG) return
+        try {
+            val prefs = com.example.outofroutebuddy.data.PreferencesManager(requireContext())
+            val lastRunMs = prefs.getLastAutoPruneTimestamp()
+            val nextEligibleMs = if (lastRunMs > 0L) lastRunMs + AUTO_PRUNE_MIN_INTERVAL_MS else 0L
+            val formatter = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US)
+            val lastRunText = if (lastRunMs > 0L) formatter.format(Date(lastRunMs)) else "never"
+            val nextEligibleText = if (nextEligibleMs > 0L) formatter.format(Date(nextEligibleMs)) else "now (never run)"
+            android.util.Log.d(
+                TAG,
+                "Auto-prune debug -> last_run=$lastRunText, next_eligible=$nextEligibleText, retention_months=$AUTO_PRUNE_RETENTION_MONTHS",
+            )
+        } catch (e: Exception) {
+            android.util.Log.e(TAG, "Failed to log auto-prune schedule debug info", e)
+        }
+    }
     
     /**
      * Show about dialog with app version and information
@@ -199,7 +277,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
         try {
             android.util.Log.d(TAG, "showAboutDialog called")
             val message = """
-                ${BuildConfig.APP_NAME}
+                ${CoreBuildConfig.APP_NAME}
                 Version ${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})
                 
                 A GPS tracking app for calculating out-of-route miles.
@@ -210,7 +288,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
                 • Dark/Light theme support
                 • Comprehensive trip history
                 
-                Built with Android ${BuildConfig.TARGET_SDK}
+                Built with Android ${CoreBuildConfig.TARGET_SDK}
             """.trimIndent()
             
             android.util.Log.d(TAG, "About message: $message")
@@ -251,8 +329,63 @@ class SettingsFragment : PreferenceFragmentCompat() {
         }
     }
     
+    /**
+     * Clear app cache (export files, temp files in context.cacheDir).
+     * Does not clear Room database or SharedPreferences.
+     */
+    private fun clearAppCache() {
+        try {
+            val cacheDir = requireContext().cacheDir ?: return
+            deleteDirContents(cacheDir)
+            Toast.makeText(requireContext(), getString(R.string.cache_cleared_message), Toast.LENGTH_SHORT).show()
+            android.util.Log.d(TAG, "Cache cleared")
+        } catch (e: Exception) {
+            android.util.Log.e(TAG, "Error clearing cache", e)
+            Toast.makeText(requireContext(), getString(R.string.cache_clear_error), Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun deleteDirContents(dir: File) {
+        dir.listFiles()?.forEach { file ->
+            if (file.isDirectory) deleteDirContents(file)
+            file.delete()
+        }
+    }
+
+    /**
+     * Phase 3.2: Share recent app log file if the app writes one (e.g. to cache or files dir).
+     * No PII or secrets in exported logs. If no log file exists, show a short message.
+     */
+    private fun exportAppLogsIfAvailable() {
+        val logDir = requireContext().cacheDir
+        val logFiles = logDir.listFiles { _, name -> name.endsWith(".log") }?.sortedByDescending { it.lastModified() }
+        val logFile = logFiles?.firstOrNull()
+        if (logFile != null && logFile.canRead()) {
+            try {
+                val uri = androidx.core.content.FileProvider.getUriForFile(
+                    requireContext(),
+                    "${requireContext().packageName}.fileprovider",
+                    logFile
+                )
+                val intent = Intent(Intent.ACTION_SEND).apply {
+                    type = "text/plain"
+                    putExtra(Intent.EXTRA_STREAM, uri)
+                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                }
+                startActivity(Intent.createChooser(intent, getString(R.string.export_app_logs_title)))
+            } catch (e: Exception) {
+                android.util.Log.e(TAG, "Error sharing log file", e)
+                Toast.makeText(requireContext(), getString(R.string.export_logs_error), Toast.LENGTH_SHORT).show()
+            }
+        } else {
+            Toast.makeText(requireContext(), getString(R.string.export_logs_not_configured), Toast.LENGTH_SHORT).show()
+        }
+    }
+
     companion object {
         private const val TAG = "SettingsFragment"
+        private const val AUTO_PRUNE_RETENTION_MONTHS = 12
+        private const val AUTO_PRUNE_MIN_INTERVAL_MS = 24 * 60 * 60 * 1000L
         fun newInstance() = SettingsFragment()
     }
 }

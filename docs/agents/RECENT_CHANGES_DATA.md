@@ -87,11 +87,3 @@ User: "What recent changes to Jarvey?"
   → load_context_for_user_message() loads JARVEY_IMPROVEMENT_LOG, JARVEY_EVALUATION_REVIEW, etc.
   → LLM composes reply from that context
 ```
-
----
-
-## Maintenance
-
-- **When adding project changes:** Use `append_to_timeline()` or run `send_phase_completion_email.py` for phase completions
-- **When adding Jarvey fixes:** Update `JARVEY_IMPROVEMENT_LOG.md` with date, change, before/after, notes
-- **When user reports wrong answer:** Check intent keywords and source caps; add to FAQ if recurring

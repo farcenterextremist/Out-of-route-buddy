@@ -23,6 +23,7 @@ class PreferencesManagerTest {
         every { mockContext.getSharedPreferences(any(), any()) } returns mockSharedPreferences
         every { mockSharedPreferences.edit() } returns mockEditor
         every { mockEditor.putString(any(), any()) } returns mockEditor
+        every { mockEditor.putLong(any(), any()) } returns mockEditor
         every { mockEditor.apply() } just Runs
         every { mockEditor.clear() } returns mockEditor
 
@@ -32,7 +33,7 @@ class PreferencesManagerTest {
     @Test
     fun `test period mode persistence`() {
         // Test default value when no preference is set
-        every { mockSharedPreferences.getString("period_mode", PeriodMode.STANDARD.name) } returns PeriodMode.STANDARD.name
+        every { mockSharedPreferences.getString("period_mode", null) } returns null
         assertEquals(PeriodMode.STANDARD, preferencesManager.getPeriodMode())
 
         // Test saving and loading CUSTOM mode
@@ -41,7 +42,7 @@ class PreferencesManagerTest {
         verify { mockEditor.apply() }
 
         // Test loading CUSTOM mode
-        every { mockSharedPreferences.getString("period_mode", PeriodMode.STANDARD.name) } returns PeriodMode.CUSTOM.name
+        every { mockSharedPreferences.getString("period_mode", null) } returns PeriodMode.CUSTOM.name
         assertEquals(PeriodMode.CUSTOM, preferencesManager.getPeriodMode())
     }
 
@@ -83,5 +84,17 @@ class PreferencesManagerTest {
         preferencesManager.clearAllPreferences()
         verify { mockEditor.clear() }
         verify { mockEditor.apply() }
+    }
+
+    @Test
+    fun `test auto prune timestamp persistence`() {
+        val now = 1700000000000L
+
+        preferencesManager.saveLastAutoPruneTimestamp(now)
+        verify { mockEditor.putLong("last_auto_prune_timestamp_ms", now) }
+        verify { mockEditor.apply() }
+
+        every { mockSharedPreferences.getLong("last_auto_prune_timestamp_ms", 0L) } returns now
+        assertEquals(now, preferencesManager.getLastAutoPruneTimestamp())
     }
 } 

@@ -75,4 +75,11 @@ class TripTrackingServiceRobolectricTest {
         TripTrackingService.stopService(app)
         Shadows.shadowOf(android.os.Looper.getMainLooper()).idle()
     }
+
+    @Test
+    @Config(application = HiltTestApplication::class, sdk = [31])
+    fun canShowTripNotifications_isTrueOnPreAndroid13WhenAppNotificationsEnabled() {
+        val app = androidx.test.core.app.ApplicationProvider.getApplicationContext<android.content.Context>()
+        assertThat(TripTrackingService.canShowTripNotifications(app)).isTrue()
+    }
 }

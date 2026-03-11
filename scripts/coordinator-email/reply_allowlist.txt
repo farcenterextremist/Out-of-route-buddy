@@ -1,9 +1,0 @@
-Got your reply — you asked: "Explain allowlist quickly please."
-
-Here's the short version:
-
-**Allowlist** (in Cursor) = a list of commands you've approved to run with fewer restrictions (e.g. network access). When a command "matches the user's command allowlist," Cursor lets it run outside the sandbox so it can do things like send email. So it's just: "this command is on your approved list."
-
-No change to plans or worker ideas from your reply. When you have yes/no/later on the ideas or want to pick what we do first, reply and we'll address it.
-
-— OutOfRouteBuddy Coordinator

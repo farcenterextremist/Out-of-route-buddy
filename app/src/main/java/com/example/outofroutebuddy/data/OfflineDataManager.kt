@@ -1,7 +1,7 @@
 package com.example.outofroutebuddy.data
 
 import android.content.Context
-import android.util.Log
+import com.example.outofroutebuddy.util.AppLogger
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
@@ -13,11 +13,19 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import java.util.Date
 import java.util.UUID
 
 /**
+ * Manages offline trip and analytics storage via DataStore. Load: read on first access. Save: fire-and-forget (launch on scope); failures logged only, no callback to caller.
+ *
  * ✅ NEW: Offline Data Manager for Enhanced Offline Support
  *
  * This class manages offline data storage, synchronization, and conflict resolution
@@ -41,6 +49,11 @@ class OfflineDataManager(
     }
 
     private val dataStore = context.offlineDataStore
+
+    private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+    private val storageMutex = Mutex()
+    private var initializationJob: Job? = null
+    private var persistJob: Job? = null
 
     // ✅ OFFLINE STORAGE: Local data storage
     private val _offlineStorage = MutableStateFlow(OfflineStorage())
@@ -130,28 +143,28 @@ class OfflineDataManager(
     )
 
     init {
-        // ✅ INITIALIZE: Load offline storage
-        loadOfflineStorage()
+        // Load offline storage asynchronously to avoid blocking the main thread (ANR prevention)
+        initializationJob = scope.launch { loadOfflineStorage() }
     }
 
     /**
-     * Load offline storage from DataStore (JSON). Called on init.
+     * Load offline storage from DataStore (JSON). Called on init (async).
      * On failure or missing data, starts with empty OfflineStorage.
      */
-    private fun loadOfflineStorage() {
+    private suspend fun loadOfflineStorage() {
         try {
-            val json = runBlocking {
-                dataStore.data.first()[stringPreferencesKey(OFFLINE_STORAGE_KEY)]
-            }
+            val prefs = dataStore.data.first()
+            val json = prefs[stringPreferencesKey(OFFLINE_STORAGE_KEY)]
             if (!json.isNullOrBlank()) {
                 val loaded = gson.fromJson<OfflineStorage>(json, offlineStorageType)
-                _offlineStorage.value = loaded
-                Log.d(TAG, "Offline storage loaded: ${loaded.tripCount} trips, ${loaded.analyticsCount} analytics")
+                val merged = mergeWithInMemory(loaded)
+                _offlineStorage.value = merged
+                AppLogger.d(TAG,"Offline storage loaded: ${merged.tripCount} trips, ${merged.analyticsCount} analytics")
             } else {
-                Log.d(TAG, "Offline storage empty (first run or cleared)")
+                AppLogger.d(TAG,"Offline storage empty (first run or cleared)")
             }
         } catch (e: Exception) {
-            Log.w(TAG, "Failed to load offline storage, starting empty", e)
+            AppLogger.w(TAG, "Failed to load offline storage, starting empty", e)
             _offlineStorage.value = OfflineStorage()
         }
     }
@@ -175,26 +188,22 @@ class OfflineDataManager(
                 )
 
             val currentStorage = _offlineStorage.value
-            val newTrips = currentStorage.trips + (localId to offlineTrip)
-
-            // ✅ CHECK: Storage limits
-            if (newTrips.size > MAX_OFFLINE_TRIPS) {
-                cleanupOldestTrips(newTrips.size - MAX_OFFLINE_TRIPS)
-            }
+            val newTrips = trimTrips(currentStorage.trips + (localId to offlineTrip))
 
             val newStorage =
-                currentStorage.copy(
+                normalizeStorage(
+                    currentStorage.copy(
                     trips = newTrips,
                     tripCount = newTrips.size,
+                    ),
                 )
 
-            _offlineStorage.value = newStorage
-            saveOfflineStorage()
+            persistAsync(newStorage)
 
-            Log.d(TAG, "Trip saved offline: $localId")
+            AppLogger.d(TAG,"Trip saved offline")
             return localId
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to save trip offline", e)
+            AppLogger.e(TAG, "Failed to save trip offline", e)
             throw e
         }
     }
@@ -217,26 +226,22 @@ class OfflineDataManager(
                 )
 
             val currentStorage = _offlineStorage.value
-            val newAnalytics = currentStorage.analytics + offlineAnalytics
-
-            // ✅ CHECK: Storage limits
-            if (newAnalytics.size > MAX_OFFLINE_ANALYTICS) {
-                cleanupOldestAnalytics(newAnalytics.size - MAX_OFFLINE_ANALYTICS)
-            }
+            val newAnalytics = trimAnalytics(currentStorage.analytics + offlineAnalytics)
 
             val newStorage =
-                currentStorage.copy(
+                normalizeStorage(
+                    currentStorage.copy(
                     analytics = newAnalytics,
                     analyticsCount = newAnalytics.size,
+                    ),
                 )
 
-            _offlineStorage.value = newStorage
-            saveOfflineStorage()
+            persistAsync(newStorage)
 
-            Log.d(TAG, "Analytics saved offline: $analyticsId")
+            AppLogger.d(TAG,"Analytics saved offline")
             return analyticsId
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to save analytics offline", e)
+            AppLogger.e(TAG, "Failed to save analytics offline", e)
             throw e
         }
     }
@@ -272,6 +277,7 @@ class OfflineDataManager(
     /**
      * ✅ NEW: Update trip sync status
      */
+    @Suppress("UNUSED_PARAMETER") // errorMessage reserved for future UI
     fun updateTripSyncStatus(
         localId: String,
         status: SyncStatus,
@@ -289,14 +295,13 @@ class OfflineDataManager(
                 )
 
             val newTrips = currentStorage.trips + (localId to updatedTrip)
-            val newStorage = currentStorage.copy(trips = newTrips)
+            val newStorage = normalizeStorage(currentStorage.copy(trips = newTrips))
 
-            _offlineStorage.value = newStorage
-            saveOfflineStorage()
+            persistAsync(newStorage)
 
-            Log.d(TAG, "Updated trip sync status: $localId -> $status")
+            AppLogger.d(TAG, "Updated trip sync status to $status")
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to update trip sync status", e)
+            AppLogger.e(TAG, "Failed to update trip sync status", e)
         }
     }
 
@@ -318,14 +323,13 @@ class OfflineDataManager(
                 )
 
             val newTrips = currentStorage.trips + (localId to updatedTrip)
-            val newStorage = currentStorage.copy(trips = newTrips)
+            val newStorage = normalizeStorage(currentStorage.copy(trips = newTrips))
 
-            _offlineStorage.value = newStorage
-            saveOfflineStorage()
+            persistAsync(newStorage)
 
-            Log.d(TAG, "Resolved trip conflict: $localId")
+            AppLogger.d(TAG, "Resolved trip conflict")
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to resolve trip conflict", e)
+            AppLogger.e(TAG, "Failed to resolve trip conflict", e)
         }
     }
 
@@ -344,17 +348,18 @@ class OfflineDataManager(
                 }
 
             val newStorage =
-                currentStorage.copy(
+                normalizeStorage(
+                    currentStorage.copy(
                     trips = newTrips,
                     tripCount = newTrips.size,
+                    ),
                 )
 
-            _offlineStorage.value = newStorage
-            saveOfflineStorage()
+            persistAsync(newStorage)
 
-            Log.d(TAG, "Cleaned up $count oldest trips")
+            AppLogger.d(TAG, "Cleaned up $count oldest trips")
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to cleanup oldest trips", e)
+            AppLogger.e(TAG, "Failed to cleanup oldest trips", e)
         }
     }
 
@@ -368,35 +373,50 @@ class OfflineDataManager(
             val analyticsToKeep = sortedAnalytics.drop(count)
 
             val newStorage =
-                currentStorage.copy(
+                normalizeStorage(
+                    currentStorage.copy(
                     analytics = analyticsToKeep,
                     analyticsCount = analyticsToKeep.size,
+                    ),
                 )
 
-            _offlineStorage.value = newStorage
-            saveOfflineStorage()
+            persistAsync(newStorage)
 
-            Log.d(TAG, "Cleaned up $count oldest analytics")
+            AppLogger.d(TAG, "Cleaned up $count oldest analytics")
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to cleanup oldest analytics", e)
+            AppLogger.e(TAG, "Failed to cleanup oldest analytics", e)
         }
     }
 
     /**
      * Save offline storage to DataStore (JSON). Called after every mutation.
+     * Runs asynchronously on IO dispatcher to avoid blocking the main thread (ANR prevention).
+     * On failure: log-only; no callback or UI. Retry effectively happens on next init/load.
+     * See docs/technical/ADR_REPOSITORY_LOAD_ERRORS.md and Weakest Areas plan Phase 2.4 for future callback/Flow option.
      */
-    private fun saveOfflineStorage() {
+    private fun persistAsync(storage: OfflineStorage) {
+        val normalizedStorage = normalizeStorage(storage)
+        _offlineStorage.value = normalizedStorage
+
+        val previousJob = persistJob
+        persistJob =
+            scope.launch {
+                previousJob?.join()
+                persistStorage(normalizedStorage)
+            }
+    }
+
+    private suspend fun persistStorage(storage: OfflineStorage) {
         try {
-            val storage = _offlineStorage.value
-            val json = gson.toJson(storage)
-            runBlocking {
+            storageMutex.withLock {
+                val json = gson.toJson(storage)
                 dataStore.edit { prefs ->
                     prefs[stringPreferencesKey(OFFLINE_STORAGE_KEY)] = json
                 }
             }
-            Log.d(TAG, "Offline storage saved: ${storage.tripCount} trips, ${storage.analyticsCount} analytics")
+            AppLogger.d(TAG, "Offline storage saved: ${storage.tripCount} trips, ${storage.analyticsCount} analytics")
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to save offline storage", e)
+            AppLogger.e(TAG, "Failed to save offline storage", e)
         }
     }
 
@@ -404,11 +424,13 @@ class OfflineDataManager(
      * ✅ NEW: Initialize offline storage
      */
     fun initializeOfflineStorage() {
-        try {
-            loadOfflineStorage()
-            Log.d(TAG, "Offline storage initialized")
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to initialize offline storage", e)
+        scope.launch {
+            try {
+                loadOfflineStorage()
+                AppLogger.d(TAG, "Offline storage initialized")
+            } catch (e: Exception) {
+                AppLogger.e(TAG, "Failed to initialize offline storage", e)
+            }
         }
     }
 
@@ -448,6 +470,7 @@ class OfflineDataManager(
         dataType: String,
     ): Boolean {
         return try {
+            @Suppress("UNCHECKED_CAST")
             when (dataType) {
                 "trip" -> {
                     val tripData = data as? Map<String, Any> ?: return false
@@ -462,12 +485,12 @@ class OfflineDataManager(
                     true
                 }
                 else -> {
-                    Log.w(TAG, "Unknown data type: $dataType")
+                    AppLogger.w(TAG, "Unknown data type: $dataType")
                     false
                 }
             }
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to save offline data", e)
+            AppLogger.e(TAG, "Failed to save offline data", e)
             false
         }
     }
@@ -482,12 +505,12 @@ class OfflineDataManager(
                 "trip" -> storage.trips.values.map { it.tripData }
                 "analytics" -> storage.analytics.map { mapOf("event" to it.event, "parameters" to it.parameters) }
                 else -> {
-                    Log.w(TAG, "Unknown data type: $dataType")
+                    AppLogger.w(TAG, "Unknown data type: $dataType")
                     emptyList()
                 }
             }
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to get offline data", e)
+            AppLogger.e(TAG, "Failed to get offline data", e)
             emptyList()
         }
     }
@@ -500,20 +523,19 @@ class OfflineDataManager(
             val currentStorage = _offlineStorage.value
             val newStorage =
                 when (dataType) {
-                    "trip" -> currentStorage.copy(trips = emptyMap(), tripCount = 0)
-                    "analytics" -> currentStorage.copy(analytics = emptyList(), analyticsCount = 0)
+                    "trip" -> normalizeStorage(currentStorage.copy(trips = emptyMap(), tripCount = 0))
+                    "analytics" -> normalizeStorage(currentStorage.copy(analytics = emptyList(), analyticsCount = 0))
                     else -> {
-                        Log.w(TAG, "Unknown data type: $dataType")
+                        AppLogger.w(TAG, "Unknown data type: $dataType")
                         return false
                     }
                 }
 
-            _offlineStorage.value = newStorage
-            saveOfflineStorage()
-            Log.d(TAG, "Cleared offline data: $dataType")
+            persistAsync(newStorage)
+            AppLogger.d(TAG, "Cleared offline data: $dataType")
             true
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to clear offline data", e)
+            AppLogger.e(TAG, "Failed to clear offline data", e)
             false
         }
     }
@@ -523,13 +545,12 @@ class OfflineDataManager(
      */
     fun clearAllOfflineData(): Boolean {
         return try {
-            val newStorage = OfflineStorage()
-            _offlineStorage.value = newStorage
-            saveOfflineStorage()
-            Log.d(TAG, "Cleared all offline data")
+            val newStorage = normalizeStorage(OfflineStorage())
+            persistAsync(newStorage)
+            AppLogger.d(TAG, "Cleared all offline data")
             true
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to clear all offline data", e)
+            AppLogger.e(TAG, "Failed to clear all offline data", e)
             false
         }
     }
@@ -575,5 +596,53 @@ class OfflineDataManager(
      */
     fun getAvailableStorageSpace(): Long {
         return MAX_OFFLINE_STORAGE_SIZE - _offlineStorage.value.storageSize
+    }
+
+    internal suspend fun awaitIdleForTesting() {
+        initializationJob?.join()
+        persistJob?.join()
+    }
+
+    private fun mergeWithInMemory(loaded: OfflineStorage): OfflineStorage {
+        val current = _offlineStorage.value
+        val mergedTrips = trimTrips(loaded.trips + current.trips)
+        val mergedAnalytics = trimAnalytics(loaded.analytics + current.analytics)
+        return normalizeStorage(
+            loaded.copy(
+                trips = mergedTrips,
+                analytics = mergedAnalytics,
+                settings = loaded.settings + current.settings,
+                lastBackup = current.lastBackup ?: loaded.lastBackup,
+                tripCount = mergedTrips.size,
+                analyticsCount = mergedAnalytics.size,
+            ),
+        )
+    }
+
+    private fun trimTrips(trips: Map<String, OfflineTrip>): Map<String, OfflineTrip> {
+        if (trips.size <= MAX_OFFLINE_TRIPS) return trips
+        return trips.values
+            .sortedByDescending { it.timestamp.time }
+            .take(MAX_OFFLINE_TRIPS)
+            .associateBy { it.localId }
+    }
+
+    private fun trimAnalytics(analytics: List<OfflineAnalytics>): List<OfflineAnalytics> {
+        if (analytics.size <= MAX_OFFLINE_ANALYTICS) return analytics
+        return analytics
+            .sortedByDescending { it.timestamp.time }
+            .take(MAX_OFFLINE_ANALYTICS)
+            .sortedBy { it.timestamp.time }
+    }
+
+    private fun normalizeStorage(storage: OfflineStorage): OfflineStorage {
+        val normalized =
+            storage.copy(
+                storageSize = 0L,
+                tripCount = storage.trips.size,
+                analyticsCount = storage.analytics.size,
+            )
+        val sizeEstimate = gson.toJson(normalized).toByteArray().size.toLong()
+        return normalized.copy(storageSize = sizeEstimate)
     }
 } 

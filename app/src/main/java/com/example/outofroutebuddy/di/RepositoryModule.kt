@@ -1,6 +1,7 @@
 package com.example.outofroutebuddy.di
 
 import com.example.outofroutebuddy.data.PreferencesManager
+import com.example.outofroutebuddy.data.StateCache
 import com.example.outofroutebuddy.data.TripStateManager
 import com.example.outofroutebuddy.data.TripStatePersistence
 import com.example.outofroutebuddy.data.archive.DefaultTripArchiveService
@@ -16,7 +17,9 @@ import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.SupervisorJob
+import javax.inject.Named
 import javax.inject.Singleton
 
 /**
@@ -43,13 +46,26 @@ object RepositoryModule {
     }
 
     /**
-     * ✅ FIXED: Provides domain layer TripRepository with proper adapter
+     * ✅ FIXED: Provides domain layer TripRepository with proper adapter (singleton adapter for error flow).
      */
     @Provides
     @Singleton
-    fun provideDomainTripRepository(dataRepository: DataTripRepository): DomainTripRepository {
-        return DomainTripRepositoryAdapter(dataRepository)
+    fun provideDomainTripRepository(adapter: DomainTripRepositoryAdapter): DomainTripRepository = adapter
+
+    @Provides
+    @Singleton
+    fun provideDomainTripRepositoryAdapter(
+        dataRepository: DataTripRepository,
+        stateCache: StateCache,
+    ): DomainTripRepositoryAdapter {
+        return DomainTripRepositoryAdapter(dataRepository, stateCache)
     }
+
+    /** Exposes repository load errors for UI (D1). ViewModels can collect and show snackbar. */
+    @Provides
+    @Singleton
+    @Named("repositoryLoadErrors")
+    fun provideRepositoryLoadErrors(adapter: DomainTripRepositoryAdapter): Flow<String> = adapter.loadErrors
 
     /**
      * Provides TripArchiveService for "delete from device (keep on server)" flow. No-op by default.

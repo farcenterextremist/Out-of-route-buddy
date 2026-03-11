@@ -149,13 +149,12 @@ class OfflineSyncCoordinator @Inject constructor(
             // For now, just mark as synced (actual offline queue implementation already exists)
             Log.d(TAG, "Checking for offline trips to sync")
             
-            var successCount = 0
+            val successCount = 0
             val failCount = 0
             
             // Offline sync logic is already handled by UnifiedOfflineService and OfflineServiceCoordinator
-            // This coordinator monitors and coordinates the existing services
-            
-            successCount = 0 // Placeholder - actual count from existing services
+            // This coordinator monitors and coordinates the existing services.
+            // successCount remains 0 until child services report actual sync counts (no backend yet).
             
             val statusMessage = if (failCount == 0) {
                 "Synced $successCount trips"

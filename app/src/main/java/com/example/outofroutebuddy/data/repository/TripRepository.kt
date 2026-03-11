@@ -7,11 +7,13 @@ import com.example.outofroutebuddy.data.entities.TripEntity
 import com.example.outofroutebuddy.models.Trip
 import com.example.outofroutebuddy.util.TimeoutManager
 import com.example.outofroutebuddy.validation.ValidationFramework
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.withContext
 import java.util.Calendar
 import java.util.Date
 
@@ -31,7 +33,9 @@ class TripRepository(private val tripDao: TripDao) {
         trip: Trip,
         gpsMetadata: Map<String, Any>? = null,
     ): Long {
-        return insertTripWithRetry(trip, gpsMetadata, maxRetries = 3)
+        return withContext(Dispatchers.IO) {
+            insertTripWithRetry(trip, gpsMetadata, maxRetries = 3)
+        }
     }
 
     /**
@@ -72,11 +76,17 @@ class TripRepository(private val tripDao: TripDao) {
                         speedAnomalies = gpsMetadata?.get("speedAnomalies") as? Int ?: 0,
                         tripStartTime = gpsMetadata?.get("tripStartTime") as? Date,
                         tripEndTime = gpsMetadata?.get("tripEndTime") as? Date,
+                        tripTimeZoneId = gpsMetadata?.get("tripTimeZoneId") as? String,
                         wasInterrupted = gpsMetadata?.get("wasInterrupted") as? Boolean ?: false,
                         interruptionCount = gpsMetadata?.get("interruptionCount") as? Int ?: 0,
                         lastLocationLat = gpsMetadata?.get("lastLocationLat") as? Double ?: 0.0,
                         lastLocationLng = gpsMetadata?.get("lastLocationLng") as? Double ?: 0.0,
                         lastLocationTime = gpsMetadata?.get("lastLocationTime") as? Date,
+                        interstatePercent = gpsMetadata?.get("interstatePercent") as? Double ?: 0.0,
+                        interstateMinutes = gpsMetadata?.get("interstateMinutes") as? Int ?: 0,
+                        backRoadsPercent = gpsMetadata?.get("backRoadsPercent") as? Double ?: 0.0,
+                        backRoadsMinutes = gpsMetadata?.get("backRoadsMinutes") as? Int ?: 0,
+                        truckStopsVisited = gpsMetadata?.get("truckStopsVisited") as? Int ?: 0,
                     )
 
                     // ✅ NEW: Validate entity before database insertion
@@ -94,8 +104,8 @@ class TripRepository(private val tripDao: TripDao) {
                 if (result.isSuccess) {
                     val tripId = result.getOrThrow()
                     // Audit: filterable tag for detection of bulk/anomalous inserts (Purple Team 2025-02-20)
-                    Log.w("TripInsertAudit", "trip_inserted trip_id=$tripId result=true")
-                    Log.d(TAG, "Successfully inserted trip with ID: $tripId (attempt ${attempt + 1})")
+                    Log.w("TripInsertAudit", "trip_inserted result=true")
+                    Log.d(TAG, "Successfully inserted trip (attempt ${attempt + 1})")
                     return tripId
                 } else {
                     throw result.exceptionOrNull() ?: Exception("Database write failed")
@@ -162,16 +172,18 @@ class TripRepository(private val tripDao: TripDao) {
                 )
             }
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to get trip by ID $tripId: ${e.message}", e)
+            Log.e(TAG, "Failed to get trip by ID: ${e.message}", e)
             null
         }
     }
 
     /**
      * ✅ NEW: Update an existing trip
+     * Preserves tripTimeZoneId, tripStartTime, tripEndTime from existing entity when not provided by caller.
      */
     suspend fun updateTrip(trip: Trip): Boolean {
         return try {
+            val existing = tripDao.getTripById(trip.id) ?: return false
             val entity =
                 TripEntity(
                     id = trip.id,
@@ -181,12 +193,38 @@ class TripRepository(private val tripDao: TripDao) {
                     actualMiles = trip.actualMiles,
                     oorMiles = trip.oorMiles,
                     oorPercentage = trip.oorPercentage,
+                    createdAt = existing.createdAt,
+                    tripTimeZoneId = existing.tripTimeZoneId,
+                    tripStartTime = existing.tripStartTime,
+                    tripEndTime = existing.tripEndTime,
+                    avgGpsAccuracy = existing.avgGpsAccuracy,
+                    minGpsAccuracy = existing.minGpsAccuracy,
+                    maxGpsAccuracy = existing.maxGpsAccuracy,
+                    totalGpsPoints = existing.totalGpsPoints,
+                    validGpsPoints = existing.validGpsPoints,
+                    rejectedGpsPoints = existing.rejectedGpsPoints,
+                    tripDurationMinutes = existing.tripDurationMinutes,
+                    avgSpeedMph = existing.avgSpeedMph,
+                    maxSpeedMph = existing.maxSpeedMph,
+                    locationJumpsDetected = existing.locationJumpsDetected,
+                    accuracyWarnings = existing.accuracyWarnings,
+                    speedAnomalies = existing.speedAnomalies,
+                    wasInterrupted = existing.wasInterrupted,
+                    interruptionCount = existing.interruptionCount,
+                    lastLocationLat = existing.lastLocationLat,
+                    lastLocationLng = existing.lastLocationLng,
+                    lastLocationTime = existing.lastLocationTime,
+                    interstatePercent = existing.interstatePercent,
+                    interstateMinutes = existing.interstateMinutes,
+                    backRoadsPercent = existing.backRoadsPercent,
+                    backRoadsMinutes = existing.backRoadsMinutes,
+                    truckStopsVisited = existing.truckStopsVisited,
                 )
             tripDao.updateTrip(entity)
-            Log.d(TAG, "Successfully updated trip with ID: ${trip.id}")
+            Log.d(TAG, "Successfully updated trip")
             true
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to update trip with ID ${trip.id}: ${e.message}", e)
+            Log.e(TAG, "Failed to update trip: ${e.message}", e)
             false
         }
     }
@@ -196,11 +234,13 @@ class TripRepository(private val tripDao: TripDao) {
      */
     suspend fun deleteTripById(tripId: Long): Boolean {
         return try {
-            tripDao.deleteTripById(tripId)
-            Log.d(TAG, "Successfully deleted trip with ID: $tripId")
+            withContext(Dispatchers.IO) {
+                tripDao.deleteTripById(tripId)
+            }
+            Log.d(TAG, "Successfully deleted trip")
             true
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to delete trip with ID $tripId: ${e.message}", e)
+            Log.e(TAG, "Failed to delete trip: ${e.message}", e)
             false
         }
     }
@@ -277,6 +317,65 @@ class TripRepository(private val tripDao: TripDao) {
         } catch (e: Exception) {
             Log.e(TAG, "Failed to get trips for date range: ${e.message}", e)
             throw RuntimeException("Failed to load trip data for date range: ${e.message}", e)
+        }
+    }
+
+    /**
+     * Get TripEntity list for a date range (for domain layer mapping with full metadata).
+     */
+    suspend fun getTripEntitiesForDateRange(
+        startDate: Date,
+        endDate: Date,
+    ): List<TripEntity> {
+        return try {
+            val entities = withContext(Dispatchers.IO) {
+                tripDao.getTripsForDateRange(startDate, endDate)
+            }
+            Log.d(TAG, "Successfully retrieved ${entities.size} trip entities for date range")
+            entities
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to get trip entities for date range: ${e.message}", e)
+            throw RuntimeException("Failed to load trip entities for date range: ${e.message}", e)
+        }
+    }
+
+    /**
+     * Get trips overlapping a single day (supports midnight-spanning trips).
+     * Returns raw TripEntity for domain layer mapping with full metadata.
+     */
+    suspend fun getTripEntitiesOverlappingDay(
+        startOfDay: Date,
+        endOfDay: Date,
+    ): List<TripEntity> {
+        return try {
+            val entities = withContext(Dispatchers.IO) {
+                tripDao.getTripsOverlappingDay(startOfDay, endOfDay)
+            }
+            Log.d(TAG, "Successfully retrieved ${entities.size} trip entities overlapping day")
+            entities
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to get trip entities overlapping day: ${e.message}", e)
+            throw RuntimeException("Failed to load trip entities overlapping day: ${e.message}", e)
+        }
+    }
+
+    /**
+     * Get trips overlapping an arbitrary range [rangeStart, rangeEnd).
+     * Returns raw TripEntity for domain-layer aggregation and metadata mapping.
+     */
+    suspend fun getTripEntitiesOverlappingRange(
+        rangeStart: Date,
+        rangeEnd: Date,
+    ): List<TripEntity> {
+        return try {
+            val entities = withContext(Dispatchers.IO) {
+                tripDao.getTripsOverlappingRange(rangeStart, rangeEnd)
+            }
+            Log.d(TAG, "Successfully retrieved ${entities.size} trip entities overlapping range")
+            entities
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to get trip entities overlapping range: ${e.message}", e)
+            throw RuntimeException("Failed to load trip entities overlapping range: ${e.message}", e)
         }
     }
 

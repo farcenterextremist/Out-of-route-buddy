@@ -1,9 +1,0 @@
-{
-  "name": "oorb-phone-emulator",
-  "version": "1.0.0",
-  "description": "Virtual phone emulator for OutOfRouteBuddy - Figma-like touch-to-edit",
-  "scripts": {
-    "start": "npx serve . -p 3000",
-    "dev": "npx serve . -p 3000"
-  }
-}

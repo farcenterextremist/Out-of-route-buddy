@@ -82,7 +82,7 @@
 **Current:** Agent card; references root Gradle, `.github/`, `scripts/`.
 
 **Expand with:**
-- [ ] **Consumes:** `build.gradle.kts`, `settings.gradle.kts`, `gradle.properties`, `app/build.gradle.kts`, `.github/`, `scripts/`, `docs/DEPLOYMENT.md`, `docs/ONEDRIVE_SETUP.md` (for “where project lives”).
+- [ ] **Consumes:** `build.gradle.kts`, `settings.gradle.kts`, `gradle.properties`, `app/build.gradle.kts`, `.github/`, `scripts/`, `docs/DEPLOYMENT.md`, `docs/ONEDRIVE_AND_GIT_SETUP.md` (for “where project lives”).
 - [ ] **Produces:** Gradle/config changes, pipeline YAML, scripts, deployment runbooks; updates to `docs/DEPLOYMENT.md` or a small `docs/ops/` set.
 - [ ] **Data-set file:** `docs/agents/data-sets/devops.md` — config paths, script paths, doc paths.
 
@@ -190,5 +190,3 @@
 - **Who does what:** See Part 3 delegation matrix.
 - **Expanding a role:** Add paths and artifacts to their data-set file and, if needed, to their agent card.
 - **New work type:** Add a row to the delegation matrix and assign primary/secondary roles.
-
-— Master Branch Coordinator

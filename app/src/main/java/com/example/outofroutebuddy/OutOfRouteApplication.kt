@@ -5,18 +5,26 @@ import android.content.Context
 import android.util.Log
 import androidx.appcompat.app.AppCompatDelegate
 import com.example.outofroutebuddy.data.AppDatabase
+import com.example.outofroutebuddy.data.DatabaseHealthCheck
 import com.example.outofroutebuddy.data.PreferencesManager
 import com.example.outofroutebuddy.data.StateCache
 import com.example.outofroutebuddy.data.repository.TripRepository
 import com.example.outofroutebuddy.services.BackgroundSyncService
 import com.example.outofroutebuddy.services.OptimizedGpsDataFlow
 import com.example.outofroutebuddy.services.TripCrashRecoveryManager
+import com.example.outofroutebuddy.util.AppLogger
 import com.example.outofroutebuddy.util.LogRotationManager
 import com.google.firebase.FirebaseApp
 import com.google.firebase.analytics.FirebaseAnalytics
 import com.example.outofroutebuddy.services.OfflineSyncCoordinator
 import com.example.outofroutebuddy.workers.WorkManagerInitializer
 import dagger.hilt.android.HiltAndroidApp
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
+import java.util.Calendar
 import javax.inject.Inject
 
 /**
@@ -75,12 +83,22 @@ open class OutOfRouteApplication : Application() {
 
     companion object {
         private const val TAG = "OutOfRouteApplication"
+        private const val AUTO_PRUNE_RETENTION_MONTHS = 12
+        private const val AUTO_PRUNE_MIN_INTERVAL_MS = 24 * 60 * 60 * 1000L
         private var isDatabaseInitialized = false
         private var databaseError: Exception? = null
         
         // Crash recovery state
         var recoveredTripState: TripCrashRecoveryManager.RecoverableTripState? = null
             private set
+        
+        /**
+         * True only for the lifetime of this process until the first trip-recovery check.
+         * Used to show Trip Recovery only on cold start (app open / after crash), not on
+         * configuration changes (e.g. theme switch) which recreate the Activity in the same process.
+         */
+        var shouldCheckTripRecoveryThisProcess: Boolean = true
+            internal set
         
         /**
          * Clear the recovered trip state (called after restoring)
@@ -97,6 +115,13 @@ open class OutOfRouteApplication : Application() {
     // ✅ NEW (#30): Inject WorkManagerInitializer for background tasks
     @Inject
     lateinit var workManagerInitializer: WorkManagerInitializer
+
+    // H1: Inject DatabaseHealthCheck for startup integrity check
+    @Inject
+    lateinit var databaseHealthCheck: DatabaseHealthCheck
+
+    /** H1: Scope for one-shot health check and other app-level coroutines. Cancelled in onTerminate(). */
+    private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
 
     // Singleton database instance with error handling
     val database: AppDatabase by lazy {
@@ -325,6 +350,7 @@ open class OutOfRouteApplication : Application() {
             
             // ✅ REFACTORED: Firebase is now initialized lazily on-demand.
             initializeCriticalComponents()
+            scheduleAutomaticTripPruning()
 
             // Log app launch event
             logAnalyticsEvent(
@@ -351,7 +377,7 @@ open class OutOfRouteApplication : Application() {
     override fun onTerminate() {
         super.onTerminate()
         Log.d(TAG, "Application onTerminate called")
-        
+        applicationScope.cancel()
         try {
             // Mark normal shutdown to avoid false crash detection
             crashRecoveryManager.markNormalShutdown()
@@ -391,12 +417,28 @@ open class OutOfRouteApplication : Application() {
     
     /**
      * Initialize critical components with proper error handling
+     * H1: After DB is ready, run DatabaseHealthCheck and set app unhealthy if check fails.
      */
     private fun initializeCriticalComponents() {
         try {
-            // Test database connection
+            // Test database connection (triggers lazy init)
             database.tripDao()
-            Log.d(TAG, "Database connection test successful")
+            AppLogger.d(TAG, "Database connection test successful")
+
+            // H1: Run full health check and update app health state
+            applicationScope.launch(Dispatchers.IO) {
+                try {
+                    val result = databaseHealthCheck.performHealthCheck(database)
+                    if (!result.isHealthy) {
+                        setDatabaseUnhealthy(
+                            Exception(result.errorMessage ?: "Database check failed")
+                        )
+                    }
+                } catch (e: Exception) {
+                    AppLogger.e(TAG, "Health check failed", e)
+                    setDatabaseUnhealthy(e)
+                }
+            }
         } catch (e: Exception) {
             Log.e(TAG, "Database connection test failed", e)
             throw DatabaseInitializationException("Database connection test failed", e)
@@ -409,6 +451,49 @@ open class OutOfRouteApplication : Application() {
         } catch (e: Exception) {
             Log.e(TAG, "Preferences access test failed", e)
             throw PreferencesInitializationException("Preferences access test failed", e)
+        }
+    }
+
+    /**
+     * Automatically prune trips older than retention window (12 months).
+     * Guarded by a minimum run interval to avoid repeated work on rapid app restarts.
+     */
+    private fun scheduleAutomaticTripPruning() {
+        applicationScope.launch(Dispatchers.IO) {
+            try {
+                if (!isHealthy()) {
+                    Log.w(TAG, "Skipping automatic prune: app is not healthy")
+                    return@launch
+                }
+
+                val nowMs = System.currentTimeMillis()
+                val lastRunMs = preferencesManager.getLastAutoPruneTimestamp()
+                if (nowMs - lastRunMs < AUTO_PRUNE_MIN_INTERVAL_MS) {
+                    Log.d(TAG, "Skipping automatic prune: ran recently")
+                    return@launch
+                }
+
+                val cutoffCal = Calendar.getInstance().apply {
+                    timeInMillis = nowMs
+                    add(Calendar.MONTH, -AUTO_PRUNE_RETENTION_MONTHS)
+                }
+                val cutoffDate = cutoffCal.time
+
+                tripRepository.deleteTripsOlderThan(cutoffDate)
+                preferencesManager.saveLastAutoPruneTimestamp(nowMs)
+
+                Log.i(TAG, "Automatic prune completed (older than $AUTO_PRUNE_RETENTION_MONTHS months)")
+                logAnalyticsEvent(
+                    "auto_trip_prune_completed",
+                    mapOf(
+                        "retention_months" to AUTO_PRUNE_RETENTION_MONTHS.toString(),
+                        "cutoff_epoch_ms" to cutoffDate.time.toString(),
+                    ),
+                )
+            } catch (e: Exception) {
+                Log.e(TAG, "Automatic prune failed", e)
+                reportErrorToCrashlytics("Automatic trip pruning failed", e)
+            }
         }
     }
 
@@ -476,7 +561,7 @@ open class OutOfRouteApplication : Application() {
     /**
      * Check if the application is in a healthy state
      */
-    fun isHealthy(): Boolean {
+    open fun isHealthy(): Boolean {
         return isDatabaseInitialized && databaseError == null
     }
 
@@ -484,6 +569,14 @@ open class OutOfRouteApplication : Application() {
      * Get the last database error if any
      */
     fun getDatabaseError(): Exception? = databaseError
+
+    /**
+     * H1: Set app unhealthy when DatabaseHealthCheck fails. Called from startup health-check coroutine.
+     */
+    fun setDatabaseUnhealthy(e: Exception?) {
+        databaseError = e
+        AppLogger.w(TAG, "Database marked unhealthy: ${e?.message ?: "unknown"}", e)
+    }
 
     /**
      * Report errors to Firebase Crashlytics

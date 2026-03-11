@@ -17,10 +17,8 @@ Each file in this folder defines what a role **consumes** (reads, references) an
 | Security Specialist | [security.md](./security.md) |
 | Email Editor / Market Guru | [email-editor.md](./email-editor.md) |
 | File Organizer | [file-organizer.md](./file-organizer.md) |
-| Human-in-the-Loop Manager | [human-in-the-loop.md](./human-in-the-loop.md) |
-| Email coordinator (Jarvey) | [jarvey.md](./jarvey.md) |
 
-See **`docs/agents/DATA_SETS_AND_DELEGATION_PLAN.md`** for the full plan and delegation matrix. Jarvey (email coordinator bot) uses coordinator-instructions and coordinator-project-context from `docs/agents/`; see [jarvey.md](./jarvey.md) for full index.
+See **`docs/agents/DATA_SETS_AND_DELEGATION_PLAN.md`** for the full plan and delegation matrix.
 
 ## Training and alignment
 

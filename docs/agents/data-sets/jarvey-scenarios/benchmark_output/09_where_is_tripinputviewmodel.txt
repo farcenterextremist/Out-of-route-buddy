@@ -1,1 +1,0 @@
-TripInputViewModel is in app/src; see the project index for the exact path. — Jarvey

@@ -1,9 +1,0 @@
-{
-  "key": "bug_report",
-  "priority": 62,
-  "keywords": ["bug", "broken", "crash", "error", "not working", "issue"],
-  "keywords_combine": "any",
-  "subject": "Re: OutOfRouteBuddy — bug report",
-  "body": "Hi,\n\nThanks for reporting. I'll assign to QA and the relevant engineer. If you can share steps to reproduce or any error messages, that will help. We'll investigate and follow up.\n\n— Jarvey",
-  "fetcher": null
-}

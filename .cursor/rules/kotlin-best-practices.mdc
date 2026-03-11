@@ -1,0 +1,23 @@
+---
+description: "Kotlin style and best practices for the Android app"
+globs: app/**/*.kt
+alwaysApply: false
+---
+
+# Kotlin best practices
+
+When editing or generating Kotlin in **app/** (Android app), follow the project’s Kotlin best practices:
+
+**`docs/technical/KOTLIN_BEST_PRACTICES.md`**
+
+In short:
+- **Naming:** PascalCase classes/files, camelCase functions/properties; one main class per file. Constants UPPER_SNAKE; prefer `core/config` for app config.
+- **Null safety:** Prefer non-null types; use `?.`, `?:`, `?.let`; avoid `!!`. Use `List`/`Set`/`Map` (read-only) in APIs.
+- **Functions:** Expression bodies when single expression; default parameters; exhaustive `when` on sealed types.
+- **Classes:** `data class` for data; `val` over `var`; sealed types for closed hierarchies; composition over inheritance.
+- **Coroutines/Flow:** Use `viewModelScope`/application scope; `StateFlow`/`SharedFlow` for hot streams; collect with `repeatOnLifecycle`/`flowWithLifecycle`; `Dispatchers.IO` for IO.
+- **Android/Room:** `suspend` DAO for one-shot; `Flow` for reactive queries; ViewModels expose state via StateFlow; Hilt for DI; no hardcoded user-facing strings.
+- **Formatting:** 4 spaces, trailing commas, no PII in logs; follow `LOGGING_POLICY.md` and `SECURITY_NOTES.md`.
+- **Project rules:** Only End trip writes to trip store; repository chain (domain → data → DAO); util vs utils packages; run Detekt and fix new issues.
+
+Match existing code in the same layer when unclear. Official refs: [Kotlin coding conventions](https://kotlinlang.org/docs/coding-conventions.html), [Android Kotlin style guide](https://developer.android.com/kotlin/style-guide).

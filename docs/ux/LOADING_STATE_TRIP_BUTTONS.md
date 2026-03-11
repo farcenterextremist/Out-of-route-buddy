@@ -2,7 +2,7 @@
 
 **Owner:** Front-end Engineer  
 **Purpose:** Ensure Start Trip and End Trip show visible disabled or loading state when appropriate.  
-**Related:** 25-point #8, `docs/agents/APP_IMPROVEMENT_25_POINT_BRAINSTORM.md`.
+**Related:** 25-point #8, `docs/archive/APP_IMPROVEMENT_25_POINT_BRAINSTORM.md`.
 
 ---
 

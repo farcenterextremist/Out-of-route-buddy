@@ -10,6 +10,7 @@ import com.example.outofroutebuddy.services.HealthCheckManager
 import com.example.outofroutebuddy.services.OptimizedGpsDataFlow
 import com.example.outofroutebuddy.services.PeriodCalculationService
 import com.example.outofroutebuddy.services.TripCrashRecoveryManager
+import com.example.outofroutebuddy.services.TripEndedDetector
 import com.example.outofroutebuddy.services.UnifiedLocationService
 import com.example.outofroutebuddy.services.UnifiedOfflineService
 import com.example.outofroutebuddy.services.UnifiedTripService
@@ -130,4 +131,11 @@ object ServiceModule {
         @ApplicationContext context: Context,
         preferencesManager: PreferencesManager
     ): TripPersistenceManager = TripPersistenceManager(context, preferencesManager)
+
+    @Provides
+    @Singleton
+    fun provideTripEndedDetector(
+        @ApplicationContext context: Context,
+        tripStateManager: TripStateManager,
+    ): TripEndedDetector = TripEndedDetector(context, tripStateManager)
 } 

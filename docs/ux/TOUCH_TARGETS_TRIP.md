@@ -2,7 +2,7 @@
 
 **Owner:** UI/UX Specialist  
 **Purpose:** Ensure all interactive elements on the Trip screen meet minimum touch target size.  
-**Related:** 25-point list #3, `docs/agents/APP_IMPROVEMENT_25_POINT_BRAINSTORM.md`.
+**Related:** 25-point list #3, `docs/archive/APP_IMPROVEMENT_25_POINT_BRAINSTORM.md`.
 
 ---
 

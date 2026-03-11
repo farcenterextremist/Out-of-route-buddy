@@ -227,6 +227,7 @@ object ErrorHandler {
     /**
      * ✅ NEW: Handle a generic exception by converting it to AppError
      */
+    @Suppress("UNUSED_PARAMETER")
     fun handleException(
         context: Context,
         exception: Throwable,
@@ -307,6 +308,7 @@ object ErrorHandler {
     /**
      * ✅ NEW: Show user-friendly error message
      */
+    @Suppress("UNUSED_PARAMETER")
     private fun showUserError(context: Context, error: AppError) {
         try {
             // Error messages are handled by UI state

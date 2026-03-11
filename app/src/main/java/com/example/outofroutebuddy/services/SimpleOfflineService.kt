@@ -56,7 +56,7 @@ class SimpleOfflineService(context: Context) {
             saveOfflineTrips(offlineTrips)
             _pendingTrips.value = offlineTrips.size
             
-            Log.d(TAG, "Trip saved offline: $tripId")
+            Log.d(TAG, "Trip saved offline")
             tripId
         } catch (e: Exception) {
             Log.e(TAG, "Failed to save trip offline", e)
@@ -153,14 +153,13 @@ class SimpleOfflineService(context: Context) {
                         actualMiles = (tripData["actualMiles"] as? Number)?.toDouble() ?: 0.0
                         // Note: oorMiles and oorPercentage are computed properties
                     )
-                    
                     // Insert trip into repository
                     // Note: We need to inject the repository here, but for now we'll log the sync
-                    Log.d(TAG, "Would sync trip: $tripId with data: $tripData")
+                    Log.d(TAG, "Would sync trip (data redacted per SECURITY_NOTES)")
                     syncedTrips++
                     
                 } catch (e: Exception) {
-                    Log.e(TAG, "Failed to sync trip $tripId", e)
+                    Log.e(TAG, "Failed to sync trip", e)
                     syncSuccess = false
                 }
             }
@@ -235,30 +234,29 @@ class SimpleOfflineService(context: Context) {
     }
     
     private fun getOfflineTrips(): Map<String, Map<String, Any>> {
-        // Simple implementation using SharedPreferences
-        // In a real app, you'd use a database
-        return emptyMap() // Placeholder
+        // Placeholder: no persistence in this implementation.
+        // Trip persistence across restarts is handled by OfflineDataManager (see docs/technical/OFFLINE_PERSISTENCE.md).
+        return emptyMap()
     }
     
-    private fun saveOfflineTrips(trips: Map<String, Map<String, Any>>) {
-        // Simple implementation using SharedPreferences
-        // In a real app, you'd use a database
+    @Suppress("UNUSED_PARAMETER")
+    private fun saveOfflineTrips(_trips: Map<String, Map<String, Any>>) {
+        // Placeholder: no-op until wired to database or OfflineDataManager.
     }
     
     private fun getOfflineAnalytics(): Map<String, Map<String, Any>> {
-        // Simple implementation using SharedPreferences
-        // In a real app, you'd use a database
-        return emptyMap() // Placeholder
+        // Placeholder: no persistence in this implementation.
+        return emptyMap()
     }
     
-    private fun saveOfflineAnalytics(analytics: Map<String, Map<String, Any>>) {
-        // Simple implementation using SharedPreferences
-        // In a real app, you'd use a database
+    @Suppress("UNUSED_PARAMETER")
+    private fun saveOfflineAnalytics(_analytics: Map<String, Map<String, Any>>) {
+        // Placeholder: no-op until wired to database or OfflineDataManager.
     }
     
     private fun calculateStorageSize(): Long {
-        // Simple storage size calculation
-        return 0L // Placeholder
+        // Placeholder: returns 0 until storage is implemented.
+        return 0L
     }
     
     /**

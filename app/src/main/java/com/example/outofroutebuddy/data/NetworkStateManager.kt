@@ -310,7 +310,7 @@ class NetworkStateManager(private val context: Context) {
             )
 
         _offlineQueue.value = newQueue
-        Log.d(TAG, "Added trip to offline queue: $tripId")
+        Log.d(TAG, "Added trip to offline queue")
 
         return tripId
     }

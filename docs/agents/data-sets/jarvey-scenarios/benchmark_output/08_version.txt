@@ -1,1 +1,0 @@
-You asked about the app version. Check app/build.gradle.kts for versionName (e.g. 1.0.2). — Jarvey

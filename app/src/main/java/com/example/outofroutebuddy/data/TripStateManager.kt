@@ -187,7 +187,7 @@ class TripStateManager(
 
             _tripState.value = newState
 
-            Log.v(TAG, "Location updated: lat=${location.latitude}, lng=${location.longitude}, accuracy=${location.accuracy}")
+            Log.v(TAG, "Location updated: accuracy=${location.accuracy}m (coordinates redacted per SECURITY_NOTES)")
         } catch (e: Exception) {
             Log.e(TAG, "Failed to update location", e)
         }

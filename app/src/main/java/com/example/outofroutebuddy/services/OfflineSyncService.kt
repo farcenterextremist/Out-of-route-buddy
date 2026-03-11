@@ -234,7 +234,7 @@ class OfflineSyncService(
         
         var totalProcessed = 0
         var totalFailed = 0
-        var conflictsResolved = 0
+        var conflictsResolved: Int
         
         // ✅ SYNC: Pending trips
         if (pendingTrips.isNotEmpty()) {
@@ -321,8 +321,9 @@ class OfflineSyncService(
                     }
                     OfflineDataManager.ResolutionStrategy.MERGE -> {
                         // Merge versions (would need custom merge logic)
+                        @Suppress("UNUSED_VARIABLE")
                         val mergedData = mergeTripData(resolution.localVersion, resolution.remoteVersion)
-                        // Update trip with merged data
+                        // TODO: Update trip with merged data when merge path is wired
                         resolvedCount++
                     }
                     OfflineDataManager.ResolutionStrategy.MANUAL -> {
@@ -482,6 +483,7 @@ class OfflineSyncService(
     /**
      * ✅ NEW: Simulate trip synchronization (replace with actual API call)
      */
+    @Suppress("UNUSED_PARAMETER")
     private suspend fun simulateTripSync(_trip: OfflineDataManager.OfflineTrip): Boolean {
         return withTimeout(SYNC_TIMEOUT_MS) {
             // ✅ SIMULATE: Network delay and potential failure
@@ -495,6 +497,7 @@ class OfflineSyncService(
     /**
      * ✅ NEW: Simulate analytics synchronization (replace with actual API call)
      */
+    @Suppress("UNUSED_PARAMETER")
     private suspend fun simulateAnalyticsSync(_analytic: OfflineDataManager.OfflineAnalytics): Boolean {
         return withTimeout(SYNC_TIMEOUT_MS) {
             // ✅ SIMULATE: Network delay and potential failure

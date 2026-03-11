@@ -38,11 +38,19 @@ data class TripEntity(
     // ✅ NEW: Trip state tracking
     val tripStartTime: Date? = null, // When the trip actually started
     val tripEndTime: Date? = null, // When the trip actually ended
+    /** IANA timezone id where the trip was recorded (e.g. "America/Chicago"). Null = legacy trip. */
+    val tripTimeZoneId: String? = null,
     val wasInterrupted: Boolean = false, // Whether the trip was interrupted
     val interruptionCount: Int = 0, // Number of times the trip was interrupted
     val lastLocationLat: Double = 0.0, // Last known latitude
     val lastLocationLng: Double = 0.0, // Last known longitude
     val lastLocationTime: Date? = null, // Last location timestamp
+    // Extended GPS metadata (schema v4)
+    val interstatePercent: Double = 0.0,
+    val interstateMinutes: Int = 0,
+    val backRoadsPercent: Double = 0.0,
+    val backRoadsMinutes: Int = 0,
+    val truckStopsVisited: Int = 0,
 ) {
     val dispatchedMiles: Double
         get() = loadedMiles + bounceMiles

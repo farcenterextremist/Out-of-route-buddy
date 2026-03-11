@@ -127,7 +127,7 @@ class CustomCalendarDialogDecoratorTest {
         cal.set(Calendar.MILLISECOND, 0)
         val millis = cal.timeInMillis
 
-        val decorator = DaysWithTripsDecorator(setOf(millis))
+        val decorator = DaysWithTripsDecorator(setOf(millis), null, null)
 
         assertTrue(decorator.shouldDecorate(CalendarDay.from(2024, 3, 15)))
     }
@@ -139,7 +139,7 @@ class CustomCalendarDialogDecoratorTest {
         cal.set(Calendar.MILLISECOND, 0)
         val millis = cal.timeInMillis
 
-        val decorator = DaysWithTripsDecorator(setOf(millis))
+        val decorator = DaysWithTripsDecorator(setOf(millis), null, null)
 
         assertFalse(decorator.shouldDecorate(CalendarDay.from(2024, 3, 14)))
         assertFalse(decorator.shouldDecorate(CalendarDay.from(2024, 3, 16)))
@@ -158,7 +158,7 @@ class CustomCalendarDialogDecoratorTest {
         cal.set(Calendar.MILLISECOND, 0)
         val millis = cal.timeInMillis
 
-        val decorator = DaysWithTripsDecorator(setOf(millis))
+        val decorator = DaysWithTripsDecorator(setOf(millis), null, null)
 
         // Decorator converts CalendarDay to start-of-day millis for lookup
         assertTrue(decorator.shouldDecorate(CalendarDay.from(2024, 3, 15)))
@@ -166,7 +166,7 @@ class CustomCalendarDialogDecoratorTest {
 
     @Test
     fun `DaysWithTripsDecorator handles empty set`() {
-        val decorator = DaysWithTripsDecorator(emptySet())
+        val decorator = DaysWithTripsDecorator(emptySet(), null, null)
 
         assertFalse(decorator.shouldDecorate(CalendarDay.from(2024, 3, 15)))
         assertFalse(decorator.shouldDecorate(CalendarDay.today()))
@@ -182,7 +182,7 @@ class CustomCalendarDialogDecoratorTest {
             set(2024, Calendar.MARCH, 20, 0, 0, 0)
             set(Calendar.MILLISECOND, 0)
         }
-        val decorator = DaysWithTripsDecorator(setOf(cal1.timeInMillis, cal2.timeInMillis))
+        val decorator = DaysWithTripsDecorator(setOf(cal1.timeInMillis, cal2.timeInMillis), null, null)
 
         assertTrue(decorator.shouldDecorate(CalendarDay.from(2024, 3, 10)))
         assertTrue(decorator.shouldDecorate(CalendarDay.from(2024, 3, 20)))
@@ -196,7 +196,7 @@ class CustomCalendarDialogDecoratorTest {
         cal.set(Calendar.MILLISECOND, 0)
         val millis = cal.timeInMillis
 
-        val decorator = DaysWithTripsDecorator(setOf(millis))
+        val decorator = DaysWithTripsDecorator(setOf(millis), null, null)
 
         assertTrue(decorator.shouldDecorate(CalendarDay.from(2024, 2, 29)))
         assertFalse(decorator.shouldDecorate(CalendarDay.from(2023, 2, 28))) // No Feb 29 in 2023

@@ -225,8 +225,8 @@ class PeriodCalculationServiceTest {
     }
 
     @Test
-    fun `isDateInCustomPeriod with date at period end returns false`() {
-        // Given
+    fun `isDateInCustomPeriod with date at period end returns true`() {
+        // Given - period end is inclusive (last day of period)
         val periodStart =
             Calendar.getInstance().apply {
                 set(2024, Calendar.FEBRUARY, 29)
@@ -243,8 +243,8 @@ class PeriodCalculationServiceTest {
         // When
         val isInPeriod = service.isDateInCustomPeriod(testDate, periodStart, periodEnd)
 
-        // Then
-        assertFalse(isInPeriod) // End date is exclusive
+        // Then - end date is inclusive per plan: period containing today includes the end Thursday
+        assertTrue(isInPeriod)
     }
 
     @Test
@@ -428,5 +428,88 @@ class PeriodCalculationServiceTest {
         assertEquals(2024, periodStart.get(Calendar.YEAR))
         assertEquals(Calendar.FEBRUARY, periodStart.get(Calendar.MONTH))
         assertEquals(29, periodStart.get(Calendar.DAY_OF_MONTH))
+    }
+
+    // --- Current Period (plan §1): period containing forDate; month rollover keeps same period until after end day ---
+
+    @Test
+    fun `CUSTOM period - today before first Thursday of month returns previous month period start`() {
+        // 2026: first Friday of Feb = Feb 6, Thu = Feb 5. Feb 1 is before Feb 5 → period from previous month
+        val feb1 = Calendar.getInstance().apply { set(2026, Calendar.FEBRUARY, 1) }.time
+        val start = service.calculateCustomPeriodStart(feb1)
+        assertEquals(2026, start.get(Calendar.YEAR))
+        assertEquals(Calendar.JANUARY, start.get(Calendar.MONTH))
+        assertEquals(1, start.get(Calendar.DAY_OF_MONTH)) // Thu before first Fri of Jan 2026 = Jan 1
+    }
+
+    @Test
+    fun `CUSTOM period - today between start and end returns that period`() {
+        // 2026: first Friday of March = Mar 6, Thu before = Mar 5; period containing Mar 15 is Mar 5 - Apr 2
+        val mar15 = Calendar.getInstance().apply { set(2026, Calendar.MARCH, 15) }.time
+        val start = service.calculateCustomPeriodStart(mar15)
+        val end = service.calculateCustomPeriodEnd(mar15)
+        assertEquals(2026, start.get(Calendar.YEAR))
+        assertEquals(Calendar.MARCH, start.get(Calendar.MONTH))
+        assertEquals(5, start.get(Calendar.DAY_OF_MONTH))
+        assertEquals(2026, end.get(Calendar.YEAR))
+        assertEquals(Calendar.APRIL, end.get(Calendar.MONTH))
+        assertEquals(2, end.get(Calendar.DAY_OF_MONTH))
+    }
+
+    @Test
+    fun `CUSTOM period - today on period end day still in same period`() {
+        // 2026: period for Mar 15 is Mar 5 - Apr 2; Apr 2 is the last day of that period (inclusive).
+        val mar15 = Calendar.getInstance().apply { set(2026, Calendar.MARCH, 15) }.time
+        val startMar15 = service.calculateCustomPeriodStart(mar15)
+        val endMar15 = service.calculateCustomPeriodEnd(mar15)
+        // Period for Mar 15 is Mar 5 - Apr 2; Apr 2 is the end day
+        val apr2EndDay = Calendar.getInstance().apply { set(2026, Calendar.APRIL, 2) }.time
+        assertTrue(service.isDateInCustomPeriod(apr2EndDay, startMar15.time, endMar15.time))
+        assertEquals(Calendar.MARCH, startMar15.get(Calendar.MONTH))
+        assertEquals(5, startMar15.get(Calendar.DAY_OF_MONTH))
+        assertEquals(Calendar.APRIL, endMar15.get(Calendar.MONTH))
+        assertEquals(2, endMar15.get(Calendar.DAY_OF_MONTH))
+    }
+
+    @Test
+    fun `CUSTOM period - month rollover Feb 28 to Mar 1 keeps period Feb 5 - Mar 5 until after Mar 5`() {
+        // 2026: Feb 5 - Mar 5 is one period; Mar 5 is first day of next period (Mar 5 - Apr 2), Mar 6 also in that period
+        val feb28 = Calendar.getInstance().apply { set(2026, Calendar.FEBRUARY, 28) }.time
+        val mar1 = Calendar.getInstance().apply { set(2026, Calendar.MARCH, 1) }.time
+        val mar5 = Calendar.getInstance().apply { set(2026, Calendar.MARCH, 5) }.time
+        val mar6 = Calendar.getInstance().apply { set(2026, Calendar.MARCH, 6) }.time
+
+        val startFeb28 = service.calculateCustomPeriodStart(feb28)
+        val endFeb28 = service.calculateCustomPeriodEnd(feb28)
+        val startMar1 = service.calculateCustomPeriodStart(mar1)
+        val endMar1 = service.calculateCustomPeriodEnd(mar1)
+        val startMar5 = service.calculateCustomPeriodStart(mar5)
+        val endMar5 = service.calculateCustomPeriodEnd(mar5)
+        val startMar6 = service.calculateCustomPeriodStart(mar6)
+        val endMar6 = service.calculateCustomPeriodEnd(mar6)
+
+        // Feb 28 and Mar 1 in same period: Feb 5 - Mar 5
+        assertEquals(5, startFeb28.get(Calendar.DAY_OF_MONTH))
+        assertEquals(Calendar.FEBRUARY, startFeb28.get(Calendar.MONTH))
+        assertEquals(5, endFeb28.get(Calendar.DAY_OF_MONTH))
+        assertEquals(Calendar.MARCH, endFeb28.get(Calendar.MONTH))
+
+        assertEquals(startFeb28.get(Calendar.DAY_OF_MONTH), startMar1.get(Calendar.DAY_OF_MONTH))
+        assertEquals(startFeb28.get(Calendar.MONTH), startMar1.get(Calendar.MONTH))
+        assertEquals(endFeb28.get(Calendar.DAY_OF_MONTH), endMar1.get(Calendar.DAY_OF_MONTH))
+        assertEquals(endFeb28.get(Calendar.MONTH), endMar1.get(Calendar.MONTH))
+
+        // Mar 5 is first day of next period (Mar 5 - Apr 2); Mar 6 in same period
+        assertEquals(5, startMar5.get(Calendar.DAY_OF_MONTH))
+        assertEquals(Calendar.MARCH, startMar5.get(Calendar.MONTH))
+        assertEquals(2, endMar5.get(Calendar.DAY_OF_MONTH))
+        assertEquals(Calendar.APRIL, endMar5.get(Calendar.MONTH))
+
+        assertEquals(startMar5.get(Calendar.DAY_OF_MONTH), startMar6.get(Calendar.DAY_OF_MONTH))
+        assertEquals(startMar5.get(Calendar.MONTH), startMar6.get(Calendar.MONTH))
+        assertEquals(5, startMar6.get(Calendar.DAY_OF_MONTH))
+        assertEquals(Calendar.MARCH, startMar6.get(Calendar.MONTH))
+        assertEquals(2, endMar6.get(Calendar.DAY_OF_MONTH))
+        assertEquals(Calendar.APRIL, endMar6.get(Calendar.MONTH))
     }
 } 

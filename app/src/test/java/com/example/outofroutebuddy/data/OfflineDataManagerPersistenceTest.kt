@@ -6,6 +6,7 @@ import com.example.outofroutebuddy.data.OfflineDataManager.SyncStatus
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test
 import org.junit.runner.RunWith
+import kotlinx.coroutines.runBlocking
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
@@ -26,6 +27,7 @@ class OfflineDataManagerPersistenceTest {
         val preferencesManager = PreferencesManager(context)
 
         val manager1 = OfflineDataManager(context, networkStateManager, preferencesManager)
+        runBlocking { manager1.awaitIdleForTesting() }
         val localId = manager1.saveTripOffline(
             tripData = mapOf(
                 "id" to "trip-1",
@@ -37,9 +39,11 @@ class OfflineDataManagerPersistenceTest {
         )
 
         assertThat(localId).isNotEmpty()
+        runBlocking { manager1.awaitIdleForTesting() }
         assertThat(manager1.getOfflineDataCount()).isEqualTo(1)
 
         val manager2 = OfflineDataManager(context, networkStateManager, preferencesManager)
+        runBlocking { manager2.awaitIdleForTesting() }
         assertThat(manager2.getOfflineDataCount()).isEqualTo(1)
         val loadedTrip = manager2.getOfflineTrip(localId)
         assertThat(loadedTrip).isNotNull()

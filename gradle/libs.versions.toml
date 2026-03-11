@@ -37,6 +37,10 @@ orchestrator = "1.4.2"
 gson = "2.10.1"
 work = "2.9.0"
 detekt = "1.23.5"
+# Plugins not in [plugins] below (used for version.ref only)
+firebase-crashlytics = "2.9.9"
+ksp = "1.8.22-1.0.11"
+google-services = "4.4.0"
 
 [libraries]
 robolectric = { group = "org.robolectric", name = "robolectric", version.ref = "robolectric" }
@@ -120,4 +124,8 @@ android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 navigation-safeargs = { id = "androidx.navigation.safeargs", version.ref = "navigation" }
 detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
+firebase-crashlytics = { id = "com.google.firebase.crashlytics", version.ref = "firebase-crashlytics" }
+hilt-android = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
+ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
+google-services = { id = "com.google.gms.google-services", version.ref = "google-services" }
 

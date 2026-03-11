@@ -5,6 +5,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.outofroutebuddy.domain.models.Trip
 import com.example.outofroutebuddy.domain.repository.TripRepository
+import com.example.outofroutebuddy.util.AppLogger
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,6 +18,7 @@ import kotlinx.coroutines.launch
 import java.util.Calendar
 import java.util.Date
 import javax.inject.Inject
+import javax.inject.Named
 
 /**
  * ✅ NEW: Trip History By Date ViewModel
@@ -27,7 +29,8 @@ import javax.inject.Inject
 @HiltViewModel
 class TripHistoryByDateViewModel @Inject constructor(
     application: Application,
-    private val repository: TripRepository
+    private val repository: TripRepository,
+    @Named("repositoryLoadErrors") private val repositoryLoadErrors: kotlinx.coroutines.flow.Flow<String>,
 ) : AndroidViewModel(application) {
     
     private val _trips = MutableStateFlow<List<Trip>>(emptyList())
@@ -38,6 +41,18 @@ class TripHistoryByDateViewModel @Inject constructor(
 
     private val _deleteError = MutableSharedFlow<String>(extraBufferCapacity = 1)
     val deleteError: SharedFlow<String> = _deleteError.asSharedFlow()
+    private val _deleteSuccess = MutableSharedFlow<String>(extraBufferCapacity = 1)
+    val deleteSuccess: SharedFlow<String> = _deleteSuccess.asSharedFlow()
+
+    /** Repository load failures (e.g. getTripsOverlappingDay). UI should show snackbar. */
+    private val _loadError = MutableSharedFlow<String>(extraBufferCapacity = 1)
+    val loadError: SharedFlow<String> = _loadError.asSharedFlow()
+
+    init {
+        viewModelScope.launch {
+            repositoryLoadErrors.collect { msg -> _loadError.emit(msg) }
+        }
+    }
 
     private var currentDate: Date? = null
     
@@ -63,55 +78,16 @@ class TripHistoryByDateViewModel @Inject constructor(
                 calendar.add(Calendar.DAY_OF_MONTH, 1)
                 val endOfDay = calendar.time
                 
-                // ✅ EDGE CASE: Handle timezone - ensure we're comparing dates in the same timezone
-                // Get trips for the date range - get first emission from Flow
+                // Use overlap query: includes midnight-spanning trips (shown on both days)
                 val tripList = try {
-                    repository.getTripsByDateRange(startOfDay, endOfDay).first()
+                    repository.getTripsOverlappingDay(startOfDay, endOfDay).first()
                 } catch (e: Exception) {
-                    android.util.Log.e(TAG, "Error fetching trips from repository", e)
+                    AppLogger.e(TAG, "Error fetching trips from repository", e)
                     emptyList()
                 }
-                
-                // ✅ EDGE CASE: Filter to only trips that occurred on this specific date
-                // Handle timezone normalization and null dates
-                val filteredTrips = tripList.filter { trip ->
-                    val tripDate = trip.endTime ?: trip.startTime
-                    if (tripDate != null) {
-                        try {
-                            // Normalize both dates to start of day in local timezone for comparison
-                            val tripCalendar = Calendar.getInstance()
-                            tripCalendar.time = tripDate
-                            tripCalendar.set(Calendar.HOUR_OF_DAY, 0)
-                            tripCalendar.set(Calendar.MINUTE, 0)
-                            tripCalendar.set(Calendar.SECOND, 0)
-                            tripCalendar.set(Calendar.MILLISECOND, 0)
-                            
-                            val dateCalendar = Calendar.getInstance()
-                            dateCalendar.time = date
-                            dateCalendar.set(Calendar.HOUR_OF_DAY, 0)
-                            dateCalendar.set(Calendar.MINUTE, 0)
-                            dateCalendar.set(Calendar.SECOND, 0)
-                            dateCalendar.set(Calendar.MILLISECOND, 0)
-                            
-                            // Compare normalized dates
-                            tripCalendar.timeInMillis == dateCalendar.timeInMillis
-                        } catch (e: Exception) {
-                            // ✅ EDGE CASE: If date parsing fails, exclude the trip
-                            android.util.Log.w(TAG, "Error comparing trip date", e)
-                            false
-                        }
-                    } else {
-                        // ✅ EDGE CASE: Trip has no date - exclude it
-                        false
-                    }
-                }
-                
-                // ✅ EDGE CASE: Sort by date descending, handle null dates
-                _trips.value = filteredTrips.sortedByDescending { trip ->
-                    (trip.endTime ?: trip.startTime)?.time ?: 0L
-                }
+                _trips.value = tripList
             } catch (e: Exception) {
-                android.util.Log.e(TAG, "Error loading trips for date", e)
+                AppLogger.e(TAG, "Error loading trips for date", e)
                 _trips.value = emptyList()
             } finally {
                 _isLoading.value = false
@@ -124,7 +100,8 @@ class TripHistoryByDateViewModel @Inject constructor(
             try {
                 val deleted = repository.deleteTrip(trip)
                 if (deleted) {
-                    android.util.Log.d(TAG, "Trip deleted: ${trip.id}")
+                    AppLogger.d(TAG, "Trip deleted")
+                    _deleteSuccess.emit("Trip deleted")
                     currentDate?.let { date ->
                         loadTripsForDate(date)
                     }
@@ -132,7 +109,7 @@ class TripHistoryByDateViewModel @Inject constructor(
                     _deleteError.emit("Failed to delete trip")
                 }
             } catch (e: Exception) {
-                android.util.Log.e(TAG, "Error deleting trip", e)
+                AppLogger.e(TAG, "Error deleting trip", e)
                 _deleteError.emit("Failed to delete trip: ${e.message ?: "Unknown error"}")
             }
         }

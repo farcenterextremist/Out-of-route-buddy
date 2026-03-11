@@ -131,7 +131,9 @@ open class UnifiedTripService(
     }
     
     /**
-     * ✅ ROBUSTNESS: Clean up resources when service is no longer needed
+     * ✅ ROBUSTNESS: Clean up resources when service is no longer needed.
+     * S2: UnifiedTripService is singleton-scoped; cleanup is optional for app lifetime.
+     * Call from Application.onTerminate() if needed (rare on Android).
      */
     fun cleanup() {
         try {
@@ -560,6 +562,7 @@ open class UnifiedTripService(
     
     /**
      * ✅ UNIFIED: Get trip statistics (suspend to avoid blocking Main; call from coroutine)
+     * Call only from a coroutine on a background dispatcher (e.g. viewModelScope.launch or withContext(Dispatchers.IO)).
      */
     suspend fun getTripStatistics(): TripStatistics {
         return statisticsMutex.withLock {
@@ -572,7 +575,7 @@ open class UnifiedTripService(
                 0.0
             }
 
-            val averageOorPercentage = if (totalTrips > 0) {
+            val averageOorPercentage = if (totalTrips > 0 && currentState.totalDistance > 0.0) {
                 currentState.totalOorMiles / currentState.totalDistance * 100.0
             } else {
                 0.0

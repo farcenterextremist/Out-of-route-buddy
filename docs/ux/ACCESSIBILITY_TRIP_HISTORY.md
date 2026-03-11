@@ -2,7 +2,7 @@
 
 **Owner:** UI/UX Specialist  
 **Purpose:** One pass for TalkBack labels and focus order on Trip and History screens.  
-**Related:** 25-point list #6, `docs/agents/APP_IMPROVEMENT_25_POINT_BRAINSTORM.md`.
+**Related:** 25-point list #6, `docs/archive/APP_IMPROVEMENT_25_POINT_BRAINSTORM.md`.
 
 ---
 

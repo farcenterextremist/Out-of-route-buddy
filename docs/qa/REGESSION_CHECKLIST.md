@@ -2,7 +2,7 @@
 
 **Owner:** QA Engineer  
 **Purpose:** Short manual (or automated) smoke checklist for core app flows.  
-**Related:** 25-point #19, `docs/agents/APP_IMPROVEMENT_25_POINT_BRAINSTORM.md`.
+**Related:** 25-point #19, `docs/archive/APP_IMPROVEMENT_25_POINT_BRAINSTORM.md`.
 
 ---
 

@@ -2,7 +2,7 @@
 
 **Owner:** Front-end Engineer  
 **Purpose:** One audit task: move hardcoded strings to `strings.xml`.  
-**Related:** 25-point #9, `docs/agents/APP_IMPROVEMENT_25_POINT_BRAINSTORM.md`.
+**Related:** 25-point #9, `docs/archive/APP_IMPROVEMENT_25_POINT_BRAINSTORM.md`.
 
 ---
 

@@ -17,6 +17,8 @@ data class Trip(
     val oorPercentage: Double = 0.0,
     val startTime: Date? = null,
     val endTime: Date? = null,
+    /** IANA timezone id where the trip was recorded (e.g. "America/Chicago"). Null = legacy trip; not shown when same as current. */
+    val timeZoneId: String? = null,
     val status: TripStatus = TripStatus.PENDING,
     val gpsMetadata: GpsMetadata = GpsMetadata(),
     val validationIssues: List<ValidationIssue> = emptyList(),
@@ -199,6 +201,12 @@ data class GpsMetadata(
     val tripDurationMinutes: Int = 0,
     val satelliteCount: Int = 0,
     val gpsQualityPercentage: Double = 0.0,
+    // Extended metadata (schema v4) — collection via road-type API/POI in future
+    val interstatePercent: Double = 0.0,
+    val interstateMinutes: Int = 0,
+    val backRoadsPercent: Double = 0.0,
+    val backRoadsMinutes: Int = 0,
+    val truckStopsVisited: Int = 0,
 ) {
     /**
      * Calculate GPS quality percentage

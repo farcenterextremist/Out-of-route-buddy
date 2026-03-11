@@ -2,6 +2,7 @@ package com.example.outofroutebuddy.presentation.ui.dialogs
 
 import android.app.Dialog
 import android.content.Context
+import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -25,9 +26,8 @@ import java.util.*
 class TripRecoveryDialog : DialogFragment() {
     
     companion object {
-        private const val TAG = "TripRecoveryDialog"
         private const val ARG_SAVED_STATE = "saved_state"
-        
+
         fun newInstance(savedState: TripPersistenceManager.SavedTripState): TripRecoveryDialog {
             val dialog = TripRecoveryDialog()
             val args = Bundle()
@@ -54,7 +54,12 @@ class TripRecoveryDialog : DialogFragment() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         arguments?.let { args ->
-            savedState = args.getSerializable(ARG_SAVED_STATE) as TripPersistenceManager.SavedTripState
+            savedState = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                args.getSerializable(ARG_SAVED_STATE, TripPersistenceManager.SavedTripState::class.java)!!
+            } else {
+                @Suppress("DEPRECATION")
+                args.getSerializable(ARG_SAVED_STATE) as TripPersistenceManager.SavedTripState
+            }
         }
     }
     

@@ -1,25 +1,37 @@
 package com.example.outofroutebuddy.services
 
 import android.annotation.SuppressLint
+import android.Manifest
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.content.SharedPreferences
+import android.media.AudioAttributes
+import android.net.Uri
 import android.location.Location
 import android.os.Build
 import android.os.IBinder
 import android.os.Looper
 import android.util.Log
 import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
+import androidx.core.content.ContextCompat
 import androidx.core.content.edit
 import com.example.outofroutebuddy.R
 import com.example.outofroutebuddy.data.repository.TripRepository
 import com.example.outofroutebuddy.models.Trip
 import com.example.outofroutebuddy.OutOfRouteApplication
+import com.example.outofroutebuddy.MainActivity
 import com.example.outofroutebuddy.core.config.BuildConfig
+import com.example.outofroutebuddy.core.config.DriveDetectConfig
+import com.example.outofroutebuddy.core.config.ValidationConfig
 import com.example.outofroutebuddy.util.TimeoutManager
 import com.google.android.gms.location.*
+import com.google.android.gms.location.ActivityRecognition
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -31,23 +43,62 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
 import java.util.*
+import kotlin.math.abs
 
 // ✅ IMPLEMENTED: Handle service crashes and notify the user if trip tracking fails.
 // Firebase Crashlytics integration added for comprehensive crash reporting.
 
-const val ACTION_START_TRIP = "ACTION_START_TRIP"
-const val ACTION_END_TRIP = "ACTION_END_TRIP"
+// Use BuildConfig for single source of truth (120_MINUTE_IMPROVEMENT_LOOP alignment)
+const val ACTION_START_TRIP = BuildConfig.ACTION_START_TRIP
+const val ACTION_END_TRIP = BuildConfig.ACTION_END_TRIP
 const val ACTION_PAUSE_TRIP = "ACTION_PAUSE_TRIP"
 const val ACTION_RESUME_TRIP = "ACTION_RESUME_TRIP"
+const val ACTION_TRIP_ENDING_DETECTED = "ACTION_TRIP_ENDING_DETECTED"
+const val ACTION_TRIP_CONTINUE_CONFIRMED = "ACTION_TRIP_CONTINUE_CONFIRMED"
+private const val ACTION_ACTIVITY_TRANSITION_UPDATE = "ACTION_ACTIVITY_TRANSITION_UPDATE"
 const val EXTRA_EXPECTED_MILES = "EXTRA_EXPECTED_MILES"
 private const val EXTRA_INITIAL_TOTAL_MILES = "EXTRA_INITIAL_TOTAL_MILES"
     private const val NOTIFICATION_ID = BuildConfig.NOTIFICATION_ID
-private const val NOTIFICATION_CHANNEL_ID = "TripTrackingChannel"
-private const val TAG = "TripTrackingService"
+    private const val COMPLETION_NOTIFICATION_ID = BuildConfig.NOTIFICATION_ID + 1
+    private const val ERROR_NOTIFICATION_ID = BuildConfig.NOTIFICATION_ID + 2
+    private const val NOTIFICATION_CHANNEL_ID = BuildConfig.NOTIFICATION_CHANNEL_ID
+    private const val TAG = "TripTrackingService"
+    private const val PREFS_NOTIFICATION_GUIDANCE = "notification_guidance"
+    private const val KEY_NEEDS_NOTIFICATION_GUIDANCE = "trip_notif_guidance_needed"
 
 data class TripMetrics(
     val totalMiles: Double = 0.0,
     val oorMiles: Double = 0.0
+)
+
+data class ActivityTransitionSignal(
+    val inVehicleConfidence: Int = 0,
+    val stillConfidence: Int = 0,
+    val inVehicleActive: Boolean = false,
+    val stillActive: Boolean = false,
+    val lastTransitionAtMillis: Long = 0L,
+    val source: String = "fallback",
+)
+
+data class GeofenceContextSignal(
+    val originLat: Double? = null,
+    val originLng: Double? = null,
+    val distanceFromOriginMeters: Double? = null,
+    val isNearOrigin: Boolean = false,
+    val dwellInOriginMillis: Long = 0L,
+)
+
+data class TripEndingSignalSnapshot(
+    val speedMph: Double = 0.0,
+    val speedDeltaMphPerSec: Double = 0.0,
+    val rollingDistanceMeters: Double = 0.0,
+    val headingVarianceDeg: Double = 0.0,
+    val gpsAccuracyMeters: Float = 0f,
+    val hasDirectSpeed: Boolean = false,
+    val lowMotionSampleCount: Int = 0,
+    val sustainedStopMillis: Long = 0L,
+    val sampleCount: Int = 0,
+    val evaluatedAtMillis: Long = 0L,
 )
 
 data class ServiceState(
@@ -84,11 +135,25 @@ data class GpsTrackingData(
 )
 
 class TripTrackingService : Service() {
+    private enum class TripEndPromptState {
+        IN_PROGRESS,
+        ENDING_DETECTED,
+        USER_CONTINUED_COOLDOWN,
+        TRIP_ENDED,
+    }
+
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var repository: TripRepository
     private lateinit var tripCalculationService: TripCalculationService
     private lateinit var locationValidationService: LocationValidationService
+
+    /** Drive-state classifier for auto-excluding walking/stationary miles. */
+    private lateinit var driveStateClassifier: DriveStateClassifier
+    /** Recent locations for highway-context lookback; trimmed by size and age. */
+    private val locationHistory = ArrayDeque<Location>()
+    private val driveStateHistoryMaxSize = ValidationConfig.DRIVE_DETECT_HISTORY_MAX_SIZE
+    private val driveStateHistoryMaxAgeMs = ValidationConfig.DRIVE_DETECT_HIGHWAY_LOOKBACK_MS
 
     private var totalDistance = 0.0
     private var loadedMiles = 0.0
@@ -103,6 +168,7 @@ class TripTrackingService : Service() {
     
     // ✅ NEW: Pause state tracking
     private var isPaused = false
+    private var tripEndPromptState = TripEndPromptState.IN_PROGRESS
     
     // ✅ ENHANCED: GPS metadata tracking for accuracy auditing
     private var totalGpsPoints = 0
@@ -128,8 +194,37 @@ class TripTrackingService : Service() {
     private var satelliteCount = 0
     private var isHighAccuracyMode = false
     private var currentLocationString = "Unknown"
+    private var originDwellStartAtMillis: Long? = null
+    private var sustainedStopStartAtMillis: Long? = null
+
+    private data class SignalSample(
+        val timestampMillis: Long,
+        val latitude: Double,
+        val longitude: Double,
+        val speedMph: Double,
+        val hasDirectSpeed: Boolean,
+        val bearingDeg: Float?,
+        val accuracyMeters: Float,
+    )
+
+    private val signalSamples = ArrayDeque<SignalSample>()
+    private var tripOriginSample: SignalSample? = null
+    private val activityRecognitionClient by lazy { ActivityRecognition.getClient(this) }
+    private var activityTransitionPendingIntent: PendingIntent? = null
 
     companion object {
+        internal const val PROMPT_STATE_IN_PROGRESS = "IN_PROGRESS"
+        internal const val PROMPT_STATE_ENDING_DETECTED = "ENDING_DETECTED"
+        internal const val PROMPT_STATE_USER_CONTINUED_COOLDOWN = "USER_CONTINUED_COOLDOWN"
+        internal const val PROMPT_STATE_TRIP_ENDED = "TRIP_ENDED"
+        private const val ACTIVITY_TRANSITION_REQUEST_CODE = 7401
+        private const val ORIGIN_GEOFENCE_RADIUS_METERS = 250.0
+        private const val ORIGIN_DWELL_MIN_SPEED_MPH = 3.0
+        private const val SIGNAL_WINDOW_MS = 120_000L
+        private const val STOP_DWELL_MAX_SPEED_MPH = 2.5
+        private const val STOP_DWELL_MAX_ROLLING_DISTANCE_METERS = 70.0
+        private const val STOP_DWELL_MAX_ACCURACY_METERS = 50f
+
         private val _tripMetrics = MutableStateFlow(TripMetrics())
         val tripMetrics: StateFlow<TripMetrics> = _tripMetrics.asStateFlow()
         
@@ -140,6 +235,19 @@ class TripTrackingService : Service() {
         private val _gpsTrackingData = MutableStateFlow(GpsTrackingData())
         val gpsTrackingData: StateFlow<GpsTrackingData> = _gpsTrackingData.asStateFlow()
 
+        /** Current drive state for auto-exclude (walking/stationary); UI can show "Not counting" when WALKING_OR_STATIONARY. */
+        private val _driveState = MutableStateFlow(DriveState.DRIVING)
+        val driveState: StateFlow<DriveState> = _driveState.asStateFlow()
+
+        private val _activityTransitionSignal = MutableStateFlow(ActivityTransitionSignal())
+        val activityTransitionSignal: StateFlow<ActivityTransitionSignal> = _activityTransitionSignal.asStateFlow()
+
+        private val _geofenceContextSignal = MutableStateFlow(GeofenceContextSignal())
+        val geofenceContextSignal: StateFlow<GeofenceContextSignal> = _geofenceContextSignal.asStateFlow()
+
+        private val _tripEndingSignalSnapshot = MutableStateFlow(TripEndingSignalSnapshot())
+        val tripEndingSignalSnapshot: StateFlow<TripEndingSignalSnapshot> = _tripEndingSignalSnapshot.asStateFlow()
+
         fun startService(context: Context, loadedMiles: Double, bounceMiles: Double, initialTotalMiles: Double? = null) {
             try {
                 val intent = Intent(context, TripTrackingService::class.java).apply {
@@ -148,7 +256,7 @@ class TripTrackingService : Service() {
                     putExtra("EXTRA_BOUNCE_MILES", bounceMiles)
                     initialTotalMiles?.let { putExtra(EXTRA_INITIAL_TOTAL_MILES, it) }
                 }
-                context.startService(intent)
+                ContextCompat.startForegroundService(context, intent)
                 Log.d(TAG, "Trip tracking service start requested")
                 
                 // ✅ ADDED: Log analytics event for trip start
@@ -170,6 +278,16 @@ class TripTrackingService : Service() {
                     e
                 )
             }
+        }
+
+        fun canShowTripNotifications(context: Context): Boolean {
+            val notificationsEnabled = NotificationManagerCompat.from(context).areNotificationsEnabled()
+            if (!notificationsEnabled) return false
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return true
+            return ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) == PackageManager.PERMISSION_GRANTED
         }
 
         fun stopService(context: Context) {
@@ -246,6 +364,30 @@ class TripTrackingService : Service() {
                 )
             }
         }
+
+        fun notifyUserContinuedTrip(context: Context) {
+            try {
+                val intent = Intent(context, TripTrackingService::class.java).apply {
+                    action = ACTION_TRIP_CONTINUE_CONFIRMED
+                }
+                context.startService(intent)
+                Log.d(TAG, "Trip continue acknowledged for notification state")
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to acknowledge trip continue", e)
+            }
+        }
+
+        internal fun resolveNotificationText(
+            promptState: String,
+            inProgressText: String,
+            endingText: String,
+        ): String {
+            return if (promptState == PROMPT_STATE_ENDING_DETECTED) {
+                endingText
+            } else {
+                inProgressText
+            }
+        }
         
         /**
          * Notify user of service failures
@@ -256,12 +398,12 @@ class TripTrackingService : Service() {
                 val notification = NotificationCompat.Builder(context, NOTIFICATION_CHANNEL_ID)
                     .setContentTitle("Trip Tracking Error")
                     .setContentText(message)
-                    .setSmallIcon(R.drawable.ic_notification)
+                    .setSmallIcon(R.drawable.ic_notification_truck)
                     .setPriority(NotificationCompat.PRIORITY_HIGH)
                     .setAutoCancel(true)
                     .build()
                 
-                notificationManager.notify(NOTIFICATION_ID + 1, notification)
+                notificationManager.notify(ERROR_NOTIFICATION_ID, notification)
                 
                 // ✅ ADDED: Log analytics event for service failure
                 (context.applicationContext as? OutOfRouteApplication)?.logAnalyticsEvent(
@@ -311,10 +453,168 @@ class TripTrackingService : Service() {
             }
         }
     }
+
+    private fun updateTripEndingSignals(location: Location) {
+        val now = System.currentTimeMillis()
+        val previous = if (signalSamples.isNotEmpty()) signalSamples.last() else null
+        val deltaSeconds = if (previous != null) {
+            ((now - previous.timestampMillis).coerceAtLeast(1L)).toDouble() / 1000.0
+        } else {
+            1.0
+        }
+        val distanceFromPreviousMeters = if (previous != null) {
+            haversineMeters(
+                previous.latitude,
+                previous.longitude,
+                location.latitude,
+                location.longitude,
+            )
+        } else {
+            0.0
+        }
+        val derivedSpeedMph = if (previous != null && deltaSeconds > 0.0) {
+            (distanceFromPreviousMeters / deltaSeconds) * 2.23694
+        } else {
+            0.0
+        }
+        val hasDirectSpeed = location.hasSpeed()
+        val speedMph = if (hasDirectSpeed) location.speed * 2.237 else derivedSpeedMph
+        val sample = SignalSample(
+            timestampMillis = now,
+            latitude = location.latitude,
+            longitude = location.longitude,
+            speedMph = speedMph,
+            hasDirectSpeed = hasDirectSpeed,
+            bearingDeg = if (location.hasBearing()) location.bearing else null,
+            accuracyMeters = location.accuracy,
+        )
+        signalSamples.addLast(sample)
+        while (signalSamples.isNotEmpty() && now - signalSamples.first().timestampMillis > SIGNAL_WINDOW_MS) {
+            signalSamples.removeFirst()
+        }
+        if (tripOriginSample == null && location.accuracy <= 40f) {
+            tripOriginSample = sample
+        }
+        val speedDelta = if (previous != null) {
+            (sample.speedMph - previous.speedMph) / deltaSeconds
+        } else {
+            0.0
+        }
+
+        var rollingDistanceMeters = 0.0
+        var lastPoint: SignalSample? = null
+        for (point in signalSamples) {
+            if (lastPoint != null) {
+                rollingDistanceMeters += haversineMeters(
+                    lastPoint.latitude,
+                    lastPoint.longitude,
+                    point.latitude,
+                    point.longitude,
+                )
+            }
+            lastPoint = point
+        }
+
+        val bearings = signalSamples.mapNotNull { it.bearingDeg?.toDouble() }
+        val headingVariance = if (bearings.size >= 2) {
+            val avg = bearings.average()
+            bearings.map { abs(it - avg) }.average()
+        } else {
+            0.0
+        }
+
+        val origin = tripOriginSample
+        val distanceFromOrigin = if (origin != null) {
+            haversineMeters(origin.latitude, origin.longitude, sample.latitude, sample.longitude)
+        } else {
+            null
+        }
+        val nearOrigin = distanceFromOrigin != null && distanceFromOrigin <= ORIGIN_GEOFENCE_RADIUS_METERS
+        if (nearOrigin && speedMph <= ORIGIN_DWELL_MIN_SPEED_MPH) {
+            if (originDwellStartAtMillis == null) {
+                originDwellStartAtMillis = now
+            }
+        } else {
+            originDwellStartAtMillis = null
+        }
+        val dwellMillis = originDwellStartAtMillis?.let { (now - it).coerceAtLeast(0L) } ?: 0L
+        val lowMotionSampleCount =
+            signalSamples.count { point ->
+                point.speedMph <= STOP_DWELL_MAX_SPEED_MPH &&
+                    point.accuracyMeters <= STOP_DWELL_MAX_ACCURACY_METERS
+            }
+        val looksStopped =
+            speedMph <= STOP_DWELL_MAX_SPEED_MPH &&
+                rollingDistanceMeters <= STOP_DWELL_MAX_ROLLING_DISTANCE_METERS &&
+                location.accuracy <= STOP_DWELL_MAX_ACCURACY_METERS
+        if (looksStopped) {
+            if (sustainedStopStartAtMillis == null) {
+                sustainedStopStartAtMillis = now
+            }
+        } else {
+            sustainedStopStartAtMillis = null
+        }
+        val sustainedStopMillis = sustainedStopStartAtMillis?.let { (now - it).coerceAtLeast(0L) } ?: 0L
+
+        _geofenceContextSignal.value = GeofenceContextSignal(
+            originLat = origin?.latitude,
+            originLng = origin?.longitude,
+            distanceFromOriginMeters = distanceFromOrigin,
+            isNearOrigin = nearOrigin,
+            dwellInOriginMillis = dwellMillis,
+        )
+        _tripEndingSignalSnapshot.value = TripEndingSignalSnapshot(
+            speedMph = speedMph,
+            speedDeltaMphPerSec = speedDelta,
+            rollingDistanceMeters = rollingDistanceMeters,
+            headingVarianceDeg = headingVariance,
+            gpsAccuracyMeters = location.accuracy,
+            hasDirectSpeed = hasDirectSpeed,
+            lowMotionSampleCount = lowMotionSampleCount,
+            sustainedStopMillis = sustainedStopMillis,
+            sampleCount = signalSamples.size,
+            evaluatedAtMillis = now,
+        )
+
+        if (
+            tripEndPromptState == TripEndPromptState.ENDING_DETECTED &&
+            (speedMph > 8.0 || _activityTransitionSignal.value.inVehicleConfidence >= 85)
+        ) {
+            tripEndPromptState = TripEndPromptState.IN_PROGRESS
+            updateNotification(currentTripNotificationText())
+        }
+    }
+
+    private fun haversineMeters(
+        lat1: Double,
+        lon1: Double,
+        lat2: Double,
+        lon2: Double,
+    ): Double {
+        val earthRadius = ValidationConfig.EARTH_RADIUS_METERS
+        val dLat = Math.toRadians(lat2 - lat1)
+        val dLon = Math.toRadians(lon2 - lon1)
+        val a = kotlin.math.sin(dLat / 2) * kotlin.math.sin(dLat / 2) +
+            kotlin.math.cos(Math.toRadians(lat1)) * kotlin.math.cos(Math.toRadians(lat2)) *
+            kotlin.math.sin(dLon / 2) * kotlin.math.sin(dLon / 2)
+        val c = 2 * kotlin.math.atan2(kotlin.math.sqrt(a), kotlin.math.sqrt(1 - a))
+        return earthRadius * c
+    }
     
     // ✅ REFACTORED: This is the new, cleaner location update logic with vehicle-specific validation.
     private fun updateLocation(location: Location) {
         try {
+            // ✅ Drive-state: maintain recent location history for highway-context lookback.
+            lastLocation?.let { prev ->
+                locationHistory.addLast(prev)
+                while (locationHistory.size > driveStateHistoryMaxSize) locationHistory.removeFirst()
+                val nowMs = System.currentTimeMillis()
+                while (locationHistory.isNotEmpty() && locationHistory.first().time < nowMs - driveStateHistoryMaxAgeMs) {
+                    locationHistory.removeFirst()
+                }
+            }
+            updateTripEndingSignals(location)
+
             // ✅ NEW: Track GPS metadata for accuracy auditing
             totalGpsPoints++
             totalGpsAccuracy += location.accuracy.toDouble()
@@ -341,17 +641,31 @@ class TripTrackingService : Service() {
             val validatedDistanceInMeters = locationValidationService.getValidatedVehicleDistance(location, lastLocation)
 
             if (validatedDistanceInMeters > 0) {
-                // The distance is valid, add it to the total IF NOT PAUSED
-                // Conversion from meters to miles happens here.
+                // ✅ Drive-state: classify so we only count miles when driving (auto-exclude walking/stationary).
+                val currentDriveState = driveStateClassifier.classify(
+                    location,
+                    lastLocation,
+                    if (locationHistory.isEmpty()) null else locationHistory.toList()
+                )
+                val previousState = _driveState.value
+                if (currentDriveState != previousState) {
+                    Log.d(TAG, "Drive state transition: ${previousState.name} -> ${currentDriveState.name} at ${System.currentTimeMillis()}")
+                }
+                _driveState.value = currentDriveState
+
+                // The distance is valid; add it to the total IF NOT PAUSED AND driving (not walking/stationary).
                 val distanceInMiles = validatedDistanceInMeters / 1609.34
-                
-                // ✅ CRITICAL FIX: Only accumulate distance if trip is not paused
-                if (!isPaused) {
+                val shouldAccumulate = !isPaused && currentDriveState == DriveState.DRIVING
+
+                if (shouldAccumulate) {
                     totalDistance += distanceInMiles
                     validGpsPoints++
                 } else {
-                    // Trip is paused - log but don't accumulate distance
-                    Log.d(TAG, "Location update received while paused - distance not accumulated")
+                    if (isPaused) {
+                        Log.d(TAG, "Location update received while paused - distance not accumulated")
+                    } else {
+                        Log.d(TAG, "Drive state ${currentDriveState.name} - distance not accumulated (auto-exclude)")
+                    }
                     rejectedGpsPoints++
                 }
                 
@@ -397,7 +711,7 @@ class TripTrackingService : Service() {
             val oorMiles = totalDistance - dispatchedMiles
 
             _tripMetrics.value = TripMetrics(totalDistance, oorMiles)
-            updateNotification("Total: ${String.format(Locale.US, "%.1f", totalDistance)} mi, OOR: ${String.format(Locale.US, "%.1f", oorMiles)} mi")
+            updateNotification(currentTripNotificationText())
             
             // ✅ NEW: Broadcast real-time GPS data to UI
             broadcastRealTimeGpsData(location)
@@ -414,9 +728,9 @@ class TripTrackingService : Service() {
     // ❌ REMOVED: isLocationValid is no longer needed as the logic is centralized 
     // in LocationValidationService.getValidatedDistance
     
-    private fun handleLocationValidationFailure(location: Location) {
+    private fun handleLocationValidationFailure(_location: Location) {
         consecutiveErrors++
-        val errorMessage = "Invalid location received: lat=${location.latitude}, lng=${location.longitude}"
+        val errorMessage = "Invalid location received from provider"
         Log.w(TAG, errorMessage)
         
         if (consecutiveErrors >= maxConsecutiveErrors) {
@@ -431,7 +745,7 @@ class TripTrackingService : Service() {
         if (consecutiveErrors >= maxConsecutiveErrors) {
             val errorMessage = "Trip tracking may be inaccurate: $message"
             updateServiceState(false, errorMessage)
-            notifyUserOfServiceFailure(this, errorMessage)
+            // Keep pull-down status clean during active trips; recover in background and log only.
             
             // ✅ NEW: Attempt GPS recovery before giving up
             attemptGpsRecovery()
@@ -503,6 +817,10 @@ class TripTrackingService : Service() {
             repository = (application as OutOfRouteApplication).tripRepository
             tripCalculationService = TripCalculationService()
             locationValidationService = LocationValidationService()
+            val driveDetectConfig = DriveDetectConfig.from(
+                getSharedPreferences("app_settings", Context.MODE_PRIVATE)
+            )
+            driveStateClassifier = DriveStateClassifier(config = driveDetectConfig)
             
             createNotificationChannel()
             updateServiceState(true, null)
@@ -536,10 +854,19 @@ class TripTrackingService : Service() {
             
             when (intent.action) {
                 ACTION_START_TRIP -> {
+                    // S3: Do not start location tracking without permission
+                    if (!hasLocationPermission()) {
+                        Log.w(TAG, "Location permission not granted; refusing to start tracking")
+                        stopSelf()
+                        return START_NOT_STICKY
+                    }
                     loadedMiles = intent.getDoubleExtra("EXTRA_LOADED_MILES", 0.0)
                     bounceMiles = intent.getDoubleExtra("EXTRA_BOUNCE_MILES", 0.0)
                     // If resuming a recovered trip, seed totalDistance
                     totalDistance = intent.getDoubleExtra(EXTRA_INITIAL_TOTAL_MILES, totalDistance)
+                    driveStateClassifier.reset()
+                    locationHistory.clear()
+                    _driveState.value = DriveState.DRIVING
                     startTrip()
                 }
                 ACTION_END_TRIP -> {
@@ -550,6 +877,17 @@ class TripTrackingService : Service() {
                 }
                 ACTION_RESUME_TRIP -> {
                     resumeTrip()
+                }
+                ACTION_TRIP_ENDING_DETECTED -> {
+                    tripEndPromptState = TripEndPromptState.ENDING_DETECTED
+                    updateNotification(currentTripNotificationText())
+                }
+                ACTION_TRIP_CONTINUE_CONFIRMED -> {
+                    tripEndPromptState = TripEndPromptState.USER_CONTINUED_COOLDOWN
+                    updateNotification(currentTripNotificationText())
+                }
+                ACTION_ACTIVITY_TRANSITION_UPDATE -> {
+                    handleActivityTransitionIntent(intent)
                 }
                 "TIMEZONE_CHANGED" -> {
                     handleTimeZoneChange()
@@ -579,6 +917,7 @@ class TripTrackingService : Service() {
     
     /**
      * ✅ NEW (#14): Handle service restart after system kill
+     * Ensures notification and status-bar icon are reloaded so they appear after app shutdown or crash.
      */
     private fun handleServiceRestart() {
         try {
@@ -589,21 +928,49 @@ class TripTrackingService : Service() {
             val wasTracking = prefs.getBoolean("was_tracking", false)
             
             if (wasTracking) {
+                // S3: Do not resume location tracking without permission
+                if (!hasLocationPermission()) {
+                    Log.w(TAG, "Location permission not granted; clearing restored trip state")
+                    clearServiceState()
+                    stopSelf()
+                    return
+                }
                 // Restore trip parameters
                 loadedMiles = prefs.getFloat("loaded_miles", 0f).toDouble()
                 bounceMiles = prefs.getFloat("bounce_miles", 0f).toDouble()
                 totalDistance = prefs.getFloat("total_distance", 0f).toDouble()
                 
-                Log.i(TAG, "✅ Restored trip state: loaded=$loadedMiles, bounce=$bounceMiles, distance=$totalDistance")
+                Log.i(TAG, "Restored trip service state after restart")
                 
-                // Show notification to user
-                val notification = createNotification(
-                    "⚠️ Trip Restored - Tracking resumed after service restart"
-                )
+                // Reload notification and tiny icon: ensure channel exists, clear stale notifications, then show foreground.
+                // (Tiny icon = status-bar small icon; pull-down = same notification in shade. See docs/NOTIFICATION_FEATURES.md.)
+                tripEndPromptState = TripEndPromptState.IN_PROGRESS
+                createNotificationChannel()
+                if (!canPostNotifications()) {
+                    markNotificationGuidanceNeeded()
+                    Log.w(TAG, "Trip notifications blocked after restart")
+                } else {
+                    val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+                    notificationManager.cancel(COMPLETION_NOTIFICATION_ID)
+                    notificationManager.cancel(ERROR_NOTIFICATION_ID)
+                    TripEndedOverlayService.cancelStaleNotifications(this)
+                }
+                val notification = createNotification(currentTripNotificationText())
                 startForeground(NOTIFICATION_ID, notification)
                 
+                // Restore service state so UI and metrics are consistent
+                _tripMetrics.value = TripMetrics(totalDistance, 0.0)
+                serviceState = serviceState.copy(isRunning = true, isHealthy = true, lastError = null)
+                _serviceState.value = serviceState
+                
                 // Resume tracking
+                startActivityTransitionUpdates()
                 startLocationUpdates()
+                
+                // Restart overlay monitoring so trip-ended detection works again after crash
+                TripEndedOverlayService.startWhenTripActive(this)
+                
+                Log.d(TAG, "Notification and tracking restored after restart")
             } else {
                 Log.d(TAG, "No active trip to restore")
             }
@@ -622,15 +989,20 @@ class TripTrackingService : Service() {
      */
     private fun saveServiceState() {
         try {
-            getSharedPreferences("trip_service_state", Context.MODE_PRIVATE).edit().apply {
-                putBoolean("was_tracking", true)
-                putFloat("loaded_miles", loadedMiles.toFloat())
-                putFloat("bounce_miles", bounceMiles.toFloat())
-                putFloat("total_distance", totalDistance.toFloat())
-                putLong("start_time", System.currentTimeMillis())
-                apply()
+            val success =
+                getSharedPreferences("trip_service_state", Context.MODE_PRIVATE).edit().run {
+                    putBoolean("was_tracking", true)
+                    putFloat("loaded_miles", loadedMiles.toFloat())
+                    putFloat("bounce_miles", bounceMiles.toFloat())
+                    putFloat("total_distance", totalDistance.toFloat())
+                    putLong("start_time", System.currentTimeMillis())
+                    commit()
+                }
+            if (success) {
+                Log.d(TAG, "Service state saved for recovery")
+            } else {
+                Log.e(TAG, "Failed to save service state for recovery")
             }
-            Log.d(TAG, "Service state saved for recovery")
         } catch (e: Exception) {
             Log.e(TAG, "Error saving service state", e)
         }
@@ -641,8 +1013,16 @@ class TripTrackingService : Service() {
      */
     private fun clearServiceState() {
         try {
-            getSharedPreferences("trip_service_state", Context.MODE_PRIVATE).edit {clear()}
-            Log.d(TAG, "Service state cleared")
+            val success =
+                getSharedPreferences("trip_service_state", Context.MODE_PRIVATE).edit().run {
+                    clear()
+                    commit()
+                }
+            if (success) {
+                Log.d(TAG, "Service state cleared")
+            } else {
+                Log.e(TAG, "Failed to clear service state")
+            }
         } catch (e: Exception) {
             Log.e(TAG, "Error clearing service state", e)
         }
@@ -657,6 +1037,122 @@ class TripTrackingService : Service() {
         _serviceState.value = serviceState
     }
 
+    /** S3: Check location permission before starting/resuming GPS tracking. */
+    private fun hasLocationPermission(): Boolean {
+        val fine = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+        val coarse = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
+        return fine && coarse
+    }
+
+    private fun hasActivityRecognitionPermission(): Boolean {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return true
+        return ContextCompat.checkSelfPermission(
+            this,
+            Manifest.permission.ACTIVITY_RECOGNITION,
+        ) == PackageManager.PERMISSION_GRANTED
+    }
+
+    private fun createActivityTransitionPendingIntent(): PendingIntent {
+        val transitionIntent = Intent(this, TripTrackingService::class.java).apply {
+            action = ACTION_ACTIVITY_TRANSITION_UPDATE
+        }
+        return PendingIntent.getService(
+            this,
+            ACTIVITY_TRANSITION_REQUEST_CODE,
+            transitionIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+        )
+    }
+
+    private fun startActivityTransitionUpdates() {
+        if (!hasActivityRecognitionPermission()) {
+            Log.i(TAG, "Activity recognition permission not granted; detector will use fallback signals")
+            _activityTransitionSignal.value = ActivityTransitionSignal(source = "permission_denied")
+            return
+        }
+        val request = ActivityTransitionRequest(
+            listOf(
+                ActivityTransition.Builder()
+                    .setActivityType(DetectedActivity.IN_VEHICLE)
+                    .setActivityTransition(ActivityTransition.ACTIVITY_TRANSITION_ENTER)
+                    .build(),
+                ActivityTransition.Builder()
+                    .setActivityType(DetectedActivity.IN_VEHICLE)
+                    .setActivityTransition(ActivityTransition.ACTIVITY_TRANSITION_EXIT)
+                    .build(),
+                ActivityTransition.Builder()
+                    .setActivityType(DetectedActivity.STILL)
+                    .setActivityTransition(ActivityTransition.ACTIVITY_TRANSITION_ENTER)
+                    .build(),
+                ActivityTransition.Builder()
+                    .setActivityType(DetectedActivity.STILL)
+                    .setActivityTransition(ActivityTransition.ACTIVITY_TRANSITION_EXIT)
+                    .build(),
+            ),
+        )
+        val pendingIntent = createActivityTransitionPendingIntent()
+        activityTransitionPendingIntent = pendingIntent
+        try {
+            activityRecognitionClient
+                .requestActivityTransitionUpdates(request, pendingIntent)
+                .addOnSuccessListener {
+                    Log.d(TAG, "Activity recognition transition updates started")
+                }
+                .addOnFailureListener { error ->
+                    Log.w(TAG, "Activity recognition transition registration failed", error)
+                }
+        } catch (se: SecurityException) {
+            Log.w(TAG, "No permission for activity transitions", se)
+            _activityTransitionSignal.value = ActivityTransitionSignal(source = "security_exception")
+        }
+    }
+
+    private fun stopActivityTransitionUpdates() {
+        val pendingIntent = activityTransitionPendingIntent ?: return
+        try {
+            activityRecognitionClient
+                .removeActivityTransitionUpdates(pendingIntent)
+                .addOnFailureListener { error ->
+                    Log.w(TAG, "Failed to remove activity transition updates", error)
+                }
+        } catch (se: SecurityException) {
+            Log.w(TAG, "No permission for activity transitions (remove)", se)
+        }
+        activityTransitionPendingIntent = null
+    }
+
+    private fun handleActivityTransitionIntent(intent: Intent) {
+        if (!ActivityTransitionResult.hasResult(intent)) return
+        val result = ActivityTransitionResult.extractResult(intent) ?: return
+        for (event in result.transitionEvents) {
+            val previous = _activityTransitionSignal.value
+            val updated = when (event.activityType) {
+                DetectedActivity.IN_VEHICLE -> {
+                    val active = event.transitionType == ActivityTransition.ACTIVITY_TRANSITION_ENTER
+                    previous.copy(
+                        inVehicleActive = active,
+                        inVehicleConfidence = if (active) 90 else 20,
+                        stillConfidence = if (active) 15 else previous.stillConfidence,
+                        lastTransitionAtMillis = event.elapsedRealTimeNanos / 1_000_000L,
+                        source = "transition_api",
+                    )
+                }
+                DetectedActivity.STILL -> {
+                    val active = event.transitionType == ActivityTransition.ACTIVITY_TRANSITION_ENTER
+                    previous.copy(
+                        stillActive = active,
+                        stillConfidence = if (active) 90 else 20,
+                        inVehicleConfidence = if (active) 10 else previous.inVehicleConfidence,
+                        lastTransitionAtMillis = event.elapsedRealTimeNanos / 1_000_000L,
+                        source = "transition_api",
+                    )
+                }
+                else -> previous
+            }
+            _activityTransitionSignal.value = updated
+        }
+    }
+
     private fun startTrip() {
         try {
             // ✅ FIX: Preserve seeded totalDistance for trip recovery
@@ -665,12 +1161,20 @@ class TripTrackingService : Service() {
             val preserveDistance = totalDistance > 0.0
             val seededDistance = if (preserveDistance) totalDistance else 0.0
             
-            Log.d(TAG, "Starting trip with loaded: $loadedMiles, bounce: $bounceMiles, ${if (preserveDistance) "resuming from ${seededDistance}mi" else "starting fresh"}")
+            Log.d(TAG, "Starting trip tracking")
             
             totalDistance = seededDistance
             lastLocation = null
             lastUpdateTime = System.currentTimeMillis()
             consecutiveErrors = 0
+            isPaused = false
+            signalSamples.clear()
+            tripOriginSample = null
+            originDwellStartAtMillis = null
+            sustainedStopStartAtMillis = null
+            _tripEndingSignalSnapshot.value = TripEndingSignalSnapshot()
+            _geofenceContextSignal.value = GeofenceContextSignal()
+            _activityTransitionSignal.value = ActivityTransitionSignal(source = "fallback")
             
             // ✅ NEW: Initialize GPS metadata tracking
             totalGpsPoints = 0
@@ -690,6 +1194,7 @@ class TripTrackingService : Service() {
             speedReadings = 0
             tripStartTime = System.currentTimeMillis()
             interruptionCount = 0
+            tripEndPromptState = TripEndPromptState.IN_PROGRESS
             
             // ✅ FIX: Initialize metrics with seeded distance for trip recovery
             _tripMetrics.value = TripMetrics(totalDistance, 0.0)
@@ -701,7 +1206,19 @@ class TripTrackingService : Service() {
             )
             _serviceState.value = serviceState
             
-            startForeground(NOTIFICATION_ID, createNotification("Trip in progress..."))
+            if (!canPostNotifications()) {
+                markNotificationGuidanceNeeded()
+                Log.w(TAG, "Trip notifications blocked by system permission/settings")
+            }
+            val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            // Clear stale, one-shot notifications from previous runs.
+            notificationManager.cancel(COMPLETION_NOTIFICATION_ID)
+            notificationManager.cancel(ERROR_NOTIFICATION_ID)
+            // Clear overlay/fallback "trip ended" notifications so they don't linger over the new "trip in progress".
+            TripEndedOverlayService.cancelStaleNotifications(this)
+
+            startForeground(NOTIFICATION_ID, createNotification(currentTripNotificationText()))
+            startActivityTransitionUpdates()
             startLocationUpdates()
             
             Log.d(TAG, "Trip started successfully with GPS metadata tracking")
@@ -722,23 +1239,22 @@ class TripTrackingService : Service() {
 
     private fun stopTrip() {
         try {
-            Log.d(TAG, "Stopping trip - totalDistance: $totalDistance miles")
+            Log.d(TAG, "Stopping trip tracking")
+
+            // ✅ Drive-state: reset classifier and history for next trip.
+            driveStateClassifier.reset()
+            locationHistory.clear()
+            _driveState.value = DriveState.DRIVING
             
             // ✅ NEW (#14): Clear persisted state when trip ends normally
             clearServiceState()
             
-            // Log final trip calculations for verification
+            // Keep release logs high-level so trip-specific data is not exposed in Logcat.
             val dispatchedMiles = loadedMiles + bounceMiles
             val oorMiles = totalDistance - dispatchedMiles
             val oorPercentage = if (dispatchedMiles > 0) (oorMiles / dispatchedMiles) * 100 else 0.0
-            
-            Log.d(TAG, "Final trip calculations:")
-            Log.d(TAG, "  - Loaded miles: $loadedMiles")
-            Log.d(TAG, "  - Bounce miles: $bounceMiles")
-            Log.d(TAG, "  - Dispatched miles: $dispatchedMiles")
-            Log.d(TAG, "  - Actual miles: $totalDistance")
-            Log.d(TAG, "  - OOR miles: $oorMiles")
-            Log.d(TAG, "  - OOR percentage: ${String.format(Locale.US, "%.2f%%", oorPercentage)}")
+
+            Log.d(TAG, "Final trip calculations completed successfully")
             
             // ✅ ADDED: Log trip completion analytics
             (application as? OutOfRouteApplication)?.logAnalyticsEvent(
@@ -756,10 +1272,22 @@ class TripTrackingService : Service() {
             // The ViewModel will call saveCurrentTrip() if the user chooses to save
             
             _tripMetrics.value = TripMetrics(0.0, 0.0) // Reset metrics
+            tripEndPromptState = TripEndPromptState.TRIP_ENDED
+            stopActivityTransitionUpdates()
+            signalSamples.clear()
+            tripOriginSample = null
+            originDwellStartAtMillis = null
+            sustainedStopStartAtMillis = null
+            _tripEndingSignalSnapshot.value = TripEndingSignalSnapshot()
+            _geofenceContextSignal.value = GeofenceContextSignal()
+            _activityTransitionSignal.value = ActivityTransitionSignal(source = "fallback")
             serviceState = serviceState.copy(isRunning = false, isHealthy = true, lastError = null)
             _serviceState.value = serviceState
+            val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            notificationManager.cancel(ERROR_NOTIFICATION_ID)
             
             stopLocationUpdates()
+            postTripEndedCompletionNotification()
             stopForeground(STOP_FOREGROUND_REMOVE)
             stopSelf()
             
@@ -788,8 +1316,8 @@ class TripTrackingService : Service() {
             
             isPaused = true
             
-            // Update notification to show paused state
-            updateNotification("Trip PAUSED - Total: ${String.format(Locale.US, "%.1f", totalDistance)} mi")
+            // Keep pull-down text fixed per product requirement.
+            updateNotification(currentTripNotificationText())
             
             Log.d(TAG, "Trip paused successfully - distance accumulation stopped")
         } catch (e: Exception) {
@@ -810,10 +1338,8 @@ class TripTrackingService : Service() {
             
             isPaused = false
             
-            // Update notification to show active state
-            val dispatchedMiles = loadedMiles + bounceMiles
-            val oorMiles = totalDistance - dispatchedMiles
-            updateNotification("Total: ${String.format(Locale.US, "%.1f", totalDistance)} mi, OOR: ${String.format(Locale.US, "%.1f", oorMiles)} mi")
+            // Keep pull-down text fixed per product requirement.
+            updateNotification(currentTripNotificationText())
             
             Log.d(TAG, "Trip resumed successfully - distance accumulation resumed")
         } catch (e: Exception) {
@@ -863,31 +1389,77 @@ class TripTrackingService : Service() {
         }
     }
 
-    private fun createNotification(text: String) = NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
-        .setContentTitle("Out of Route Buddy")
-        .setContentText(text)
-        .setSmallIcon(R.drawable.ic_notification)
-        .setOngoing(true)
-        .build()
+    /**
+     * Builds the foreground notification shown in the system pull-down (notification shade).
+     * Title and content text come from string resources; tap opens MainActivity, and when
+     * the notification shows "Trip ending", tap opens directly to the "End trip?" dialog.
+     */
+    private fun createNotification(
+        text: String,
+        promptState: TripEndPromptState = tripEndPromptState,
+    ): android.app.Notification {
+        val contentIntent = Intent(this, MainActivity::class.java).apply {
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+            if (promptState == TripEndPromptState.ENDING_DETECTED) {
+                putExtra(TripEndedOverlayService.EXTRA_OPEN_TRIP_ENDED_DIALOG, true)
+            }
+        }
+        val pendingIntent = PendingIntent.getActivity(
+            this,
+            0,
+            contentIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+        )
+        return NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
+            .setContentTitle(getString(R.string.notification_trip_title))
+            .setContentText(text)
+            .setSmallIcon(R.drawable.ic_notification_truck)
+            .setBadgeIconType(NotificationCompat.BADGE_ICON_NONE)
+            .setNumber(0)
+            .setContentIntent(pendingIntent)
+            .setOngoing(true)
+            .setOnlyAlertOnce(true)
+            .setSilent(true)
+            .setPriority(NotificationCompat.PRIORITY_LOW)
+            .build()
+    }
 
     private fun updateNotification(text: String) {
         try {
+            if (!canPostNotifications()) {
+                markNotificationGuidanceNeeded()
+                Log.w(TAG, "Skipping notification update; notifications blocked")
+                return
+            }
             val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-            notificationManager.notify(NOTIFICATION_ID, createNotification(text))
+            notificationManager.notify(NOTIFICATION_ID, createNotification(text, tripEndPromptState))
         } catch (e: Exception) {
             Log.e(TAG, "Failed to update notification", e)
         }
     }
 
+    private fun currentTripNotificationText(): String {
+        return resolveNotificationText(
+            promptState = tripEndPromptState.name,
+            inProgressText = getString(R.string.trip_notification_in_progress),
+            endingText = getString(R.string.trip_notification_ending),
+        )
+    }
+
     private fun createNotificationChannel() {
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                val manager = getSystemService(NotificationManager::class.java)
                 val serviceChannel = NotificationChannel(
                     NOTIFICATION_CHANNEL_ID,
                     "Trip Tracking Channel",
-                    NotificationManager.IMPORTANCE_DEFAULT
-                )
-                val manager = getSystemService(NotificationManager::class.java)
+                    NotificationManager.IMPORTANCE_LOW
+                ).apply {
+                    setShowBadge(false)
+                    enableVibration(false)
+                    // Foreground tracking status should be silent while still visible.
+                    setSound(null as Uri?, null as AudioAttributes?)
+                }
                 manager.createNotificationChannel(serviceChannel)
                 Log.d(TAG, "Notification channel created")
             }
@@ -895,10 +1467,60 @@ class TripTrackingService : Service() {
             Log.e(TAG, "Failed to create notification channel", e)
         }
     }
+
+    private fun canPostNotifications(): Boolean {
+        if (!NotificationManagerCompat.from(this).areNotificationsEnabled()) return false
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            val granted = ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) == PackageManager.PERMISSION_GRANTED
+            if (!granted) return false
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val manager = getSystemService(NotificationManager::class.java)
+            val channel = manager.getNotificationChannel(NOTIFICATION_CHANNEL_ID)
+            if (channel != null && channel.importance == NotificationManager.IMPORTANCE_NONE) {
+                return false
+            }
+        }
+        return true
+    }
+
+    private fun markNotificationGuidanceNeeded() {
+        val prefs: SharedPreferences = getSharedPreferences(PREFS_NOTIFICATION_GUIDANCE, Context.MODE_PRIVATE)
+        prefs.edit { putBoolean(KEY_NEEDS_NOTIFICATION_GUIDANCE, true) }
+    }
+
+    private fun postTripEndedCompletionNotification() {
+        if (!canPostNotifications()) return
+        val contentIntent = Intent(this, MainActivity::class.java).apply {
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+        }
+        val pendingIntent = PendingIntent.getActivity(
+            this,
+            1,
+            contentIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        val notification = NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
+            .setContentTitle(getString(R.string.notification_trip_title))
+            .setContentText(getString(R.string.trip_notification_ended))
+            .setSmallIcon(R.drawable.ic_notification_truck)
+            .setBadgeIconType(NotificationCompat.BADGE_ICON_NONE)
+            .setNumber(0)
+            .setContentIntent(pendingIntent)
+            .setAutoCancel(true)
+            .setOngoing(false)
+            .build()
+        val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager.notify(COMPLETION_NOTIFICATION_ID, notification)
+    }
     
     override fun onDestroy() {
         try {
             Log.d(TAG, "TripTrackingService onDestroy")
+            stopActivityTransitionUpdates()
             stopLocationUpdates()
             super.onDestroy()
         } catch (e: Exception) {

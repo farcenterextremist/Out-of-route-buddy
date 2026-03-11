@@ -10,11 +10,10 @@ This document summarizes the security plan produced by the comprehensive Purple 
 
 ## 1. Overview
 
-The security plan covers three attack surfaces:
+The security plan covers the main attack surfaces in the shipped app:
 
-1. **Sync Service API** — Local dev tool (`scripts/emulator-sync-service/sync_service.py`) exposing GET `/design` and POST `/sync`
-2. **Android Service Boundaries** — Internal service communication (TripRepository, TripStateManager, UnifiedLocationService, etc.)
-3. **Export/Delete Flows** — Trip export and delete (covered in 2025-02-22 exercise)
+1. **Android Service Boundaries** — Internal service communication (TripRepository, TripStateManager, UnifiedLocationService, etc.)
+2. **Export/Delete Flows** — Trip export and delete (covered in 2025-02-22 exercise)
 
 ---
 
@@ -24,32 +23,24 @@ The security plan covers three attack surfaces:
 |------|----------------|
 | **Coordinator** | Orchestrate exercise; assign Security Specialist, Red Team, Blue Team, Back-end, DevOps, QA |
 | **Security Specialist** | Attack surface summary; threat model; SECURITY_NOTES updates |
-| **Red Team** | Simulate attacks (Technical Ninja: sync API, service boundaries) |
+| **Red Team** | Simulate attacks against app boundaries and data flows |
 | **Blue Team** | Check alarms; propose and document remediations |
-| **Back-end** | Implement sync service hardening; trip insert audit |
-| **DevOps** | Sync service config (if needed) |
+| **Back-end** | Implement validation and audit improvements |
+| **DevOps** | Build and release pipeline support where needed |
 | **QA** | Security regression tests (optional) |
 
 ---
 
 ## 3. Implemented Remediations
 
-### 3.1 Sync Service (scripts/emulator-sync-service/sync_service.py)
-
-| Control | Implementation |
-|---------|----------------|
-| Key allowlist | `validate_design_keys()` rejects design with any path not in `EMULATOR_TO_PROJECT` |
-| Request size limit | 64KB max body; returns 413 if exceeded |
-| Audit log | `[SyncServiceAudit] sync_requested applied=N keys=...` on successful sync |
-
-### 3.2 Android Service Boundaries
+### 3.1 Android Service Boundaries
 
 | Control | Implementation |
 |---------|----------------|
 | Trip insert audit | `Log.w("TripInsertAudit", "trip_inserted trip_id=$tripId result=true")` in TripRepository |
 | Validation layers | Trip init, InputValidator, ValidationFramework, entity validation (existing) |
 
-### 3.3 Export/Delete (2025-02-22)
+### 3.2 Export/Delete (2025-02-22)
 
 | Control | Implementation |
 |---------|----------------|
@@ -63,26 +54,18 @@ The security plan covers three attack surfaces:
 
 | Endpoint | Method | Auth | Hardening |
 |----------|--------|------|-----------|
-| `/design` | GET | None | Local only (127.0.0.1); info disclosure risk if exposed |
-| `/sync` | POST | None | Key allowlist, 64KB limit, SyncServiceAudit |
-
-**Note:** Sync service is for local dev only. Optional future hardening: API key/token via `OORB_SYNC_TOKEN` env var (document in SECURITY_NOTES if adopted).
+No custom local sync endpoints are currently part of the active toolchain.
 
 ---
 
 ## 5. Worker-to-Worker Attack Simulations
 
-### 5.1 Sync API (external process → sync service)
-
-- **Attack:** Malicious POST to `http://127.0.0.1:8765/sync` with oversized payload or unknown keys
-- **Mitigation:** 413 for oversized; 400 for unknown keys; audit log for detection
-
-### 5.2 Android Services (ViewModel → Repository)
+### 5.1 Android Services (ViewModel → Repository)
 
 - **Attack:** Malicious trip data (NaN, negative values) flowing to TripRepository
 - **Mitigation:** Trip init, InputValidator, ValidationFramework reject; TripInsertAudit for detection
 
-### 5.3 Agent vs Agent (Red Team → Blue Team)
+### 5.2 Agent vs Agent (Red Team → Blue Team)
 
 - **Purple protocol:** Red attacks; Blue checks "Did the alarm go off?"; Blue remediates if not; proof of work logged
 
@@ -94,11 +77,9 @@ The security plan covers three attack surfaces:
 |-------------|----------|
 | Attack surface summary | `docs/agents/data-sets/security-exercises/artifacts/2025-02-20-attack-surface-summary.md` |
 | Purple exercise log | `docs/agents/data-sets/security-exercises/2025-02-20-security-plan.md` |
-| Sync service hardening | `scripts/emulator-sync-service/sync_service.py` |
 | Trip insert audit | `app/.../data/repository/TripRepository.kt` |
 | SECURITY_NOTES updates | `docs/security/SECURITY_NOTES.md` (Sections 6, 7) |
 | Proof of work | `docs/agents/security-team-proof-of-work.md` |
-| Sync service tests | `scripts/emulator-sync-service/test_sync_service.py` |
 
 ---
 
@@ -120,9 +101,9 @@ The security plan covers three attack surfaces:
 | Secrets Management | 4/5 | .env gitignored; google-services.json committed (GCP-restricted) |
 | Data Protection | 3/5 | Room in app-private storage; StandaloneOfflineService key in prefs (S-1) |
 | Permissions | 5/5 | Minimal, justified; runtime requests |
-| Input Validation | 5/5 | Multi-layer validation; sync key allowlist |
-| Network Security | 5/5 | No PII transmission; sync local-only |
-| Audit Logging | 4/5 | Trip/export/delete/sync audits |
+| Input Validation | 5/5 | Multi-layer validation across domain, repository, and framework layers |
+| Network Security | 5/5 | No PII transmission in the shipped app |
+| Audit Logging | 4/5 | Trip/export/delete audits |
 | Dependency Security | 4/5 | Official repos; regular updates recommended |
 | Documentation | 5/5 | SECURITY_NOTES, SECURITY_PLAN, Purple artifacts |
 
@@ -135,8 +116,7 @@ The security plan covers three attack surfaces:
 | S-1 | StandaloneOfflineService stores AES key in SharedPreferences | Medium | Migrate to Android Keystore (KeyStore + EncryptedSharedPreferences) for key storage |
 | S-2 | SharedPreferences for trip state/prefs not encrypted | Low | Consider EncryptedSharedPreferences for trip state and sensitive prefs |
 | S-3 | Firebase API key in google-services.json | Low | Verify GCP restrictions (Android package, API limits); document in SECURITY_NOTES |
-| S-4 | Sync service has no auth (local-only) | Low | Optional: add OORB_SYNC_TOKEN env var for stricter setups |
-| S-5 | PII in logs risk | Low | Enforce no-coordinate logging; add pre-commit or CI check for log patterns |
+| S-4 | PII in logs risk | Low | **L1 (implemented):** AppLogger used in MainActivity, TripPersistenceManager, OfflineDataManager, PreferencesManager; debug/verbose no-op in release; warn/error messages must not contain PII. See docs/technical/LOGGING_POLICY.md. |
 
 ---
 

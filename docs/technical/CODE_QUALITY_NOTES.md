@@ -12,8 +12,7 @@ Notes from Phase 4a code quality cleanup (Project Health Improvement Plan).
 ## util vs utils Package
 
 - **util/:** Core utilities (PerformanceTracker, InputValidator, TripExporter, etc.)
-- **utils/:** Formatters and extensions (DistanceFormatter, DateExtensions)
-- **Action:** Documented; optional future consolidation into `util/` to avoid breaking changes in one pass.
+- **utils/:** Extensions (e.g. DateExtensions). DistanceFormatter was removed; optional future consolidation into `util/` to avoid breaking changes in one pass.
 
 ## Legacy Naming
 
@@ -27,7 +26,8 @@ Notes from Phase 4a code quality cleanup (Project Health Improvement Plan).
 | Location | Notes |
 |----------|-------|
 | `TripStatePersistence.saveCompletedTrip()` | Unused; `TripInputViewModel.endTrip()` uses `TripRepository.insertTrip(trip)` instead. Retain if GPS-metadata path is needed later, or remove. |
-| `TripStatePersistence.autoSaveTripState()` | No-op; kept for API compatibility. `TripPersistenceManager` handles auto-save. |
+| `TripStatePersistence.autoSaveTripState()` | **Removed (R2).** Was no-op; `TripPersistenceManager` handles auto-save via `saveTripState()`. |
+| **OfflineDataManager.saveOfflineStorage()** | Save failure is log-only; no callback or UI. Retry effectively on next init. Optional: add Flow/callback for save failure and wire in sync status UI (Weakest Areas plan Phase 2.4). |
 
 ## Detekt
 
@@ -38,6 +38,7 @@ Notes from Phase 4a code quality cleanup (Project Health Improvement Plan).
 ## Future Cleanup
 
 - Run `./gradlew lint` and address remaining issues before setting `abortOnError = true`.
+- **Logging policy (L1, Weakest Areas Phase 4.2):** In release, strip or gate verbose `android.util.Log` (e.g. guard with `BuildConfig.DEBUG` or log level). **Implemented as pattern:** MainActivity, OfflineDataManager, and TripPersistenceManager use a `debugLog(msg)` helper that only calls `Log.d` when `BuildConfig.DEBUG` is true. Apply the same pattern in other heavy Log users as follow-up. See QUALITY_AND_ROBUSTNESS_PLAN L1. **PII:** Do not log coordinates, trip IDs that could be linked to a user, or other PII; see docs/security/SECURITY_NOTES.md §2.
 - Migrate call sites from `LocationValidationService.DEFAULT_*` to `ValidationConfig` and remove legacy constants.
 - Decide on `saveCompletedTrip` retention vs removal.
 - Reduce detekt `maxIssues` as findings are addressed.

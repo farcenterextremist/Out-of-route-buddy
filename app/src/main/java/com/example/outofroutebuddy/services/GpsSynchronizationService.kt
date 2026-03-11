@@ -38,7 +38,6 @@ class GpsSynchronizationService(
             private const val MIN_ACCURACY_METERS = ValidationConfig.VEHICLE_MIN_ACCURACY.toDouble()
     private const val MAX_SPEED_MPH = ValidationConfig.VEHICLE_MAX_SPEED_MPH.toDouble()
     private const val LOCATION_JUMP_THRESHOLD_METERS = ValidationConfig.MAX_DISTANCE_BETWEEN_UPDATES.toDouble()
-    private const val ARRIVAL_ESTIMATION_WINDOW_MINUTES = 30
     private const val MIN_SPEED_FOR_ESTIMATION_MPH = ValidationConfig.VEHICLE_MIN_SPEED_MPH.toDouble()
     }
     
@@ -93,7 +92,7 @@ class GpsSynchronizationService(
         try {
             destinationCoordinates = Pair(latitude, longitude)
             routeDistance = routeDistanceMiles
-            Log.d(TAG, "Destination set: lat=$latitude, lng=$longitude, distance=${routeDistance}mi")
+            Log.d(TAG, "Destination set: distance=${routeDistance}mi (coordinates redacted per SECURITY_NOTES)")
         } catch (e: Exception) {
             Log.e(TAG, "Failed to set destination", e)
         }
@@ -165,7 +164,7 @@ class GpsSynchronizationService(
             consecutiveErrors = 0
             updateSyncState(true, "GPS data synchronized")
             
-            Log.v(TAG, "GPS location processed successfully: lat=${location.latitude}, lng=${location.longitude}")
+            Log.v(TAG, "GPS location processed successfully (coordinates redacted per SECURITY_NOTES)")
             
         } catch (e: Exception) {
             Log.e(TAG, "Failed to process GPS location update", e)

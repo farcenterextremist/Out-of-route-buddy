@@ -72,6 +72,7 @@ class DataManagementViewModelTest {
         assertTrue(results.size >= 1)
         assertTrue(results.last() is DataManagementViewModel.DataManagementResult.Success)
         collectJob.cancel()
+        advanceUntilIdle()
     }
 
     @Test
@@ -83,16 +84,18 @@ class DataManagementViewModelTest {
         val collectJob = launch {
             viewModel.results.collect { results.add(it) }
         }
+        try {
+            viewModel.deleteOldDataFromDevice(12)
+            advanceUntilIdle()
 
-        viewModel.deleteOldDataFromDevice(12)
-        advanceUntilIdle()
-
-        coVerify(exactly = 0) { mockRepository.deleteTripsOlderThan(any()) }
-        assertTrue(results.any { it is DataManagementViewModel.DataManagementResult.Error })
-        (results.last() as? DataManagementViewModel.DataManagementResult.Error)?.let {
-            assertTrue(it.message.contains("Network error") || it.message.contains("Export failed"))
+            coVerify(exactly = 0) { mockRepository.deleteTripsOlderThan(any()) }
+            assertTrue(results.any { it is DataManagementViewModel.DataManagementResult.Error })
+            val errorResult = results.lastOrNull() as? DataManagementViewModel.DataManagementResult.Error
+            assertTrue(errorResult != null && (errorResult.message.contains("Network error") || errorResult.message.contains("Export failed")))
+        } finally {
+            collectJob.cancel()
+            advanceUntilIdle()
         }
-        collectJob.cancel()
     }
 
     @Test
@@ -131,5 +134,6 @@ class DataManagementViewModelTest {
         coVerify(exactly = 0) { mockRepository.clearAllTrips() }
         assertTrue(results.any { it is DataManagementViewModel.DataManagementResult.Error })
         collectJob.cancel()
+        advanceUntilIdle()
     }
 }

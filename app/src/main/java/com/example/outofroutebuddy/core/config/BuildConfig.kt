@@ -53,10 +53,10 @@ object BuildConfig {
     const val PACKAGE_NAME = "com.example.outofroutebuddy"
 
     /** Application version name */
-    const val VERSION_NAME = "1.0.2"
+    const val VERSION_NAME = "1.1"
 
     /** Application version code */
-    const val VERSION_CODE = 2
+    const val VERSION_CODE = 3
 
     /** Application name */
     const val APP_NAME = "OutOfRouteBuddy"
@@ -74,17 +74,17 @@ object BuildConfig {
 
     // ==================== SERVICE CONSTANTS ====================
 
-    /** Notification channel ID for trip tracking */
-    const val NOTIFICATION_CHANNEL_ID = "trip_tracking_channel"
+    /** Notification channel ID for trip tracking (pull-down notification). Used by TripTrackingService. */
+    const val NOTIFICATION_CHANNEL_ID = "TripTrackingChannelV2"
 
     /** Notification ID for trip tracking service */
     const val NOTIFICATION_ID = 1001
 
-    /** Service action to start trip tracking */
-    const val ACTION_START_TRIP = "START_TRIP"
+    /** Service action to start trip tracking. Used by TripTrackingService and Intent handling. */
+    const val ACTION_START_TRIP = "ACTION_START_TRIP"
 
-    /** Service action to end trip tracking */
-    const val ACTION_END_TRIP = "END_TRIP"
+    /** Service action to end trip tracking. Used by TripTrackingService and Intent handling. */
+    const val ACTION_END_TRIP = "ACTION_END_TRIP"
 
     // ==================== UI CONSTANTS ====================
 

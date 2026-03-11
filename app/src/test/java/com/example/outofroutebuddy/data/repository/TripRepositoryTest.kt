@@ -6,6 +6,7 @@ import com.example.outofroutebuddy.models.Trip
 import io.mockk.*
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.*
 import org.junit.Before
@@ -243,10 +244,12 @@ class TripRepositoryTest {
                     ),
                 )
 
-            coEvery { tripDao.getTripsForDateRange(startDate, endDate) } returns entities
+            // TripDao.getTripsForDateRange is non-suspend (returns List); use every for mockk
+            every { tripDao.getTripsForDateRange(startDate, endDate) } returns entities
 
             // When
             val trips = tripRepository.getTripsForDateRange(startDate, endDate)
+            advanceUntilIdle()
 
             // Then
             assertEquals(1, trips.size)

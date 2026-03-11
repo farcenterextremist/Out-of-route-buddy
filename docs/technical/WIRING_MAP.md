@@ -12,7 +12,8 @@ TripInputFragment (fragment_trip_input.xml)
     │
     ├─ bindings: loaded_miles_input, bounce_miles_input, start_trip_button, pause_button,
     │            statistics_button, statistics_calendar_button, settings (toolbar),
-    │            total_miles_output, oor_*, selected_period_value, days_with_trips_container, monthly_stats
+    │            total_miles_output, oor_*, selected_period_value, days_with_trips_container,
+    │            monthly_stats (Month row), yearly_stats (Year row)
     │
     ├─ observe: viewModel.uiState → updateUI(state)
     │            viewModel.events  → handleEvent(event)
@@ -25,13 +26,13 @@ TripInputFragment (fragment_trip_input.xml)
                     ▼
 TripInputViewModel
     │
-    ├─ state: uiState (monthlyStatistics, selectedPeriodLabel, datesWithTripsInPeriod, periodStatistics*, …)
+    ├─ state: uiState (periodStatistics, yearStatistics, monthlyStatistics, selectedPeriodLabel, datesWithTripsInPeriod, …)
     ├─ load: loadInitialData() → crash recovery OR TripPersistenceManager.loadSavedTripState()
     │        refreshAggregateStatistics() → tripRepository.getMonthlyTripStatistics()
-    │        updatePeriodStatistics() → getTripStatistics + getTripsByDateRange → datesWithTripsInPeriod
+    │        updatePeriodStatistics() → getTripStatistics(period) + getTripStatistics(year) + getTripsByDateRange → periodStatistics, yearStatistics, datesWithTripsInPeriod
     │
     ├─ trip lifecycle: calculateTrip → TripTrackingService.startService, saveTripStateForPersistence, startAutoSave
-    │                  endTrip → insertTrip (Room), clearTripPersistence, refreshAggregateStatistics
+    │                  endTrip → insertTrip (Room), clearTripPersistence, refreshStatisticsAfterSave → periodStatistics, yearStatistics, datesWithTripsInPeriod
     │                  clearTrip → no insert, clearTripPersistence, refreshAggregateStatistics
     │
     ├─ observers: TripTrackingService.tripMetrics → actualMiles, saveTripStateForPersistence
@@ -99,6 +100,31 @@ Statistics “View” (calendar button) → CustomCalendarDialog
 showTripHistoryForDate(date) → TripHistoryByDateDialog
     TripHistoryByDateViewModel → repository.getTripsByDateRange(startOfDay, endOfDay) → RecyclerView
 ```
+
+---
+
+## End Trip → Monthly/Yearly Statistics flow
+
+```
+[User taps End Trip]
+  → TripInputViewModel.endTrip()
+  → tripRepository.insertTrip(tripData)   // trip date = end date (when user taps End Trip)
+  → refreshStatisticsAfterSave(selectedPeriod)
+      → getMonthlyTripStatistics()
+      → if selectedPeriod != null:
+          getTripStatistics(periodStart, periodEnd)   // Month row
+          getTripStatistics(yearStart, yearEnd)       // Year row (Jan 1–Dec 31 of period's year)
+          getTripsByDateRange → datesWithTripsInPeriod
+        else:
+          getCurrentPeriodDates → same flow for current period
+  → _uiState.update(periodStatistics, yearStatistics, datesWithTripsInPeriod)
+  → Fragment observes uiState → updateStatisticsRow(monthlyStats, yearlyStats)
+  → Display updates
+```
+
+**Trip date for period grouping:** End date (when user taps End Trip). Stored via `DomainTripRepositoryAdapter` mapping `trip.startTime` to `TripEntity.date`.
+
+**Future (trip cards):** Selectable boxes in calendar for a specific date; Month/Year stats aggregate from completed trips (same as today).
 
 ---
 

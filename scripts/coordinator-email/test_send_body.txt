@@ -1,3 +1,0 @@
-This is a test from the coordinator email system. If you received this, the listener has been restarted and send is working.
-
-— OutOfRouteBuddy Team

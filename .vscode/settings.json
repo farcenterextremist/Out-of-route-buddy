@@ -1,4 +1,31 @@
 {
-  "java.configuration.updateBuildConfiguration": "interactive",
-  "python.defaultInterpreterPath": "C:\\Users\\brand\\AppData\\Local\\Programs\\Python\\Python312\\python.exe"
+  "java.configuration.updateBuildConfiguration": "disabled",
+  "java.autobuild.enabled": false,
+  "java.import.gradle.enabled": false,
+  "java.server.launchMode": "LightWeight",
+  "java.trace.server": "off",
+  "java.referencesCodeLens.enabled": false,
+  "java.implementationsCodeLens.enabled": false,
+  "java.codeGeneration.useBlocks": false,
+  "java.completion.favoriteStaticMembers": [],
+  "java.format.enabled": false,
+  "java.saveActions.organizeImports": false,
+  "gradle.autoDetect": "off",
+  "gradle.reuseTerminals": false,
+  "git.enabled": false,
+  "python.defaultInterpreterPath": "C:\\Users\\brand\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+  "git.decorations.enabled": false,
+  "git.autorefresh": false,
+  "scm.diffDecorations": "none",
+  "files.watcherExclude": {
+    "**/.git/objects/**": true,
+    "**/.git/subtree-cache/**": true,
+    "**/.gradle/**": true,
+    "**/build/**": true,
+    "**/.cursor/**": true
+  },
+  "search.exclude": {
+    "**/.gradle/**": true,
+    "**/build/**": true
+  }
 }

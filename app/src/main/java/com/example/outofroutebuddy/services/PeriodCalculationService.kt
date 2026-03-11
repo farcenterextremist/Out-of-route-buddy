@@ -114,24 +114,52 @@ class PeriodCalculationService {
     }
     
     /**
-     * Calculate the end date of the custom period for a given date
-     * Returns the Thursday before the first Friday of the NEXT month
+     * Calculate the end date of the custom period for a given date.
+     * The end of the period containing forDate is the start of the next period
+     * (Thursday before first Friday of some later month). We derive it from the
+     * period start so that when the calendar month flips (e.g. Feb → Mar), we
+     * still show the current period (e.g. Feb 5–Mar 5) instead of jumping to the
+     * next period's end (e.g. Apr). If "month after period start" yields a
+     * boundary that is not after period start (e.g. Feb 29 in 2024 for both Feb
+     * and Mar), we use the following month.
      */
     fun calculateCustomPeriodEnd(forDate: Date): Calendar {
-        val calendar = Calendar.getInstance(TimeZone.getDefault())
-        calendar.time = forDate
-        val year = calendar.get(Calendar.YEAR)
-        val month = calendar.get(Calendar.MONTH)
-        
-        // Get the next month
-        val nextMonthCalendar = Calendar.getInstance(TimeZone.getDefault())
-        nextMonthCalendar.set(year, month, 1)
-        nextMonthCalendar.add(Calendar.MONTH, 1)
-        
-        val nextYear = nextMonthCalendar.get(Calendar.YEAR)
-        val nextMonth = nextMonthCalendar.get(Calendar.MONTH)
-        
-        return findThursdayBeforeFirstFriday(nextYear, nextMonth)
+        val periodStart = calculateCustomPeriodStart(forDate)
+        val year = periodStart.get(Calendar.YEAR)
+        val month = periodStart.get(Calendar.MONTH)
+        var nextMonthCal = Calendar.getInstance(TimeZone.getDefault())
+        nextMonthCal.set(year, month, 1)
+        nextMonthCal.add(Calendar.MONTH, 1)
+        var nextYear = nextMonthCal.get(Calendar.YEAR)
+        var nextMonth = nextMonthCal.get(Calendar.MONTH)
+        var endCal = findThursdayBeforeFirstFriday(nextYear, nextMonth)
+        endCal.set(Calendar.HOUR_OF_DAY, 0)
+        endCal.set(Calendar.MINUTE, 0)
+        endCal.set(Calendar.SECOND, 0)
+        endCal.set(Calendar.MILLISECOND, 0)
+        periodStart.set(Calendar.HOUR_OF_DAY, 0)
+        periodStart.set(Calendar.MINUTE, 0)
+        periodStart.set(Calendar.SECOND, 0)
+        periodStart.set(Calendar.MILLISECOND, 0)
+        // If this "end" is not after period start (e.g. Feb 29 for both Feb and Mar in 2024), use next month
+        if (endCal.compareTo(periodStart) <= 0) {
+            nextMonthCal = Calendar.getInstance(TimeZone.getDefault())
+            nextMonthCal.set(year, month, 1)
+            nextMonthCal.add(Calendar.MONTH, 2)
+            nextYear = nextMonthCal.get(Calendar.YEAR)
+            nextMonth = nextMonthCal.get(Calendar.MONTH)
+            endCal = findThursdayBeforeFirstFriday(nextYear, nextMonth)
+            endCal.set(Calendar.HOUR_OF_DAY, 0)
+            endCal.set(Calendar.MINUTE, 0)
+            endCal.set(Calendar.SECOND, 0)
+            endCal.set(Calendar.MILLISECOND, 0)
+        }
+        // End of period is inclusive (last day of period at end-of-day) so "Current Period" includes the end Thursday
+        endCal.set(Calendar.HOUR_OF_DAY, 23)
+        endCal.set(Calendar.MINUTE, 59)
+        endCal.set(Calendar.SECOND, 59)
+        endCal.set(Calendar.MILLISECOND, 999)
+        return endCal
     }
     
     /**
@@ -193,7 +221,7 @@ class PeriodCalculationService {
         endCal.set(Calendar.SECOND, 0)
         endCal.set(Calendar.MILLISECOND, 0)
         
-        return dateCal.compareTo(startCal) >= 0 && dateCal.compareTo(endCal) < 0
+        return dateCal.compareTo(startCal) >= 0 && dateCal.compareTo(endCal) <= 0
     }
     
     /**

@@ -13,8 +13,8 @@ param(
 Write-Host "OutOfRouteBuddy Build Performance Monitor" -ForegroundColor Cyan
 Write-Host "=============================================" -ForegroundColor Cyan
 
-# Configuration
-$GRADLE_CMD = "./gradlew"
+# Configuration: use gradlew.bat on Windows for reliable execution
+$GRADLE_CMD = if ($env:OS -eq "Windows_NT") { ".\gradlew.bat" } else { "./gradlew" }
 $PROJECT_DIR = Get-Location
 $BUILD_LOG_DIR = "$PROJECT_DIR/build-logs"
 $PERFORMANCE_LOG = "$BUILD_LOG_DIR/performance.log"

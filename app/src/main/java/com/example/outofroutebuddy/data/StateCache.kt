@@ -178,12 +178,12 @@ class StateCache {
         val cached = gpsCache[key]
         if (cached != null && !isExpired(cached.timestamp, GPS_CACHE_DURATION_MS)) {
             cacheHits++
-            Log.v(TAG, "Cache HIT for GPS data trip: $tripId")
+            Log.v(TAG, "Cache HIT for GPS data")
             return cached.gpsMetadata
         }
 
         cacheMisses++
-        Log.v(TAG, "Cache MISS for GPS data trip: $tripId")
+        Log.v(TAG, "Cache MISS for GPS data")
         return null
     }
 
@@ -211,9 +211,9 @@ class StateCache {
             gpsCache[key] = cachedData
             updateCacheState()
 
-            Log.d(TAG, "Cached GPS data for trip: $tripId")
+            Log.d(TAG, "Cached GPS data")
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to cache GPS data for trip: $tripId", e)
+            Log.e(TAG, "Failed to cache GPS data", e)
         }
     }
 

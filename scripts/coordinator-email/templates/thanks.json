@@ -1,9 +1,0 @@
-{
-  "key": "thanks",
-  "priority": 95,
-  "keywords": ["\\b(thank|thanks|got it|sounds good|perfect|acknowledged)\\b"],
-  "keywords_combine": "any",
-  "subject": "Re: OutOfRouteBuddy",
-  "body": "Hi,\n\nThanks for getting back to us. We'll continue from here in the next session or by email.\n\n— Jarvey",
-  "fetcher": null
-}

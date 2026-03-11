@@ -8,15 +8,7 @@
 
 ## 1. Location jump detection (TripStateManager)
 
-**Current:** `GpsMetadata.locationJumps` is present but never incremented; `updateGpsMetadata()` has `// TODO: Implement jump detection` (line ~231).
-
-**Definition (recommended):** A "jump" is a pair of consecutive location samples such that the implied speed (distance / time) exceeds a plausible threshold (e.g. 120 mph or configurable). Optionally, also treat as jump if horizontal accuracy is very poor and distance is large.
-
-**Implementation options:**
-
-- In `TripStateManager.updateLocation()` (or before calling `updateGpsMetadata`): compare `newLocation` with `currentState.lastLocation`. If `lastLocation` is null, no jump. Otherwise compute distance (e.g. Haversine) and time delta; if speed > threshold (e.g. 53.6 m/s for 120 mph), increment `locationJumps`.
-- Expose threshold as a constant or from `PreferencesManager` for tuning.
-- After implementation, remove the TODO and add a unit test (e.g. two points 1 km apart 1 second apart → one jump).
+**Status: implemented.** Jump detection is implemented in `TripStateManager.updateGpsMetadata()`: implied speed (distance/time) between consecutive samples is compared to `JUMP_SPEED_THRESHOLD_MS` (120 mph in m/s); if exceeded, `locationJumps` is incremented. See `TripStateManager.kt` around lines 198–220. No TODO remaining.
 
 ---
 

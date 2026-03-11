@@ -5,7 +5,8 @@ import kotlinx.coroutines.flow.Flow
 import java.util.Date
 
 /**
- * Repository interface for trip data operations
+ * Repository interface for trip data operations.
+ * All methods are main-safe; call from any dispatcher. Flows emit on the caller's context.
  *
  * This interface defines the contract for trip data operations in the domain layer.
  * It follows the Repository pattern to abstract data access from business logic.
@@ -36,6 +37,19 @@ interface TripRepository {
     fun getTripsByDateRange(
         startDate: Date,
         endDate: Date,
+    ): Flow<List<Trip>>
+
+    /**
+     * Get trips overlapping a single day (supports midnight-spanning trips).
+     * Returns trips where the day falls within [startTime, endTime] or date matches (backward compat).
+     *
+     * @param startOfDay Start of the day (inclusive)
+     * @param endOfDay End of the day (exclusive, typically start of next day)
+     * @return Flow of trips overlapping the day, with full metadata
+     */
+    fun getTripsOverlappingDay(
+        startOfDay: Date,
+        endOfDay: Date,
     ): Flow<List<Trip>>
 
     /**

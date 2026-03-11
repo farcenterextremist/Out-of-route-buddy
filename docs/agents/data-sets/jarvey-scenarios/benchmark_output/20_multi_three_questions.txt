@@ -1,9 +1,0 @@
-You asked about the next steps for the Reports screen.
-
-* The Reports view is currently being designed by our UI/UX Specialist, and we're aiming to implement it in a future release.
-* Our Front-end Engineer will be responsible for implementing the UI, while our Back-end Engineer will ensure that the data layer is properly set up to support the new feature.
-* We don't have a specific version number yet, but we'll keep you updated on the progress and provide another update when the Reports screen is ready.
-
-Next steps: Our QA Engineer will work with the Front-end and Back-end Engineers to create test cases for the Reports screen. I'll follow up with an email once those are complete.
-
-— Jarvey

@@ -1,0 +1,196 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 3,
+    "identityHash": "f7006d7819866e972cf1f6b0f7c9db9c",
+    "entities": [
+      {
+        "tableName": "trips",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `date` INTEGER NOT NULL, `loadedMiles` REAL NOT NULL, `bounceMiles` REAL NOT NULL, `actualMiles` REAL NOT NULL, `oorMiles` REAL NOT NULL, `oorPercentage` REAL NOT NULL, `createdAt` INTEGER NOT NULL, `avgGpsAccuracy` REAL NOT NULL, `minGpsAccuracy` REAL NOT NULL, `maxGpsAccuracy` REAL NOT NULL, `totalGpsPoints` INTEGER NOT NULL, `validGpsPoints` INTEGER NOT NULL, `rejectedGpsPoints` INTEGER NOT NULL, `tripDurationMinutes` INTEGER NOT NULL, `avgSpeedMph` REAL NOT NULL, `maxSpeedMph` REAL NOT NULL, `locationJumpsDetected` INTEGER NOT NULL, `accuracyWarnings` INTEGER NOT NULL, `speedAnomalies` INTEGER NOT NULL, `tripStartTime` INTEGER, `tripEndTime` INTEGER, `tripTimeZoneId` TEXT, `wasInterrupted` INTEGER NOT NULL, `interruptionCount` INTEGER NOT NULL, `lastLocationLat` REAL NOT NULL, `lastLocationLng` REAL NOT NULL, `lastLocationTime` INTEGER)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "date",
+            "columnName": "date",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "loadedMiles",
+            "columnName": "loadedMiles",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "bounceMiles",
+            "columnName": "bounceMiles",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "actualMiles",
+            "columnName": "actualMiles",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "oorMiles",
+            "columnName": "oorMiles",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "oorPercentage",
+            "columnName": "oorPercentage",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "createdAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "avgGpsAccuracy",
+            "columnName": "avgGpsAccuracy",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "minGpsAccuracy",
+            "columnName": "minGpsAccuracy",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "maxGpsAccuracy",
+            "columnName": "maxGpsAccuracy",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "totalGpsPoints",
+            "columnName": "totalGpsPoints",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "validGpsPoints",
+            "columnName": "validGpsPoints",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "rejectedGpsPoints",
+            "columnName": "rejectedGpsPoints",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "tripDurationMinutes",
+            "columnName": "tripDurationMinutes",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "avgSpeedMph",
+            "columnName": "avgSpeedMph",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "maxSpeedMph",
+            "columnName": "maxSpeedMph",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "locationJumpsDetected",
+            "columnName": "locationJumpsDetected",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "accuracyWarnings",
+            "columnName": "accuracyWarnings",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "speedAnomalies",
+            "columnName": "speedAnomalies",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "tripStartTime",
+            "columnName": "tripStartTime",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "tripEndTime",
+            "columnName": "tripEndTime",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "tripTimeZoneId",
+            "columnName": "tripTimeZoneId",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "wasInterrupted",
+            "columnName": "wasInterrupted",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "interruptionCount",
+            "columnName": "interruptionCount",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastLocationLat",
+            "columnName": "lastLocationLat",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastLocationLng",
+            "columnName": "lastLocationLng",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastLocationTime",
+            "columnName": "lastLocationTime",
+            "affinity": "INTEGER",
+            "notNull": false
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [],
+        "foreignKeys": []
+      }
+    ],
+    "views": [],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'f7006d7819866e972cf1f6b0f7c9db9c')"
+    ]
+  }
+}

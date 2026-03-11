@@ -3,12 +3,14 @@ package com.example.outofroutebuddy.presentation.ui.trip
 import android.Manifest
 import android.app.Dialog
 import android.content.Context
+import android.content.res.Configuration
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.MotionEvent
+import android.view.HapticFeedbackConstants
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatDelegate
@@ -17,7 +19,7 @@ import androidx.core.content.edit
 import androidx.core.util.Pair
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.viewModels
+import androidx.fragment.app.activityViewModels
 import com.google.android.material.snackbar.Snackbar
 import android.view.Gravity
 import androidx.coordinatorlayout.widget.CoordinatorLayout
@@ -25,6 +27,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.example.outofroutebuddy.MainActivity
+import com.example.outofroutebuddy.OutOfRouteApplication
 import com.example.outofroutebuddy.R
 import com.example.outofroutebuddy.core.config.BuildConfig
 import com.example.outofroutebuddy.databinding.DialogHelpInfoBinding
@@ -38,7 +41,9 @@ import com.example.outofroutebuddy.data.SettingsManager
 import com.example.outofroutebuddy.presentation.viewmodel.TripInputViewModel
 import com.example.outofroutebuddy.presentation.viewmodel.TripInputViewModel.TripEvent
 import com.example.outofroutebuddy.presentation.ui.dialogs.CustomCalendarDialog
+import com.example.outofroutebuddy.presentation.ui.dialogs.TripHistoryByDateDialog
 import com.example.outofroutebuddy.services.PeriodCalculationService
+import com.example.outofroutebuddy.services.TripEndedOverlayService
 import com.google.android.material.datepicker.CalendarConstraints
 import com.google.android.material.datepicker.CompositeDateValidator
 import com.google.android.material.datepicker.MaterialDatePicker
@@ -120,7 +125,7 @@ class TripInputFragment : Fragment() {
     //
     // ✅ RESULT: ViewModel is now properly injected by Hilt with all dependencies resolved
     //
-    private val viewModel: TripInputViewModel by viewModels()
+    private val viewModel: TripInputViewModel by activityViewModels()
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -143,6 +148,7 @@ class TripInputFragment : Fragment() {
         setupUI()
         observeViewModel()
         setupClickListeners()
+        observeTripHistoryDeletionResults()
         
         // ✅ FIX: Update UI immediately with current state in case trip was restored from persistence
         // This handles the case where app was closed and reopened - the ViewModel may have already
@@ -167,6 +173,12 @@ class TripInputFragment : Fragment() {
         if (_binding != null) {
             saveTextInputsToPrefs()
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // Keep stat cards aligned with natural month/year rollover when app returns to foreground.
+        viewModel.ensureStatisticsPeriodIsCurrentCycle()
     }
     
     /**
@@ -253,16 +265,19 @@ class TripInputFragment : Fragment() {
     private fun setupUI() {
         // Initialize UI components
         binding.startTripButton.text = getString(R.string.start_trip)
+        binding.startTripButton.contentDescription = getString(R.string.start_trip_button_description)
         binding.progressBar.visibility = View.GONE
 
         // Toolbar background: set in custom_toolbar.xml (toolbar_background_cracked_road)
         // Ensure statistics content starts collapsed
         binding.statisticsContent.visibility = View.GONE
         binding.statisticsButton.setIconResource(R.drawable.ic_arrow_down)
+        binding.statisticsButton.contentDescription = getString(R.string.statistics_button_description)
     }
 
     private fun setupClickListeners() {
         binding.startTripButton.setOnClickListener {
+            performButtonHapticFeedback(it)
             // ✅ FIX: Toggle between Start Trip and End Trip based on current state
             if (viewModel.uiState.value.isTripActive) {
                 // Trip is active, so show confirmation before ending
@@ -307,6 +322,7 @@ class TripInputFragment : Fragment() {
             // Update button icon - when collapsed show down arrow (to expand), when expanded show up arrow (to collapse)
             val icon = if (isVisible) R.drawable.ic_arrow_down else R.drawable.ic_arrow_up
             binding.statisticsButton.setIconResource(icon)
+            binding.statisticsButton.contentDescription = getString(R.string.statistics_button_description)
         }
 
         binding.statisticsCalendarButton.setOnClickListener {
@@ -314,6 +330,20 @@ class TripInputFragment : Fragment() {
                 viewModel.refreshPeriodForCalendar()
                 showCalendarPicker()
             }
+        }
+
+        binding.monthDeleteButton.setOnClickListener {
+            showStatsDeleteConfirmationDialog(
+                scope = "month section",
+                onConfirm = { clearMonthSectionDisplay() },
+            )
+        }
+
+        binding.yearDeleteButton.setOnClickListener {
+            showStatsDeleteConfirmationDialog(
+                scope = "year section",
+                onConfirm = { clearYearSectionDisplay() },
+            )
         }
 
         // Settings button click listener
@@ -328,13 +358,15 @@ class TripInputFragment : Fragment() {
                 // Currently active, so pause
                 viewModel.pauseTrip()
                 binding.pauseButton.setIconResource(R.drawable.ic_play_adaptive)
-                binding.pauseButton.contentDescription = "Resume trip tracking"
+                binding.pauseButton.setIconTintResource(android.R.color.white) // Dark mode: force white for visibility
+                binding.pauseButton.contentDescription = getString(R.string.resume_trip_button_description)
                 showSnackbar("Trip paused")
             } else {
                 // Currently paused, so resume
                 viewModel.resumeTrip()
                 binding.pauseButton.setIconResource(R.drawable.ic_pause_adaptive)
-                binding.pauseButton.contentDescription = "Pause trip tracking"
+                binding.pauseButton.setIconTintResource(android.R.color.white) // Dark mode: force white for visibility
+                binding.pauseButton.contentDescription = getString(R.string.pause_trip_button_description)
                 showSnackbar("Trip resumed")
             }
         }
@@ -357,6 +389,76 @@ class TripInputFragment : Fragment() {
         
         snackbar.show()
     }
+
+    private fun performButtonHapticFeedback(target: View) {
+        target.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+    }
+
+    private fun showStatsDeleteConfirmationDialog(
+        scope: String,
+        onConfirm: () -> Unit,
+    ) {
+        val dialog = AlertDialog.Builder(requireContext())
+            .setTitle("Clear Section")
+            .setMessage(
+                "Clear displayed stats in the $scope?\n\n" +
+                    "This will NOT delete trip history and will NOT affect other sections."
+            )
+            .setNegativeButton("Cancel", null)
+            .setPositiveButton("Clear") { _, _ ->
+                onConfirm()
+            }
+            .create()
+        dialog.setOnShowListener {
+            val isDarkMode = (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) ==
+                Configuration.UI_MODE_NIGHT_YES
+            if (isDarkMode) {
+                val white = android.graphics.Color.WHITE
+                dialog.findViewById<TextView>(android.R.id.message)?.setTextColor(white)
+                dialog.getButton(AlertDialog.BUTTON_POSITIVE)?.setTextColor(white)
+                dialog.getButton(AlertDialog.BUTTON_NEGATIVE)?.setTextColor(white)
+            }
+        }
+        dialog.show()
+    }
+
+    private fun clearMonthSectionDisplay() {
+        viewModel.clearSelectedPeriodSectionDisplay()
+        showSnackbar("Month section cleared (display only).")
+    }
+
+    private fun clearYearSectionDisplay() {
+        viewModel.clearYearSectionDisplay()
+        showSnackbar("Year section cleared (display only).")
+    }
+
+    /**
+     * Re-sync month/year stats after single-day trip deletion in history dialog.
+     * Day deletion is data-destructive by design and should update aggregate rows.
+     */
+    private fun observeTripHistoryDeletionResults() {
+        parentFragmentManager.setFragmentResultListener(
+            TripHistoryByDateDialog.REQUEST_KEY_DAY_TRIP_DELETED,
+            viewLifecycleOwner
+        ) { _, _ ->
+            viewLifecycleOwner.lifecycleScope.launch {
+                viewModel.refreshPeriodForCalendar()
+                // Refresh calendar dots (yellow/orange) so deleted trip no longer shows a dot
+                val now = Date()
+                val calMin = getFirstDayOfMonth(now).apply { add(Calendar.MONTH, -12) }
+                val calMax = getLastDayOfMonth(now)
+                val calendarMinDate = calMin.time
+                val calendarMaxDate = calMax.time
+                val datesWithTrips = viewModel.getDatesWithTripsForCalendarRange(calendarMinDate, calendarMaxDate)
+                withContext(Dispatchers.Main) {
+                    val calendarDialog = parentFragmentManager.findFragmentByTag("custom_calendar_dialog")
+                    if (calendarDialog is CustomCalendarDialog) {
+                        calendarDialog.refreshDatesWithTrips(datesWithTrips)
+                    }
+                }
+            }
+        }
+    }
     
     /**
      * ✅ NEW: Show confirmation dialog before ending trip
@@ -377,7 +479,6 @@ class TripInputFragment : Fragment() {
         dialogView.setBackgroundColor(ContextCompat.getColor(requireContext(), R.color.background_adaptive))
         
         val dialog = android.app.AlertDialog.Builder(requireContext())
-            .setTitle("End Trip?")
             .setView(dialogView)
             .create()
         dialog.setOnShowListener {
@@ -403,9 +504,11 @@ class TripInputFragment : Fragment() {
         // Button 1: End Trip (top)
         val endTripButton = com.google.android.material.button.MaterialButton(requireContext()).apply {
             text = "End Trip"
+            contentDescription = getString(R.string.end_trip_button_description)
             layoutParams = buttonLayoutParams
             apply3DButtonStyle(this)
             setOnClickListener {
+                performButtonHapticFeedback(this)
                 dialog.dismiss()
                 viewModel.endTrip()
                 clearSavedTextInputs()
@@ -418,6 +521,7 @@ class TripInputFragment : Fragment() {
         // Button 2: Clear Trip (middle)
         val clearTripButton = com.google.android.material.button.MaterialButton(requireContext()).apply {
             text = "Clear Trip"
+            contentDescription = getString(R.string.cancel_trip_button_description)
             layoutParams = buttonLayoutParams
             apply3DButtonStyle(this)
             setOnClickListener {
@@ -430,22 +534,109 @@ class TripInputFragment : Fragment() {
         // Button 3: Continue Trip (bottom)
         val continueTripButton = com.google.android.material.button.MaterialButton(requireContext()).apply {
             text = "Continue Trip"
+            contentDescription = getString(R.string.continue_trip_button_description)
             layoutParams = buttonLayoutParams
             apply3DButtonStyle(this)
             setOnClickListener {
                 dialog.dismiss()
+                TripEndedOverlayService.notifyUserChoseNoContinue(requireContext())
             }
         }
         dialogView.addView(continueTripButton)
         
         dialog.show()
     }
+
+    /**
+     * Show a lightweight arrival confirmation when trip-ended detection routes the user back into the app.
+     */
+    fun showEndTripConfirmationFromOverlay(
+        promptSource: String = TripEndedOverlayService.PROMPT_SURFACE_OVERLAY,
+    ) {
+        val dialogView = android.widget.LinearLayout(requireContext()).apply {
+            orientation = android.widget.LinearLayout.VERTICAL
+            setPadding(32, 16, 32, 16)
+        }
+        val messageText = android.widget.TextView(requireContext()).apply {
+            text = getString(R.string.end_trip_overlay_dialog_message)
+            setPadding(0, 16, 0, 24)
+            setTextColor(ContextCompat.getColor(requireContext(), R.color.text_primary_adaptive))
+        }
+        dialogView.addView(messageText)
+        dialogView.setBackgroundColor(ContextCompat.getColor(requireContext(), R.color.background_adaptive))
+        val buttonLayoutParams = android.widget.LinearLayout.LayoutParams(
+            android.widget.LinearLayout.LayoutParams.MATCH_PARENT,
+            android.widget.LinearLayout.LayoutParams.WRAP_CONTENT
+        ).apply { setMargins(0, 8, 0, 8) }
+        val apply3DButtonStyle: (com.google.android.material.button.MaterialButton) -> Unit = { btn ->
+            btn.setBackgroundResource(R.drawable.button_3d_material)
+            btn.backgroundTintList = null
+            btn.setTextColor(android.graphics.Color.WHITE)
+            btn.textSize = 16f
+            btn.setTypeface(null, android.graphics.Typeface.BOLD)
+        }
+        val dialog = android.app.AlertDialog.Builder(requireContext())
+            .setTitle(getString(R.string.end_trip_overlay_dialog_title))
+            .setView(dialogView)
+            .setCancelable(true)
+            .create()
+        var actionTaken = false
+        dialog.setOnCancelListener {
+            if (!actionTaken) {
+                logTripEndPromptAction(promptSource, "ignored")
+            }
+        }
+        val yesButton = com.google.android.material.button.MaterialButton(requireContext()).apply {
+            text = getString(R.string.yes_complete_trip)
+            layoutParams = buttonLayoutParams
+            apply3DButtonStyle(this)
+            setOnClickListener {
+                actionTaken = true
+                dialog.dismiss()
+                logTripEndPromptAction(promptSource, "ended")
+                viewModel.endTrip()
+                if (_binding != null) {
+                    clearSavedTextInputs()
+                    binding.loadedMilesInput.setText("")
+                    binding.bounceMilesInput.setText("")
+                }
+                TripEndedOverlayService.dismissBubble(requireContext())
+            }
+        }
+        val noButton = com.google.android.material.button.MaterialButton(requireContext()).apply {
+            text = getString(R.string.no_continue_trip)
+            layoutParams = buttonLayoutParams
+            apply3DButtonStyle(this)
+            setOnClickListener {
+                actionTaken = true
+                dialog.dismiss()
+                logTripEndPromptAction(promptSource, "continued")
+                TripEndedOverlayService.notifyUserChoseNoContinue(requireContext())
+            }
+        }
+        dialogView.addView(yesButton)
+        dialogView.addView(noButton)
+        dialog.show()
+    }
+
+    private fun logTripEndPromptAction(
+        promptSource: String,
+        action: String,
+    ) {
+        (activity?.application as? OutOfRouteApplication)?.logAnalyticsEvent(
+            "trip_end_prompt_action",
+            mapOf(
+                "surface" to promptSource,
+                "action" to action,
+            ),
+        )
+    }
     
     /**
      * ✅ NEW: Show confirmation dialog for clearing trip
      */
     private fun showClearTripConfirmation() {
-        android.app.AlertDialog.Builder(requireContext())
+        val dialog = android.app.AlertDialog.Builder(requireContext())
             .setTitle("Clear Trip?")
             .setMessage(getString(R.string.clear_trip_dialog_message))
             .setPositiveButton("Yes, Clear") { _, _ ->
@@ -461,27 +652,17 @@ class TripInputFragment : Fragment() {
                 dialog.dismiss()
             }
             .create()
-            .show()
-    }
 
-    /**
-     * ✅ SIMPLIFIED: Show dialog for trip calculation
-     */
-    private fun showTripCalculationDialog() {
-        val dialog =
-            AlertDialog.Builder(requireContext())
-                .setTitle("Calculate Trip")
-                .setMessage("Calculate OOR miles for this trip?")
-                .setPositiveButton("Calculate") { _, _ ->
-                    val loadedMiles = binding.loadedMilesInput.text.toString().toDoubleOrNull() ?: 0.0
-                    val bounceMiles = binding.bounceMilesInput.text.toString().toDoubleOrNull() ?: 0.0
-                    val actualMiles = viewModel.uiState.value.actualMiles // Use current GPS distance
-                    
-                    viewModel.calculateTrip(loadedMiles, bounceMiles, actualMiles)
-                }
-                .setNegativeButton("Cancel", null)
-                .create()
-
+        // In dark mode, force readable action text for this platform AlertDialog.
+        dialog.setOnShowListener {
+            val isDarkMode =
+                (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
+            if (isDarkMode) {
+                val white = ContextCompat.getColor(requireContext(), android.R.color.white)
+                dialog.getButton(android.app.AlertDialog.BUTTON_POSITIVE)?.setTextColor(white)
+                dialog.getButton(android.app.AlertDialog.BUTTON_NEGATIVE)?.setTextColor(white)
+            }
+        }
         dialog.show()
     }
 
@@ -544,8 +725,8 @@ class TripInputFragment : Fragment() {
         // Apply selection after layout so it's visible when dialog is shown
         modeBinding.root.post { modeBinding.modeSelectRadioGroup.check(checkedId) }
 
-        modeBinding.modeSelectRadioGroup.setOnCheckedChangeListener { _, checkedId ->
-            when (checkedId) {
+        modeBinding.modeSelectRadioGroup.setOnCheckedChangeListener { _, selectedId ->
+            when (selectedId) {
                 R.id.radio_mode_light -> {
                     settingsManager.setThemePreference("light")
                     AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
@@ -606,6 +787,10 @@ class TripInputFragment : Fragment() {
     private fun showHelpInfoDialog() {
         val helpBinding = DialogHelpInfoBinding.inflate(LayoutInflater.from(requireContext()))
         helpBinding.versionText.text = "Version ${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})"
+        // Future features: append to features section so users see what's coming (from ROADMAP)
+        val currentFeatures = helpBinding.featuresText.text?.toString() ?: ""
+        val futureSection = "\n\n${getString(R.string.help_future_features_title)}\n${getString(R.string.help_future_features)}"
+        helpBinding.featuresText.text = if (currentFeatures.isNotEmpty()) currentFeatures + futureSection else getString(R.string.help_future_features_title) + "\n" + getString(R.string.help_future_features)
         val dialog = Dialog(requireContext())
         dialog.setContentView(helpBinding.root)
         dialog.setCancelable(true)
@@ -643,12 +828,18 @@ class TripInputFragment : Fragment() {
     }
 
     private fun updateUI(state: TripInputViewModel.TripInputUiState) {
-        // Update button text based on trip state
+        // Update button text and contentDescription based on trip state
         binding.startTripButton.text =
             if (state.isTripActive) {
                 getString(R.string.end_trip)
             } else {
                 getString(R.string.start_trip)
+            }
+        binding.startTripButton.contentDescription =
+            if (state.isTripActive) {
+                getString(R.string.end_trip_button_description)
+            } else {
+                getString(R.string.start_trip_button_description)
             }
         
         // Update pause button visibility and icon
@@ -657,8 +848,9 @@ class TripInputFragment : Fragment() {
             binding.pauseButton.setIconResource(
                 if (state.isPaused) R.drawable.ic_play_adaptive else R.drawable.ic_pause_adaptive
             )
-            binding.pauseButton.contentDescription = 
-                if (state.isPaused) "Resume trip tracking" else "Pause trip tracking"
+            binding.pauseButton.setIconTintResource(android.R.color.white) // Dark mode: force white for visibility
+            binding.pauseButton.contentDescription =
+                if (state.isPaused) getString(R.string.resume_trip_button_description) else getString(R.string.pause_trip_button_description)
         }
         
         // ✅ FIX: Restore loaded/bounce miles from ViewModel state when trip is active
@@ -683,40 +875,14 @@ class TripInputFragment : Fragment() {
         binding.oorMilesOutput.text = oorMilesText
         binding.oorPercentageOutput.text = oorPercentText
 
-        // Statistics for selected period (from calendar) - was monthlyStatistics
+        // Statistics for selected period (Month) and Year
+        // Monthly row = selected period (current calendar month in STANDARD mode; custom range in CUSTOM).
+        // Yearly row = Jan 1–Dec 31 of the period's year. Both are populated together in refreshStatisticsAfterSave.
         updateStatisticsRow(binding.monthlyStats, viewModel.mapPeriodToSummary(state.periodStatistics))
+        updateStatisticsRow(binding.yearlyStats, viewModel.mapPeriodToSummary(state.yearStatistics))
 
         binding.selectedPeriodValue.text = state.selectedPeriodLabel
 
-        // Calendar/current period: show days with saved trips (clickable)
-        val datesWithTrips = state.datesWithTripsInPeriod
-        if (datesWithTrips.isEmpty()) {
-            binding.daysWithTripsLabel.visibility = View.GONE
-            binding.daysWithTripsContainerWrapper.visibility = View.GONE
-            binding.daysWithTripsContainer.removeAllViews()
-        } else {
-            binding.daysWithTripsLabel.visibility = View.VISIBLE
-            binding.daysWithTripsContainerWrapper.visibility = View.VISIBLE
-            binding.daysWithTripsContainer.removeAllViews()
-            val dateFormat = java.text.SimpleDateFormat("MMM d", Locale.getDefault())
-            val dp8 = (8 * resources.displayMetrics.density).toInt()
-            val dp12 = (12 * resources.displayMetrics.density).toInt()
-            for (date in datesWithTrips) {
-                val chip = com.google.android.material.button.MaterialButton(requireContext(), null, com.google.android.material.R.attr.materialButtonOutlinedStyle).apply {
-                    text = dateFormat.format(date)
-                    setOnClickListener { showTripHistoryForDate(date) }
-                    setPadding(dp12, dp8, dp12, dp8)
-                    minimumWidth = 0
-                    minWidth = 0
-                }
-                val params = android.widget.LinearLayout.LayoutParams(
-                    android.view.ViewGroup.LayoutParams.WRAP_CONTENT,
-                    android.view.ViewGroup.LayoutParams.WRAP_CONTENT
-                ).apply { marginEnd = dp8 }
-                binding.daysWithTripsContainer.addView(chip, params)
-            }
-        }
-        
         // ✅ New: Lock inputs while trip is active; unlock when trip ends
         val inputsEnabled = !state.isTripActive
         binding.loadedMilesInput.isEnabled = inputsEnabled
@@ -798,10 +964,16 @@ class TripInputFragment : Fragment() {
     private fun showCalendarPicker() {
         val periodMode = viewModel.getCurrentPeriodMode()
         val selectedPeriod = viewModel.uiState.value.selectedPeriod
-        val referenceDate = selectedPeriod?.startDate ?: Date()
-        // Calendar range: 1 year prior and 1 year future so dialog min/max match
-        val calMin = getFirstDayOfMonth(referenceDate).apply { add(Calendar.YEAR, -1) }
-        val calMax = getLastDayOfMonth(referenceDate).apply { add(Calendar.YEAR, 1) }
+        // CUSTOM: always open calendar to period containing today so "Current Period" is consistent
+        val referenceDate = if (periodMode == PeriodMode.CUSTOM) {
+            Date()
+        } else {
+            selectedPeriod?.startDate ?: Date()
+        }
+        // Calendar history window: rolling last 12 months through current month.
+        val now = Date()
+        val calMin = getFirstDayOfMonth(now).apply { add(Calendar.MONTH, -12) }
+        val calMax = getLastDayOfMonth(now)
         val calendarMinDate = calMin.time
         val calendarMaxDate = calMax.time
 
@@ -811,9 +983,6 @@ class TripInputFragment : Fragment() {
                 val dialog = CustomCalendarDialog.newInstance(
                     periodMode = periodMode,
                     referenceDate = referenceDate,
-                    onPeriodConfirmed = { startDate, endDate ->
-                        viewModel.onCalendarPeriodSelected(periodMode, startDate, endDate)
-                    },
                     onHistoryDateClicked = { date ->
                         showTripHistoryForDate(date)
                     },
@@ -822,214 +991,6 @@ class TripInputFragment : Fragment() {
                 dialog.show(parentFragmentManager, "custom_calendar_dialog")
             }
         }
-    }
-
-    private fun showSingleDatePicker(selectedPeriod: TripInputViewModel.SelectedPeriod?) {
-        val initialSelection = selectedPeriod?.startDate?.time ?: MaterialDatePicker.todayInUtcMilliseconds()
-        val initialDate = Date(initialSelection)
-        
-        // ✅ FIXED: Calculate first and last day of month for STANDARD mode highlighting
-        val firstDayOfMonth = getFirstDayOfMonth(initialDate)
-        val lastDayOfMonth = getLastDayOfMonth(initialDate)
-        
-        // ✅ FIXED: Use Calendar.timeInMillis directly - it already returns UTC milliseconds
-        val firstDayUtcMillis = firstDayOfMonth.timeInMillis
-        val lastDayUtcMillis = lastDayOfMonth.timeInMillis
-        
-        // ✅ FIXED: For STANDARD mode, use range picker to show both first and last day highlighted with circles
-        // Pre-selecting the range will show both boundary dates with circular highlighting
-        val builder = MaterialDatePicker.Builder.dateRangePicker()
-            .setTitleText(getString(R.string.statistics_select_day))
-        
-        // ✅ NEW: Create validator that allows all dates to be clickable (for history viewing)
-        // But we'll intercept selection changes to handle history clicks vs boundary selection
-        val allowAllDatesValidator = object : CalendarConstraints.DateValidator {
-            override fun isValid(date: Long): Boolean {
-                // Allow all dates in the month range - we'll handle boundary logic in selection listener
-                val dateAtStartOfDay = normalizeToStartOfDayUtc(date)
-                return dateAtStartOfDay >= firstDayUtcMillis && dateAtStartOfDay <= lastDayUtcMillis
-            }
-            override fun describeContents(): Int = 0
-            override fun writeToParcel(dest: android.os.Parcel, flags: Int) {}
-        }
-        
-        // ✅ FIXED: Create calendar constraints - allow all dates to be clickable (no grayed out dates)
-        val constraintsBuilder = CalendarConstraints.Builder()
-            .setStart(firstDayUtcMillis)
-            .setEnd(lastDayUtcMillis)
-            .setValidator(allowAllDatesValidator) // Allow all dates for clicking
-        
-        builder.setCalendarConstraints(constraintsBuilder.build())
-        
-        // ✅ FIXED: Pre-select first to last day range to highlight both boundaries with circles
-        builder.setSelection(Pair(firstDayUtcMillis, lastDayUtcMillis))
-        
-        val picker = builder.build()
-
-
-        picker.addOnPositiveButtonClickListener { range ->
-            val startMillis = range.first
-            val endMillis = range.second
-            if (startMillis != null && endMillis != null) {
-                // ✅ FIXED: Selection is locked to boundaries, so always use first and last day
-                val startDate = convertUtcMillisToLocalDate(firstDayUtcMillis)
-                val endDate = convertUtcMillisToLocalDate(lastDayUtcMillis)
-                // For STANDARD mode, use first day as the selected date
-                viewModel.onCalendarPeriodSelected(PeriodMode.STANDARD, startDate, startDate)
-            }
-        }
-
-        picker.show(parentFragmentManager, "trip_period_day_picker")
-    }
-
-    private fun showRangeDatePicker(selectedPeriod: TripInputViewModel.SelectedPeriod?) {
-        val builder = MaterialDatePicker.Builder.dateRangePicker()
-            .setTitleText("${getString(R.string.statistics_select_range)}\n${getString(R.string.calendar_click_hint)}")
-
-        // ✅ FIXED: Calculate custom period boundaries for highlighting
-        val referenceDate = selectedPeriod?.startDate ?: Date()
-        val customPeriodStart = periodCalculationService.calculateCustomPeriodStart(referenceDate)
-        val customPeriodEnd = periodCalculationService.calculateCustomPeriodEnd(referenceDate)
-        
-        // ✅ FIXED: Normalize times to start of day in local timezone
-        customPeriodStart.set(Calendar.HOUR_OF_DAY, 0)
-        customPeriodStart.set(Calendar.MINUTE, 0)
-        customPeriodStart.set(Calendar.SECOND, 0)
-        customPeriodStart.set(Calendar.MILLISECOND, 0)
-        
-        customPeriodEnd.set(Calendar.HOUR_OF_DAY, 0)
-        customPeriodEnd.set(Calendar.MINUTE, 0)
-        customPeriodEnd.set(Calendar.SECOND, 0)
-        customPeriodEnd.set(Calendar.MILLISECOND, 0)
-        
-        // ✅ FIXED: Use Calendar.timeInMillis directly - it already returns UTC milliseconds
-        val periodStartUtcMillis = customPeriodStart.timeInMillis
-        val periodEndUtcMillis = customPeriodEnd.timeInMillis
-        
-        // ✅ FIXED: Create validators to ONLY allow period start and end date selection (locked/unmoveable)
-        // This locks the selection but will gray out other dates (required for locking)
-        val periodStartValidator = object : CalendarConstraints.DateValidator {
-            override fun isValid(date: Long): Boolean {
-                val dateAtStartOfDay = normalizeToStartOfDayUtc(date)
-                return dateAtStartOfDay == periodStartUtcMillis
-            }
-            override fun describeContents(): Int = 0
-            override fun writeToParcel(dest: android.os.Parcel, flags: Int) {}
-        }
-        
-        val periodEndValidator = object : CalendarConstraints.DateValidator {
-            override fun isValid(date: Long): Boolean {
-                val dateAtStartOfDay = normalizeToStartOfDayUtc(date)
-                return dateAtStartOfDay == periodEndUtcMillis
-            }
-            override fun describeContents(): Int = 0
-            override fun writeToParcel(dest: android.os.Parcel, flags: Int) {}
-        }
-        
-        // Combine validators - only period start OR end can be selected
-        val validators = listOf(periodStartValidator, periodEndValidator)
-        val combinedValidator = CompositeDateValidator.anyOf(validators)
-        
-        // ✅ FIXED: Create calendar constraints with validators to lock selection to period boundaries only
-        val constraintsBuilder = CalendarConstraints.Builder()
-            .setStart(periodStartUtcMillis)
-            .setEnd(periodEndUtcMillis)
-            .setValidator(combinedValidator) // Only allow period start or end date selection (locked)
-        
-        builder.setCalendarConstraints(constraintsBuilder.build())
-
-        // ✅ FIXED: Pre-select the period boundaries to highlight them with circles (green for start, red for end)
-        builder.setSelection(Pair(periodStartUtcMillis, periodEndUtcMillis))
-
-        val picker = builder.build()
-
-        // ✅ NEW: Intercept selection changes to handle history clicks vs boundary selection
-        var lastSelection: Pair<Long, Long>? = null
-        
-        // Monitor selection changes after picker is shown
-        picker.view?.postDelayed({
-            try {
-                // Use reflection to access the selection field and monitor changes
-                val selectionField = picker.javaClass.getDeclaredField("selection")
-                selectionField.isAccessible = true
-                
-                // Check selection periodically to detect changes
-                val selectionChecker = object : Runnable {
-                    override fun run() {
-                        try {
-                            val currentSelection = selectionField.get(picker) as? Pair<Long, Long>
-                            if (currentSelection != null && currentSelection != lastSelection) {
-                                val startMillis = currentSelection.first
-                                val endMillis = currentSelection.second
-                                
-                                if (startMillis != null && endMillis != null) {
-                                    val startAtStartOfDay = normalizeToStartOfDayUtc(startMillis)
-                                    val endAtStartOfDay = normalizeToStartOfDayUtc(endMillis)
-                                    
-                                    // Check if clicked date is a boundary date
-                                    val isPeriodStart = startAtStartOfDay == periodStartUtcMillis
-                                    val isPeriodEnd = endAtStartOfDay == periodEndUtcMillis
-                                    
-                                    if (!isPeriodStart && !isPeriodEnd) {
-                                        // User clicked a non-boundary date - open history
-                                        val clickedDate = convertUtcMillisToLocalDate(startMillis)
-                                        showTripHistoryForDate(clickedDate)
-                                        
-                                        // Reset selection to boundaries
-                                        selectionField.set(picker, Pair(periodStartUtcMillis, periodEndUtcMillis))
-                                    }
-                                    
-                                    lastSelection = currentSelection
-                                }
-                            }
-                        } catch (e: Exception) {
-                            // Ignore reflection errors
-                        }
-                        
-                        // Continue checking if picker is still showing
-                        if (picker.isAdded && picker.dialog?.isShowing == true) {
-                            picker.view?.postDelayed(this, 100)
-                        }
-                    }
-                }
-                picker.view?.post(selectionChecker)
-            } catch (e: Exception) {
-                // If reflection fails, fall back to standard behavior
-            }
-        }, 200)
-
-        picker.addOnPositiveButtonClickListener { range ->
-            val startMillis = range.first
-            val endMillis = range.second
-            if (startMillis != null && endMillis != null) {
-                // ✅ FIXED: Selection is locked to boundaries, so always use period start and end
-                val startDate = convertUtcMillisToLocalDate(periodStartUtcMillis)
-                val endDate = convertUtcMillisToLocalDate(periodEndUtcMillis)
-                viewModel.onCalendarPeriodSelected(PeriodMode.CUSTOM, startDate, endDate)
-            }
-        }
-
-        picker.show(parentFragmentManager, "trip_period_range_picker")
-    }
-
-    private fun startOfDay(date: Date): Date {
-        val calendar = Calendar.getInstance()
-        calendar.time = date
-        calendar.set(Calendar.HOUR_OF_DAY, 0)
-        calendar.set(Calendar.MINUTE, 0)
-        calendar.set(Calendar.SECOND, 0)
-        calendar.set(Calendar.MILLISECOND, 0)
-        return calendar.time
-    }
-
-    private fun endOfDay(date: Date): Date {
-        val calendar = Calendar.getInstance()
-        calendar.time = date
-        calendar.set(Calendar.HOUR_OF_DAY, 23)
-        calendar.set(Calendar.MINUTE, 59)
-        calendar.set(Calendar.SECOND, 59)
-        calendar.set(Calendar.MILLISECOND, 999)
-        return calendar.time
     }
 
     /**
@@ -1111,58 +1072,6 @@ class TripInputFragment : Fragment() {
     }
 
     /**
-     * ✅ NEW: Show a date picker for selecting which date to view history
-     * This allows users to view history for any date while keeping the period selection locked
-     */
-    private fun showHistoryDatePickerForCurrentPeriod() {
-        val periodMode = viewModel.getCurrentPeriodMode()
-        val selectedPeriod = viewModel.uiState.value.selectedPeriod
-        val referenceDate = selectedPeriod?.startDate ?: Date()
-        
-        val (startUtcMillis, endUtcMillis) = when (periodMode) {
-            PeriodMode.STANDARD -> {
-                val initialDate = referenceDate
-                val firstDayOfMonth = getFirstDayOfMonth(initialDate)
-                val lastDayOfMonth = getLastDayOfMonth(initialDate)
-                firstDayOfMonth.timeInMillis to lastDayOfMonth.timeInMillis
-            }
-            PeriodMode.CUSTOM -> {
-                val customPeriodStart = periodCalculationService.calculateCustomPeriodStart(referenceDate)
-                val customPeriodEnd = periodCalculationService.calculateCustomPeriodEnd(referenceDate)
-                customPeriodStart.set(Calendar.HOUR_OF_DAY, 0)
-                customPeriodStart.set(Calendar.MINUTE, 0)
-                customPeriodStart.set(Calendar.SECOND, 0)
-                customPeriodStart.set(Calendar.MILLISECOND, 0)
-                customPeriodEnd.set(Calendar.HOUR_OF_DAY, 0)
-                customPeriodEnd.set(Calendar.MINUTE, 0)
-                customPeriodEnd.set(Calendar.SECOND, 0)
-                customPeriodEnd.set(Calendar.MILLISECOND, 0)
-                customPeriodStart.timeInMillis to customPeriodEnd.timeInMillis
-            }
-        }
-        
-        val builder = MaterialDatePicker.Builder.datePicker()
-            .setTitleText(getString(R.string.history_date_picker_title))
-        
-        val constraintsBuilder = CalendarConstraints.Builder()
-            .setStart(startUtcMillis)
-            .setEnd(endUtcMillis)
-        
-        builder.setCalendarConstraints(constraintsBuilder.build())
-        
-        val picker = builder.build()
-        
-        picker.addOnPositiveButtonClickListener { selectedDate ->
-            if (selectedDate != null) {
-                val date = convertUtcMillisToLocalDate(selectedDate)
-                showTripHistoryForDate(date)
-            }
-        }
-        
-        picker.show(parentFragmentManager, "history_date_picker")
-    }
-
-    /**
      * ✅ NEW: Show trip history for a specific date
      * Opens a dialog displaying all trips that occurred on the selected date
      * 
@@ -1211,6 +1120,7 @@ class TripInputFragment : Fragment() {
     }
 
 
+    // All error events show snackbar (Health & resilience audit).
     private fun handleEvent(event: TripEvent) {
         when (event) {
             is TripEvent.TripCalculated -> {

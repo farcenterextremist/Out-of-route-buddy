@@ -127,7 +127,7 @@ class UnifiedOfflineService(
             networkStateManager.networkState
                 .filter { it.isConnected }
                 .distinctUntilChanged()
-                .collect { networkState ->
+                .collect { _ ->
                     Log.d(TAG, "Network restored - checking for offline data to sync")
                     if (hasOfflineDataToSync()) {
                         startAutoSync()
@@ -187,6 +187,7 @@ class UnifiedOfflineService(
      * ✅ UNIFIED: Perform synchronization
      */
     private suspend fun performSync(): Boolean {
+        @Suppress("UNUSED_VARIABLE")
         val startTime = System.currentTimeMillis()
         
         try {
@@ -341,7 +342,7 @@ class UnifiedOfflineService(
             saveOfflineTrips(currentTrips)
             
             updateOfflineState()
-            Log.d(TAG, "Trip saved offline: $tripId")
+            Log.d(TAG, "Trip saved offline")
             tripId
             
         } catch (e: Exception) {
@@ -398,6 +399,7 @@ class UnifiedOfflineService(
             }
             
             // Fallback to offline
+            @Suppress("UNCHECKED_CAST")
             when (dataType) {
                 "trip" -> {
                     val tripData = data as? Map<String, Any> ?: throw IllegalArgumentException("Invalid trip data")
@@ -415,6 +417,7 @@ class UnifiedOfflineService(
         } catch (e: Exception) {
             Log.e(TAG, "Failed to save data", e)
             // Always fallback to offline storage
+            @Suppress("UNCHECKED_CAST")
             when (dataType) {
                 "trip" -> saveTripOffline(data as? Map<String, Any> ?: emptyMap())
                 "analytics" -> {
@@ -475,37 +478,32 @@ class UnifiedOfflineService(
     }
     
     /**
-     * ✅ UNIFIED: Get offline trips
+     * Placeholder: returns empty list. Trip persistence is handled by OfflineDataManager.
+     * See docs/technical/OFFLINE_PERSISTENCE.md. Wire here when unifying with backend sync.
      */
     private fun getOfflineTrips(): List<OfflineTrip> {
-        // Simple implementation using SharedPreferences
-        // In a real app, you'd use a database
-        return emptyList() // Placeholder
+        return emptyList()
     }
     
     /**
-     * ✅ UNIFIED: Get offline analytics
+     * Placeholder: returns empty list until analytics persistence is wired.
      */
     private fun getOfflineAnalytics(): List<OfflineAnalytics> {
-        // Simple implementation using SharedPreferences
-        // In a real app, you'd use a database
-        return emptyList() // Placeholder
+        return emptyList()
     }
     
     /**
-     * ✅ UNIFIED: Save offline trips
+     * Placeholder: no-op until persistence layer is wired.
      */
-    private fun saveOfflineTrips(trips: List<OfflineTrip>) {
-        // Simple implementation using SharedPreferences
-        // In a real app, you'd use a database
+    @Suppress("UNUSED_PARAMETER")
+    private fun saveOfflineTrips(_trips: List<OfflineTrip>) {
     }
     
     /**
-     * ✅ UNIFIED: Save offline analytics
+     * Placeholder: no-op until persistence layer is wired.
      */
-    private fun saveOfflineAnalytics(analytics: List<OfflineAnalytics>) {
-        // Simple implementation using SharedPreferences
-        // In a real app, you'd use a database
+    @Suppress("UNUSED_PARAMETER")
+    private fun saveOfflineAnalytics(_analytics: List<OfflineAnalytics>) {
     }
     
     private fun calculateStorageSize(): Long {
@@ -515,12 +513,14 @@ class UnifiedOfflineService(
         return (offlineTrips.size + offlineAnalytics.size) * 1024L // Rough estimate
     }
     
-    private suspend fun simulateTripSync(trip: OfflineTrip): Boolean {
+    @Suppress("UNUSED_PARAMETER")
+    private suspend fun simulateTripSync(_trip: OfflineTrip): Boolean {
         delay(200) // Simulate network delay
         return Math.random() > 0.1 // 90% success rate
     }
     
-    private suspend fun simulateAnalyticsSync(analytics: OfflineAnalytics): Boolean {
+    @Suppress("UNUSED_PARAMETER")
+    private suspend fun simulateAnalyticsSync(_analytics: OfflineAnalytics): Boolean {
         delay(100) // Simulate network delay
         return Math.random() > 0.05 // 95% success rate
     }

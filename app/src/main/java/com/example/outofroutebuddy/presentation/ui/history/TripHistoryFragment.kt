@@ -7,7 +7,9 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.fragment.NavHostFragment
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.example.outofroutebuddy.R
 import com.example.outofroutebuddy.databinding.FragmentTripHistoryBinding
 import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
@@ -49,12 +51,14 @@ class TripHistoryFragment : Fragment() {
         setupClickListeners()
         observeTrips()
         observeDeleteError()
+        observeLoadError()
     }
     
     private fun setupRecyclerView() {
+        val navController = (activity?.supportFragmentManager?.findFragmentById(R.id.nav_host_fragment) as? NavHostFragment)?.navController
         adapter = TripHistoryAdapter(
             onTripClick = { trip ->
-                // Navigate to trip details (navigation handled by adapter)
+                navController?.navigate(R.id.tripDetailsFragment, Bundle().apply { putString("tripId", trip.id) })
             },
             onDeleteClick = { trip ->
                 viewModel.deleteTrip(trip)
@@ -81,6 +85,15 @@ class TripHistoryFragment : Fragment() {
     private fun observeDeleteError() {
         lifecycleScope.launch {
             viewModel.deleteError.collect { message ->
+                view?.let { Snackbar.make(it, message, Snackbar.LENGTH_SHORT).show() }
+            }
+        }
+    }
+
+    /** D1: Show snackbar when repository load fails. */
+    private fun observeLoadError() {
+        lifecycleScope.launch {
+            viewModel.loadError.collect { message ->
                 view?.let { Snackbar.make(it, message, Snackbar.LENGTH_SHORT).show() }
             }
         }

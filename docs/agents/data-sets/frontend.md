@@ -7,9 +7,7 @@
 - **Values:** `app/src/main/res/values/`, `values-night/`
 - **Presentation:** `app/src/main/java/.../presentation/` (ViewModels, fragments, activities, UI packages)
 - **Drawables:** `app/src/main/res/drawable/`, `drawable-night/`
-- **Emulator (reference):** `phone-emulator/` — visual and interaction parity
 - **UX specs (when available):** `docs/ux/` — screens, flows, accessibility
-- **Feature context:** `phone-emulator/EMULATOR_PERFECTION_PLAN.md`
 
 ## Produces (writes / owns)
 
@@ -18,4 +16,4 @@
 
 ## Delegation
 
-Implement screens/components from UI/UX spec; match emulator behavior; add or change UI only (data/API from Back-end).
+Implement screens and components from UI/UX spec; add or change UI only (data/API from Back-end).

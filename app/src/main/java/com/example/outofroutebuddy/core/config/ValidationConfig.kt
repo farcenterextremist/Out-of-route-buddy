@@ -388,4 +388,63 @@ object ValidationConfig {
     const val TEST_HIGH_SPEED_MPH = 50f
     const val TEST_UNREALISTIC_SPEED_MPH = 100f
     const val TEST_TRAFFIC_SPEED_MPH = 3f
+
+    // ===== DRIVE STATE / WALKING DETECTION (auto-exclude non-driving miles) =====
+
+    /** Maximum speed (mph) considered walking/stationary; above this we treat as driving. */
+    const val DRIVE_DETECT_WALKING_SPEED_MPH = 5f
+
+    /** Minimum duration (ms) in walking-speed band before classifying as WALKING_OR_STATIONARY. */
+    const val DRIVE_DETECT_WALKING_MIN_DURATION_MS = 30_000L
+
+    /** Speed (mph) above which we consider "highway context" (e.g. interstate). */
+    const val DRIVE_DETECT_HIGHWAY_SPEED_MPH = 35f
+
+    /** Lookback window (ms) for highway context; if we had speed > HIGHWAY in this window, treat slow segment as driving. */
+    const val DRIVE_DETECT_HIGHWAY_LOOKBACK_MS = 5 * 60 * 1000L
+
+    /** Minimum speed (mph) with stable bearing to count as "recent highway-like" driving. */
+    const val DRIVE_DETECT_HIGHWAY_LIKE_MIN_SPEED_MPH = 10f
+
+    /** Max number of recent location samples to keep for drive-state classification. */
+    const val DRIVE_DETECT_HISTORY_MAX_SIZE = 100
+}
+
+/**
+ * Optional overrides for drive-state detection thresholds. When null or a value is default,
+ * [ValidationConfig] constants are used. Used by [DriveStateClassifier] and read from app_settings.
+ */
+data class DriveDetectConfig(
+    val walkingSpeedMph: Float = ValidationConfig.DRIVE_DETECT_WALKING_SPEED_MPH,
+    val walkingMinDurationMs: Long = ValidationConfig.DRIVE_DETECT_WALKING_MIN_DURATION_MS,
+    val highwayLookbackMs: Long = ValidationConfig.DRIVE_DETECT_HIGHWAY_LOOKBACK_MS,
+) {
+    companion object {
+        /**
+         * Build config from SharedPreferences (app_settings). Use keys drive_detect_walking_speed_mph,
+         * drive_detect_walking_min_duration_sec, drive_detect_highway_lookback_sec. Missing or "default" = use ValidationConfig.
+         */
+        fun from(prefs: android.content.SharedPreferences): DriveDetectConfig {
+            val walkingSpeed = prefs.getString("drive_detect_walking_speed_mph", "default")
+            val walkingSpeedMph = when {
+                walkingSpeed == null || walkingSpeed == "default" -> ValidationConfig.DRIVE_DETECT_WALKING_SPEED_MPH
+                else -> walkingSpeed.toFloatOrNull() ?: ValidationConfig.DRIVE_DETECT_WALKING_SPEED_MPH
+            }
+            val durationSec = prefs.getString("drive_detect_walking_min_duration_sec", "default")
+            val walkingMinDurationMs = when {
+                durationSec == null || durationSec == "default" -> ValidationConfig.DRIVE_DETECT_WALKING_MIN_DURATION_MS
+                else -> (durationSec.toIntOrNull() ?: 30) * 1000L
+            }
+            val lookbackSec = prefs.getString("drive_detect_highway_lookback_sec", "default")
+            val highwayLookbackMs = when {
+                lookbackSec == null || lookbackSec == "default" -> ValidationConfig.DRIVE_DETECT_HIGHWAY_LOOKBACK_MS
+                else -> (lookbackSec.toIntOrNull() ?: 300) * 1000L
+            }
+            return DriveDetectConfig(
+                walkingSpeedMph = walkingSpeedMph,
+                walkingMinDurationMs = walkingMinDurationMs,
+                highwayLookbackMs = highwayLookbackMs,
+            )
+        }
+    }
 } 

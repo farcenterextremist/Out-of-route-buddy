@@ -1,5 +1,7 @@
 name: Coverage Check
 
+# Quick check: runs unit tests + coverage report; does NOT run jacocoCoverageVerification (thresholds).
+# For full gate (tests + report + threshold verification) run ./gradlew jacocoSuite locally. See docs/qa/JACOCO_SUITE.md.
 on:
   pull_request:
     branches: [ main ]
@@ -30,7 +32,7 @@ jobs:
       id: jacoco
       uses: cicirello/jacoco-badge-generator@v2
       with:
-        jacoco-csv-file: app/build/reports/jacoco/jacocoTestReport.csv
+        jacoco-csv-file: app/build/reports/jacoco/jacocoTestReport/jacocoTestReport.csv
         badges-directory: .github/badges
         generate-branches-badge: true
         generate-summary: true
@@ -44,7 +46,7 @@ jobs:
       if: github.event_name == 'pull_request'
       uses: madrapps/jacoco-report@v1.6
       with:
-        paths: app/build/reports/jacoco/jacocoTestReport.xml
+        paths: app/build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml
         token: ${{ secrets.GITHUB_TOKEN }}
         min-coverage-overall: 50
         min-coverage-changed-files: 60

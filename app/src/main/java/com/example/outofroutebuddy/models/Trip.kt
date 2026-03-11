@@ -30,11 +30,10 @@ data class Trip(
 ) {
     // Validation and computed properties for trip data
 
-    // Validation constants
+        // Validation constants
     companion object {
         private const val MIN_MILES = 0.0
         private const val MAX_MILES = 10000.0 // Realistic maximum for a single trip
-        private const val MIN_ACTUAL_MILES = 0.1 // Minimum actual miles to prevent zero trips
 
         /**
          * Validates trip data and throws appropriate exceptions for invalid data

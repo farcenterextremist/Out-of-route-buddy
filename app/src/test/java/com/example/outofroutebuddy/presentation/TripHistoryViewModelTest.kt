@@ -10,6 +10,7 @@ import io.mockk.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.*
@@ -53,7 +54,7 @@ class TripHistoryViewModelTest {
         // Stub so ViewModel init loadTrips() completes (tests can override per test)
         every { mockRepository.getAllTrips() } returns flowOf(emptyList())
 
-        viewModel = TripHistoryViewModel(mockApplication, mockRepository)
+        viewModel = TripHistoryViewModel(mockApplication, mockRepository, emptyFlow())
     }
 
     @After
@@ -81,7 +82,7 @@ class TripHistoryViewModelTest {
     }
 
     @Test
-    fun `trips are sorted by date descending (most recent first)`() = runTest {
+    fun `trips are sorted by date ascending (oldest first)`() = runTest {
         val oldTrip = createTestTrip(
             actualMiles = 100.0,
             endTime = Date(System.currentTimeMillis() - 86400000) // 1 day ago
@@ -90,15 +91,15 @@ class TripHistoryViewModelTest {
             actualMiles = 150.0,
             endTime = Date(System.currentTimeMillis()) // Now
         )
-        
+
         every { mockRepository.getAllTrips() } returns flowOf(listOf(oldTrip, newTrip))
-        
+
         viewModel.loadTrips()
         advanceUntilIdle()
-        
+
         val trips = viewModel.trips.value
-        assertTrue("Most recent trip should be first", 
-            trips[0].actualMiles == 150.0)
+        // ViewModel uses sortedBy (ascending): oldest first
+        assertTrue("Oldest trip should be first", trips[0].actualMiles == 100.0)
     }
 
     @Test

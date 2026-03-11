@@ -4,26 +4,27 @@
 
 This plan was produced from multi-agent exploration of the codebase (backend quality, test coverage, architecture and single source of truth).
 
+**Health & resilience:** Startup database health check and start-trip guard (block Start when unhealthy) are implemented (OutOfRouteApplication, TripInputViewModel).
+
 ---
 
 ## 1. Critical production bugs
 
-| ID | Finding | Location | Action |
-|----|---------|----------|--------|
-| C1 | **getTripsByStatus never emits** | `DomainTripRepositoryAdapter.getTripsByStatus()` | `getAllTrips()` is an infinite Flow; `collect` never completes so `emit(domainTrips)` is never reached. Callers hang. Use `.first()` (or one-shot API) to get one snapshot, then emit from the flow. |
-| C2 | **Loading never set to false** | `TripHistoryViewModel.loadTrips()` | `repository.getAllTrips().collect { }` never completes, so `finally { _isLoading.value = false }` never runs. Set `_isLoading.value = false` on first emission inside `collect`. |
-| C3 | **Error events not shown to user** | `TripInputFragment.handleEvent()` | `TripEvent.Error`, `CalculationError`, `SaveError` have empty branches; user never sees the message. **Wiring:** Call `showSnackbar(event.message)` (or equivalent) for these events. |
-| C4 | **Delete failure not surfaced** | `TripHistoryViewModel` / `TripHistoryByDateViewModel` + repository | Domain `deleteTrip` returns `Unit`; data layer returns `Boolean`. Extend domain contract (e.g. return success/failure or throw) and **wire** UI to show Snackbar on delete failure. |
+| ID | Finding | Location | Action | Status |
+|----|---------|----------|--------|--------|
+| C1 | **getTripsByStatus never emits** | `DomainTripRepositoryAdapter.getTripsByStatus()` | Use `.first()` to get one snapshot. | DONE |
+| C2 | **Loading never set to false** | `TripHistoryViewModel.loadTrips()` | Set `_isLoading.value = false` on first emission inside `collect`. | DONE |
+| C3 | **Error events not shown to user** | `TripInputFragment.handleEvent()` | Call `showSnackbar(event.message)` for Error, CalculationError, SaveError. | DONE |
+| C4 | **Delete failure not surfaced** | `TripHistoryViewModel` / `TripHistoryByDateViewModel` | Domain returns `Boolean`; UI observes `deleteError` SharedFlow. | DONE |
 
 ---
 
 ## 2. Concurrency and blocking
 
-| ID | Finding | Location | Action |
-|----|---------|----------|--------|
-| B1 | **runBlocking can block Main** | `UnifiedTripService.getTripStatistics()` | Uses `runBlocking { statisticsMutex.withLock { ... } }`. If called from Main, it blocks. Make the API suspend and call from a coroutine on a background dispatcher, or expose Flow/StateFlow. |
-| B2 | **runBlocking in performance logger** | `PerformanceTracker.logPerformance()` | Same risk. Use a non-blocking path (e.g. lock that doesn’t require runBlocking, or dispatch updates to a background scope). |
-
+| ID | Finding | Location | Action | Status |
+|----|---------|----------|--------|--------|
+| B1 | **runBlocking can block Main** | `UnifiedTripService.getTripStatistics()` | API is suspend; callers use coroutines. | DONE |
+| B2 | **runBlocking in performance logger** | `PerformanceTracker.logPerformance()` | Uses synchronized, not runBlocking. | DONE |
 ---
 
 ## 3. Data consistency and repository
@@ -38,41 +39,41 @@ This plan was produced from multi-agent exploration of the codebase (backend qua
 
 ## 4. Wiring and UX (wiring only)
 
-| ID | Finding | Location | Action |
-|----|---------|----------|--------|
-| W1 | **History-by-date dialog stale** | `TripHistoryByDateViewModel` uses `getTripsByDateRange(...).first()` once; no refresh when DB changes. | Refresh when dialog becomes visible (e.g. call `loadTripsForDate(currentDate)` in onResume or when fragment/dialog is shown) so list is fresh after a save elsewhere. |
+| ID | Finding | Location | Action | Status |
+|----|---------|----------|--------|--------|
+| W1 | **History-by-date dialog stale** | `TripHistoryByDateViewModel` | Call `loadTripsForDate` in onResume. | DONE |
 
 ---
 
 ## 5. Dead or redundant code
 
-| ID | Finding | Location | Action |
-|----|---------|----------|--------|
-| R1 | **saveCompletedTrip never used** | `TripStatePersistence.saveCompletedTrip(actualMiles)` saves with GPS metadata; ViewModel `endTrip()` uses domain `insertTrip(trip)` without it. | Either use saveCompletedTrip when ending a trip (so DB gets metadata), or remove the method if not needed. |
-| R2 | **autoSaveTripState empty** | `TripStatePersistence.autoSaveTripState()` is no-op. | Remove the method or implement and use from one place. |
-| R3 | **getCurrentActiveTrip always null** | `DomainTripRepositoryAdapter.getCurrentActiveTrip()` always emits null; active trip is in TripStateManager. | Remove from domain interface and adapter, or implement from TripStateManager if something should consume it. |
-| R4 | **StateCache unused in ViewModel** | `TripInputViewModel` has `StateCache` in constructor but never uses it. | Remove from constructor and DI for TripInputViewModel (if not used elsewhere for this screen). |
+| ID | Finding | Location | Action | Status |
+|----|---------|----------|--------|--------|
+| R1 | **saveCompletedTrip never used** | `TripStatePersistence` | Documented as future work; not wired. Wire to trip-end flow when GPS metadata persistence via this path is needed (Weakest Areas Plan Phase 5.5). | DONE — Wired in TripInputViewModel.endTrip(); saves with GPS metadata. |
+| R2 | **autoSaveTripState empty** | `TripStatePersistence` | Removed no-op method and call. | DONE |
+| R3 | **getCurrentActiveTrip always null** | `DomainTripRepositoryAdapter` | Not in current codebase. | N/A |
+| R4 | **StateCache unused in ViewModel** | `TripInputViewModel` | StateCache not in constructor. | DONE |
 
 ---
 
 ## 6. Test quality and robustness
 
-| ID | Finding | Location | Action |
-|----|---------|----------|--------|
-| T1 | **DomainTripRepositoryAdapter untested** | No dedicated tests for mapping and one-shot flows. | Add unit test for DomainTripRepositoryAdapter (data → domain mapping, getTripsByDateRange/getTripsByStatus behavior). |
-| T2 | **TripHistoryViewModelTest temp dir** | Creates temp directory in @Before, never deletes in @After. | Delete the temp directory in @After to avoid accumulation. |
-| T3 | **Call-order assertion brittle** | `TripStatisticsWiringTest`: asserts callOrder.contains("insertTrip") and "getMonthlyStats". | Prefer asserting observable outcomes (e.g. final UI state or repository state) instead of call order. |
-| T4 | **Edge-case coverage** | Missing tests for repository insert failure, empty list, delete failure on critical paths. | Add at least one test each: insert failure in endTrip path, empty list handling, delete failure surface. |
+| ID | Finding | Location | Action | Status |
+|----|---------|----------|--------|--------|
+| T1 | **DomainTripRepositoryAdapter untested** | | Add unit tests for mapping, getTripsByStatus, deleteTrip invalid ID. | DONE |
+| T2 | **TripHistoryViewModelTest temp dir** | | Delete temp dir in @After. | DONE |
+| T3 | **Call-order assertion brittle** | `TripStatisticsWiringTest` | Uses coVerify and outcome assertions. | DONE |
+| T4 | **Edge-case coverage** | | Migration tests deferred (schema export enabled; add test when second version exists). Insert/delete failure and empty list covered in DomainTripRepositoryAdapterTest. Other edge cases (invalid ID, data layer throws) covered; D1 logging in place in DomainTripRepositoryAdapter. | DONE |
 
 ---
 
 ## 7. Logging and null safety (lower priority)
 
-| ID | Finding | Location | Action |
-|----|---------|----------|--------|
-| L1 | **PreferencesManager fallback silent** | `getPeriodMode()` catches and returns STANDARD without logging. | Log at debug/warn when falling back to default so corrupted pref is visible. |
-| L2 | **Unsafe !! in CustomCalendarDialog** | `periodStartDate!!`, `periodEndDate!!` when adding decorators. | Use safe check after calculatePeriodBoundaries; early-return or show error if null. |
-| L3 | **Invalid ID in deleteTrip** | `DomainTripRepositoryAdapter.deleteTrip(trip)` uses `trip.id.toLongOrNull() ?: 0L`; 0 may match no row. | Validate ID (e.g. require positive) and/or propagate "invalid id" to caller. |
+| ID | Finding | Location | Action | Status |
+|----|---------|----------|--------|--------|
+| L1 | **PreferencesManager fallback silent** | `getPeriodMode()` | Log at debug/warn when falling back. | DONE — PreferencesManager.getPeriodMode() logs fallback with AppLogger.d/w. |
+| L2 | **Unsafe !! in CustomCalendarDialog** | | Safe check `if (start == null \|\| end == null) return`. | DONE |
+| L3 | **Invalid ID in deleteTrip** | `DomainTripRepositoryAdapter` | Validate ID; return false for invalid. | DONE |
 
 ---
 

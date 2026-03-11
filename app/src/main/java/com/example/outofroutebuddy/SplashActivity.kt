@@ -7,13 +7,13 @@ import android.os.Looper
 import androidx.appcompat.app.AppCompatActivity
 
 /**
- * Splash screen shown on app launch for a fixed duration (2 seconds),
+ * Splash screen shown on app launch for a fixed duration (1.2 seconds),
  * then navigates to MainActivity.
  */
 class SplashActivity : AppCompatActivity() {
 
     companion object {
-        private const val SPLASH_DURATION_MS = 2000L
+        private const val SPLASH_DURATION_MS = 1200L
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {

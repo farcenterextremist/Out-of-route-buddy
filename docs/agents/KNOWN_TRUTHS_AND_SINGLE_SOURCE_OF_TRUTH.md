@@ -8,7 +8,7 @@
 
 ## Goal (concise)
 
-**OutOfRouteBuddy** helps delivery drivers and fleet operators track **out-of-route (OOR) miles** accurately. The app is the single place to log loaded and bounce miles, run trips with GPS, and see monthly statistics and history so users can report and improve OOR performance. All agent work (design, UX, code, QA, security, comms) should support this goal and stay consistent with the SSOT below.
+**OutOfRouteBuddy** gives drivers advanced analytics and tracking for out-of-route (OOR) miles. The app is the single place to log loaded and bounce miles, run trips with GPS, and see monthly statistics and history so users gain useful data and can report and improve OOR performance. Solo drivers first; fleet management later. See `docs/GOAL_AND_MISSION.md` for full mission and success criteria. All agent work should support this goal and stay consistent with the SSOT below.
 
 ---
 
@@ -61,6 +61,17 @@
 
 ---
 
+## Roadmap feature definitions (canonical)
+
+**Reports screen**
+
+- **Location:** Not in the app yet (planned feature). Spec and roadmap: `docs/product/FEATURE_BRIEF_reports.md`, `docs/product/ROADMAP.md`. When built, entry is planned from the main app (e.g. nav or Statistics) via "Reports" or "View report."
+- **Definition:** The planned screen where the user selects a period (this week, this month, or custom range), sees a summary of total miles, out-of-route (OOR) miles, and OOR % for that period, optionally a list of trips in the period, and optionally can export (e.g. PDF) or share the report. It uses the same data as Statistics and History; no new data model for v1.
+
+When the user says "reports screen," "Reports," or "prioritize reports," this is the feature. Jarvey can use this to clarify: e.g. "Do you mean the planned Reports screen—period selector, summary (total/OOR miles, OOR %), optional trip list and export/share, per docs/product/FEATURE_BRIEF_reports.md?"
+
+---
+
 ## Conventions and ownership (quick reference)
 
 - **PreferencesManager** (`OutOfRouteBuddyPreferences`): Period mode, last loaded/bounce miles, trip active flag.
@@ -76,7 +87,3 @@
 | Theme / settings | SettingsManager, OutOfRouteApplication.applyThemePreference, SettingsFragment, TripInputFragment (settings dialog) |
 | History by date | TripHistoryByDateViewModel, getTripsByDateRange |
 | Wiring reference | docs/technical/WIRING_MAP.md, docs/technical/TRIP_PERSISTENCE_END_CLEAR.md |
-
----
-
-*Keep this doc in sync with TRIP_PERSISTENCE_END_CLEAR.md and WIRING_MAP.md when changing persistence or wiring.*

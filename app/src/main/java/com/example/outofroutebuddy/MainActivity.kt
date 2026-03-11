@@ -1,14 +1,18 @@
 package com.example.outofroutebuddy
 
+import android.content.Intent
 import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
+import android.provider.Settings
+import android.net.Uri
+import com.example.outofroutebuddy.util.AppLogger
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.core.app.NotificationManagerCompat
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
@@ -18,6 +22,7 @@ import com.example.outofroutebuddy.data.TripPersistenceManager
 import com.example.outofroutebuddy.domain.models.PeriodMode
 import com.example.outofroutebuddy.presentation.ui.dialogs.TripRecoveryDialog
 import com.example.outofroutebuddy.presentation.ui.trip.TripInputFragment
+import com.example.outofroutebuddy.services.TripEndedOverlayService
 import com.example.outofroutebuddy.presentation.viewmodel.TripInputViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
@@ -87,8 +92,9 @@ class MainActivity : AppCompatActivity(), TripRecoveryDialog.TripRecoveryListene
     companion object {
         private const val TAG = "MainActivity"
         private const val KEY_NAVIGATION_STATE = "navigation_state"
-        private const val KEY_LAST_SCREEN = "last_screen"
-        
+        @Volatile
+        internal var isVisibleInForeground: Boolean = false
+
         // Required permissions for GPS tracking
         private val REQUIRED_PERMISSIONS = arrayOf(
             Manifest.permission.ACCESS_FINE_LOCATION,
@@ -97,6 +103,10 @@ class MainActivity : AppCompatActivity(), TripRecoveryDialog.TripRecoveryListene
         
         // Background permission (Android 10+)
         private val BACKGROUND_PERMISSION = Manifest.permission.ACCESS_BACKGROUND_LOCATION
+        private const val PREFS_NOTIFICATION_GUIDANCE = "notification_guidance"
+        private const val KEY_NOTIFICATION_GUIDANCE_SHOWN = "notification_guidance_shown"
+        private const val KEY_NOTIFICATION_PERMISSION_REQUESTED = "notification_permission_requested"
+        private const val KEY_NEEDS_NOTIFICATION_GUIDANCE = "trip_notif_guidance_needed"
     }
 
     @Inject
@@ -105,10 +115,13 @@ class MainActivity : AppCompatActivity(), TripRecoveryDialog.TripRecoveryListene
     private lateinit var navController: NavController
     private var isNavigationInitialized = false
     private var hasCheckedForRecovery = false
+    private var shouldRunRecoveryCheckOnThisCreate = false
     
     // ✅ NEW: Location permission state tracking
     private var locationPermissionsGranted = false
     private var backgroundPermissionGranted = false
+    private var notificationPermissionGranted = true
+    private var activityRecognitionPermissionGranted = true
     
     // ✅ NEW: Permission request launcher using modern API
     private val locationPermissionLauncher = registerForActivityResult(
@@ -122,6 +135,23 @@ class MainActivity : AppCompatActivity(), TripRecoveryDialog.TripRecoveryListene
         ActivityResultContracts.RequestPermission()
     ) { granted ->
         handleBackgroundPermissionResult(granted)
+    }
+
+    private val notificationPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        handleNotificationPermissionResult(granted)
+    }
+
+    private val activityRecognitionPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission(),
+    ) { granted ->
+        activityRecognitionPermissionGranted = granted
+        if (granted) {
+            AppLogger.d(TAG, "✅ Activity recognition permission granted")
+        } else {
+            AppLogger.w(TAG, "❌ Activity recognition permission denied; trip-end detector will use fallback signals")
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -138,10 +168,9 @@ class MainActivity : AppCompatActivity(), TripRecoveryDialog.TripRecoveryListene
         // - Initialize user onboarding if needed
 
         try {
-            Log.d(TAG, "MainActivity onCreate started")
+            AppLogger.d(TAG,"MainActivity onCreate started")
             setContentView(R.layout.activity_main)
-
-            // setupCrashlyticsTestTriggers() // Temporarily disabled
+            shouldRunRecoveryCheckOnThisCreate = savedInstanceState == null
 
             // ✅ IMPLEMENTED: Add error handling for fragment not found
             // ✅ IMPLEMENTED: Add fallback navigation if NavHostFragment is null
@@ -150,16 +179,23 @@ class MainActivity : AppCompatActivity(), TripRecoveryDialog.TripRecoveryListene
             
             // ✅ NEW: Request location permissions on app launch
             checkAndRequestLocationPermissions()
+            notificationPermissionGranted = hasNotificationPermission()
             
-            // ✅ NEW: Check for trip recovery on app startup (only on initial launch, not configuration changes)
-            if (savedInstanceState == null && !hasCheckedForRecovery) {
-                checkForTripRecovery()
-                hasCheckedForRecovery = true
+            // S3: Defer trip recovery until after permission flow completes (onPermissionsFlowComplete).
+            // Only check for recovery when permissions are granted so we don't start tracking without permission.
+            // Only run recovery for fresh activity creates (savedInstanceState == null), not config changes.
+            if (shouldRunRecoveryCheckOnThisCreate && !hasCheckedForRecovery) {
+                // If we already have permission, check recovery now; otherwise recovery runs in onPermissionsFlowComplete
+                if (locationPermissionsGranted) {
+                    checkForTripRecovery()
+                    hasCheckedForRecovery = true
+                    shouldRunRecoveryCheckOnThisCreate = false
+                }
             }
 
-            Log.d(TAG, "MainActivity onCreate completed successfully")
+            AppLogger.d(TAG,"MainActivity onCreate completed successfully")
         } catch (e: Exception) {
-            Log.e(TAG, "Critical error during MainActivity initialization", e)
+            AppLogger.e(TAG, "Critical error during MainActivity initialization", e)
             // ✅ ADDED: Report critical errors to Firebase Crashlytics
             (application as? OutOfRouteApplication)?.reportErrorToCrashlytics(
                 "Critical error during MainActivity initialization",
@@ -169,20 +205,6 @@ class MainActivity : AppCompatActivity(), TripRecoveryDialog.TripRecoveryListene
             // For now, we'll show a user-friendly error and try to recover
             showInitializationError(e)
         }
-    }
-
-    /**
-     * Setup internal crash triggers for testing Crashlytics
-     */
-    private fun setupCrashlyticsTestTriggers() {
-        // 🚀 FUTURE ENHANCEMENT: Investigate why Crashlytics reports (both forced and non-fatal)
-        // are not appearing in the Firebase console. The SDK is initialized but no data is received.
-
-        // Report a non-fatal error for testing purposes
-        (application as? OutOfRouteApplication)?.reportErrorToCrashlytics(
-            "Test non-fatal error from MainActivity onCreate",
-            null,
-        )
     }
 
     /**
@@ -206,12 +228,12 @@ class MainActivity : AppCompatActivity(), TripRecoveryDialog.TripRecoveryListene
                     val navigationState = bundle.getBundle(KEY_NAVIGATION_STATE)
                     if (navigationState != null) {
                         navController.restoreState(navigationState)
-                        Log.d(TAG, "Navigation state restored successfully")
+                        AppLogger.d(TAG,"Navigation state restored successfully")
                     } else {
-                        Log.d(TAG, "No navigation state to restore")
+                        AppLogger.d(TAG,"No navigation state to restore")
                     }
                 } catch (e: Exception) {
-                    Log.w(TAG, "Failed to restore navigation state", e)
+                    AppLogger.w(TAG, "Failed to restore navigation state", e)
                     // Continue with default navigation
                 }
             }
@@ -220,9 +242,9 @@ class MainActivity : AppCompatActivity(), TripRecoveryDialog.TripRecoveryListene
             setupNavigationListeners()
 
             isNavigationInitialized = true
-            Log.d(TAG, "Navigation initialized successfully")
+            AppLogger.d(TAG,"Navigation initialized successfully")
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to initialize navigation", e)
+            AppLogger.e(TAG, "Failed to initialize navigation", e)
             throw NavigationInitializationException("Failed to initialize navigation", e)
         }
     }
@@ -233,10 +255,10 @@ class MainActivity : AppCompatActivity(), TripRecoveryDialog.TripRecoveryListene
     private fun setupNavigationListeners() {
         navController.addOnDestinationChangedListener { _, destination, arguments ->
             try {
-                Log.d(TAG, "Navigation to: ${destination.label} with args: $arguments")
+                AppLogger.d(TAG, "Navigation to: ${destination.label} with args: $arguments")
                 // 🚀 FUTURE ENHANCEMENT: Add analytics tracking for screen views
             } catch (e: Exception) {
-                Log.e(TAG, "Error in navigation listener", e)
+                AppLogger.e(TAG, "Error in navigation listener", e)
             }
         }
     }
@@ -248,40 +270,10 @@ class MainActivity : AppCompatActivity(), TripRecoveryDialog.TripRecoveryListene
         try {
             if (isNavigationInitialized) {
                 navController.navigate(R.id.tripInputFragment)
-                Log.d(TAG, "Navigated to trip input")
+                AppLogger.d(TAG, "Navigated to trip input")
             }
         } catch (e: Exception) {
-            Log.e(TAG, "Error navigating to trip input", e)
-        }
-    }
-
-    /**
-     * Navigate to trip history
-     */
-    private fun navigateToTripHistory() {
-        try {
-            if (isNavigationInitialized) {
-                // 🚀 FUTURE ENHANCEMENT: Implement trip history navigation when fragment is created
-                Log.d(TAG, "Trip history navigation requested (not yet implemented)")
-                navigateToTripInput() // Fallback for now
-            }
-        } catch (e: Exception) {
-            Log.e(TAG, "Error navigating to trip history", e)
-        }
-    }
-
-    /**
-     * Navigate to statistics
-     */
-    private fun navigateToStatistics() {
-        try {
-            if (isNavigationInitialized) {
-                // 🚀 FUTURE ENHANCEMENT: Implement statistics navigation when fragment is created
-                Log.d(TAG, "Statistics navigation requested (not yet implemented)")
-                navigateToTripInput() // Fallback for now
-            }
-        } catch (e: Exception) {
-            Log.e(TAG, "Error navigating to statistics", e)
+            AppLogger.e(TAG, "Error navigating to trip input", e)
         }
     }
 
@@ -291,7 +283,7 @@ class MainActivity : AppCompatActivity(), TripRecoveryDialog.TripRecoveryListene
     private fun showInitializationError(error: Exception) {
         // In a production app, you would show a proper error dialog
         // For now, we'll just log the error
-        Log.e(TAG, "Showing initialization error to user: ${error.message}")
+        AppLogger.e(TAG, "Showing initialization error to user: ${error.message}")
 
         // Initialization error logged - user will see unresponsive app
         // Critical errors should prevent app from loading
@@ -300,7 +292,7 @@ class MainActivity : AppCompatActivity(), TripRecoveryDialog.TripRecoveryListene
     override fun onSupportNavigateUp(): Boolean {
         // Line 118: Defensive version
         if (!isNavigationInitialized) {
-            Log.w(TAG, "Navigation not initialized, cannot navigate up")
+            AppLogger.w(TAG, "Navigation not initialized, cannot navigate up")
             return false
         }
         val navResult = navController.navigateUp()
@@ -310,29 +302,81 @@ class MainActivity : AppCompatActivity(), TripRecoveryDialog.TripRecoveryListene
         return navResult
     }
 
+    override fun onNewIntent(intent: Intent?) {
+        super.onNewIntent(intent)
+        intent?.let {
+            setIntent(it)
+            window.decorView.post { handleTripEndedPromptIntent() }
+        }
+    }
+
     override fun onResume() {
         super.onResume()
-        // ✅ COMPLETED: Add error handling for resume
-        // 🚀 FUTURE ENHANCEMENTS (Optional):
-        // - Add analytics tracking for screen view
-        // - Check for app updates
-        // - Check for data sync requirements
-        // - Update UI based on current state
-
         try {
-            Log.d(TAG, "MainActivity onResume")
-
-            // Check if navigation is healthy
+            AppLogger.v(TAG, "MainActivity onResume")
             if (!isNavigationInitialized) {
-                Log.w(TAG, "Navigation not initialized in onResume, attempting recovery")
                 try {
                     initializeNavigation(null)
                 } catch (e: Exception) {
-                    Log.e(TAG, "Failed to recover navigation in onResume", e)
+                    AppLogger.e(TAG, "Failed to recover navigation in onResume", e)
                 }
             }
+            handleTripEndedPromptIntent()
+            maybeShowNotificationGuidanceIfNeeded()
         } catch (e: Exception) {
-            Log.e(TAG, "Error in onResume", e)
+            AppLogger.e(TAG, "Error in onResume", e)
+        }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        isVisibleInForeground = true
+    }
+
+    override fun onStop() {
+        isVisibleInForeground = false
+        super.onStop()
+    }
+
+    private fun handleTripEndedPromptIntent() {
+        if (!intent.getBooleanExtra(TripEndedOverlayService.EXTRA_OPEN_TRIP_ENDED_DIALOG, false)) {
+            return
+        }
+        val promptSource =
+            intent.getStringExtra(TripEndedOverlayService.EXTRA_TRIP_END_PROMPT_SOURCE)
+                ?: TripEndedOverlayService.PROMPT_SURFACE_OVERLAY
+        intent.removeExtra(TripEndedOverlayService.EXTRA_OPEN_TRIP_ENDED_DIALOG)
+        intent.removeExtra(TripEndedOverlayService.EXTRA_TRIP_END_PROMPT_SOURCE)
+        if (!isNavigationInitialized) {
+            AppLogger.w(TAG, "Cannot show trip-ended dialog: navigation not initialized")
+            return
+        }
+        navigateToTripInput()
+        val listenerHolder = arrayOf<NavController.OnDestinationChangedListener?>(null)
+        val listener = NavController.OnDestinationChangedListener { _, destination, _ ->
+            if (destination.id == R.id.tripInputFragment) {
+                listenerHolder[0]?.let { navController.removeOnDestinationChangedListener(it) }
+                supportFragmentManager.executePendingTransactions()
+                window.decorView.post {
+                    val navHost = supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as? NavHostFragment
+                    val fragment = navHost?.childFragmentManager?.fragments?.firstOrNull()
+                    if (fragment is TripInputFragment) {
+                        fragment.showEndTripConfirmationFromOverlay(promptSource)
+                    }
+                }
+            }
+        }
+        listenerHolder[0] = listener
+        navController.addOnDestinationChangedListener(listener)
+        if (navController.currentDestination?.id == R.id.tripInputFragment) {
+            listenerHolder[0]?.let { navController.removeOnDestinationChangedListener(it) }
+            window.decorView.post {
+                val navHost = supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as? NavHostFragment
+                val fragment = navHost?.childFragmentManager?.fragments?.firstOrNull()
+                if (fragment is TripInputFragment) {
+                    fragment.showEndTripConfirmationFromOverlay(promptSource)
+                }
+            }
         }
     }
 
@@ -345,9 +389,9 @@ class MainActivity : AppCompatActivity(), TripRecoveryDialog.TripRecoveryListene
         // - Log analytics events
 
         try {
-            Log.d(TAG, "MainActivity onPause")
+            AppLogger.v(TAG, "MainActivity onPause")
         } catch (e: Exception) {
-            Log.e(TAG, "Error in onPause", e)
+            AppLogger.e(TAG, "Error in onPause", e)
         }
     }
 
@@ -359,10 +403,10 @@ class MainActivity : AppCompatActivity(), TripRecoveryDialog.TripRecoveryListene
             if (isNavigationInitialized) {
                 val navigationState = navController.saveState()
                 outState.putBundle(KEY_NAVIGATION_STATE, navigationState)
-                Log.d(TAG, "Navigation state saved")
+                AppLogger.v(TAG, "Navigation state saved")
             }
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to save navigation state", e)
+            AppLogger.e(TAG, "Failed to save navigation state", e)
         }
     }
 
@@ -375,10 +419,10 @@ class MainActivity : AppCompatActivity(), TripRecoveryDialog.TripRecoveryListene
         // - Log analytics events
 
         try {
-            Log.d(TAG, "MainActivity onDestroy")
+            AppLogger.v(TAG, "MainActivity onDestroy")
             isNavigationInitialized = false
         } catch (e: Exception) {
-            Log.e(TAG, "Error in onDestroy", e)
+            AppLogger.e(TAG, "Error in onDestroy", e)
         }
     }
 
@@ -398,7 +442,7 @@ class MainActivity : AppCompatActivity(), TripRecoveryDialog.TripRecoveryListene
      */
     private fun checkAndRequestLocationPermissions() {
         try {
-            Log.d(TAG, "Checking location permissions")
+            AppLogger.d(TAG, "Checking location permissions")
             
             // Check if foreground permissions are granted
             val hasFineLocation = ContextCompat.checkSelfPermission(
@@ -414,10 +458,10 @@ class MainActivity : AppCompatActivity(), TripRecoveryDialog.TripRecoveryListene
             locationPermissionsGranted = hasFineLocation && hasCoarseLocation
             
             if (!locationPermissionsGranted) {
-                Log.d(TAG, "Location permissions not granted, requesting...")
+                AppLogger.d(TAG, "Location permissions not granted, requesting...")
                 showPermissionRationale()
             } else {
-                Log.d(TAG, "Location permissions already granted")
+                AppLogger.d(TAG, "Location permissions already granted")
                 
                 // Check background permission (Android 10+)
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -427,7 +471,7 @@ class MainActivity : AppCompatActivity(), TripRecoveryDialog.TripRecoveryListene
                 }
             }
         } catch (e: Exception) {
-            Log.e(TAG, "Error checking location permissions", e)
+            AppLogger.e(TAG, "Error checking location permissions", e)
         }
     }
     
@@ -447,7 +491,7 @@ class MainActivity : AppCompatActivity(), TripRecoveryDialog.TripRecoveryListene
             }
             .setNegativeButton("Not Now") { dialog, _ ->
                 dialog.dismiss()
-                Log.d(TAG, "User declined location permission")
+                AppLogger.d(TAG, "User declined location permission")
             }
             .setCancelable(false)
             .show()
@@ -458,10 +502,10 @@ class MainActivity : AppCompatActivity(), TripRecoveryDialog.TripRecoveryListene
      */
     private fun requestLocationPermissions() {
         try {
-            Log.d(TAG, "Requesting location permissions")
+            AppLogger.d(TAG, "Requesting location permissions")
             locationPermissionLauncher.launch(REQUIRED_PERMISSIONS)
         } catch (e: Exception) {
-            Log.e(TAG, "Error requesting location permissions", e)
+            AppLogger.e(TAG, "Error requesting location permissions", e)
         }
     }
     
@@ -476,7 +520,7 @@ class MainActivity : AppCompatActivity(), TripRecoveryDialog.TripRecoveryListene
             locationPermissionsGranted = fineLocationGranted && coarseLocationGranted
             
             if (locationPermissionsGranted) {
-                Log.d(TAG, "✅ Location permissions granted")
+                AppLogger.d(TAG, "✅ Location permissions granted")
                 
                 // Ask for background permission on Android 10+
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -485,11 +529,11 @@ class MainActivity : AppCompatActivity(), TripRecoveryDialog.TripRecoveryListene
                     onPermissionsFlowComplete()
                 }
             } else {
-                Log.w(TAG, "❌ Location permissions denied")
+                AppLogger.w(TAG, "❌ Location permissions denied")
                 showPermissionDeniedDialog()
             }
         } catch (e: Exception) {
-            Log.e(TAG, "Error handling location permission result", e)
+            AppLogger.e(TAG, "Error handling location permission result", e)
         }
     }
     
@@ -506,10 +550,11 @@ class MainActivity : AppCompatActivity(), TripRecoveryDialog.TripRecoveryListene
             backgroundPermissionGranted = hasBackgroundPermission
             
             if (!hasBackgroundPermission) {
-                Log.d(TAG, "Background location permission not granted")
-                // We'll ask for this when user starts a trip
+                AppLogger.d(TAG, "Background location permission not granted")
+                // We'll ask for this when user starts a trip; complete flow so period onboarding can show
+                onPermissionsFlowComplete()
             } else {
-                Log.d(TAG, "Background location permission already granted")
+                AppLogger.d(TAG, "Background location permission already granted")
                 onPermissionsFlowComplete()
             }
         }
@@ -532,7 +577,7 @@ class MainActivity : AppCompatActivity(), TripRecoveryDialog.TripRecoveryListene
                 }
                 .setNegativeButton("Skip") { dialog, _ ->
                     dialog.dismiss()
-                    Log.d(TAG, "User skipped background permission")
+                    AppLogger.d(TAG, "User skipped background permission")
                     onPermissionsFlowComplete()
                 }
                 .show()
@@ -545,10 +590,10 @@ class MainActivity : AppCompatActivity(), TripRecoveryDialog.TripRecoveryListene
     private fun requestBackgroundPermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             try {
-                Log.d(TAG, "Requesting background location permission")
+                AppLogger.d(TAG, "Requesting background location permission")
                 backgroundPermissionLauncher.launch(BACKGROUND_PERMISSION)
             } catch (e: Exception) {
-                Log.e(TAG, "Error requesting background permission", e)
+                AppLogger.e(TAG, "Error requesting background permission", e)
             }
         }
     }
@@ -560,9 +605,9 @@ class MainActivity : AppCompatActivity(), TripRecoveryDialog.TripRecoveryListene
         backgroundPermissionGranted = granted
         
         if (granted) {
-            Log.d(TAG, "✅ Background location permission granted")
+            AppLogger.d(TAG, "✅ Background location permission granted")
         } else {
-            Log.w(TAG, "❌ Background location permission denied")
+            AppLogger.w(TAG, "❌ Background location permission denied")
         }
         onPermissionsFlowComplete()
     }
@@ -586,7 +631,7 @@ class MainActivity : AppCompatActivity(), TripRecoveryDialog.TripRecoveryListene
                     )
                     startActivity(intent)
                 } catch (e: Exception) {
-                    Log.e(TAG, "Failed to open app settings", e)
+                    AppLogger.e(TAG, "Failed to open app settings", e)
                 }
             }
             .setNegativeButton("Cancel") { dialog, _ ->
@@ -598,10 +643,153 @@ class MainActivity : AppCompatActivity(), TripRecoveryDialog.TripRecoveryListene
     /**
      * Called when the permission flow is complete (all prompts done, user granted or declined).
      * Shows period onboarding dialog on first run if location permissions are granted.
+     * S3: Run trip recovery check only when location permission is granted so we don't start tracking without permission.
+     * Trip recovery runs only for fresh activity creates (savedInstanceState == null), not config changes.
      */
     private fun onPermissionsFlowComplete() {
         if (!locationPermissionsGranted) return
+        checkAndRequestActivityRecognitionPermission()
+        checkAndRequestNotificationPermission()
         maybeShowPeriodOnboarding()
+        // S3: Check for trip recovery only after permission is granted, and only once per fresh activity create.
+        if (!hasCheckedForRecovery && shouldRunRecoveryCheckOnThisCreate) {
+            checkForTripRecovery()
+            hasCheckedForRecovery = true
+            shouldRunRecoveryCheckOnThisCreate = false
+        }
+    }
+
+    private fun checkAndRequestActivityRecognitionPermission() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+            activityRecognitionPermissionGranted = true
+            return
+        }
+        activityRecognitionPermissionGranted = ContextCompat.checkSelfPermission(
+            this,
+            Manifest.permission.ACTIVITY_RECOGNITION,
+        ) == PackageManager.PERMISSION_GRANTED
+        if (activityRecognitionPermissionGranted) return
+
+        AlertDialog.Builder(this)
+            .setTitle("Activity Recognition")
+            .setMessage(
+                "Allow activity recognition to improve trip end detection (driving vs still). " +
+                    "You can continue without it, but reliability may be lower."
+            )
+            .setPositiveButton("Allow") { dialog, _ ->
+                dialog.dismiss()
+                activityRecognitionPermissionLauncher.launch(Manifest.permission.ACTIVITY_RECOGNITION)
+            }
+            .setNegativeButton("Not now") { dialog, _ ->
+                dialog.dismiss()
+            }
+            .show()
+    }
+
+    private fun checkAndRequestNotificationPermission() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+            notificationPermissionGranted = true
+            return
+        }
+        notificationPermissionGranted =
+            ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) == PackageManager.PERMISSION_GRANTED
+        if (notificationPermissionGranted) return
+
+        val prefs = getSharedPreferences(PREFS_NOTIFICATION_GUIDANCE, MODE_PRIVATE)
+        val requested = prefs.getBoolean(KEY_NOTIFICATION_PERMISSION_REQUESTED, false)
+        if (requested) return
+
+        AlertDialog.Builder(this)
+            .setTitle(getString(R.string.notification_permission_title))
+            .setMessage(getString(R.string.notification_permission_message))
+            .setPositiveButton(getString(R.string.grant_permission)) { dialog, _ ->
+                dialog.dismiss()
+                prefs.edit().putBoolean(KEY_NOTIFICATION_PERMISSION_REQUESTED, true).apply()
+                notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            }
+            .setNegativeButton(getString(R.string.not_now)) { dialog, _ ->
+                dialog.dismiss()
+                prefs.edit().putBoolean(KEY_NOTIFICATION_PERMISSION_REQUESTED, true).apply()
+                markNotificationGuidanceNeeded()
+            }
+            .show()
+    }
+
+    private fun handleNotificationPermissionResult(granted: Boolean) {
+        notificationPermissionGranted = granted
+        if (granted) {
+            AppLogger.d(TAG, "✅ Notification permission granted")
+            clearNotificationGuidanceNeeded()
+        } else {
+            AppLogger.w(TAG, "❌ Notification permission denied")
+            markNotificationGuidanceNeeded()
+        }
+    }
+
+    private fun markNotificationGuidanceNeeded() {
+        val prefs = getSharedPreferences(PREFS_NOTIFICATION_GUIDANCE, MODE_PRIVATE)
+        prefs.edit().putBoolean(KEY_NEEDS_NOTIFICATION_GUIDANCE, true).apply()
+    }
+
+    private fun clearNotificationGuidanceNeeded() {
+        val prefs = getSharedPreferences(PREFS_NOTIFICATION_GUIDANCE, MODE_PRIVATE)
+        prefs.edit().putBoolean(KEY_NEEDS_NOTIFICATION_GUIDANCE, false).apply()
+    }
+
+    private fun maybeShowNotificationGuidanceIfNeeded() {
+        val prefs = getSharedPreferences(PREFS_NOTIFICATION_GUIDANCE, MODE_PRIVATE)
+        val needsGuidance = prefs.getBoolean(KEY_NEEDS_NOTIFICATION_GUIDANCE, false)
+        val shown = prefs.getBoolean(KEY_NOTIFICATION_GUIDANCE_SHOWN, false)
+        if (!needsGuidance || shown) return
+        if (areSystemNotificationsEnabled()) {
+            clearNotificationGuidanceNeeded()
+            return
+        }
+
+        AlertDialog.Builder(this)
+            .setTitle(getString(R.string.notification_blocked_title))
+            .setMessage(getString(R.string.notification_blocked_message))
+            .setPositiveButton(getString(R.string.open_settings)) { dialog, _ ->
+                dialog.dismiss()
+                openAppNotificationSettings()
+            }
+            .setNegativeButton(getString(R.string.cancel)) { dialog, _ ->
+                dialog.dismiss()
+            }
+            .show()
+        prefs.edit().putBoolean(KEY_NOTIFICATION_GUIDANCE_SHOWN, true).apply()
+    }
+
+    private fun openAppNotificationSettings() {
+        try {
+            val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
+                putExtra(Settings.EXTRA_APP_PACKAGE, packageName)
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            startActivity(intent)
+        } catch (e: Exception) {
+            AppLogger.w(TAG, "Falling back to app details settings for notifications", e)
+            val fallback = Intent(
+                Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                Uri.fromParts("package", packageName, null)
+            )
+            startActivity(fallback)
+        }
+    }
+
+    fun hasNotificationPermission(): Boolean {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return true
+        return ContextCompat.checkSelfPermission(
+            this,
+            Manifest.permission.POST_NOTIFICATIONS
+        ) == PackageManager.PERMISSION_GRANTED
+    }
+
+    fun areSystemNotificationsEnabled(): Boolean {
+        return NotificationManagerCompat.from(this).areNotificationsEnabled()
     }
 
     /**
@@ -613,7 +801,6 @@ class MainActivity : AppCompatActivity(), TripRecoveryDialog.TripRecoveryListene
         if (preferencesManager.hasSeenPeriodOnboarding()) return
 
         val dialogView = layoutInflater.inflate(R.layout.dialog_period_onboarding, null)
-        val radioGroup = dialogView.findViewById<android.widget.RadioGroup>(R.id.period_onboarding_radio_group)
         val radioStandard = dialogView.findViewById<android.widget.RadioButton>(R.id.radio_period_standard)
         val radioCustom = dialogView.findViewById<android.widget.RadioButton>(R.id.radio_period_custom)
         val confirmButton = dialogView.findViewById<android.widget.Button>(R.id.period_onboarding_confirm)
@@ -630,7 +817,7 @@ class MainActivity : AppCompatActivity(), TripRecoveryDialog.TripRecoveryListene
             preferencesManager.savePeriodMode(mode)
             preferencesManager.setHasSeenPeriodOnboarding(true)
             dialog.dismiss()
-            Log.d(TAG, "Period onboarding completed: $mode")
+            AppLogger.d(TAG, "Period onboarding completed: $mode")
             refreshTripInputPeriodAfterOnboarding()
         }
 
@@ -648,10 +835,10 @@ class MainActivity : AppCompatActivity(), TripRecoveryDialog.TripRecoveryListene
             if (tripInputFragment != null) {
                 val viewModel = ViewModelProvider(tripInputFragment)[TripInputViewModel::class.java]
                 viewModel.calculateCurrentPeriodStatistics()
-                Log.d(TAG, "Period refreshed in TripInputFragment after onboarding")
+                AppLogger.d(TAG, "Period refreshed in TripInputFragment after onboarding")
             }
         } catch (e: Exception) {
-            Log.w(TAG, "Failed to refresh period after onboarding", e)
+            AppLogger.w(TAG, "Failed to refresh period after onboarding", e)
         }
     }
     
@@ -675,35 +862,18 @@ class MainActivity : AppCompatActivity(), TripRecoveryDialog.TripRecoveryListene
     private fun checkForTripRecovery() {
         lifecycleScope.launch {
             try {
-                Log.d(TAG, "Checking for trip recovery")
-                
-                // Get the TripInputViewModel
-                val navHostFragment = supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as? NavHostFragment
-                val navController = navHostFragment?.navController
-                
-                if (navController != null) {
-                    // Navigate to trip input fragment to get ViewModel
-                    navController.navigate(R.id.tripInputFragment)
-                    
-                    // Get ViewModel from the fragment
-                    val tripInputFragment = navHostFragment.childFragmentManager.fragments.firstOrNull()
-                    if (tripInputFragment != null) {
-                        val viewModel = ViewModelProvider(tripInputFragment)[TripInputViewModel::class.java]
-                        
-                        // Check for saved trip state
-                        val savedState = viewModel.checkForTripRecovery()
-                        
-                        if (savedState != null) {
-                            Log.d(TAG, "Trip recovery data found, showing dialog")
-                            showTripRecoveryDialog(savedState, viewModel)
-                        } else {
-                            Log.d(TAG, "No trip recovery data found")
-                        }
-                    }
+                AppLogger.d(TAG, "Checking for trip recovery")
+
+                val activityScopedViewModel = ViewModelProvider(this@MainActivity)[TripInputViewModel::class.java]
+                val savedState = activityScopedViewModel.checkForTripRecovery()
+                if (savedState != null) {
+                    AppLogger.d(TAG, "Trip recovery data found, showing dialog")
+                    showTripRecoveryDialog(savedState, activityScopedViewModel)
+                } else {
+                    AppLogger.d(TAG, "No trip recovery data found")
                 }
-                
             } catch (e: Exception) {
-                Log.e(TAG, "Failed to check for trip recovery", e)
+                AppLogger.e(TAG, "Failed to check for trip recovery", e)
             }
         }
     }
@@ -711,42 +881,47 @@ class MainActivity : AppCompatActivity(), TripRecoveryDialog.TripRecoveryListene
     /**
      * ✅ NEW: Show trip recovery dialog
      */
+    @Suppress("UNUSED_PARAMETER")
     private fun showTripRecoveryDialog(
         savedState: TripPersistenceManager.SavedTripState,
-        viewModel: TripInputViewModel
+        _viewModel: TripInputViewModel
     ) {
         try {
             // ✅ FIX: Don't show recovery dialog if it's already showing (prevents showing on theme changes)
             val existingDialog = supportFragmentManager.findFragmentByTag("TripRecoveryDialog")
             if (existingDialog != null && existingDialog.isAdded) {
-                Log.d(TAG, "Trip recovery dialog already showing, skipping")
+                AppLogger.d(TAG, "Trip recovery dialog already showing, skipping")
                 return
             }
             
             val dialog = TripRecoveryDialog.newInstance(savedState)
             dialog.show(supportFragmentManager, "TripRecoveryDialog")
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to show trip recovery dialog", e)
+            AppLogger.e(TAG, "Failed to show trip recovery dialog", e)
         }
     }
     
     // TripRecoveryDialog.TripRecoveryListener implementation
     override fun onContinueTrip(savedState: TripPersistenceManager.SavedTripState) {
-        Log.d(TAG, "User chose to continue trip")
+        // S3: Do not start location tracking without permission
+        if (!locationPermissionsGranted) {
+            AppLogger.w(TAG, "Cannot continue trip: location permission not granted")
+            checkAndRequestLocationPermissions()
+            return
+        }
+        AppLogger.d(TAG, "User chose to continue trip")
         // Use Activity-scoped ViewModel so we are not dependent on which fragment is currently visible
         val activityScopedViewModel = ViewModelProvider(this)[TripInputViewModel::class.java]
         activityScopedViewModel.continueRecoveredTrip(savedState)
     }
     
     override fun onStartNewTrip() {
-        Log.d(TAG, "User chose to start new trip")
-        // Get the current ViewModel and start new trip
+        AppLogger.d(TAG, "User chose to start new trip")
+        val activityScopedViewModel = ViewModelProvider(this)[TripInputViewModel::class.java]
+        activityScopedViewModel.startNewTrip()
         val navHostFragment = supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as? NavHostFragment
         val currentFragment = navHostFragment?.childFragmentManager?.fragments?.firstOrNull()
         if (currentFragment is TripInputFragment) {
-            val viewModel = ViewModelProvider(currentFragment)[TripInputViewModel::class.java]
-            viewModel.startNewTrip()
-            // ✅ FIX: Clear the text input fields when starting new trip
             currentFragment.clearTextInputs()
         }
     }
