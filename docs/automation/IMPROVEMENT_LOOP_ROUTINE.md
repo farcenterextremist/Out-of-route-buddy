@@ -16,6 +16,8 @@
 
 **Pre-loop checkpoint:** Save a copy (git commit or tag) before the loop. Say **"revert"** to restore if something breaks. See LOOP_TIERING § Revert.
 
+**Loop listener:** Record events for data and improvement. `run_120min_loop.ps1` and `pulse_check.ps1` invoke the listener automatically. When running phases manually (agent-driven), invoke `loop_listener.ps1` at phase boundaries. See [LOOP_LISTENER.md](./LOOP_LISTENER.md). Run `test_loop_listener.ps1` to verify wiring.
+
 ---
 
 ## Phase 0: Research & Allowlist (0–20 min)
@@ -190,16 +192,17 @@ Pick **one**:
 
 ### 2.3 Sandboxing (10 min, when Medium approved)
 
-If user approved Medium tasks, run **one** sandbox action per [SANDBOX_TESTING.md](./SANDBOX_TESTING.md):
+**Every loop:** Medium tier improves on sandboxed ideas. Run **one** sandbox action per [SANDBOX_TESTING.md](./SANDBOX_TESTING.md) and [SANDBOX_COMPLETION_PERCENTAGE.md](./SANDBOX_COMPLETION_PERCENTAGE.md):
 
 | Action | Example |
 |--------|---------|
 | Document new idea | Add one item to FUTURE_IDEAS.md (from ROADMAP or backlog) |
 | Validate sandboxed feature | Create design brief, feature branch stub, or validation checklist for one FUTURE_IDEAS item |
+| **Improve sandboxed idea** | Add design brief, validation checklist, or advance completion % for 1–2 ideas in HEAVY_TIER_IDEAS. Use [SANDBOX_COMPLETION_PERCENTAGE.md](./SANDBOX_COMPLETION_PERCENTAGE.md). Merging should not be taken lightly. |
 | **Sandbox testing for merge** | Test new features in a branch or build variant before merging into main; validate behavior; merge only when safe |
 | Improve sandbox | Update FUTURE_IDEAS index, add cross-link, or document promotion flow |
 
-**Rule:** Sandboxing is additive (docs, branches, briefs). No implementation of Heavy features without user confirmation. No merge into main without sandbox validation.
+**Rule:** Sandboxing is additive (docs, branches, briefs). No implementation of Heavy features without user confirmation. No merge into main without sandbox validation. **Every loop:** Medium tier improves 1–2 sandboxed ideas; report % in summary.
 
 ### 2.5 Unit tests (5 min)
 
@@ -271,7 +274,7 @@ If user approved Medium tasks, run **one** sandbox action per [SANDBOX_TESTING.m
 6. **Research findings** — Design, security, meta-research; metadata (if Data/Metrics focus)
 7. **Files modified** — List with one-line change
 8. **Suggested next steps** — 4–6 items for next loop (see template below); actionable (include commands where helpful)
-9. **File Organizer: recommended new ideas** — Propose new tasks for Light, Medium, or Heavy. **Add at least 1–2 Heavy ideas per run** when [HEAVY_TIER_IDEAS.md](./HEAVY_TIER_IDEAS.md) is below 50. Heavy ideas require human approval before implementation. See [IMPROVEMENT_LOOP_TEAMS.md](./IMPROVEMENT_LOOP_TEAMS.md).
+9. **File Organizer: recommended new ideas** — Propose new tasks for Light, Medium, or Heavy. **Add at least 1–2 Heavy ideas per run** when [HEAVY_TIER_IDEAS.md](./HEAVY_TIER_IDEAS.md) is below 50. **Sandbox completion %** — Report true % for 1–2 improved ideas (per [SANDBOX_COMPLETION_PERCENTAGE.md](./SANDBOX_COMPLETION_PERCENTAGE.md)). Heavy ideas require human approval; one by one, ask "Are you ready to implement this new feature?" before each. See [IMPROVEMENT_LOOP_TEAMS.md](./IMPROVEMENT_LOOP_TEAMS.md).
 10. **Next run focus** — Suggested focus for next loop (from File Organizer or metrics)
 11. **Quality Grade** — A/B/C with rationale and one improvement for next run
 

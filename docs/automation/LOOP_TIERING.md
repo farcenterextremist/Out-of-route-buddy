@@ -17,9 +17,9 @@
 1. **Phase 0.1 Research** — Run first. Read all docs; identify tasks from CRUCIAL, REDUNDANT_DEAD_CODE, FAILING_OR_IGNORED_TESTS, suggested next steps.
 2. **Classify tasks** — Assign each identified task to Light, Medium, or Heavy.
 3. **If any Heavy tasks exist:**
-   - **Prompt:** "Hold up. Would you like me to implement these heavy tasks?"
-   - **List** the Heavy tasks for the user.
-   - **Wait for user response** before implementing Heavy.
+   - **Never run the entire Heavy tier by itself.** Heavy features are implemented **one by one**.
+   - **Per-feature gate:** Before implementing each Heavy feature, ask: "Are you ready to implement this new feature? [Feature name]"
+   - **Wait for user response** before implementing that feature. Then move to the next (if any); ask again.
 4. **Full autonomous mode:** Light and Medium run **without stopping**. No prompts. Execute all Light and Medium tasks. Heavy tasks → document in summary for next run; do not implement without user approval.
 5. **User response options (when Heavy exists):**
    - "Implement all" (light + medium + heavy)
@@ -65,6 +65,7 @@
 | **Logging** | Add one clear log in trip start → save path |
 | **Ship instructions** | Generate or update `Desktop\OUTOFROUTEBUDDY_SHIP_INSTRUCTIONS.txt` with final steps |
 | **Sandboxing** | Add Heavy ideas to FUTURE_IDEAS (100% sandboxed); improve index/cross-links; validate sandboxed features. Runs when you run Medium tier. See [SANDBOX_TESTING.md](./SANDBOX_TESTING.md) |
+| **Sandbox improvement (every loop)** | **Improve on sandboxed ideas each run.** Add design brief, validation checklist, or advance completion % for 1–2 ideas in [HEAVY_TIER_IDEAS.md](./HEAVY_TIER_IDEAS.md). Merging should not be taken lightly; use [true completion %](./SANDBOX_COMPLETION_PERCENTAGE.md). |
 | **Sandbox testing for merge** | Test new features in sandbox (branch, build variant) before merging into main project. Validate behavior; merge only when safe. |
 | **Advanced beautification & organizing research** | Research color schemes, typography, spacing, elevation, professional UI patterns; document organizing best practices; apply one subtle improvement per loop. |
 | **Code structure review** | Assess one module for feature-based vs layer-based organization; document finding in summary (no change unless user approves). See [REDUNDANT_DEAD_CODE_REPORT.md](../REDUNDANT_DEAD_CODE_REPORT.md) refactor priority quadrant. |
@@ -128,19 +129,33 @@ New feature ideas **must not** go directly to Heavy. They must be:
 
 ---
 
+## Heavy Tier One-by-One Clause
+
+**Never run the entire Heavy tier by itself.** Heavy features are implemented **one at a time**.
+
+Before implementing **each** Heavy feature:
+1. Ask: **"Are you ready to implement this new feature? [Feature name]"**
+2. Wait for user response.
+3. If yes: proceed with visual approval + "approve 100% implement" for that feature only.
+4. If no: skip or defer; move to next feature (if any) and ask again.
+
+---
+
 ## Prompt Template (when Heavy tasks exist)
 
 ```
-Hold up. Would you like me to implement these heavy tasks?
+Hold up. Would you like me to implement any of these heavy tasks?
 
-**Heavy tasks:**
+**Heavy tasks (one by one):**
 - [Task 1]
 - [Task 2]
+
+**Per-feature gate:** I will ask "Are you ready to implement this new feature?" before each one. I will never implement the entire Heavy tier at once.
 
 **Visual approval required:** Before implementing any Heavy task, I will generate a simple image showing where the feature goes and what it looks like. You must say "approve 100% implement" before I proceed.
 
 **Options:**
-- "Implement all" — I'll show the visual(s), then implement after you say "approve 100% implement"
+- "Implement [feature X] only" — I'll ask for that one, then stop
 - "Light and medium only" — I'll skip heavy (light and medium run autonomously)
 - Or specify: "Implement heavy task X but not Y"
 ```

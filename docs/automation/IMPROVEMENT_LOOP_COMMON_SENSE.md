@@ -36,7 +36,7 @@
 | **Build fails** | Document in summary. Try lint anyway if possible. Do not pretend build passed. Suggest `./gradlew clean assembleDebug` in next steps. |
 | **Tests fail** | Stop. Revert the change that caused it. Report in summary. Do not leave tests red. |
 | **Uncertain** | When in doubt → suggest in summary, don't implement. Ask user. |
-| **Heavy task** | Never implement Heavy without: (1) sandboxed in FUTURE_IDEAS, (2) visual image, (3) user says "approve 100% implement". |
+| **Heavy task** | Never implement Heavy without: (1) sandboxed in FUTURE_IDEAS, (2) visual image, (3) user says "approve 100% implement". **One by one:** Ask "Are you ready to implement this new feature?" before each Heavy feature. Never run the entire Heavy tier at once. |
 
 ---
 

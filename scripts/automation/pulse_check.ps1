@@ -64,6 +64,15 @@ if ($Note) { Add-Content -Path $PulseLog -Value "  note: $Note" }
 Add-Content -Path $PulseLog -Value "  objective: shippable product (see docs/automation/IMPROVEMENT_LOOP_ROUTINE.md)"
 Add-Content -Path $PulseLog -Value ""
 
+# 4. Loop listener (record pulse event for data/improvement)
+$ListenerScript = Join-Path $PSScriptRoot "loop_listener.ps1"
+if (Test-Path $ListenerScript) {
+    try {
+        $metricsJson = @{ tests = $testResult } | ConvertTo-Json -Compress
+        & $ListenerScript -Event "pulse" -Note $Note -Metrics $metricsJson 2>$null
+    } catch { }
+}
+
 # Console summary
 Write-Host "[$ts] Pulse recorded -> $PulseLog"
 Write-Host "  tests: $testResult"

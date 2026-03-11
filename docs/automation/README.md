@@ -9,13 +9,15 @@ This folder backs the **8-hour slow improvement** run and the **ship instruction
 | **8_HOUR_IMPROVEMENT_PLAN.md** | Improvement objectives (backend-heavy, ~2% frontend), pulse checklist, and how to run automation. |
 | **IMPROVEMENT_LOOP_ROUTINE.md** | **Routine** Improvement Loop: research first, security + smoothness, suggested next steps. Run when user says **GO**. |
 | **IMPROVEMENT_LOOP_COMMON_SENSE.md** | Non-negotiable parameters: checkpoint first, tests green, full autonomy for Light+Medium. Read at loop start. |
-| **HEAVY_TIER_IDEAS.md** | Heavy tier ideas list (cap 50) with state: sandbox-ready / sandboxed / proposed. Light and Medium add 1–2 per run. |
+| **HEAVY_TIER_IDEAS.md** | Heavy tier ideas list (cap 50) with state and true completion %. Light and Medium add 1–2 per run. |
+| **SANDBOX_COMPLETION_PERCENTAGE.md** | True completion % for sandboxed ideas; merging should not be taken lightly. |
 | **IMPROVEMENT_LOOP_AUDIT.md** | Full systems audit: safety, durability, accuracy, readiness. Re-run after major changes. |
 | **IMPROVEMENT_LOOP_TEAMS.md** | **Teams** Front: Researchers + Meta-Researchers. Back: File Organizer (recommends new ideas; Heavy needs human approval). |
 | **AUTONOMOUS_LOOP_SETUP.md** | One-time setup for no human intervention (Run Everything or allowlist). |
 | **LOOP_MASTER_ALLOWLIST.md** | Commands for allowlist; use prefix `cd c:\...\OutofRoutebuddy` for minimal entries. |
 | **120_MINUTE_IMPROVEMENT_LOOP.md** | Legacy plan; superseded by IMPROVEMENT_LOOP_ROUTINE. |
 | **pulse_log.txt** | Appended every 30 min by the pulse script (tests, lint, one-line note). |
+| **loop_events.jsonl** | Structured event log (JSONL) from loop listener; used for loop improvement. |
 | **OUTOFROUTEBUDDY_SHIP_INSTRUCTIONS.txt** | Generated in the last 2 hours (or manually). **Copy this to your Desktop** if you want it there: `copy OUTOFROUTEBUDDY_SHIP_INSTRUCTIONS.txt %USERPROFILE%\Desktop\` |
 
 ## Scripts (run from repo root)
@@ -25,6 +27,8 @@ This folder backs the **8-hour slow improvement** run and the **ship instruction
 | **scripts\automation\pulse_check.ps1** | Run every 30 min. Runs unit tests (optional skip with `-Quick`), lint, appends to `pulse_log.txt`. |
 | **scripts\automation\run_8hr_automation.ps1** | Runs for 8 hours: pulse every 30 min; in the last 2 hours calls `write_ship_instructions.ps1` to generate ship instructions. |
 | **scripts\automation\run_120min_loop.ps1** | Runs for 2 hours: pulse every 30 min. Use with IMPROVEMENT_LOOP_ROUTINE.md when user says GO. |
+| **scripts\automation\loop_listener.ps1** | Records loop events (loop_start, phase, pulse, loop_end) to loop_events.jsonl for data and improvement. |
+| **scripts\automation\test_loop_listener.ps1** | Test/simulation: verifies listener is wired and functioning. |
 | **scripts\automation\write_ship_instructions.ps1** | Writes `OUTOFROUTEBUDDY_SHIP_INSTRUCTIONS.txt` (default: Desktop; use `-OutFile` to override). Creates output directory if missing. |
 
 ## Quick start

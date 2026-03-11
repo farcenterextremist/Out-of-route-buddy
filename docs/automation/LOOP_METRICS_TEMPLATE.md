@@ -29,6 +29,18 @@
 
 ---
 
+## Before/After Tracking
+
+Capture baseline **before** any changes; compare **after** loop:
+
+| Metric | BEFORE | AFTER | Delta |
+|--------|--------|-------|-------|
+| Tests | pass/fail count | pass/fail count | No change / improved / regressed |
+| Lint | status | status | — |
+| Build | status | status | — |
+
+---
+
 ## Summary Block Format
 
 Copy into every summary:

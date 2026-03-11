@@ -53,6 +53,14 @@ cd c:\Users\brand\OutofRoutebuddy; powershell -File .\scripts\automation\pulse_c
 cd c:\Users\brand\OutofRoutebuddy; .\scripts\automation\run_120min_loop.ps1
 ```
 
+```
+cd c:\Users\brand\OutofRoutebuddy; .\scripts\automation\loop_listener.ps1
+```
+
+```
+cd c:\Users\brand\OutofRoutebuddy; .\scripts\automation\test_loop_listener.ps1
+```
+
 ---
 
 ## Optional (if loop uses these)

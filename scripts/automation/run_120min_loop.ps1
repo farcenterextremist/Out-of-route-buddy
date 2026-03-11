@@ -16,8 +16,14 @@ for ($i = 0; $i -lt 2; $i++) { $RepoRoot = Split-Path -Parent $RepoRoot }
 Set-Location $RepoRoot
 
 $PulseScript = Join-Path $RepoRoot "scripts\automation\pulse_check.ps1"
+$ListenerScript = Join-Path $RepoRoot "scripts\automation\loop_listener.ps1"
 $PlanPath   = Join-Path $RepoRoot "docs\automation\IMPROVEMENT_LOOP_ROUTINE.md"
 $PulseLog   = Join-Path $RepoRoot "docs\automation\pulse_log.txt"
+
+$RunId = "run-$((Get-Date).ToString('yyyyMMdd-HHmm'))"
+if (Test-Path $ListenerScript) {
+    & $ListenerScript -Event "loop_start" -Note "Duration=$DurationMinutes min, pulse every $PulseIntervalMinutes min" -RunId $RunId
+}
 
 $endTime = (Get-Date).AddMinutes($DurationMinutes)
 $summaryReminder = (Get-Date).AddMinutes([Math]::Max(0, $DurationMinutes - 30))
@@ -48,5 +54,8 @@ while ((Get-Date) -lt $endTime) {
     Start-Sleep -Seconds $sleepSec
 }
 
+if (Test-Path $ListenerScript) {
+    & $ListenerScript -Event "loop_end" -Note "Pulses=$pulseCount" -RunId $RunId
+}
 Write-Host ""
 Write-Host "Improvement Loop complete. Review pulse_log.txt and write summary per Phase 4 in IMPROVEMENT_LOOP_ROUTINE.md."

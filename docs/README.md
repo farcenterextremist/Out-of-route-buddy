@@ -58,6 +58,7 @@ Short index of the key docs for OutOfRouteBuddy. Start here for product, archite
 | [automation/CURSOR_SELF_IMPROVEMENT.md](./automation/CURSOR_SELF_IMPROVEMENT.md) | Safe web search, prompt-injection protections, contextualization. |
 | [automation/SANDBOX_TESTING.md](./automation/SANDBOX_TESTING.md) | Feature testing before merge; sandbox phase. |
 | [automation/AUTONOMOUS_LOOP_SETUP.md](./automation/AUTONOMOUS_LOOP_SETUP.md) | Full automation (zero human intervention); Cursor Automations. |
+| [automation/HEAVY_TIER_IDEAS.md](./automation/HEAVY_TIER_IDEAS.md) | Heavy-tier ideas list (cap 50) with state: sandbox-ready / sandboxed / proposed. |
 
 ---
 

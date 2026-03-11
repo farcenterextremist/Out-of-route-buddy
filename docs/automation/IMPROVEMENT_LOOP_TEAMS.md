@@ -47,6 +47,7 @@ Primary research in Phase 0: CRUCIAL, REDUNDANT_DEAD_CODE, FAILING_OR_IGNORED_TE
 | **Idea placement** | Classify each recommendation: Light (auto), Medium (auto), or Heavy (human approval required) |
 | **Research improvements & populate tasks** | Research more ways to improve; add ideas to [BRAINSTORM_AND_TASKS.md](./BRAINSTORM_AND_TASKS.md); classify and promote 1–2 per loop to CRUCIAL or FUTURE_IDEAS |
 | **Heavy tier population** | **Add at least 1–2 new Heavy ideas per run** when [HEAVY_TIER_IDEAS.md](./HEAVY_TIER_IDEAS.md) is below 50. Light and Medium must produce ideas for Heavy; File Organizer adds to FUTURE_IDEAS and HEAVY_TIER_IDEAS with state (sandbox-ready / sandboxed / proposed). |
+| **Sandbox improvement (every loop)** | **Improve on sandboxed ideas each run.** Add design brief, validation checklist, or advance completion % for 1–2 ideas in HEAVY_TIER_IDEAS. Use [SANDBOX_COMPLETION_PERCENTAGE.md](./SANDBOX_COMPLETION_PERCENTAGE.md) — true % only; merging should not be taken lightly. Report % in summary. |
 | **Metrics-based recommendations** | Use [LOOP_METRICS_TEMPLATE.md](./LOOP_METRICS_TEMPLATE.md) to recommend next focus (e.g., "Lint warnings increased → next focus: Code Quality") |
 | **Metadata-based recommendations** | When user metadata is available, use signals from [USER_METADATA_USAGE_GUIDE.md](./USER_METADATA_USAGE_GUIDE.md) (e.g., high recovery rate → suggest UI/UX focus for recovery flow) |
 
