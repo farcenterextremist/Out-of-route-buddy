@@ -23,12 +23,13 @@
 
 ---
 
-## 2-hour improvement loop
+## Improvement Loop
 
 When user says **GO** (or "run improvement loop"):
 
-1. Follow [docs/automation/IMPROVEMENT_LOOP_ROUTINE.md](docs/automation/IMPROVEMENT_LOOP_ROUTINE.md)
-2. For autonomy: [docs/automation/AUTONOMOUS_LOOP_SETUP.md](docs/automation/AUTONOMOUS_LOOP_SETUP.md)
+1. Read [docs/automation/IMPROVEMENT_LOOP_COMMON_SENSE.md](docs/automation/IMPROVEMENT_LOOP_COMMON_SENSE.md) (checkpoint first, tests green, full autonomy)
+2. Follow [docs/automation/IMPROVEMENT_LOOP_ROUTINE.md](docs/automation/IMPROVEMENT_LOOP_ROUTINE.md)
+3. For autonomy: [docs/automation/AUTONOMOUS_LOOP_SETUP.md](docs/automation/AUTONOMOUS_LOOP_SETUP.md)
 
 ---
 

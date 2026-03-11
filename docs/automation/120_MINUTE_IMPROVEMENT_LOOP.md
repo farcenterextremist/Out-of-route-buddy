@@ -1,4 +1,4 @@
-# 120-Minute Improvement Loop — OutOfRouteBuddy
+# Improvement Loop — OutOfRouteBuddy
 
 **Objective:** Obvious improvements only. No drastic frontend changes. Sharpen, pop, beautify, or add useful information where clearly beneficial.  
 **Strategy:** Slow, decisive, low-risk. Use subagents for parallelizable work. Call on more capable models for complex reasoning.  
@@ -6,10 +6,18 @@
 
 ---
 
+## Phase 0: Pre-loop (before any changes)
+
+- **Checkpoint:** `git add -A && git commit -m "Pre-improvement-loop checkpoint YYYY-MM-DD"` or `git tag improvement-loop-pre-$(date +%Y%m%d-%H%M)`. Record commit hash or tag in summary for revert.
+- **Research note:** One-line: design intent, last loop, this focus. Add to summary.
+
+---
+
 ## Overview
 
 | Phase | Time | Focus | Subagent use |
 |-------|------|-------|--------------|
+| 0 | — | Checkpoint, research note | — |
 | 1 | 0–30 min | Quick wins: dead code, unused constants, obvious fixes | Shell (tests), GeneralPurpose (code search) |
 | 2 | 30–60 min | Test health, documentation alignment | GeneralPurpose (test fixes), Shell (run tests) |
 | 3 | 60–90 min | UI polish: sharpen, pop, useful info (minimal) | GeneralPurpose (UI tweaks) |
@@ -111,13 +119,16 @@
 
 ### 4.3 Write improvement summary (10 min)
 
-- **Output:** `docs/automation/120_MINUTE_LOOP_SUMMARY_<date>.md`
-- **Contents:**
+- **Output:** `docs/automation/IMPROVEMENT_LOOP_SUMMARY_<date>.md` (or `120_MINUTE_LOOP_SUMMARY_<date>.md` for compatibility)
+- **Contents (A-grade format):**
+  - Phase 0 research note (one-line: design intent, last loop, this focus)
   - What was done (checkboxes from this plan)
   - What was skipped and why
-  - Test status (pass/fail count)
-  - Lint status
-  - Suggested next steps for a future loop
+  - Files modified
+  - Build status
+  - **Metrics block** — Tests, Lint, Files changed, Focus, Variant, Checkpoint (see [LOOP_METRICS_TEMPLATE.md](./LOOP_METRICS_TEMPLATE.md))
+  - Suggested next steps (actionable: include commands where helpful)
+  - **Quality Grade** — A/B/C with rationale and one improvement for next run
 
 ---
 

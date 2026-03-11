@@ -1,6 +1,6 @@
-# Autonomous 2-Hour Loop — No Human Intervention
+# Improvement Loop — Full Autonomous Running
 
-**Goal:** Run the 2-hour improvement loop without approval prompts. Fully automated = zero human intervention.
+**Goal:** Run the Improvement Loop without approval prompts. Fully autonomous = Light + Medium run without stopping; Heavy deferred. See [IMPROVEMENT_LOOP_COMMON_SENSE.md](./IMPROVEMENT_LOOP_COMMON_SENSE.md) § Full Autonomous Mode.
 
 ---
 
@@ -22,12 +22,14 @@ For **scheduled runs with no one at the keyboard**, use **Cursor Automations** (
 ### Automation prompt template
 
 ```
-Run the 2-hour improvement loop for OutOfRouteBuddy.
+Run the Improvement Loop for OutOfRouteBuddy.
 
-1. Read docs/automation/IMPROVEMENT_LOOP_ROUTINE.md
-2. Execute Phase 0 (Research), Phase 0.3 (Self-improvement), Phases 1–4
-3. Write docs/automation/IMPROVEMENT_LOOP_SUMMARY_<date>.md with what was done and suggested next steps
-4. Open a pull request with your changes, or comment on the repo with the summary if no code changes
+1. Read docs/automation/IMPROVEMENT_LOOP_COMMON_SENSE.md (checkpoint first, tests green, no unwarranted UI changes)
+2. Read docs/automation/IMPROVEMENT_LOOP_ROUTINE.md
+3. Execute Phase 0 (Research, checkpoint), Phase 0.3 (Self-improvement), Phases 1–4
+4. Full autonomy: Light + Medium run without stopping; Heavy deferred
+5. Write docs/automation/IMPROVEMENT_LOOP_SUMMARY_<date>.md with A-grade format (Metrics block, Quality Grade, suggested next steps)
+6. Open a pull request with your changes, or comment on the repo with the summary if no code changes
 
 Scope: Low-risk fixes only. No new features, architecture refactors, or unwarranted UI changes. See docs/GOAL_AND_MISSION.md and docs/CRUCIAL_IMPROVEMENTS_TODO.md.
 ```

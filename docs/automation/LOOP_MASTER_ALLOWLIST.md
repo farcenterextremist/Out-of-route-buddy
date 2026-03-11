@@ -1,8 +1,9 @@
-# Master Command Allowlist — 2-Hour Improvement Loop
+# Master Command Allowlist — Improvement Loop
 
-**Purpose:** Add commands to Cursor's Command Allowlist for autonomous execution.  
+**Purpose:** Add commands to Cursor's Command Allowlist for full autonomous execution.  
 **Location:** Cursor Settings → Agents → Auto-Run → Command Allowlist  
-**Full guide:** See [AUTONOMOUS_LOOP_SETUP.md](./AUTONOMOUS_LOOP_SETUP.md) for no-human-intervention setup.
+**Full guide:** See [AUTONOMOUS_LOOP_SETUP.md](./AUTONOMOUS_LOOP_SETUP.md) for no-human-intervention setup.  
+**Common sense:** See [IMPROVEMENT_LOOP_COMMON_SENSE.md](./IMPROVEMENT_LOOP_COMMON_SENSE.md).
 
 ---
 
@@ -84,4 +85,4 @@ cd c:\Users\brand\OutofRoutebuddy; .\gradlew.bat assembleDebug --warning-mode al
 
 ---
 
-*Created for 2-hour improvement loop autonomy. Update paths if repo moves.*
+*Created for Improvement Loop full autonomy. Update paths if repo moves.*

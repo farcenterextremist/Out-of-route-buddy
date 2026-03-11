@@ -12,6 +12,8 @@
 
 Primary research in Phase 0: CRUCIAL, REDUNDANT_DEAD_CODE, FAILING_OR_IGNORED_TESTS, security, design. See IMPROVEMENT_LOOP_ROUTINE Phase 0.
 
+**Brainstorming & idea generation (Light):** Based on current context and research, document possible ideas, suggestions, and future improvements in [BRAINSTORM_AND_TASKS.md](./BRAINSTORM_AND_TASKS.md). Research more ways to improve; add 1–2 suggestions per loop.
+
 ### Meta-Researchers (Researchers for Researchers)
 
 **Purpose:** Improve the quality of research produced by the primary researchers.
@@ -43,6 +45,8 @@ Primary research in Phase 0: CRUCIAL, REDUNDANT_DEAD_CODE, FAILING_OR_IGNORED_TE
 | **Organizing research** | Best practices for repo layout; when "File Structure" is focus, propose one move/rename (document only; user approves before apply) |
 | **Recommend new ideas** | Propose new tasks to add to Light, Medium, or Heavy (LOOP_TIERING, CRUCIAL, FUTURE_IDEAS) |
 | **Idea placement** | Classify each recommendation: Light (auto), Medium (auto), or Heavy (human approval required) |
+| **Research improvements & populate tasks** | Research more ways to improve; add ideas to [BRAINSTORM_AND_TASKS.md](./BRAINSTORM_AND_TASKS.md); classify and promote 1–2 per loop to CRUCIAL or FUTURE_IDEAS |
+| **Heavy tier population** | **Add at least 1–2 new Heavy ideas per run** when [HEAVY_TIER_IDEAS.md](./HEAVY_TIER_IDEAS.md) is below 50. Light and Medium must produce ideas for Heavy; File Organizer adds to FUTURE_IDEAS and HEAVY_TIER_IDEAS with state (sandbox-ready / sandboxed / proposed). |
 | **Metrics-based recommendations** | Use [LOOP_METRICS_TEMPLATE.md](./LOOP_METRICS_TEMPLATE.md) to recommend next focus (e.g., "Lint warnings increased → next focus: Code Quality") |
 | **Metadata-based recommendations** | When user metadata is available, use signals from [USER_METADATA_USAGE_GUIDE.md](./USER_METADATA_USAGE_GUIDE.md) (e.g., high recovery rate → suggest UI/UX focus for recovery flow) |
 
@@ -70,7 +74,8 @@ When File Organizer recommends new ideas:
 
 1. **Classify** each idea as Light, Medium, or Heavy.
 2. **Light / Medium** — Add to LOOP_TIERING examples, CRUCIAL, or suggested next steps. These may run in the next autonomous loop.
-3. **Heavy** — Add to FUTURE_IDEAS (sandboxed) or a "Proposed for Heavy" list. **Do not implement** until human explicitly approves: "Approve Heavy idea X."
+3. **Heavy** — Add to FUTURE_IDEAS (sandboxed) and [HEAVY_TIER_IDEAS.md](./HEAVY_TIER_IDEAS.md) with state (sandbox-ready / sandboxed / proposed). **Do not implement** until human explicitly approves: "Approve Heavy idea X."
+4. **Cap:** Heavy tier max 50 ideas. When below cap, add at least 1–2 Heavy ideas per run. Light and Medium must produce ideas for Heavy each loop.
 
 ---
 

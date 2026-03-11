@@ -1,7 +1,8 @@
-# 2-hour improvement loop: pulse every 30 min for 2 hours.
+# Improvement Loop: pulse every 30 min for 2 hours.
 # Run from repo root: .\scripts\automation\run_120min_loop.ps1
 # Stop anytime with Ctrl+C.
-# ROUTINE: See docs/automation/2_HOUR_IMPROVEMENT_LOOP_ROUTINE.md
+# ROUTINE: See docs/automation/IMPROVEMENT_LOOP_ROUTINE.md
+# COMMON SENSE: docs/automation/IMPROVEMENT_LOOP_COMMON_SENSE.md
 # ALLOWLIST: Add commands from docs/automation/LOOP_MASTER_ALLOWLIST.md at loop start for full autonomy.
 
 param(
@@ -15,7 +16,7 @@ for ($i = 0; $i -lt 2; $i++) { $RepoRoot = Split-Path -Parent $RepoRoot }
 Set-Location $RepoRoot
 
 $PulseScript = Join-Path $RepoRoot "scripts\automation\pulse_check.ps1"
-$PlanPath   = Join-Path $RepoRoot "docs\automation\2_HOUR_IMPROVEMENT_LOOP_ROUTINE.md"
+$PlanPath   = Join-Path $RepoRoot "docs\automation\IMPROVEMENT_LOOP_ROUTINE.md"
 $PulseLog   = Join-Path $RepoRoot "docs\automation\pulse_log.txt"
 
 $endTime = (Get-Date).AddMinutes($DurationMinutes)
@@ -36,7 +37,7 @@ while ((Get-Date) -lt $endTime) {
     # In the last 30 min: remind to write summary
     if ($now -ge $summaryReminder -and -not $script:summaryReminded) {
         Write-Host ""
-        Write-Host ">>> Phase 4: Write improvement summary to docs/automation/2_HOUR_LOOP_SUMMARY_<date>.md <<<"
+        Write-Host ">>> Phase 4: Write improvement summary to docs/automation/IMPROVEMENT_LOOP_SUMMARY_<date>.md <<<"
         $script:summaryReminded = $true
     }
 
@@ -48,4 +49,4 @@ while ((Get-Date) -lt $endTime) {
 }
 
 Write-Host ""
-Write-Host "2-hour loop complete. Review pulse_log.txt and write summary per Phase 4 in 2_HOUR_IMPROVEMENT_LOOP_ROUTINE.md."
+Write-Host "Improvement Loop complete. Review pulse_log.txt and write summary per Phase 4 in IMPROVEMENT_LOOP_ROUTINE.md."

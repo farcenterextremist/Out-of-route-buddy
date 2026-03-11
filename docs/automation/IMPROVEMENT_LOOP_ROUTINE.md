@@ -4,9 +4,11 @@
 **Strategy:** Research first, master allowlist for autonomy, then execute phases. Use subagents for parallel work.  
 **Trigger:** Run when user says **GO** (Full 2 hr). **GO quick** = 30 min. **GO standard** = 90 min. See [LOOP_VARIANTS.md](./LOOP_VARIANTS.md).
 
+**Common sense:** Read [IMPROVEMENT_LOOP_COMMON_SENSE.md](./IMPROVEMENT_LOOP_COMMON_SENSE.md) at loop start. Checkpoint first, respect design intent, tests green, timebox, no unwarranted UI changes.
+
 **Framework (PDCA / Kaizen):** Phase 0 = Plan; Phase 1–3 = Do; Phase 4 = Check; Phase 4.3 = Act. **Kaizen rule:** One improvement per category per loop to avoid overload.
 
-**Tiering:** Tasks are Light (auto), Medium (auto when autonomous), or Heavy (human approval always). See [LOOP_TIERING.md](./LOOP_TIERING.md). **Autonomy:** Light and Medium may run autonomously; Heavy always requires human-in-the-loop.
+**Tiering:** Tasks are Light (auto), Medium (auto when autonomous), or Heavy (human approval always). See [LOOP_TIERING.md](./LOOP_TIERING.md). **Full autonomy:** Light and Medium run without stopping; Heavy deferred or documented for next run. See [IMPROVEMENT_LOOP_COMMON_SENSE.md](./IMPROVEMENT_LOOP_COMMON_SENSE.md) § Full Autonomous Mode.
 
 **Visual approval clause:** Heavy features (100% sandboxed) require a simple visual image + user says **"approve 100% implement"** before implementation. See LOOP_TIERING § Visual Approval Clause.
 
@@ -57,7 +59,7 @@ Read these files **before** making any changes. (0.0a already read USER_PREFEREN
 | Doc | Purpose |
 |-----|---------|
 | `docs/automation/USER_PREFERENCES_AND_DESIGN_INTENT.md` | **Read first (0.0a).** User preferences; design intent; must-not-change |
-| `docs/automation/IMPROVEMENT_LOOP_SUMMARY_<latest>.md` | What was done last loop; suggested next steps |
+| `docs/automation/IMPROVEMENT_LOOP_SUMMARY_<latest>.md` or `120_MINUTE_LOOP_SUMMARY_*.md` | What was done last loop; suggested next steps |
 | `docs/CRUCIAL_IMPROVEMENTS_TODO.md` | Prioritized backlog; pick 1–2 low-risk items |
 | `docs/REDUNDANT_DEAD_CODE_REPORT.md` | Safe dead code to remove |
 | `docs/qa/FAILING_OR_IGNORED_TESTS.md` | Test health; @Ignore reasons |
@@ -76,14 +78,15 @@ Per [LOOP_TIERING.md](./LOOP_TIERING.md):
 
 1. **Classify** each task from research (CRUCIAL, REDUNDANT_DEAD_CODE, suggested next steps) as Light, Medium, or Heavy.
 2. **Include sandboxing** as a Medium task when applicable: document new idea in FUTURE_IDEAS, validate a sandboxed feature, or improve sandbox workflow. See [SANDBOX_TESTING.md](./SANDBOX_TESTING.md).
-3. **Autonomy:** Light and Medium run without stopping. **Heavy only:** If any Heavy tasks exist, stop and prompt:
+3. **Full autonomy:** Light and Medium run **without stopping**. No prompts. Execute all Light and Medium tasks.
+4. **Heavy only:** If any Heavy tasks exist, stop and prompt:
    > **Hold up. Would you like me to implement these heavy tasks?**
    > 
    > **Heavy tasks:** [list]
    > 
    > **Options:** "Implement all" | "Light and medium only" | or specify tasks
-4. **Wait for user response** before implementing Heavy (if any).
-5. **Execute** Light and Medium; for Heavy: **visual approval required** — generate a simple image showing where the feature goes and what it looks like; do not implement until user says **"approve 100% implement"**. See LOOP_TIERING § Visual Approval Clause.
+5. **Wait for user response** before implementing Heavy (if any).
+6. **Execute** Light and Medium; for Heavy: **visual approval required** — generate a simple image showing where the feature goes and what it looks like; do not implement until user says **"approve 100% implement"**. See LOOP_TIERING § Visual Approval Clause.
 
 **Sandbox:** For higher-risk items, use [SANDBOX_TESTING.md](./SANDBOX_TESTING.md). Sandboxing is a Medium task; runs autonomously.
 
@@ -258,17 +261,19 @@ If user approved Medium tasks, run **one** sandbox action per [SANDBOX_TESTING.m
 
 **Output:** `docs/automation/IMPROVEMENT_LOOP_SUMMARY_<date>.md`
 
-**Contents (standardized):** See [LOOP_METRICS_TEMPLATE.md](./LOOP_METRICS_TEMPLATE.md).
+**Contents (A-grade format):** See [LOOP_METRICS_TEMPLATE.md](./LOOP_METRICS_TEMPLATE.md).
 
-1. **Run metadata** — Date, focus area, variant (Quick/Standard/Full)
-2. **PDCA phase summary** — Plan (0), Do (1–3), Check (4), Act (4.3)
-3. **Metrics** — Tests (pass/fail), lint (errors/warnings), files changed, checkpoint
-4. **What was done** — Table: Phase, Task, Status, Details
-5. **Research findings** — Design, security, meta-research; metadata (if Data/Metrics focus)
-6. **Files modified** — List with one-line change
-7. **Suggested next steps** — 4–6 items for next loop (see template below)
-8. **File Organizer: recommended new ideas** — Propose new tasks for Light, Medium, or Heavy. **Heavy ideas require human approval before implementation.** Light and Medium may run autonomously. See [IMPROVEMENT_LOOP_TEAMS.md](./IMPROVEMENT_LOOP_TEAMS.md).
-9. **Next run focus** — Suggested focus for next loop (from File Organizer or metrics)
+1. **Phase 0 research note** — One-line: design intent, last loop, this focus
+2. **Run metadata** — Date, focus area, variant (Quick/Standard/Full)
+3. **PDCA phase summary** — Plan (0), Do (1–3), Check (4), Act (4.3)
+4. **Metrics** — Tests (pass/fail), lint (errors/warnings), files changed, checkpoint
+5. **What was done** — Table: Phase, Task, Status, Details
+6. **Research findings** — Design, security, meta-research; metadata (if Data/Metrics focus)
+7. **Files modified** — List with one-line change
+8. **Suggested next steps** — 4–6 items for next loop (see template below); actionable (include commands where helpful)
+9. **File Organizer: recommended new ideas** — Propose new tasks for Light, Medium, or Heavy. **Add at least 1–2 Heavy ideas per run** when [HEAVY_TIER_IDEAS.md](./HEAVY_TIER_IDEAS.md) is below 50. Heavy ideas require human approval before implementation. See [IMPROVEMENT_LOOP_TEAMS.md](./IMPROVEMENT_LOOP_TEAMS.md).
+10. **Next run focus** — Suggested focus for next loop (from File Organizer or metrics)
+11. **Quality Grade** — A/B/C with rationale and one improvement for next run
 
 ---
 

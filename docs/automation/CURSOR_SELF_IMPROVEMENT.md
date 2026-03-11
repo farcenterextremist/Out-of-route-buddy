@@ -129,7 +129,7 @@ Insert after Phase 0 (Research) and before Phase 1:
 
 ### Summary Additions
 
-In `2_HOUR_LOOP_SUMMARY_<date>.md`, add:
+In `IMPROVEMENT_LOOP_SUMMARY_<date>.md` (or `120_MINUTE_LOOP_SUMMARY_<date>.md`), add:
 
 ```markdown
 ## Self-Improvement (Phase 0.5)

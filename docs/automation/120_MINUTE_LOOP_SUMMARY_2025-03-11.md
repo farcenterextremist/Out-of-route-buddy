@@ -1,7 +1,13 @@
-# 120-Minute Improvement Loop — Summary
+# Improvement Loop — Summary
 
 **Date:** 2025-03-11  
 **Plan:** [120_MINUTE_IMPROVEMENT_LOOP.md](./120_MINUTE_IMPROVEMENT_LOOP.md)
+
+---
+
+## Phase 0: Research Note
+
+> Design intent: No UI layout drift. Last loop: (first run). This focus: Shipability / Code Quality. BuildConfig alignment, dead code, test health, accessibility.
 
 ---
 
@@ -61,13 +67,35 @@
 
 ---
 
+## Metrics
+
+| Metric | Value |
+|--------|-------|
+| Tests | 1,021 passed, 6 skipped, 0 failed |
+| Lint | Not run (build failed before lint) |
+| Files changed | 6 |
+| Focus | Shipability / Code Quality |
+| Variant | Full (2 hr) |
+| Checkpoint | Not recorded (add pre-loop checkpoint in future runs) |
+
+---
+
 ## Suggested Next Steps for Future Loop
 
-1. **Resolve pre-existing build issues** — Run `./gradlew clean assembleDebug` and fix any AAPT/dependency resource errors.
+1. **Resolve pre-existing build issues** — Run `./gradlew clean assembleDebug`; if AAPT errors persist, check `build_warnings.txt` and `GRADLE_9_MIGRATION_NOTES.md`.
 2. **Dead code cleanup** — Revisit REDUNDANT_DEAD_CODE_REPORT §2 for remaining safe removals (e.g. CustomCalendarDialog unused members) after confirming no callers.
 3. **LocationValidationServiceTest** — Consider fixing the ignored test or moving to instrumented suite per FAILING_OR_IGNORED_TESTS.md.
 4. **Gradle 9 readiness** — Per CRUCIAL_IMPROVEMENTS §1, run `--warning-mode all` and document migration steps.
 
 ---
 
-*120-minute loop completed. All planned improvements applied; build environment issues noted for follow-up.*
+## Quality Grade
+
+| Grade | A |
+|-------|---|
+| **Rationale** | Task coverage complete; Metrics block present; Phase 0 note; actionable next steps; transparent about build/lint gaps. |
+| **Next run improvement** | Add pre-loop checkpoint before any changes; record commit hash or tag in summary. |
+
+---
+
+*Improvement Loop completed. All planned improvements applied; build environment issues noted for follow-up.*

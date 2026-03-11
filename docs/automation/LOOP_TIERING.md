@@ -7,7 +7,7 @@
 **Kaizen rule:** One improvement per category per loop (Phase 1–3). Small incremental changes compound. See [LOOP_FOCUS_ROTATION.md](./LOOP_FOCUS_ROTATION.md).
 
 **Established:** 2025-03-11  
-**References:** [IMPROVEMENT_LOOP_ROUTINE.md](./IMPROVEMENT_LOOP_ROUTINE.md), [IMPROVEMENT_LOOP_TEAMS.md](./IMPROVEMENT_LOOP_TEAMS.md), [LOOP_FOCUS_ROTATION.md](./LOOP_FOCUS_ROTATION.md), [CRUCIAL_IMPROVEMENTS_TODO.md](../CRUCIAL_IMPROVEMENTS_TODO.md), [FUTURE_IDEAS.md](../product/FUTURE_IDEAS.md), [SANDBOX_TESTING.md](./SANDBOX_TESTING.md)
+**References:** [IMPROVEMENT_LOOP_ROUTINE.md](./IMPROVEMENT_LOOP_ROUTINE.md), [IMPROVEMENT_LOOP_COMMON_SENSE.md](./IMPROVEMENT_LOOP_COMMON_SENSE.md), [IMPROVEMENT_LOOP_TEAMS.md](./IMPROVEMENT_LOOP_TEAMS.md), [LOOP_FOCUS_ROTATION.md](./LOOP_FOCUS_ROTATION.md), [CRUCIAL_IMPROVEMENTS_TODO.md](../CRUCIAL_IMPROVEMENTS_TODO.md), [FUTURE_IDEAS.md](../product/FUTURE_IDEAS.md), [SANDBOX_TESTING.md](./SANDBOX_TESTING.md), [BRAINSTORM_AND_TASKS.md](./BRAINSTORM_AND_TASKS.md)
 
 ---
 
@@ -16,17 +16,17 @@
 0. **Pre-loop checkpoint (Medium)** — Save a copy before the loop: `git add -A && git commit -m "Pre-improvement-loop checkpoint"` or create a tag. If something breaks or you want to go back, say **"revert"** to restore from this checkpoint.
 1. **Phase 0.1 Research** — Run first. Read all docs; identify tasks from CRUCIAL, REDUNDANT_DEAD_CODE, FAILING_OR_IGNORED_TESTS, suggested next steps.
 2. **Classify tasks** — Assign each identified task to Light, Medium, or Heavy.
-3. **If any Medium or Heavy tasks exist:**
-   - **Prompt:** "Hold up. Would you like me to implement these medium or heavy tasks?"
-   - **List** the Medium and Heavy tasks for the user.
-   - **Wait for user response** before proceeding.
-4. **User response options:**
-   - "Implement light and medium tasks only"
+3. **If any Heavy tasks exist:**
+   - **Prompt:** "Hold up. Would you like me to implement these heavy tasks?"
+   - **List** the Heavy tasks for the user.
+   - **Wait for user response** before implementing Heavy.
+4. **Full autonomous mode:** Light and Medium run **without stopping**. No prompts. Execute all Light and Medium tasks. Heavy tasks → document in summary for next run; do not implement without user approval.
+5. **User response options (when Heavy exists):**
    - "Implement all" (light + medium + heavy)
+   - "Light and medium only" (skip heavy; run autonomously)
    - "Light only" (skip medium and heavy)
-   - "Light and heavy" (skip medium)
-   - Or any custom combination (e.g. "Implement medium task X but not Y")
-5. **Execute** — Run only the tasks in the user-approved scope.
+   - Or any custom combination (e.g. "Implement heavy task X but not Y")
+6. **Execute** — Run only the tasks in scope. In autonomous mode: Light + Medium run; Heavy deferred.
 
 ---
 
@@ -45,6 +45,8 @@
 | **Research: future light tasks** | At end of loop: research and document new Light task ideas for next runs |
 | **Metadata research** | Research metadata methods; document one new suggestion in [USER_METADATA_USAGE_GUIDE.md](./USER_METADATA_USAGE_GUIDE.md) (when Data/Metrics focus) |
 | **Preference capture** | When user clarifies a preference this run, add to [USER_PREFERENCES_AND_DESIGN_INTENT.md](./USER_PREFERENCES_AND_DESIGN_INTENT.md) § Subtle Preferences |
+| **Brainstorming & idea generation** | Based on current context, user feedback, and research: document possible ideas, suggestions, and future improvements. Add to [BRAINSTORM_AND_TASKS.md](./BRAINSTORM_AND_TASKS.md) or suggested next steps. |
+| **Populate task list** | Classify brainstormed ideas into Light/Medium/Heavy; add to CRUCIAL, LOOP_TIERING examples, or FUTURE_IDEAS (sandboxed). Update as we learn. |
 
 **Rule:** No code removal, no refactor, no new logic. Additive only (strings, docs, comments).
 
@@ -68,6 +70,8 @@
 | **Code structure review** | Assess one module for feature-based vs layer-based organization; document finding in summary (no change unless user approves). See [REDUNDANT_DEAD_CODE_REPORT.md](../REDUNDANT_DEAD_CODE_REPORT.md) refactor priority quadrant. |
 | **Metadata collection/display** | Add one opt-in metadata collection point (e.g., trip-end rating) or one metadata display (e.g., "Trips this week" in Settings). See [USER_METADATA_USAGE_GUIDE.md](./USER_METADATA_USAGE_GUIDE.md). Store on-device; no PII. |
 | **Pre-loop checkpoint** | Save a copy (git commit/tag) before the Improvement Loop so you can **revert** if something breaks. Say **"revert"** to restore. |
+| **Research improvements & populate tasks** | Research more ways to improve (from user feedback, summaries, industry patterns). Add ideas to [BRAINSTORM_AND_TASKS.md](./BRAINSTORM_AND_TASKS.md); classify and populate CRUCIAL, LOOP_TIERING, or FUTURE_IDEAS. Update task lists as we learn. |
+| **Idea classification & placement** | Take brainstormed ideas; divide into Light (docs, verification), Medium (small code changes, sandboxing), Heavy (new features → FUTURE_IDEAS). Add 1–2 new items per loop to keep backlog fresh. |
 
 **Rule:** Small, localized change. Low risk. Supports shipping. **Do not drift from original UI layout.**
 
@@ -116,11 +120,11 @@ New feature ideas **must not** go directly to Heavy. They must be:
 
 | Tier | Focus | Autonomous? | Human approval |
 |------|-------|-------------|-----------------|
-| **Light** | Verification, docs, strings, security research, future light-task research | Yes | Not required |
-| **Medium** | Ship readiness, backend, sandboxing, guaranteed frontend | Yes | Not required |
+| **Light** | Verification, docs, strings, brainstorming, idea generation, populate tasks | Yes | Not required |
+| **Medium** | Ship readiness, backend, sandboxing, research improvements, populate & classify tasks | Yes | Not required |
 | **Heavy** | New features (sandboxed first) | No | **Required** — always human-in-the-loop |
 
-**Rule:** File Organizer (back team) recommends new ideas to Light/Medium/Heavy. Heavy ideas must be approved by a human before implementation. See [IMPROVEMENT_LOOP_TEAMS.md](./IMPROVEMENT_LOOP_TEAMS.md).
+**Rule:** File Organizer (back team) recommends new ideas to Light/Medium/Heavy. Heavy ideas must be approved by a human before implementation. See [IMPROVEMENT_LOOP_TEAMS.md](./IMPROVEMENT_LOOP_TEAMS.md). Light and Medium tiers research improvements and populate [BRAINSTORM_AND_TASKS.md](./BRAINSTORM_AND_TASKS.md); promote 1–2 ideas per loop to CRUCIAL or FUTURE_IDEAS. **Add at least 1–2 Heavy ideas per run** when [HEAVY_TIER_IDEAS.md](./HEAVY_TIER_IDEAS.md) is below 50.
 
 ---
 

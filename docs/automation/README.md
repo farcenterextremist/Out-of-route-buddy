@@ -8,6 +8,8 @@ This folder backs the **8-hour slow improvement** run and the **ship instruction
 |------|--------|
 | **8_HOUR_IMPROVEMENT_PLAN.md** | Improvement objectives (backend-heavy, ~2% frontend), pulse checklist, and how to run automation. |
 | **IMPROVEMENT_LOOP_ROUTINE.md** | **Routine** Improvement Loop: research first, security + smoothness, suggested next steps. Run when user says **GO**. |
+| **IMPROVEMENT_LOOP_COMMON_SENSE.md** | Non-negotiable parameters: checkpoint first, tests green, full autonomy for Light+Medium. Read at loop start. |
+| **HEAVY_TIER_IDEAS.md** | Heavy tier ideas list (cap 50) with state: sandbox-ready / sandboxed / proposed. Light and Medium add 1–2 per run. |
 | **IMPROVEMENT_LOOP_AUDIT.md** | Full systems audit: safety, durability, accuracy, readiness. Re-run after major changes. |
 | **IMPROVEMENT_LOOP_TEAMS.md** | **Teams** Front: Researchers + Meta-Researchers. Back: File Organizer (recommends new ideas; Heavy needs human approval). |
 | **AUTONOMOUS_LOOP_SETUP.md** | One-time setup for no human intervention (Run Everything or allowlist). |
