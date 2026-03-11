@@ -8,6 +8,7 @@ This folder backs the **8-hour slow improvement** run and the **ship instruction
 |------|--------|
 | **8_HOUR_IMPROVEMENT_PLAN.md** | Improvement objectives (backend-heavy, ~2% frontend), pulse checklist, and how to run automation. |
 | **IMPROVEMENT_LOOP_ROUTINE.md** | **Routine** Improvement Loop: research first, security + smoothness, suggested next steps. Run when user says **GO**. |
+| **IMPROVEMENT_LOOP_AUDIT.md** | Full systems audit: safety, durability, accuracy, readiness. Re-run after major changes. |
 | **IMPROVEMENT_LOOP_TEAMS.md** | **Teams** Front: Researchers + Meta-Researchers. Back: File Organizer (recommends new ideas; Heavy needs human approval). |
 | **AUTONOMOUS_LOOP_SETUP.md** | One-time setup for no human intervention (Run Everything or allowlist). |
 | **LOOP_MASTER_ALLOWLIST.md** | Commands for allowlist; use prefix `cd c:\...\OutofRoutebuddy` for minimal entries. |
