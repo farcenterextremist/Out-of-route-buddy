@@ -2,7 +2,7 @@
 
 **Purpose:** Non-negotiable rules and guardrails for every Improvement Loop run. Apply during the mission for safe, predictable, full autonomous execution.
 
-**References:** [IMPROVEMENT_LOOP_ROUTINE.md](./IMPROVEMENT_LOOP_ROUTINE.md), [LOOP_TIERING.md](./LOOP_TIERING.md), [AUTONOMOUS_LOOP_SETUP.md](./AUTONOMOUS_LOOP_SETUP.md)
+**References:** [IMPROVEMENT_LOOP_ROUTINE.md](./IMPROVEMENT_LOOP_ROUTINE.md), [LOOP_TIERING.md](./LOOP_TIERING.md), [AUTONOMOUS_LOOP_SETUP.md](./AUTONOMOUS_LOOP_SETUP.md), [IMPROVEMENT_LOOP_REASONING.md](./IMPROVEMENT_LOOP_REASONING.md)
 
 ---
 
@@ -10,7 +10,7 @@
 
 | Parameter | Rule |
 |-----------|------|
-| **Pre-loop checkpoint** | Create checkpoint (git commit or tag) before making any changes. Record in summary. Enables "revert" if something breaks. |
+| **Pre-loop checkpoint** | Create checkpoint (git commit or tag) before making any changes. Record in summary. Enables "revert" if something breaks. If no checkpoint exists when user says "revert," inform: "No checkpoint found. Create one next run." |
 | **Read USER_PREFERENCES first** | Read [USER_PREFERENCES_AND_DESIGN_INTENT.md](./USER_PREFERENCES_AND_DESIGN_INTENT.md) before research or changes. Do not drift from design intent. |
 | **No UI changes without permission** | User rule: "DO NOT MAKE ANY UNWARRANTED CHANGES TO THE UI WITHOUT MY PERMISSION." When uncertain → suggest, don't implement. |
 
@@ -20,8 +20,10 @@
 
 | Parameter | Rule |
 |-----------|------|
+| **Reason before each change** | Before editing any file: state goal, consider options, predict consequences. "What could go wrong? Is there a simpler option?" See [IMPROVEMENT_LOOP_REASONING.md](./IMPROVEMENT_LOOP_REASONING.md). |
 | **Tests must pass** | If a change breaks tests → revert the change, report in summary, move on. Do not proceed with failing tests. |
 | **Timebox per task** | Do not spend >10 min on any single test fix or dead-code item. If stuck → document and defer. |
+| **Unit tests only** | Loop runs in full-autonomous environment. **No instrumented tests** (no device/emulator). Do not run `connectedAndroidTest` or suggest "move to instrumented suite." For ignored tests: fix in unit suite, document with reason, or defer. |
 | **One improvement per category** | Kaizen rule: One improvement per category per loop (Phase 1–3). Avoid overload. |
 | **No secrets or PII** | Never add API keys, passwords, or PII to logs or code. Grep for coordinates/tripId before committing. |
 | **Additive only (Light)** | Light tier: additive only (strings, docs, comments). No code removal, no refactor, no new logic. |
@@ -36,7 +38,7 @@
 | **Build fails** | Document in summary. Try lint anyway if possible. Do not pretend build passed. Suggest `./gradlew clean assembleDebug` in next steps. |
 | **Tests fail** | Stop. Revert the change that caused it. Report in summary. Do not leave tests red. |
 | **Uncertain** | When in doubt → suggest in summary, don't implement. Ask user. |
-| **Heavy task** | Never implement Heavy without: (1) sandboxed in FUTURE_IDEAS, (2) visual image, (3) user says "approve 100% implement". **One by one:** Ask "Are you ready to implement this new feature?" before each Heavy feature. Never run the entire Heavy tier at once. |
+| **Heavy task** | Never implement Heavy without: (1) sandboxed in FUTURE_IDEAS, (2) **question lock:** when user says "implement X," ask "Would you like to see a generated image or layout or simulate a merge?" first, (3) visual image/layout/merge simulation, (4) user says "approve 100% implement". **One by one:** Ask "Are you ready to implement this new feature?" before each Heavy feature. Never run the entire Heavy tier at once. |
 
 ---
 

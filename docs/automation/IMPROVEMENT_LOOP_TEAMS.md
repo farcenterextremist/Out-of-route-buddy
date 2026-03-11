@@ -63,7 +63,7 @@ Primary research in Phase 0: CRUCIAL, REDUNDANT_DEAD_CODE, FAILING_OR_IGNORED_TE
 | **Medium** | Yes | Not required — may run without stopping |
 | **Heavy** | No | **Required** — visual image + user says **"approve 100% implement"** before implementation |
 
-**Visual approval clause:** Features 100% sandboxed in Heavy must have a simple visual image (where + what it looks like) and user must say **"approve 100% implement"** before implementation. See [LOOP_TIERING.md](./LOOP_TIERING.md) § Visual Approval Clause.
+**Question lock + visual approval:** When user says "implement X," ask "Would you like to see a generated image or layout or simulate a merge?" first. Then: simple visual image (where + what it looks like) and user must say **"approve 100% implement"** before implementation. See [LOOP_TIERING.md](./LOOP_TIERING.md) § Question Lock and Visual Approval Clause.
 
 **Rule:** All ideas recommended to Heavy must first be approved by a human in the loop. Light and Medium may run autonomously when the loop is configured for full autonomy.
 

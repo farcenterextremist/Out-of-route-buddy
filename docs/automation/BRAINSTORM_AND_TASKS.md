@@ -32,6 +32,7 @@
 
 | Idea | Suggested tier | Notes |
 |------|----------------|-------|
+| Loop listener data analysis — aggregate pulse/phase events to suggest next focus | Light | From listener data: which phases take longest; test pass rate over runs |
 | *(Add new ideas here as Light/Medium research runs)* | | |
 
 ---

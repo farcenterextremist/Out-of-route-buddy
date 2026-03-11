@@ -28,8 +28,9 @@
 When user says **GO** (or "run improvement loop"):
 
 1. Read [docs/automation/IMPROVEMENT_LOOP_COMMON_SENSE.md](docs/automation/IMPROVEMENT_LOOP_COMMON_SENSE.md) (checkpoint first, tests green, full autonomy)
-2. Follow [docs/automation/IMPROVEMENT_LOOP_ROUTINE.md](docs/automation/IMPROVEMENT_LOOP_ROUTINE.md)
-3. For autonomy: [docs/automation/AUTONOMOUS_LOOP_SETUP.md](docs/automation/AUTONOMOUS_LOOP_SETUP.md)
+2. Read [docs/automation/IMPROVEMENT_LOOP_REASONING.md](docs/automation/IMPROVEMENT_LOOP_REASONING.md) (logic and reasoning; think before you act)
+3. Follow [docs/automation/IMPROVEMENT_LOOP_ROUTINE.md](docs/automation/IMPROVEMENT_LOOP_ROUTINE.md)
+4. For autonomy: [docs/automation/AUTONOMOUS_LOOP_SETUP.md](docs/automation/AUTONOMOUS_LOOP_SETUP.md)
 
 ---
 

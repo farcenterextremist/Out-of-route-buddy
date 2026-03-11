@@ -84,7 +84,7 @@
 
 1. **Resolve pre-existing build issues** — Run `./gradlew clean assembleDebug`; if AAPT errors persist, check `build_warnings.txt` and `GRADLE_9_MIGRATION_NOTES.md`.
 2. **Dead code cleanup** — Revisit REDUNDANT_DEAD_CODE_REPORT §2 for remaining safe removals (e.g. CustomCalendarDialog unused members) after confirming no callers.
-3. **LocationValidationServiceTest** — Consider fixing the ignored test or moving to instrumented suite per FAILING_OR_IGNORED_TESTS.md.
+3. **LocationValidationServiceTest** — Fix ignored test in unit suite or document with reason. (Loop runs unit tests only; no instrumented tests in this environment.)
 4. **Gradle 9 readiness** — Per CRUCIAL_IMPROVEMENTS §1, run `--warning-mode all` and document migration steps.
 
 ---

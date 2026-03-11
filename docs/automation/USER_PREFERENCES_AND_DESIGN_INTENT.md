@@ -42,6 +42,16 @@
 
 ---
 
+## Agent Behavior (Heavy Features)
+
+**When the user says "implement X feature" (or any Heavy-tier feature):** Do not proceed to implementation. Instead, ask:
+
+> **Would you like to see a generated image or layout or simulate a merge?**
+
+See [LOOP_TIERING.md](./LOOP_TIERING.md) § Question Lock. This applies in any context (loop or ad-hoc).
+
+---
+
 ## How to Use (Improvement Loop)
 
 1. **Phase 0.0a:** Read this doc first. Note: "Design intent: X. Must not change: Y. User preferences: Z."

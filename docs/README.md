@@ -53,12 +53,15 @@ Short index of the key docs for OutOfRouteBuddy. Start here for product, archite
 |---------------|-------------|
 | **automation/** | Improvement Loop routine and self-improvement system. |
 | [automation/IMPROVEMENT_LOOP_ROUTINE.md](./automation/IMPROVEMENT_LOOP_ROUTINE.md) | Phased routine: research, quick wins, tests, UI polish, summary. |
+| [automation/IMPROVEMENT_LOOP_REASONING.md](./automation/IMPROVEMENT_LOOP_REASONING.md) | Logic and reasoning: decision checkpoints, reasoning framework, traceable rationale in summaries. |
 | [automation/LOOP_TIERING.md](./automation/LOOP_TIERING.md) | Task tiering: Light (auto), Medium/Heavy (user approval). |
 | [automation/DESIGN_AND_UX_RESEARCH.md](./automation/DESIGN_AND_UX_RESEARCH.md) | Design research: color schemes, templates, state flows, beautification, professionalism—integrated into loops. |
 | [automation/CURSOR_SELF_IMPROVEMENT.md](./automation/CURSOR_SELF_IMPROVEMENT.md) | Safe web search, prompt-injection protections, contextualization. |
 | [automation/SANDBOX_TESTING.md](./automation/SANDBOX_TESTING.md) | Feature testing before merge; sandbox phase. |
 | [automation/AUTONOMOUS_LOOP_SETUP.md](./automation/AUTONOMOUS_LOOP_SETUP.md) | Full automation (zero human intervention); Cursor Automations. |
-| [automation/HEAVY_TIER_IDEAS.md](./automation/HEAVY_TIER_IDEAS.md) | Heavy-tier ideas list (cap 50) with state: sandbox-ready / sandboxed / proposed. |
+| [automation/HEAVY_TIER_IDEAS.md](./automation/HEAVY_TIER_IDEAS.md) | Heavy-tier ideas list (cap 50) with state and true completion %. |
+| [automation/LOOP_LISTENER.md](./automation/LOOP_LISTENER.md) | Loop event recording (JSONL) for data and improvement. |
+| [automation/IMPROVEMENT_LOOP_AUDIT.md](./automation/IMPROVEMENT_LOOP_AUDIT.md) | Blind spots, loose ends, scope summary; re-run after major changes. |
 
 ---
 

@@ -101,6 +101,8 @@
 
 **Dependencies:** Route/path data (expected vs. actual), map rendering (e.g. Google Maps, Mapbox), deviation detection logic.
 
+**Validation checklist (40%):** (1) Define expected-path source (loaded miles route? bounce waypoints?); (2) Map SDK choice (Google Maps vs Mapbox); (3) Red-line rendering from GPS track vs expected; (4) Stat card placement (expandable block); (5) Performance with long trips.
+
 **Status:** Sandboxed 100%. Not in ROADMAP yet.
 
 ---

@@ -21,7 +21,7 @@
 | 2 | Driver ranking | (sandboxed) | 20 |
 | 3 | Ranking chart | (sandboxed) | 20 |
 | 4 | Optional email signup for updates | (sandboxed) | 20 |
-| 5 | Route deviation map (instant replay) | (sandboxed) | 20 |
+| 5 | Route deviation map (instant replay) | (sandboxed) | 40 |
 | 6 | Sandboxed virtual fleet | (sandboxed) | 20 |
 | 7 | Auto drive detected | (sandbox-ready) | 60 |
 | 8 | Reports screen | (sandbox-ready) | 40 |
@@ -39,8 +39,11 @@
 | 20 | Statistics monthly-only refactor | (proposed) | 0 |
 | 21 | Help & Info placement spec | (proposed) | 0 |
 | 22 | Period picker for Statistics (This week / This month / Custom) | (proposed) | 0 |
+| 23 | Weekly one-liner (Human-in-the-Loop digest) | (proposed) | 0 |
 
-**Count:** 22 / 50. **Next run:** Light and Medium must add 1–2 new Heavy ideas.
+**Count:** 23 / 50. **Next run:** Light and Medium must add 1–2 new Heavy ideas.
+
+**Sandbox improvement this run:** Route deviation map 20→40 (validation checklist added). New Heavy idea: Weekly one-liner.
 
 ---
 

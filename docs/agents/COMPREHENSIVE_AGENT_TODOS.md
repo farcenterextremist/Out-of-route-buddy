@@ -89,7 +89,7 @@ Each agent has a single checklist. When a task is done, check it off here and in
 
 - [ ] **CRUCIAL #5** — TripInputViewModelIntegrationTest: fix or document the ignored test (dispatcher conflict with Dispatchers.IO).
 - [ ] **CRUCIAL #5** — TripHistoryByDateViewModelTest: complete with Robolectric/DI or document as integration-only and add to test plan.
-- [ ] **CRUCIAL #5** — LocationValidationServiceTest: triage PHASE 1 / INSTRUMENTED / HEAVY TRAFFIC — fix, ignore with reason, or move to instrumented suite.
+- [ ] **CRUCIAL #5** — LocationValidationServiceTest: fix in unit suite or ignore with reason. (Improvement Loop: unit tests only; no instrumented tests in this environment.)
 - [ ] **CRUCIAL #5** — ThemeScreenshotTest: add Paparazzi and enable, or document in `docs/qa/` that screenshot tests are deferred.
 - [ ] **CRUCIAL #9 (Statistics: monthly only)** — Update tests: remove or adjust assertions for weekly/yearly; mock only `getMonthlyTripStatistics()` where relevant. Ref: `TripStatisticsWiringTest.kt`, `TripInputViewModelIntegrationTest.kt`, `TestConfig.kt` (statistics_button description).
 - [ ] Add test cases for **Auto drive detected** once the flow is defined.

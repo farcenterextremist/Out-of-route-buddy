@@ -6,6 +6,8 @@
 
 **Common sense:** Read [IMPROVEMENT_LOOP_COMMON_SENSE.md](./IMPROVEMENT_LOOP_COMMON_SENSE.md) at loop start. Checkpoint first, respect design intent, tests green, timebox, no unwarranted UI changes.
 
+**Logic & reasoning:** Read [IMPROVEMENT_LOOP_REASONING.md](./IMPROVEMENT_LOOP_REASONING.md) at loop start. Apply reasoning checkpoints before research, task selection, each change, and summary. Think before you act.
+
 **Framework (PDCA / Kaizen):** Phase 0 = Plan; Phase 1–3 = Do; Phase 4 = Check; Phase 4.3 = Act. **Kaizen rule:** One improvement per category per loop to avoid overload.
 
 **Tiering:** Tasks are Light (auto), Medium (auto when autonomous), or Heavy (human approval always). See [LOOP_TIERING.md](./LOOP_TIERING.md). **Full autonomy:** Light and Medium run without stopping; Heavy deferred or documented for next run. See [IMPROVEMENT_LOOP_COMMON_SENSE.md](./IMPROVEMENT_LOOP_COMMON_SENSE.md) § Full Autonomous Mode.
@@ -17,6 +19,14 @@
 **Pre-loop checkpoint:** Save a copy (git commit or tag) before the loop. Say **"revert"** to restore if something breaks. See LOOP_TIERING § Revert.
 
 **Loop listener:** Record events for data and improvement. `run_120min_loop.ps1` and `pulse_check.ps1` invoke the listener automatically. When running phases manually (agent-driven), invoke `loop_listener.ps1` at phase boundaries. See [LOOP_LISTENER.md](./LOOP_LISTENER.md). Run `test_loop_listener.ps1` to verify wiring.
+
+**Script vs agent:** `run_120min_loop.ps1` is a **timer** — it pulses every 30 min and reminds to write summary. The **agent** executes phases per this routine. When user says GO, the agent follows phases 0–4; the script can run in parallel to pulse, or the agent runs `pulse_check.ps1` at phase boundaries.
+
+---
+
+## Before First Loop (One-Time Setup)
+
+**Autonomy setup:** For no human-in-the-loop, follow [AUTONOMOUS_LOOP_SETUP.md](./AUTONOMOUS_LOOP_SETUP.md) once. Option A: Set Auto-run mode to **Run Everything**. Option B: Add `cd c:\Users\brand\OutofRoutebuddy` to Command Allowlist. Skip if already configured.
 
 ---
 
@@ -50,9 +60,11 @@
 
 ### 0.0b Meta-Research (optional, 5 min)
 
-**Meta-Researchers:** Use [META_RESEARCH_CHECKLIST.md](./META_RESEARCH_CHECKLIST.md) — answer 5 questions; add one-line meta-note to summary: "Research quality: X. Gaps: Y. Suggested improvement: Z."
+**Meta-Researchers:** Use [META_RESEARCH_CHECKLIST.md](./META_RESEARCH_CHECKLIST.md) if it exists; else answer inline: (1) Research quality? (2) Gaps? (3) Suggested improvement? Add one-line meta-note to summary: "Research quality: X. Gaps: Y. Suggested improvement: Z."
 
 ### 0.1 Research (15 min)
+
+**Reasoning checkpoint (before research):** "What do I need to know to make good decisions this run? What did last run miss?" See [IMPROVEMENT_LOOP_REASONING.md](./IMPROVEMENT_LOOP_REASONING.md).
 
 **Set this run's focus:** Read last summary; use "Next run focus" if suggested, else next in [LOOP_FOCUS_ROTATION.md](./LOOP_FOCUS_ROTATION.md) order. Default: Security.
 
@@ -67,14 +79,16 @@ Read these files **before** making any changes. (0.0a already read USER_PREFEREN
 | `docs/qa/FAILING_OR_IGNORED_TESTS.md` | Test health; @Ignore reasons |
 | `docs/security/SECURITY_NOTES.md` | Security checklist; PII, encryption, FileProvider |
 | `docs/security/SECURITY_CHECKLIST.md` | Pre-release items |
-| `docs/automation/DESIGN_AND_UX_RESEARCH.md` | Design research topics; how to research and apply |
+| `docs/automation/DESIGN_AND_UX_RESEARCH.md` or `docs/ux/UI_CONSISTENCY.md` | Design research; fallback to UI_CONSISTENCY if DESIGN_AND_UX missing |
 | `docs/automation/LOOP_TIERING.md` | Light / Medium / Heavy task definitions; approval gate |
 | `docs/automation/LOOP_FOCUS_ROTATION.md` | This run's focus; bias effort |
-| `docs/automation/USER_METADATA_USAGE_GUIDE.md` | Metadata collection, display, improvement use (when Data/Metrics focus) |
+| `docs/automation/USER_METADATA_USAGE_GUIDE.md` | Metadata (when Data/Metrics focus); skip if missing |
 
 **Output:** One-line research note: "Design intent: [from 0.0a]. Last loop did X; next: Y, Z. This focus: [Security|UI/UX|Shipability|Code Quality|File Structure|Data/Metrics]. Security gaps: A. Smoothness: B. Design: [topic to research]."
 
 ### 0.1b Task classification & approval gate
+
+**Reasoning checkpoint (before task selection):** "Given this focus and backlog, which 1–2 tasks give the highest value for lowest risk? Why?" See [IMPROVEMENT_LOOP_REASONING.md](./IMPROVEMENT_LOOP_REASONING.md).
 
 Per [LOOP_TIERING.md](./LOOP_TIERING.md):
 
@@ -88,7 +102,7 @@ Per [LOOP_TIERING.md](./LOOP_TIERING.md):
    > 
    > **Options:** "Implement all" | "Light and medium only" | or specify tasks
 5. **Wait for user response** before implementing Heavy (if any).
-6. **Execute** Light and Medium; for Heavy: **visual approval required** — generate a simple image showing where the feature goes and what it looks like; do not implement until user says **"approve 100% implement"**. See LOOP_TIERING § Visual Approval Clause.
+6. **Execute** Light and Medium; for Heavy: **question lock first** — when user says "implement X," ask "Would you like to see a generated image or layout or simulate a merge?"; then **visual approval required** — generate image/layout/merge simulation; do not implement until user says **"approve 100% implement"**. See LOOP_TIERING § Question Lock and Visual Approval Clause.
 
 **Sandbox:** For higher-risk items, use [SANDBOX_TESTING.md](./SANDBOX_TESTING.md). Sandboxing is a Medium task; runs autonomously.
 
@@ -107,7 +121,7 @@ Per [LOOP_TIERING.md](./LOOP_TIERING.md):
 
 ### 0.4 Design & UX Research (5–10 min, 15 min when UI/UX focus)
 
-**Goal:** Research color schemes, templates, state flows, color matching, popular designs, beautification standards, professionalism—then apply findings in Phase 3. See [DESIGN_AND_UX_RESEARCH.md](./DESIGN_AND_UX_RESEARCH.md).
+**Goal:** Research color schemes, templates, state flows, color matching, popular designs, beautification standards, professionalism—then apply findings in Phase 3. See [DESIGN_AND_UX_RESEARCH.md](./DESIGN_AND_UX_RESEARCH.md) if it exists; else use [docs/ux/UI_CONSISTENCY.md](../ux/UI_CONSISTENCY.md) and web search.
 
 **When UI/UX focus:** Extend to 15 min; add "Compare to Material Design 3" or similar. See [LOOP_FOCUS_ROTATION.md](./LOOP_FOCUS_ROTATION.md).
 
@@ -121,18 +135,13 @@ Per [LOOP_TIERING.md](./LOOP_TIERING.md):
 
 **Medium tier — Advanced beautification & organizing research:** When running Medium, include deeper research: advanced color theory, typography hierarchy, organizing best practices (file structure, doc layout), professional fleet/driver app patterns. Document findings; apply one subtle improvement per loop.
 
-### 0.2 Autonomy setup (one-time)
-
-**For no human-in-the-loop:** Follow [AUTONOMOUS_LOOP_SETUP.md](./AUTONOMOUS_LOOP_SETUP.md) once.
-
-- **Option A:** Set Auto-run mode to **Run Everything** (full autonomy)
-- **Option B:** Add `cd c:\Users\brand\OutofRoutebuddy` to Command Allowlist (prefix matches all loop commands)
-
-After setup, the loop runs without approval prompts.
-
 ---
 
 ## Phase 1: Quick Wins + Security + Smoothness (20–50 min)
+
+**Listener:** Invoke `.\scripts\automation\loop_listener.ps1 -Event phase_start -Phase "1" -Note "Quick wins"` at start; `phase_end` at end. See [LOOP_LISTENER.md](./LOOP_LISTENER.md).
+
+**Reasoning checkpoint (before each change):** "What is my goal? What could go wrong? Is there a simpler option?" See [IMPROVEMENT_LOOP_REASONING.md](./IMPROVEMENT_LOOP_REASONING.md). Apply throughout Phases 1–3.
 
 **Goal:** Low-risk fixes, one security improvement, one smoothness improvement.
 
@@ -146,7 +155,7 @@ After setup, the loop runs without approval prompts.
 
 ### 1.2 Security (10 min, full checklist when Security focus)
 
-**When Security focus:** Run full [SECURITY_LOOP_CHECKLIST.md](./SECURITY_LOOP_CHECKLIST.md) — PII grep, FileProvider, Keystore, secrets, dependency audit. Optionally run `./gradlew dependencyUpdates` or document "last dependency audit" in summary.
+**When Security focus:** Run full security checklist — PII grep, FileProvider, Keystore, secrets, dependency audit. Use [SECURITY_NOTES.md](../security/SECURITY_NOTES.md) and [SECURITY_CHECKLIST.md](../security/SECURITY_CHECKLIST.md). Optionally run `./gradlew dependencyUpdates` or document "last dependency audit" in summary.
 
 **Else,** pick **one** per SECURITY_NOTES:
 
@@ -176,6 +185,8 @@ Pick **one**:
 ---
 
 ## Phase 2: Test Health & Documentation (50–80 min)
+
+**Listener:** Invoke `loop_listener.ps1 -Event phase_start -Phase "2"` at start; `phase_end` at end.
 
 **Goal:** Fix or document one test; align docs.
 
@@ -217,6 +228,8 @@ Pick **one**:
 
 ## Phase 3: UI Polish + Smoothness (80–105 min)
 
+**Listener:** Invoke `loop_listener.ps1 -Event phase_start -Phase "3"` at start; `phase_end` at end.
+
 **Goal:** Sharpen, pop, useful info. Apply design research from Phase 0.4. One smoothness tweak.
 
 **Kaizen rule:** Apply one subtle improvement only. No more than one to avoid drift (user rule).
@@ -245,6 +258,8 @@ Pick **one**:
 
 ## Phase 4: Final Pulse & Summary (105–120 min)
 
+**Listener:** Invoke `loop_listener.ps1 -Event phase_start -Phase "4"` at start; `phase_end` at end.
+
 **Goal:** Lint, summary, suggested next steps.
 
 ### 4.1 Lint (5 min)
@@ -254,7 +269,7 @@ Pick **one**:
 
 ### 4.1b Shipability check (optional, 10 min)
 
-**When Shipability focus:** Run [SHIPABILITY_CHECKLIST.md](./SHIPABILITY_CHECKLIST.md) — 7 signals, 10-min timebox. Run before pre-release loops or when user says "shipability focus."
+**When Shipability focus:** Run shipability check — 7 signals, 10-min timebox. Use [STORE_CHECKLIST.md](../STORE_CHECKLIST.md) if no SHIPABILITY_CHECKLIST. Run before pre-release loops or when user says "shipability focus."
 
 ### 4.2 Final pulse (2 min)
 
@@ -264,6 +279,8 @@ Pick **one**:
 
 **Output:** `docs/automation/IMPROVEMENT_LOOP_SUMMARY_<date>.md`
 
+**Reasoning checkpoint (before summary):** "What did I learn? What should the next run do differently?" See [IMPROVEMENT_LOOP_REASONING.md](./IMPROVEMENT_LOOP_REASONING.md).
+
 **Contents (A-grade format):** See [LOOP_METRICS_TEMPLATE.md](./LOOP_METRICS_TEMPLATE.md).
 
 1. **Phase 0 research note** — One-line: design intent, last loop, this focus
@@ -271,12 +288,13 @@ Pick **one**:
 3. **PDCA phase summary** — Plan (0), Do (1–3), Check (4), Act (4.3)
 4. **Metrics** — Tests (pass/fail), lint (errors/warnings), files changed, checkpoint
 5. **What was done** — Table: Phase, Task, Status, Details
-6. **Research findings** — Design, security, meta-research; metadata (if Data/Metrics focus)
-7. **Files modified** — List with one-line change
-8. **Suggested next steps** — 4–6 items for next loop (see template below); actionable (include commands where helpful)
-9. **File Organizer: recommended new ideas** — Propose new tasks for Light, Medium, or Heavy. **Add at least 1–2 Heavy ideas per run** when [HEAVY_TIER_IDEAS.md](./HEAVY_TIER_IDEAS.md) is below 50. **Sandbox completion %** — Report true % for 1–2 improved ideas (per [SANDBOX_COMPLETION_PERCENTAGE.md](./SANDBOX_COMPLETION_PERCENTAGE.md)). Heavy ideas require human approval; one by one, ask "Are you ready to implement this new feature?" before each. See [IMPROVEMENT_LOOP_TEAMS.md](./IMPROVEMENT_LOOP_TEAMS.md).
-10. **Next run focus** — Suggested focus for next loop (from File Organizer or metrics)
-11. **Quality Grade** — A/B/C with rationale and one improvement for next run
+6. **Reasoning (this run)** — Table: Decision, Rationale. Per [IMPROVEMENT_LOOP_REASONING.md](./IMPROVEMENT_LOOP_REASONING.md). Makes logic traceable for next run.
+7. **Research findings** — Design, security, meta-research; metadata (if Data/Metrics focus)
+8. **Files modified** — List with one-line change
+9. **Suggested next steps** — 4–6 items for next loop (see template below); actionable (include commands where helpful)
+10. **File Organizer: recommended new ideas** — Propose new tasks for Light, Medium, or Heavy. **Add at least 1–2 Heavy ideas per run** when [HEAVY_TIER_IDEAS.md](./HEAVY_TIER_IDEAS.md) is below 50. **Sandbox completion %** — Report true % for 1–2 improved ideas (per [SANDBOX_COMPLETION_PERCENTAGE.md](./SANDBOX_COMPLETION_PERCENTAGE.md)). Heavy ideas require human approval; one by one, ask "Are you ready to implement this new feature?" before each. See [IMPROVEMENT_LOOP_TEAMS.md](./IMPROVEMENT_LOOP_TEAMS.md).
+11. **Next run focus** — Suggested focus for next loop (from File Organizer or metrics)
+12. **Quality Grade** — A/B/C with rationale and one improvement for next run
 
 ---
 
@@ -289,7 +307,7 @@ Copy into each summary. Update checkboxes as items are completed.
 
 - [ ] Resolve pre-existing build issues — `./gradlew clean assembleDebug` if AAPT/dependency errors
 - [ ] Dead code cleanup — REDUNDANT_DEAD_CODE_REPORT §2 (CustomCalendarDialog, etc.)
-- [ ] LocationValidationServiceTest — Fix ignored test or move to instrumented suite
+- [ ] LocationValidationServiceTest — Fix ignored test in unit suite or document with reason (no instrumented tests in this environment)
 - [ ] Gradle 9 readiness — Run `--warning-mode all`, document in GRADLE_9_MIGRATION_NOTES
 - [ ] Security: StandaloneOfflineService — Migrate encryption key to Keystore (larger task)
 - [ ] Security: PII audit — Re-grep logs for coordinates, trip IDs; redact if found
@@ -318,6 +336,7 @@ Copy into each summary. Update checkboxes as items are completed.
 
 **Delegation rules:**
 - Give subagent clear scope: file paths, constraints, "do not touch X"
+- Pass constraints: no unwarranted UI changes, tests must pass, timebox 10 min per test
 - Timebox: "Do not spend >10 min on any single test"
 - Subagent returns: what changed, why, test result
 
@@ -331,6 +350,7 @@ Copy into each summary. Update checkboxes as items are completed.
 - Statistics monthly-only refactor (CRUCIAL §9) — user approval needed
 - Gradle 9 migration
 - New features or major refactors
+- **Instrumented tests** — Loop runs in a full-autonomous environment with **unit tests only** (no device/emulator). Do not run `connectedAndroidTest` or suggest "move to instrumented suite" as a fix. For ignored tests: fix in unit suite, document with reason, or defer. Instrumented tests are for CI/pre-release when a device or emulator is available.
 
 ---
 
@@ -339,6 +359,10 @@ Copy into each summary. Update checkboxes as items are completed.
 - **Sprint:** Run every 1–2 weeks.
 - **Pre-release:** Run + SECURITY_CHECKLIST before ship.
 - **After major changes:** Run to catch regressions and polish.
+
+---
+
+**Audit:** For blind spots and loose ends, see [IMPROVEMENT_LOOP_AUDIT.md](./IMPROVEMENT_LOOP_AUDIT.md). Re-run audit after major changes.
 
 ---
 

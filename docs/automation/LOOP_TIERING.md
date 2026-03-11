@@ -104,16 +104,35 @@ New feature ideas **must not** go directly to Heavy. They must be:
 
 ---
 
+## Question Lock (Heavy Implementation Gate)
+
+**When the user says "implement X feature" (or any Heavy feature name), do not proceed to implementation.** Instead, respond with:
+
+> **Would you like to see a generated image or layout or simulate a merge?**
+
+**Options:**
+
+| User choice | Response |
+|-------------|----------|
+| **Generated image** | Create a simple image or mockup showing where the feature goes and what it looks like. |
+| **Layout** | Show a layout or wireframe description (e.g. XML, placement, hierarchy). |
+| **Simulate a merge** | Show what would change (diff, file list, affected modules) without applying. |
+
+**Rule:** Do not implement until the user answers this question and then proceeds to "approve 100% implement." Even if the user says "implement X," the agent must ask this question first.
+
+---
+
 ## Visual Approval Clause (Heavy Implementation Gate)
 
 **Features that are 100% finished and 100% sandboxed in the Heavy tier** must pass a visual approval gate before implementation during the Improvement Loop:
 
-1. **Generate a simple visual image** — Show where the feature is being implemented and what it looks like (e.g. mockup, wireframe, or screenshot of placement).
-2. **Present to user** — Display the image and a brief description of the feature and its placement.
-3. **Wait for explicit approval** — Do **not** implement until the user says: **"approve 100% implement"** (exact phrase).
-4. **Implement only after approval** — If the user says "approve 100% implement," proceed with implementation. Otherwise, do not implement.
+1. **Question lock first** — When user says "implement X" or "implement [feature name]," ask: "Would you like to see a generated image or layout or simulate a merge?" See [Question Lock](#question-lock-heavy-implementation-gate) above.
+2. **Generate a simple visual image** (or layout or merge simulation) — Show where the feature is being implemented and what it looks like (e.g. mockup, wireframe, or screenshot of placement).
+3. **Present to user** — Display the image and a brief description of the feature and its placement.
+4. **Wait for explicit approval** — Do **not** implement until the user says: **"approve 100% implement"** (exact phrase).
+5. **Implement only after approval** — If the user says "approve 100% implement," proceed with implementation. Otherwise, do not implement.
 
-**Rule:** No Heavy feature implementation without this visual approval step and the exact phrase "approve 100% implement."
+**Rule:** No Heavy feature implementation without this question lock and visual approval step and the exact phrase "approve 100% implement."
 
 ---
 
@@ -136,8 +155,9 @@ New feature ideas **must not** go directly to Heavy. They must be:
 Before implementing **each** Heavy feature:
 1. Ask: **"Are you ready to implement this new feature? [Feature name]"**
 2. Wait for user response.
-3. If yes: proceed with visual approval + "approve 100% implement" for that feature only.
-4. If no: skip or defer; move to next feature (if any) and ask again.
+3. If yes: **ask the question lock first:** "Would you like to see a generated image or layout or simulate a merge?" See [Question Lock](#question-lock-heavy-implementation-gate).
+4. Do not implement until user answers this question and then says **"approve 100% implement"** for that feature only.
+5. If no: skip or defer; move to next feature (if any) and ask again.
 
 ---
 
@@ -152,10 +172,12 @@ Hold up. Would you like me to implement any of these heavy tasks?
 
 **Per-feature gate:** I will ask "Are you ready to implement this new feature?" before each one. I will never implement the entire Heavy tier at once.
 
-**Visual approval required:** Before implementing any Heavy task, I will generate a simple image showing where the feature goes and what it looks like. You must say "approve 100% implement" before I proceed.
+**Question lock:** When you say "implement X" or "implement [feature name]," I will first ask: "Would you like to see a generated image or layout or simulate a merge?" I will not proceed to implementation until you answer this and then say "approve 100% implement."
+
+**Visual approval required:** Before implementing any Heavy task, I will generate a simple image (or layout or merge simulation) showing where the feature goes and what it looks like. You must say "approve 100% implement" before I proceed.
 
 **Options:**
-- "Implement [feature X] only" — I'll ask for that one, then stop
+- "Implement [feature X] only" — I'll ask for that one, then ask the question lock
 - "Light and medium only" — I'll skip heavy (light and medium run autonomously)
 - Or specify: "Implement heavy task X but not Y"
 ```
@@ -166,7 +188,9 @@ Hold up. Would you like me to implement any of these heavy tasks?
 
 ## Revert
 
-**When you say "revert"** — Restore from the pre-loop checkpoint (commit or tag created before the Improvement Loop). Use `git reset --hard <checkpoint>` or `git checkout <tag>`. Do not revert unless the user explicitly says "revert."
+**When you say "revert"** — Restore from the pre-loop checkpoint (commit or tag created before the Improvement Loop). Use `git reset --hard <checkpoint>` or `git reset --hard <tag>`. Do not revert unless the user explicitly says "revert."
+
+**If no checkpoint exists:** Say "No checkpoint found. Create one next run with `git add -A && git commit -m "Pre-improvement-loop checkpoint"` or `git tag improvement-loop-pre-$(date +%Y%m%d-%H%M)`."
 
 ---
 

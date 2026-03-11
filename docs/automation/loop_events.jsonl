@@ -1,1 +1,4 @@
 {"ts":"2026-03-11T17:05:22Z","event":"pulse","run_id":"run-20260311-1705","note":"Listener wiring test","metrics":{"tests":"quick run (skipped)"}}
+{"ts":"2026-03-11T17:07:00Z","event":"loop_start","run_id":"run-20260311-1706","note":"Light+Medium run"}
+{"ts":"2026-03-11T17:08:05Z","event":"pulse","run_id":"run-20260311-1708","note":"Phase 2: Light+Medium complete","metrics":{"tests":"quick run (skipped)"}}
+{"ts":"2026-03-11T17:08:18Z","event":"loop_end","run_id":"run-20260311-1708","note":"Light+Medium run complete"}

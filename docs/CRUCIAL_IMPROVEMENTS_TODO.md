@@ -47,7 +47,7 @@
 
 - **TripInputViewModelIntegrationTest:** One test ignored with "TODO: Fix dispatcher conflict with Dispatchers.IO in ViewModel". Fix the test (e.g. inject TestDispatcher) or document in `docs/qa/` and in the test so it’s not forgotten.
 - **TripHistoryByDateViewModelTest:** "TODO: These tests are incomplete - they require Application context and repository setup." Either complete with Robolectric/DI or document as integration-only and add to test plan.
-- **LocationValidationServiceTest:** Comments reference "PHASE 1 FIXES" (1 failing test), "INSTRUMENTED TESTS" (future device tests), and "REMAINING HEAVY TRAFFIC ENHANCEMENT STEPS". QA to triage: fix, ignore with reason, or move to instrumented suite.
+- **LocationValidationServiceTest:** Comments reference "PHASE 1 FIXES" (1 failing test) and "REMAINING HEAVY TRAFFIC ENHANCEMENT STEPS". QA to triage: fix in unit suite or ignore with reason. *(Improvement Loop runs unit tests only; no instrumented tests in this environment.)*
 - **ThemeScreenshotTest:** "TODO: Uncomment when Paparazzi is configured." Either add Paparazzi and enable the test or document in `docs/qa/` that screenshot tests are deferred.
 
 **Artifacts:** Fixed tests or `docs/qa/TEST_STRATEGY.md` / test-plan updates and clear `@Ignore` reasons.

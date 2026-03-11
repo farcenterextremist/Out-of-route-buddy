@@ -72,11 +72,12 @@ New feature ideas **must not** go directly to implementation. Per [LOOP_TIERING.
 1. **Document** in FUTURE_IDEAS.md → 100% sandboxed.
 2. **Validate** — feature branch, build variant, or design brief; user confirms behavior.
 3. **Confirm** — User explicitly approves: "This is ready to implement."
-4. **Visual approval** — Generate a simple image showing where the feature is implemented and what it looks like. Present to user.
-5. **Explicit phrase** — Do **not** implement until user says: **"approve 100% implement"**.
-6. **Then** implement.
+4. **Question lock** — When user says "implement X," ask: "Would you like to see a generated image or layout or simulate a merge?" See [LOOP_TIERING.md](./LOOP_TIERING.md) § Question Lock.
+5. **Visual approval** — Generate a simple image (or layout or merge simulation) showing where the feature is implemented and what it looks like. Present to user.
+6. **Explicit phrase** — Do **not** implement until user says: **"approve 100% implement"**.
+7. **Then** implement.
 
-**Goal:** 100% confidence that a feature is ready before implementation. No implementation without visual approval and "approve 100% implement."
+**Goal:** 100% confidence that a feature is ready before implementation. No implementation without question lock, visual approval, and "approve 100% implement."
 
 ---
 
@@ -97,7 +98,7 @@ Future/planned features are shown in the Help & Info dialog so users know what's
 | **Loop** | Optional sandbox phase for user approval |
 | **Heavy ideas sandboxed** | Document in FUTURE_IDEAS = 100% sandboxed; add anytime; Medium tier runs improvements |
 | **Sandbox testing for merge** | Test new features in branch/build variant before merging into main; merge only when safe |
-| **Promotion to implementation** | Validate → Confirm → **Visual image** → User says **"approve 100% implement"** → Implement |
+| **Promotion to implementation** | Validate → Confirm → **Question lock** ("image or layout or simulate merge?") → **Visual image/layout/merge** → User says **"approve 100% implement"** → Implement |
 | **User-facing** | Help & Info "Coming soon" section |
 
 ---
