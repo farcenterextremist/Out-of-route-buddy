@@ -2,7 +2,7 @@
 
 **Purpose:** Staging area for ideas and suggestions based on current context, user feedback, and research. Light and Medium tiers use this to research improvements and populate the task backlog. Ideas are classified into Light, Medium, or Heavy before promotion to [CRUCIAL_IMPROVEMENTS_TODO.md](../CRUCIAL_IMPROVEMENTS_TODO.md), [LOOP_TIERING.md](./LOOP_TIERING.md), or [FUTURE_IDEAS.md](../product/FUTURE_IDEAS.md).
 
-**References:** [LOOP_TIERING.md](./LOOP_TIERING.md), [IMPROVEMENT_LOOP_TEAMS.md](./IMPROVEMENT_LOOP_TEAMS.md), [CRUCIAL_IMPROVEMENTS_TODO.md](../CRUCIAL_IMPROVEMENTS_TODO.md), [FUTURE_IDEAS.md](../product/FUTURE_IDEAS.md)
+**References:** [LOOP_TIERING.md](./LOOP_TIERING.md), [IMPROVEMENT_LOOP_TEAMS.md](./IMPROVEMENT_LOOP_TEAMS.md), [CRUCIAL_IMPROVEMENTS_TODO.md](../CRUCIAL_IMPROVEMENTS_TODO.md), [FUTURE_IDEAS.md](../product/FUTURE_IDEAS.md), [IMPROVEMENT_LOOP_AUDIT.md](./IMPROVEMENT_LOOP_AUDIT.md)
 
 ---
 
@@ -33,6 +33,7 @@
 | Idea | Suggested tier | Notes |
 |------|----------------|-------|
 | Loop listener data analysis — aggregate pulse/phase events to suggest next focus | Light | From listener data: which phases take longest; test pass rate over runs |
+| Run IMPROVEMENT_LOOP_AUDIT periodically — catch blind spots, verify referenced docs exist | Light | After major loop changes; ensures no broken links or missing fallbacks |
 | *(Add new ideas here as Light/Medium research runs)* | | |
 
 ---
