@@ -6,6 +6,7 @@ import com.example.outofroutebuddy.data.StateCache
 import com.example.outofroutebuddy.domain.models.GpsMetadata
 import com.example.outofroutebuddy.domain.models.Trip
 import com.example.outofroutebuddy.domain.models.TripStatus
+import com.example.outofroutebuddy.domain.models.DataTier
 import com.example.outofroutebuddy.domain.repository.TripRepository as DomainTripRepository
 import com.example.outofroutebuddy.domain.repository.TripStatistics
 import kotlinx.coroutines.flow.Flow
@@ -131,6 +132,17 @@ class DomainTripRepositoryAdapter(
         }
     }
 
+    /** Returns trips by data tier. Errors emitted to [loadErrors]. */
+    override fun getTripsByTier(tier: DataTier): Flow<List<Trip>> {
+        return dataRepository.getTripEntitiesByTier(tier)
+            .map { entities -> entities.map { mapTripEntityToDomain(it) } }
+            .catch { e ->
+                Log.w(TAG, "getTripsByTier failed", e)
+                _loadErrors.tryEmit(e.message ?: "Load failed")
+                emit(emptyList())
+            }
+    }
+
     /** Maps TripEntity to domain Trip with full metadata (startTime, endTime, gpsMetadata). */
     private fun mapTripEntityToDomain(entity: TripEntity): Trip {
         return Trip(
@@ -144,6 +156,7 @@ class DomainTripRepositoryAdapter(
             endTime = entity.tripEndTime,
             timeZoneId = entity.tripTimeZoneId,
             status = TripStatus.COMPLETED,
+            dataTier = entity.dataTier,
             gpsMetadata = GpsMetadata(
                 totalPoints = entity.totalGpsPoints,
                 validPoints = entity.validGpsPoints,
@@ -295,6 +308,7 @@ class DomainTripRepositoryAdapter(
         trip.startTime?.let { gpsMetadata["tripStartTime"] = it }
         trip.endTime?.let { gpsMetadata["tripEndTime"] = it }
         trip.timeZoneId?.let { gpsMetadata["tripTimeZoneId"] = it }
+        gpsMetadata["dataTier"] = trip.dataTier
         val id = dataRepository.insertTrip(dataTrip, if (gpsMetadata.isEmpty()) null else gpsMetadata)
         stateCache?.invalidateAll()
         return id.toString()
@@ -329,6 +343,13 @@ class DomainTripRepositoryAdapter(
             .also { if (it) stateCache?.invalidateAll() }
     }
 
+    override suspend fun setTripTier(tripId: String, tier: DataTier): Boolean {
+        val id = extractNumericTripId(tripId)
+        if (id == null || id <= 0L) return false
+        return dataRepository.setTripTier(id, tier)
+            .also { if (it) stateCache?.invalidateAll() }
+    }
+
     private fun extractNumericTripId(id: String): Long? {
         id.toLongOrNull()?.let { return it }
         val digits = id.takeLastWhile { it.isDigit() }
@@ -358,8 +379,9 @@ class DomainTripRepositoryAdapter(
     }
 
     /** Deletes trips with date strictly before [cutoffDate]. */
-    override suspend fun deleteTripsOlderThan(cutoffDate: Date) {
-        dataRepository.deleteTripsOlderThan(cutoffDate)
+    /** Deletes trips with date strictly before [cutoffDate]. Optionally only trips at or below [maxTier]. */
+    override suspend fun deleteTripsOlderThan(cutoffDate: Date, maxTier: DataTier?) {
+        dataRepository.deleteTripsOlderThan(cutoffDate, maxTier)
         stateCache?.invalidateAll()
     }
 

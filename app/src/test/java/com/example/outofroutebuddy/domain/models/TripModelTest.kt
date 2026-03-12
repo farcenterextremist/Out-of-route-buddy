@@ -354,6 +354,36 @@ class TripModelTest {
         assertEquals(endDate, updated.endTime)
         assertNull(trip.endTime) // Original unchanged
     }
+
+    @Test
+    fun `copyForEdit returns copy with same dataTier`() {
+        val trip = Trip(
+            id = "1",
+            loadedMiles = 100.0,
+            bounceMiles = 20.0,
+            actualMiles = 110.0,
+            dataTier = DataTier.GOLD
+        )
+        val copy = trip.copyForEdit()
+        assertNotSame(trip, copy)
+        assertEquals(trip.dataTier, copy.dataTier)
+        assertEquals(DataTier.GOLD, copy.dataTier)
+        assertEquals("1", copy.id)
+    }
+
+    @Test
+    fun `copyForEdit with newId uses new id`() {
+        val trip = Trip(
+            id = "1",
+            loadedMiles = 100.0,
+            bounceMiles = 20.0,
+            actualMiles = 110.0,
+            dataTier = DataTier.PLATINUM
+        )
+        val copy = trip.copyForEdit(newId = "2")
+        assertEquals("2", copy.id)
+        assertEquals(DataTier.PLATINUM, copy.dataTier)
+    }
     
     // ==================== GPS METADATA TESTS ====================
     

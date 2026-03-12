@@ -21,6 +21,9 @@ Each `*-purple-training.json` file contains:
       "blue_visibility": "validate_design_keys in sync_service"
     }
   ],
+  "synthetic_scenarios": [
+    {"scenario_id": "direct_ignore_previous", "category": "prompt_injection", "expected": "flag", "automated": false}
+  ],
   "http_simulations": [],
   "summary": {
     "unit_tests": "pass",

@@ -20,6 +20,8 @@ OutOfRouteBuddy is the single place for solo drivers to log loaded and bounce mi
 - Users gaining useful data from their trips
 - Requests from iPhone users for an iOS version
 
+**When we're "finished" or at the ceiling:** See [docs/readiness/](readiness/README.md) — plateau & shipping easy, what finished/perfected looks like, and the grand progress bar.
+
 ---
 
 ## Audience

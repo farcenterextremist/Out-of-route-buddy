@@ -1,0 +1,12 @@
+---
+description: "Synthetic vs human data: keep verifiably separate; use synthetic to suggest improvements to human data gathering"
+globs: []
+alwaysApply: true
+---
+
+# Data separation rule
+
+- **Synthetic data must stay verifiably separate from human data.** Human data = **GOLD** tier only; synthetic/simulated = **PLATINUM** or **SILVER**. Never store synthetic as GOLD; never re-tag human data as synthetic without explicit user action. Use tier APIs (`getTripsByTier`, `deleteTripsOlderThan(cutoff, maxTier)`) so separation is queryable and enforceable.
+- **We may use synthetic data to suggest improvements to how we gather human data.** Synthetic runs and quality reports can recommend changes to validation, UX, export shape, or trip capture—so human data gathering improves. Output suggestions only; do not auto-apply to GOLD or production capture without user approval.
+
+**Reference:** `docs/DATA_TIERS.md` § Rule: Verifiable separation; Synthetic Data Loop: `docs/automation/SYNTHETIC_DATA_LOOP_MASTER_PLAN.md`, `SYNTHETIC_DATA_LOOP_FOR_OTHER_AGENTS.md`.

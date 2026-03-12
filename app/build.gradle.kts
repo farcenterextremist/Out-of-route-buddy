@@ -493,3 +493,24 @@ tasks.register("jacocoSuiteTestsOnly") {
     }
 }
 
+// ==================== CYBER SECURITY LOOP ====================
+
+// Run SecuritySimulationTest + run_purple_simulations.py. Single entry point for attack simulations.
+tasks.register<Exec>("securitySimulations") {
+    group = "Verification"
+    description = "Run security attack simulations (SecuritySimulationTest + Purple training JSON)"
+    workingDir = rootProject.projectDir
+    commandLine(
+        "python",
+        "scripts/purple-team/run_purple_simulations.py",
+        "--full"
+    )
+    isIgnoreExitValue = false
+    doFirst {
+        println("Running Purple Team simulations...")
+    }
+    doLast {
+        println("✅ Security simulations complete. Check docs/agents/data-sets/security-exercises/artifacts/")
+    }
+}
+

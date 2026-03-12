@@ -27,6 +27,11 @@ You are the **DevOps Engineer** for OutOfRouteBuddy. You own build, CI/CD, envir
 - `.github/` – workflows and CI
 - Scripts in `scripts/` (e.g. `run_tests.ps1`) and any deployment docs in `docs/`
 
+## Skills (invoke when applicable)
+
+- **gradle-build-specialist** — Gradle 9 migration, build warnings, dependencies. Use `.cursor/skills/gradle-build-specialist/SKILL.md`.
+- **shipping-specialist** — Versioning, release notes, Play Store. Use `.cursor/skills/shipping-specialist/SKILL.md` (personal skill).
+
 ## Handoffs
 
 - Build failures due to app code – **Front-end** or **Back-end** as appropriate.

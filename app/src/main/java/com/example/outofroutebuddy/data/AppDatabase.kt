@@ -10,6 +10,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 import com.example.outofroutebuddy.data.dao.TripDao
 import com.example.outofroutebuddy.data.entities.TripEntity
 import com.example.outofroutebuddy.data.util.DateConverter
+import com.example.outofroutebuddy.data.util.DataTierConverter
 
 /**
  * Room database for the OutOfRouteBuddy app.
@@ -17,10 +18,10 @@ import com.example.outofroutebuddy.data.util.DateConverter
  */
 @Database(
     entities = [TripEntity::class],
-    version = 4,
+    version = 5,
     exportSchema = true,
 )
-@TypeConverters(DateConverter::class)
+@TypeConverters(DateConverter::class, DataTierConverter::class)
 abstract class AppDatabase : RoomDatabase() {
     /**
      * Data Access Object for trip operations
@@ -43,7 +44,7 @@ abstract class AppDatabase : RoomDatabase() {
                         AppDatabase::class.java,
                         "outofroutebuddy_database",
                     )
-                        .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
+                        .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
                         .addCallback(DatabaseHealthCheck.IntegrityCheckCallback()) // ✅ NEW (#4)
                         // DB1 (PROJECT_AUDIT): fallbackToDestructiveMigration kept until migration test coverage exists.
                         // Prevents app crash on migration failure; may cause data loss. Add migration test when schema v2 exists (T4 in COVERAGE_SCORE_AND_CRITICAL_AREAS).
@@ -98,6 +99,14 @@ abstract class AppDatabase : RoomDatabase() {
                     db.execSQL("ALTER TABLE trips ADD COLUMN backRoadsPercent REAL DEFAULT 0.0")
                     db.execSQL("ALTER TABLE trips ADD COLUMN backRoadsMinutes INTEGER DEFAULT 0")
                     db.execSQL("ALTER TABLE trips ADD COLUMN truckStopsVisited INTEGER DEFAULT 0")
+                }
+            }
+
+        /** Migration 4→5: add data tier (SILVER / PLATINUM / GOLD). Existing rows default to GOLD (human data). */
+        internal val MIGRATION_4_5 =
+            object : Migration(4, 5) {
+                override fun migrate(db: SupportSQLiteDatabase) {
+                    db.execSQL("ALTER TABLE trips ADD COLUMN dataTier TEXT NOT NULL DEFAULT 'GOLD'")
                 }
             }
     }

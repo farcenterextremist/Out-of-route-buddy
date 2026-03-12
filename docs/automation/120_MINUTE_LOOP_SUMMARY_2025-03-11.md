@@ -98,4 +98,11 @@
 
 ---
 
+## Next Run Focus (Priming)
+
+- **Next run focus (suggested):** **Security** (next in [LOOP_FOCUS_ROTATION.md](./LOOP_FOCUS_ROTATION.md) after Shipability/Code Quality).
+- **Priming:** See [IMPROVEMENT_LOOP_ANALYSIS_AND_IMPROVEMENTS.md](./IMPROVEMENT_LOOP_ANALYSIS_AND_IMPROVEMENTS.md) for analysis, improvements, and run readiness. Before next **GO**: create checkpoint first; optionally run `./gradlew clean assembleDebug` to confirm build state.
+
+---
+
 *Improvement Loop completed. All planned improvements applied; build environment issues noted for follow-up.*

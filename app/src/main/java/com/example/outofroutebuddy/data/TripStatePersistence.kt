@@ -4,6 +4,7 @@ import com.example.outofroutebuddy.util.AppLogger
 import com.example.outofroutebuddy.data.repository.TripRepository
 import com.example.outofroutebuddy.domain.models.Trip as DomainTrip
 import com.example.outofroutebuddy.domain.models.TripStatus
+import com.example.outofroutebuddy.domain.models.DataTier
 import com.example.outofroutebuddy.models.Trip as DataTrip
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -91,6 +92,8 @@ class TripStatePersistence(
                 gpsMetadata["tripEndTime"] = resolvedEndTime
                 // Store timezone where trip was recorded so we can show it when user is in a different zone
                 gpsMetadata["tripTimeZoneId"] = TimeZone.getDefault().id
+                // Human-ended trips are GOLD tier (digital gold; parse carefully, copy when needed).
+                gpsMetadata["dataTier"] = DataTier.GOLD
 
                 // Create trip entity (data layer Trip for repository)
                 val dataTrip = DataTrip(

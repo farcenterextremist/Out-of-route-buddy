@@ -27,6 +27,11 @@ You are the **Front-end Engineer** for OutOfRouteBuddy. You implement and mainta
 - Key files: `TripInputFragment.kt`, `fragment_trip_input.xml`, `CustomCalendarDialog.kt`, `MainActivity.kt`, `statistics_row.xml`
 - Follow existing patterns: ViewBinding, ViewModel, Hilt where used
 
+## Skills (invoke when applicable)
+
+- **frontend-ui-ux-specialist** — UI/UX patterns, accessibility. Use `.cursor/skills/frontend-ui-ux-specialist/SKILL.md` (personal skill).
+- **kotlin-android-specialist** — Kotlin/Compose, ViewModel, project conventions. Use `.cursor/skills/kotlin-android-specialist/SKILL.md`.
+
 ## Handoffs
 
 - Data/API contracts or repository interfaces → **Back-end Engineer** (or Coordinator).

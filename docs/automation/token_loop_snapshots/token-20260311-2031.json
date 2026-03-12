@@ -1,0 +1,48 @@
+﻿{
+    "git_head":  "79f3624b6b39f5ef344447624bde7d384986399a",
+    "always_apply_count":  3,
+    "run_id":  "token-20260311-2031",
+    "purpose":  "rollback and progress tracking; what works / what doesn\u0027t",
+    "always_apply_lines":  42,
+    "rules":  [
+                  {
+                      "line_count":  16,
+                      "always_apply":  false,
+                      "name":  "2-hour-loop.mdc"
+                  },
+                  {
+                      "line_count":  13,
+                      "always_apply":  false,
+                      "name":  "blue-team.mdc"
+                  },
+                  {
+                      "line_count":  18,
+                      "always_apply":  false,
+                      "name":  "kotlin-best-practices.mdc"
+                  },
+                  {
+                      "line_count":  13,
+                      "always_apply":  false,
+                      "name":  "red-team.mdc"
+                  },
+                  {
+                      "line_count":  42,
+                      "always_apply":  true,
+                      "name":  "self-improvement.mdc"
+                  }
+              ],
+    "ts":  "2026-03-11T20:31:57Z",
+    "settings_snippet":  {
+                             "search_exclude":  {
+                                                    "**/.gradle/**":  true,
+                                                    "**/build/**":  true
+                                                },
+                             "files_watcher_exclude":  {
+                                                           "**/.git/objects/**":  true,
+                                                           "**/.git/subtree-cache/**":  true,
+                                                           "**/.gradle/**":  true,
+                                                           "**/build/**":  true,
+                                                           "**/.cursor/**":  true
+                                                       }
+                         }
+}

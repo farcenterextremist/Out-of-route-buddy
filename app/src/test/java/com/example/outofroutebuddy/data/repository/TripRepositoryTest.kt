@@ -2,6 +2,7 @@ package com.example.outofroutebuddy.data.repository
 
 import com.example.outofroutebuddy.data.dao.TripDao
 import com.example.outofroutebuddy.data.entities.TripEntity
+import com.example.outofroutebuddy.domain.models.DataTier
 import com.example.outofroutebuddy.models.Trip
 import io.mockk.*
 import kotlinx.coroutines.flow.first
@@ -528,4 +529,114 @@ class TripRepositoryTest {
                 )
             }
         }
+
+    @Test
+    fun `setTripTier loads entity updates tier and calls updateTrip`() = runTest {
+        val existing = TripEntity(
+            id = 1L,
+            date = Date(),
+            loadedMiles = 10.0,
+            bounceMiles = 2.0,
+            actualMiles = 12.0,
+            oorMiles = 0.0,
+            oorPercentage = 0.0,
+            dataTier = DataTier.GOLD,
+        )
+        coEvery { tripDao.getTripById(1L) } returns existing
+        coEvery { tripDao.updateTrip(any()) } just Runs
+
+        val result = tripRepository.setTripTier(1L, DataTier.PLATINUM)
+
+        assertTrue(result)
+        coVerify {
+            tripDao.updateTrip(
+                match { it.id == 1L && it.dataTier == DataTier.PLATINUM }
+            )
+        }
+    }
+
+    @Test
+    fun `setTripTier returns false when trip not found`() = runTest {
+        coEvery { tripDao.getTripById(99L) } returns null
+
+        val result = tripRepository.setTripTier(99L, DataTier.GOLD)
+
+        assertFalse(result)
+        coVerify(exactly = 0) { tripDao.updateTrip(any()) }
+    }
+
+    @Test
+    fun `deleteTripsOlderThan with maxTier calls deleteTripsBeforeWithTiers`() = runTest {
+        val cutoff = Date()
+        coEvery { tripDao.deleteTripsBeforeWithTiers(cutoff, listOf("SILVER")) } just Runs
+
+        tripRepository.deleteTripsOlderThan(cutoff, DataTier.SILVER)
+
+        coVerify { tripDao.deleteTripsBeforeWithTiers(cutoff, listOf("SILVER")) }
+    }
+
+    @Test
+    fun `deleteTripsOlderThan with null maxTier calls deleteTripsBefore`() = runTest {
+        val cutoff = Date()
+        coEvery { tripDao.deleteTripsBefore(cutoff) } just Runs
+
+        tripRepository.deleteTripsOlderThan(cutoff, null)
+
+        coVerify { tripDao.deleteTripsBefore(cutoff) }
+    }
+
+    // ---------- Data separation rule: human-ended path stores GOLD; synthetic stays separate ----------
+
+    @Test
+    fun `insertTrip with gpsMetadata dataTier GOLD stores entity with GOLD`() = runTest {
+        val trip = Trip(
+            id = 0L,
+            date = Date(),
+            loadedMiles = 100.0,
+            bounceMiles = 20.0,
+            actualMiles = 120.0,
+        )
+        val gpsMetadata = mapOf<String, Any>("dataTier" to DataTier.GOLD)
+        val slot = slot<TripEntity>()
+        coEvery { tripDao.insertTrip(capture(slot)) } returns 1L
+
+        tripRepository.insertTrip(trip, gpsMetadata)
+
+        assertEquals(DataTier.GOLD, slot.captured.dataTier)
+    }
+
+    @Test
+    fun `insertTrip with null gpsMetadata stores entity with GOLD default`() = runTest {
+        val trip = Trip(
+            id = 0L,
+            date = Date(),
+            loadedMiles = 50.0,
+            bounceMiles = 10.0,
+            actualMiles = 60.0,
+        )
+        val slot = slot<TripEntity>()
+        coEvery { tripDao.insertTrip(capture(slot)) } returns 1L
+
+        tripRepository.insertTrip(trip, null)
+
+        assertEquals(DataTier.GOLD, slot.captured.dataTier)
+    }
+
+    @Test
+    fun `insertTrip with gpsMetadata dataTier PLATINUM stores entity with PLATINUM`() = runTest {
+        val trip = Trip(
+            id = 0L,
+            date = Date(),
+            loadedMiles = 100.0,
+            bounceMiles = 25.0,
+            actualMiles = 130.0,
+        )
+        val gpsMetadata = mapOf<String, Any>("dataTier" to DataTier.PLATINUM)
+        val slot = slot<TripEntity>()
+        coEvery { tripDao.insertTrip(capture(slot)) } returns 1L
+
+        tripRepository.insertTrip(trip, gpsMetadata)
+
+        assertEquals(DataTier.PLATINUM, slot.captured.dataTier)
+    }
 } 

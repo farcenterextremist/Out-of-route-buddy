@@ -57,9 +57,22 @@ Because Red and Blue are "in the same room" (e.g. same chat or same session), yo
 
 ---
 
+## Simulated vs. Agent-driven
+
+| Mode | What runs | How |
+|------|-----------|-----|
+| **Simulated** | Validation bypass, path traversal | `./gradlew :app:securitySimulations` runs SecuritySimulationTest + run_purple_simulations.py |
+| **Agent-driven** | Prompt injection, rules backdoor, context poisoning | Red/Blue agents in chat; document in proof of work |
+
+Automated simulations produce training JSON in `docs/agents/data-sets/security-exercises/artifacts/`. Agent-driven exercises require Red/Blue coordination.
+
+---
+
 ## How to invoke (linking the two agents)
 
+- **Skill:** Invoke **purple-orchestrator-skill** (`.cursor/skills/purple-orchestrator-skill/SKILL.md`) for full flow: scope → Red attack → Blue check → fix → re-test.
 - **Single prompt:** "Run a Purple Team exercise: Red attacks [X], Blue checks alarms. Use docs/agents/purple-team-protocol.md and the Red/Blue agent cards."
+- **Cyber Security Loop:** "Run Cyber Security Loop" or `.\scripts\purple-team\run_cyber_security_loop.ps1` — runs `./gradlew :app:securitySimulations` and invokes loop listener.
 - **Sequential:** First ask Red to attack [X] and produce the structured output; then ask Blue to review that output and answer whether the alarm went off; if not, Blue proposes a fix.
 - **Proof of work:** After the exercise, add the Red and Blue blocks to `docs/agents/security-team-proof-of-work.md` (or the run log file) and save any scripts or configs to `docs/agents/data-sets/security-exercises/`.
 
@@ -70,4 +83,6 @@ Because Red and Blue are "in the same room" (e.g. same chat or same session), yo
 - **Red Team agent:** `docs/agents/roles/red-team-agent.md`
 - **Blue Team agent:** `docs/agents/roles/blue-team-agent.md`
 - **Proof of work and logging:** `docs/agents/security-team-proof-of-work.md`
+- **Attack library:** `docs/agents/data-sets/security-exercises/ATTACK_LIBRARY.md`
+- **Cyber Security Loop:** `docs/automation/CYBER_SECURITY_LOOP_ROUTINE.md`
 - **Security data set:** `docs/agents/data-sets/security.md` (existing); exercises go in `docs/agents/data-sets/security-exercises/`

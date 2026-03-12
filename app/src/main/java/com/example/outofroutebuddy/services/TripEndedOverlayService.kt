@@ -165,7 +165,7 @@ class TripEndedOverlayService : Service() {
             y = dp(120)
         }
         val container = FrameLayout(this).apply {
-            setBackgroundResource(R.drawable.button_3d_material)
+            setBackgroundResource(R.drawable.button_primary_material)
             alpha = 0.95f
         }
         val imageView = ImageView(this).apply {

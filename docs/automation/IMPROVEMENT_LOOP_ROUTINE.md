@@ -1,10 +1,13 @@
 # Improvement Loop — Routine
 
 **Objective:** Obvious improvements, security hardening, and smoothness. No drastic frontend changes.  
+**Frontend vs backend:** Loop should be **mostly backend** (~75–85% by task); frontend only when ultimately obvious (accessibility, one useful string, one subtle consistency fix). See [LOOP_FRONTEND_VS_BACKEND_BREAKDOWN.md](./LOOP_FRONTEND_VS_BACKEND_BREAKDOWN.md).  
 **Strategy:** Research first, master allowlist for autonomy, then execute phases. Use subagents for parallel work.  
-**Trigger:** Run when user says **GO** (Full 2 hr). **GO quick** = 30 min. **GO standard** = 90 min. See [LOOP_VARIANTS.md](./LOOP_VARIANTS.md).
+**Trigger:** Run when user says **GO**. For **"start master loop"**, run [LOOP_MASTER_ROLE.md](./LOOP_MASTER_ROLE.md) Step 0.M first (research all loops, compare/analyze/scrutinize, update universal files), then this routine. Complete tasks on todo lists (CRUCIAL, suggested next steps). See [LOOP_VARIANTS.md](./LOOP_VARIANTS.md) for scope variants.
 
 **Common sense:** Read [IMPROVEMENT_LOOP_COMMON_SENSE.md](./IMPROVEMENT_LOOP_COMMON_SENSE.md) at loop start. Checkpoint first, respect design intent, tests green, timebox, no unwarranted UI changes.
+
+**For other agents:** Read [IMPROVEMENT_LOOP_FOR_OTHER_AGENTS.md](./IMPROVEMENT_LOOP_FOR_OTHER_AGENTS.md) at loop start and follow the best practices there. At the end of every run, append one block to [IMPROVEMENT_LOOP_RUN_LEDGER.md](./IMPROVEMENT_LOOP_RUN_LEDGER.md).
 
 **Logic & reasoning:** Read [IMPROVEMENT_LOOP_REASONING.md](./IMPROVEMENT_LOOP_REASONING.md) at loop start. Apply reasoning checkpoints before research, task selection, each change, and summary. Think before you act.
 
@@ -18,9 +21,9 @@
 
 **Pre-loop checkpoint:** Save a copy (git commit or tag) before the loop. Say **"revert"** to restore if something breaks. See LOOP_TIERING § Revert.
 
-**Loop listener:** Record events for data and improvement. `run_120min_loop.ps1` and `pulse_check.ps1` invoke the listener automatically. When running phases manually (agent-driven), invoke `loop_listener.ps1` at phase boundaries. See [LOOP_LISTENER.md](./LOOP_LISTENER.md). Run `test_loop_listener.ps1` to verify wiring.
+**Loop listener:** Record events for data and improvement. `pulse_check.ps1` invokes the listener. When running phases (agent-driven), invoke `loop_listener.ps1` at phase boundaries. See [LOOP_LISTENER.md](./LOOP_LISTENER.md). Run `test_loop_listener.ps1` to verify wiring.
 
-**Script vs agent:** `run_120min_loop.ps1` is a **timer** — it pulses every 30 min and reminds to write summary. The **agent** executes phases per this routine. When user says GO, the agent follows phases 0–4; the script can run in parallel to pulse, or the agent runs `pulse_check.ps1` at phase boundaries.
+**Task-based execution:** The agent completes tasks from CRUCIAL, suggested next steps, and todo lists. No fixed duration. Run `pulse_check.ps1` at phase boundaries.
 
 ---
 
@@ -30,9 +33,11 @@
 
 ---
 
-## Phase 0: Research & Allowlist (0–20 min)
+## Phase 0: Research & Allowlist
 
 **Goal:** Understand current state, classify tasks, and get approval for Medium/Heavy before execution.
+
+**When trigger was "start master loop":** Step 0.M (Loop Master) has already been run: other loops researched, universal files updated. Proceed with checkpoint and Phase 0 below.
 
 **Variants:** When user says **GO quick** or **GO standard**, use the phase subsets and time allocations in [LOOP_VARIANTS.md](./LOOP_VARIANTS.md). Quick skips most phases; Standard skips or shortens Phase 3.
 
@@ -58,11 +63,11 @@
 
 **Revert:** When user says **"revert"**, restore from the checkpoint: `git reset --hard <commit>` or `git checkout <tag>`.
 
-### 0.0b Meta-Research (optional, 5 min)
+### 0.0b Meta-Research (optional)
 
 **Meta-Researchers:** Use [META_RESEARCH_CHECKLIST.md](./META_RESEARCH_CHECKLIST.md) if it exists; else answer inline: (1) Research quality? (2) Gaps? (3) Suggested improvement? Add one-line meta-note to summary: "Research quality: X. Gaps: Y. Suggested improvement: Z."
 
-### 0.1 Research (15 min)
+### 0.1 Research
 
 **Reasoning checkpoint (before research):** "What do I need to know to make good decisions this run? What did last run miss?" See [IMPROVEMENT_LOOP_REASONING.md](./IMPROVEMENT_LOOP_REASONING.md).
 
@@ -73,7 +78,7 @@ Read these files **before** making any changes. (0.0a already read USER_PREFEREN
 | Doc | Purpose |
 |-----|---------|
 | `docs/automation/USER_PREFERENCES_AND_DESIGN_INTENT.md` | **Read first (0.0a).** User preferences; design intent; must-not-change |
-| `docs/automation/IMPROVEMENT_LOOP_SUMMARY_<latest>.md` or `120_MINUTE_LOOP_SUMMARY_*.md` | What was done last loop; suggested next steps |
+| `docs/automation/IMPROVEMENT_LOOP_SUMMARY_<latest>.md` | What was done last loop; suggested next steps |
 | `docs/CRUCIAL_IMPROVEMENTS_TODO.md` | Prioritized backlog; pick 1–2 low-risk items |
 | `docs/REDUNDANT_DEAD_CODE_REPORT.md` | Safe dead code to remove |
 | `docs/qa/FAILING_OR_IGNORED_TESTS.md` | Test health; @Ignore reasons |
@@ -82,7 +87,9 @@ Read these files **before** making any changes. (0.0a already read USER_PREFEREN
 | `docs/automation/DESIGN_AND_UX_RESEARCH.md` or `docs/ux/UI_CONSISTENCY.md` | Design research; fallback to UI_CONSISTENCY if DESIGN_AND_UX missing |
 | `docs/automation/LOOP_TIERING.md` | Light / Medium / Heavy task definitions; approval gate |
 | `docs/automation/LOOP_FOCUS_ROTATION.md` | This run's focus; bias effort |
+| `docs/automation/HEAVY_IDEAS_FAVORITES.md` | User favorites for Heavy ideas; surface favorites first; keep Heavy list lightly populated; quality bar for new Heavy ideas |
 | `docs/automation/USER_METADATA_USAGE_GUIDE.md` | Metadata (when Data/Metrics focus); skip if missing |
+| `docs/TASKS_INDEX.md` or `docs/agents/COMPREHENSIVE_AGENT_TODOS.md` | Consolidated TODOs; check and update during run. Skip if missing. |
 
 **Output:** One-line research note: "Design intent: [from 0.0a]. Last loop did X; next: Y, Z. This focus: [Security|UI/UX|Shipability|Code Quality|File Structure|Data/Metrics]. Security gaps: A. Smoothness: B. Design: [topic to research]."
 
@@ -95,41 +102,53 @@ Per [LOOP_TIERING.md](./LOOP_TIERING.md):
 1. **Classify** each task from research (CRUCIAL, REDUNDANT_DEAD_CODE, suggested next steps) as Light, Medium, or Heavy.
 2. **Include sandboxing** as a Medium task when applicable: document new idea in FUTURE_IDEAS, validate a sandboxed feature, or improve sandbox workflow. See [SANDBOX_TESTING.md](./SANDBOX_TESTING.md).
 3. **Full autonomy:** Light and Medium run **without stopping**. No prompts. Execute all Light and Medium tasks.
-4. **Heavy only:** If any Heavy tasks exist, stop and prompt:
+4. **During Light and Medium runs:** **Check TODOs** — Before and during Phases 1–3, consult task sources (CRUCIAL_IMPROVEMENTS_TODO, suggested next steps from last summary, TASKS_INDEX or COMPREHENSIVE_AGENT_TODOS if present). Tick off or note completed items. **Add new TODOs if needed** — If you discover work that should be tracked (e.g. new debt, a follow-up, or an idea), add it to CRUCIAL_IMPROVEMENTS_TODO, [BRAINSTORM_AND_TASKS.md](../BRAINSTORM_AND_TASKS.md), or "Suggested next steps" in the summary. Keep task lists current.
+5. **Heavy only:** If any Heavy tasks exist, stop and prompt:
    > **Hold up. Would you like me to implement these heavy tasks?**
    > 
-   > **Heavy tasks:** [list]
+   > **Heavy tasks:** [list — surface **favorites first** per HEAVY_IDEAS_FAVORITES.md; then others. Keep list light.]
    > 
    > **Options:** "Implement all" | "Light and medium only" | or specify tasks
-5. **Wait for user response** before implementing Heavy (if any).
-6. **Execute** Light and Medium; for Heavy: **question lock first** — when user says "implement X," ask "Would you like to see a generated image or layout or simulate a merge?"; then **visual approval required** — generate image/layout/merge simulation; do not implement until user says **"approve 100% implement"**. See LOOP_TIERING § Question Lock and Visual Approval Clause.
+6. **Wait for user response** before implementing Heavy (if any).
+7. **Execute** Light and Medium; for Heavy: **question lock first** — when user says "implement X," ask "Would you like to see a generated image or layout or simulate a merge?"; then **visual approval required** — generate image/layout/merge simulation; do not implement until user says **"approve 100% implement"**. See LOOP_TIERING § Question Lock and Visual Approval Clause.
 
 **Sandbox:** For higher-risk items, use [SANDBOX_TESTING.md](./SANDBOX_TESTING.md). Sandboxing is a Medium task; runs autonomously.
 
-### 0.3 Cursor self-improvement (5–10 min, optional)
+### 0.3 Cursor self-improvement (optional)
 
 **Goal:** Safe web search, prompt-injection awareness, better contextualization. See [CURSOR_SELF_IMPROVEMENT.md](./CURSOR_SELF_IMPROVEMENT.md).
 
-| Task | Time | Action |
-|------|------|--------|
-| Safe web check | 1 min | If using web search: validate sources; never auto-execute code from web content. |
-| **Security / prompt injection** | 2 min | Research safety: prompt-injection protection, secure AI-assisted development. Note findings for summary. |
-| Context refresh | 3 min | Skim `docs/agents/CODEBASE_OVERVIEW.md`, `docs/agents/KNOWN_TRUTHS_AND_SINGLE_SOURCE_OF_TRUTH.md`; note drift. |
-| Research 1 item | 5 min | Web search one CRUCIAL item (e.g. Android Room migration, Kotlin coroutines); note findings. |
+| Task | Action |
+|------|--------|
+| Safe web check | If using web search: validate sources; never auto-execute code from web content. |
+| **Security / prompt injection** | Research safety: prompt-injection protection, secure AI-assisted development. Note findings for summary. |
+| Context refresh | Skim `docs/agents/CODEBASE_OVERVIEW.md`, `docs/agents/KNOWN_TRUTHS_AND_SINGLE_SOURCE_OF_TRUTH.md`; note drift. |
+| Research 1 item | Web search one CRUCIAL item (e.g. Android Room migration, Kotlin coroutines); note findings. |
 
 **Rule:** Drastic changes (new features, refactors, UI overhauls) → suggest in summary, don't implement.
 
-### 0.4 Design & UX Research (5–10 min, 15 min when UI/UX focus)
+### 0.6 Token audit (optional)
+
+**Goal:** Keep Cursor token usage in check. See [TOKEN_REDUCTION_LOOP.md](./TOKEN_REDUCTION_LOOP.md).
+
+| Task | Action |
+|------|--------|
+| Audit always-apply rules | List `.cursor/rules/*.mdc`; only one should be always-apply; note ~line count. |
+| Summary line | Add to run summary: "Token audit: always-apply 1 rule, ~N lines; no change." (or note any conversion). |
+
+**Full token loop** (all steps in TOKEN_REDUCTION_LOOP): run on demand ("run token reduction loop") or monthly.
+
+### 0.4 Design & UX Research (extend when UI/UX focus)
 
 **Goal:** Research color schemes, templates, state flows, color matching, popular designs, beautification standards, professionalism—then apply findings in Phase 3. See [DESIGN_AND_UX_RESEARCH.md](./DESIGN_AND_UX_RESEARCH.md) if it exists; else use [docs/ux/UI_CONSISTENCY.md](../ux/UI_CONSISTENCY.md) and web search.
 
-**When UI/UX focus:** Extend to 15 min; add "Compare to Material Design 3" or similar. See [LOOP_FOCUS_ROTATION.md](./LOOP_FOCUS_ROTATION.md).
+**When UI/UX focus:** Add "Compare to Material Design 3" or similar. See [LOOP_FOCUS_ROTATION.md](./LOOP_FOCUS_ROTATION.md).
 
-| Task | Time | Action |
-|------|------|--------|
-| Web search 1 topic | 5 min | Rotate: color schemes, Material Design 3 palettes, state flows (loading/error/empty), color matching & contrast, fleet/driver app UI patterns, beautification standards (spacing, typography, elevation), professional UI principles. |
-| Compare to current | 2 min | Read `app/src/main/res/values/colors.xml`, `docs/ux/UI_CONSISTENCY.md`; note gaps. |
-| Log findings | 2 min | Note 2–3 actionable items in research note; add to summary under "Design Research". |
+| Task | Action |
+|------|--------|
+| Web search 1 topic | Rotate: color schemes, Material Design 3 palettes, state flows (loading/error/empty), color matching & contrast, fleet/driver app UI patterns, beautification standards (spacing, typography, elevation), professional UI principles. |
+| Compare to current | Read `app/src/main/res/values/colors.xml`, `docs/ux/UI_CONSISTENCY.md`; note gaps. |
+| Log findings | Note 2–3 actionable items in research note; add to summary under "Design Research". |
 
 **Output:** One-line design note: "Researched X; findings: A, B. Gaps: C." Apply at most one subtle improvement in Phase 3.
 
@@ -137,7 +156,7 @@ Per [LOOP_TIERING.md](./LOOP_TIERING.md):
 
 ---
 
-## Phase 1: Quick Wins + Security + Smoothness (20–50 min)
+## Phase 1: Quick Wins + Security + Smoothness
 
 **Listener:** Invoke `.\scripts\automation\loop_listener.ps1 -Event phase_start -Phase "1" -Note "Quick wins"` at start; `phase_end` at end. See [LOOP_LISTENER.md](./LOOP_LISTENER.md).
 
@@ -147,15 +166,17 @@ Per [LOOP_TIERING.md](./LOOP_TIERING.md):
 
 **Kaizen rule:** One improvement per category per loop. Bias effort toward this run's focus (see [LOOP_FOCUS_ROTATION.md](./LOOP_FOCUS_ROTATION.md)).
 
-### 1.1 Quick wins (10 min)
+### 1.1 Quick wins
 
 - **Dead code:** Remove 1–2 safest items from REDUNDANT_DEAD_CODE_REPORT §2 (grep first; no injected params).
 - **Constants:** Align any remaining BuildConfig/service constant drift.
 - **Doc links:** Verify CRUCIAL_IMPROVEMENTS_TODO is linked from docs/README.md.
 
-### 1.2 Security (10 min, full checklist when Security focus)
+### 1.2 Security (full checklist when Security focus)
 
 **When Security focus:** Run full security checklist — PII grep, FileProvider, Keystore, secrets, dependency audit. Use [SECURITY_NOTES.md](../security/SECURITY_NOTES.md) and [SECURITY_CHECKLIST.md](../security/SECURITY_CHECKLIST.md). Optionally run `./gradlew dependencyUpdates` or document "last dependency audit" in summary.
+
+**Cyber Security Loop integration:** When Security focus, run `./gradlew :app:securitySimulations` to execute attack simulations (SecuritySimulationTest + Purple training JSON). Log results to proof of work; add metrics to summary (simulations_run, passed, failed). See [CYBER_SECURITY_LOOP_ROUTINE.md](./CYBER_SECURITY_LOOP_ROUTINE.md).
 
 **Else,** pick **one** per SECURITY_NOTES:
 
@@ -166,7 +187,7 @@ Per [LOOP_TIERING.md](./LOOP_TIERING.md):
 | StandaloneOfflineService key | Add KDoc note: "TODO: Migrate to Keystore + EncryptedSharedPreferences" if not present. |
 | SECURITY_CHECKLIST | Ensure no new secrets in logs; one-line verification. |
 
-### 1.3 Smoothness (10 min)
+### 1.3 Smoothness
 
 Pick **one**:
 
@@ -184,24 +205,24 @@ Pick **one**:
 
 ---
 
-## Phase 2: Test Health & Documentation (50–80 min)
+## Phase 2: Test Health & Documentation
 
 **Listener:** Invoke `loop_listener.ps1 -Event phase_start -Phase "2"` at start; `phase_end` at end.
 
 **Goal:** Fix or document one test; align docs.
 
-### 2.1 Test health (15 min)
+### 2.1 Test health
 
 - Per FAILING_OR_IGNORED_TESTS.md — ensure all @Ignore have clear reason.
 - Optionally fix one trivial ignored test (e.g. LocationValidationServiceTest) or document why deferred.
 - Do NOT spend >10 min on any single test.
 
-### 2.2 Documentation (10 min)
+### 2.2 Documentation
 
 - Update IMPROVEMENT_LOOP_SUMMARY or create new `IMPROVEMENT_LOOP_SUMMARY_<date>.md` stub with "In progress."
 - Add one cross-link if CRUCIAL_IMPROVEMENTS or ROADMAP is missing from docs index.
 
-### 2.3 Sandboxing (10 min, when Medium approved)
+### 2.3 Sandboxing (when Medium approved)
 
 **Every loop:** Medium tier improves on sandboxed ideas. Run **one** sandbox action per [SANDBOX_TESTING.md](./SANDBOX_TESTING.md) and [SANDBOX_COMPLETION_PERCENTAGE.md](./SANDBOX_COMPLETION_PERCENTAGE.md):
 
@@ -215,7 +236,7 @@ Pick **one**:
 
 **Rule:** Sandboxing is additive (docs, branches, briefs). No implementation of Heavy features without user confirmation. No merge into main without sandbox validation. **Every loop:** Medium tier improves 1–2 sandboxed ideas; report % in summary.
 
-### 2.5 Unit tests (5 min)
+### 2.5 Unit tests
 
 - Run: `.\gradlew.bat :app:testDebugUnitTest --no-daemon`
 - Log result.
@@ -234,7 +255,7 @@ Pick **one**:
 
 **Kaizen rule:** Apply one subtle improvement only. No more than one to avoid drift (user rule).
 
-### 3.1 Strings / accessibility (10 min)
+### 3.1 Strings / accessibility
 
 - One string fix: typo, contentDescription, or clearer label per TERMINOLOGY_AND_COPY.md.
 - Example: Add contentDescription to a key icon if missing.
@@ -245,7 +266,7 @@ Pick **one**:
 - **Apply design research:** Use findings from Phase 0.4 (DESIGN_AND_UX_RESEARCH.md). One subtle improvement: OOR contrast, divider, spacing, or color tweak for professionalism/beautification.
 - Examples: Adjust one color for better contrast; add 1–2dp spacing on 8dp grid; improve state flow (loading/empty) per research.
 
-### 3.3 Useful information (5 min)
+### 3.3 Useful information
 
 - One small useful info: e.g. version in Settings (if not done), or period mode hint.
 - **Constraint:** No unwarranted UI changes without user permission. Drastic design changes → suggest in summary, don't implement.
@@ -262,20 +283,20 @@ Pick **one**:
 
 **Goal:** Lint, summary, suggested next steps.
 
-### 4.1 Lint (5 min)
+### 4.1 Lint
 
 - Run: `.\gradlew.bat :app:lintDebug --no-daemon`
 - Fix only **obvious** new issues from this session.
 
-### 4.1b Shipability check (optional, 10 min)
+### 4.1b Shipability check (optional)
 
 **When Shipability focus:** Run shipability check — 7 signals, 10-min timebox. Use [STORE_CHECKLIST.md](../STORE_CHECKLIST.md) if no SHIPABILITY_CHECKLIST. Run before pre-release loops or when user says "shipability focus."
 
-### 4.2 Final pulse (2 min)
+### 4.2 Final pulse
 
 - Run: `.\scripts\automation\pulse_check.ps1 -Note "Phase 4: Final. Lint reviewed."`
 
-### 4.3 Write summary (8 min)
+### 4.3 Write summary
 
 **Output:** `docs/automation/IMPROVEMENT_LOOP_SUMMARY_<date>.md`
 
@@ -286,19 +307,18 @@ Pick **one**:
 1. **Phase 0 research note** — One-line: design intent, last loop, this focus
 2. **Run metadata** — Date, focus area, variant (Quick/Standard/Full)
 3. **PDCA phase summary** — Plan (0), Do (1–3), Check (4), Act (4.3)
-4. **Metrics** — Tests (pass/fail), lint (errors/warnings), files changed, checkpoint
-5. **What was done** — Table: Phase, Task, Status, Details
-6. **Reasoning (this run)** — Table: Decision, Rationale. Per [IMPROVEMENT_LOOP_REASONING.md](./IMPROVEMENT_LOOP_REASONING.md). Makes logic traceable for next run.
-7. **Research findings** — Design, security, meta-research; metadata (if Data/Metrics focus)
-8. **Files modified** — List with one-line change
-9. **Suggested next steps** — 4–6 items for next loop (see template below); actionable (include commands where helpful)
-10. **File Organizer: recommended new ideas** — Propose new tasks for Light, Medium, or Heavy. **Add at least 1–2 Heavy ideas per run** when [HEAVY_TIER_IDEAS.md](./HEAVY_TIER_IDEAS.md) is below 50. **Sandbox completion %** — Report true % for 1–2 improved ideas (per [SANDBOX_COMPLETION_PERCENTAGE.md](./SANDBOX_COMPLETION_PERCENTAGE.md)). Heavy ideas require human approval; one by one, ask "Are you ready to implement this new feature?" before each. See [IMPROVEMENT_LOOP_TEAMS.md](./IMPROVEMENT_LOOP_TEAMS.md).
-11. **Next run focus** — Suggested focus for next loop (from File Organizer or metrics)
-12. **Quality Grade** — A/B/C with rationale and one improvement for next run
+4. **Metrics** — Tests (pass/fail), lint (errors/warnings), files changed, checkpoint. **When Security focus:** Add Cyber Security metrics (simulations_run, passed, failed) from `./gradlew :app:securitySimulations`.
+5. **Frontend vs backend** — Brief line: "Backend: [N] tasks/files; Frontend: [N] tasks/files." Per [LOOP_FRONTEND_VS_BACKEND_BREAKDOWN.md](./LOOP_FRONTEND_VS_BACKEND_BREAKDOWN.md); target mostly backend.
+6. **What was done** — Table: Phase, Task, Status, Details
+7. **Reasoning (this run)** — Table: Decision, Rationale. Per [IMPROVEMENT_LOOP_REASONING.md](./IMPROVEMENT_LOOP_REASONING.md). Makes logic traceable for next run.
+8. **Research findings** — Design, security, meta-research; metadata (if Data/Metrics focus)
+9. **Files modified** — List with one-line change
+10. **Suggested next steps** — 4–6 items for next loop (see template below); actionable (include commands where helpful)
+11. **File Organizer: recommended new ideas** — Propose new tasks for Light, Medium, or Heavy. **Heavy:** Consult [HEAVY_IDEAS_FAVORITES.md](./HEAVY_IDEAS_FAVORITES.md): surface **favorites first** (ideas with ✅), keep the Heavy list **lightly populated**; when proposing new Heavy ideas, add at most 1–2 that meet the **quality bar** in that doc (aligned with mission, clear placement, sandboxed, one-by-one). Sandbox completion % — Report true % for 1–2 improved ideas (per [SANDBOX_COMPLETION_PERCENTAGE.md](./SANDBOX_COMPLETION_PERCENTAGE.md)). Heavy ideas require human approval; one by one, ask "Are you ready to implement this new feature?" before each. See [IMPROVEMENT_LOOP_TEAMS.md](./IMPROVEMENT_LOOP_TEAMS.md).
+12. **Next run focus** — Suggested focus for next loop (from File Organizer or metrics)
+13. **Quality Grade** — A/B/C with rationale and one improvement for next run
 
----
-
-## Suggested Next Steps Template
+**4.3b Record run (required):** Append this run to [IMPROVEMENT_LOOP_RUN_LEDGER.md](./IMPROVEMENT_LOOP_RUN_LEDGER.md). Add a new **Run YYYY-MM-DD** section with: Focus, Variant, Summary (link to this summary file), Metrics one-liner (tests, lint, files changed, checkpoint), Next (1–2 bullets). Use the template in the ledger. This keeps a shared record for us and for other agents. See [IMPROVEMENT_LOOP_FOR_OTHER_AGENTS.md](./IMPROVEMENT_LOOP_FOR_OTHER_AGENTS.md).
 
 Copy into each summary. Update checkboxes as items are completed.
 
@@ -312,6 +332,7 @@ Copy into each summary. Update checkboxes as items are completed.
 - [ ] Security: StandaloneOfflineService — Migrate encryption key to Keystore (larger task)
 - [ ] Security: PII audit — Re-grep logs for coordinates, trip IDs; redact if found
 - [ ] Design research — Next topic: color schemes / state flows / contrast / fleet app patterns (rotate)
+- [ ] **Readiness** — Update [docs/readiness/GRAND_PROGRESS_BAR.md](../readiness/GRAND_PROGRESS_BAR.md) with current Status/Notes; add one line to this summary: "Grand progress bar: N/10 green, M amber, K red."
 ```
 
 ---

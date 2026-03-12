@@ -44,7 +44,7 @@
 
 1. **Read** `docs/GOAL_AND_MISSION.md` and this plan
 2. **Pick** 2–4 items across Pillar 1 and Pillar 2 (balanced)
-3. **Execute** using the 2-hour loop routine if time-boxed, or ad-hoc if open-ended
+3. **Execute** using the Improvement Loop routine (complete tasks on todo lists) or ad-hoc if open-ended
 4. **Log** what was done in `docs/automation/IMPROVEMENT_LOOP_SUMMARY_<date>.md` or a brief note
 
 ---
@@ -67,7 +67,7 @@
 
 ---
 
-## Integration with 2-Hour Loop
+## Integration with Improvement Loop
 
 The Improvement Loop (`docs/automation/IMPROVEMENT_LOOP_ROUTINE.md`) already covers quick wins, security, smoothness, and UI polish. Use it when you want a **time-boxed** self-improvement run. This plan is the **strategic layer**—what to prioritize when you direct a run.
 

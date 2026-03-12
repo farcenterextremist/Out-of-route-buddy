@@ -50,3 +50,16 @@ When running 2-hour loop, add Phase 0.5 after Research:
 4. Add "Suggested for user approval" to summary if any drastic items
 
 Full system: `docs/automation/CURSOR_SELF_IMPROVEMENT.md`
+
+## Token awareness (reduce Cursor usage)
+
+**Goals:** Save token spend; manage context squish. **All agents** must abide by the **Golden Storage Rules** in docs/agents/TOKEN_INITIATIVE_BRIEFING.md. **Token Boss** may dictate model delegation for underperforming agents.
+
+**Skill:** Invoke **token-conservationist** when context is large, conversation is long (>10 turns), or user asks for brevity / shorter responses / token conservation.
+
+**Token saving recommendations (easy to see):** Minimal context; reference don’t inline; one always-apply rule; new chat when gauge >60%; front-load context; faster model for simple work. Full list + latest next-run tasks: docs/agents/TOKEN_INITIATIVE_BRIEFING.md §Token saving recommendations, docs/automation/TOKEN_LOOP_NEXT_TASKS.md. Master plan: docs/automation/TOKEN_LOOP_MASTER_PLAN.md.
+
+- Prefer **minimal context**: @-mention only files needed; let agent open more if required.
+- **New chat** when context gauge >60% or when switching task/codebase area.
+- **Front-load** relevant docs and paths in the first message instead of building over many messages.
+- **Start token loop:** When user says **"start token loop"** (or "run token reduction loop" / "token audit"): (1) **Record state** — `.\scripts\automation\token_loop_state_snapshot.ps1 -RunId <run_id>`. (2) Run `.\scripts\automation\run_token_loop.ps1` (snapshot + token_loop_start) or invoke token_loop_listener -Event token_loop_start with same RunId. (3) Run **steps 0–7** from `docs/automation/TOKEN_REDUCTION_LOOP.md`: **Step 0** = deep research and analysis of current structure; **Step 7** = organize results and recommend TODO tasks for next token loop in TOKEN_LOOP_NEXT_TASKS.md. Use same RunId for all events. **No human in the loop** — run autonomously. Listener data is used to improve the loop.

@@ -9,8 +9,7 @@ Generated from manual search and Detekt static analysis.
 ### BuildConfig (`core/config/BuildConfig.kt`)
 
 - **`ACTION_START_TRIP`**, **`ACTION_END_TRIP`**  
-  Not used by any Kotlin code. `TripTrackingService` defines its own top-level constants with different string values (`"ACTION_START_TRIP"` / `"ACTION_END_TRIP"`). Only referenced in `core/config/README.md`.  
-  **Suggestion:** Remove from BuildConfig and update README, or refactor TripTrackingService to use BuildConfig and align string values.
+  **Resolved (2025-03-11).** TripTrackingService now uses BuildConfig for these; string values aligned. See core/config/README.md and TripTrackingService.kt.
 
 - **`NOTIFICATION_CHANNEL_ID`** (`"trip_tracking_channel"`)  
   Not used by any Kotlin code. `TripTrackingService` uses a private constant `"TripTrackingChannel"`. Only referenced in README.  
@@ -75,7 +74,7 @@ Generated from manual search and Detekt static analysis.
 
 ## 5. References to missing doc
 
-- **TripDetailsFragment**, **SyncWorker**: Reference `docs/CRUCIAL_IMPROVEMENTS_TODO.md`. Confirm the file exists or update/remove the references.
+- **TripDetailsFragment**, **SyncWorker**: Reference `docs/CRUCIAL_IMPROVEMENTS_TODO.md`. **Verified:** File exists. No action needed.
 
 ---
 

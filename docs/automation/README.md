@@ -1,74 +1,134 @@
-# Automation — 8-hour improvement run and pulse
+# Automation — Improvement loops, pulse, and ship instructions
 
-This folder backs the **8-hour slow improvement** run and the **ship instructions** for OutOfRouteBuddy.
+This folder holds **all Improvement Loop docs** (routine, tiering, autonomy, summaries) and backs the **8-hour pulse run** and **ship instructions** for OutOfRouteBuddy.
 
-## Files
+---
 
-| File | Purpose |
-|------|--------|
-| **8_HOUR_IMPROVEMENT_PLAN.md** | Improvement objectives (backend-heavy, ~2% frontend), pulse checklist, and how to run automation. |
-| **IMPROVEMENT_LOOP_ROUTINE.md** | **Routine** Improvement Loop: research first, security + smoothness, suggested next steps. Run when user says **GO**. |
-| **IMPROVEMENT_LOOP_COMMON_SENSE.md** | Non-negotiable parameters: checkpoint first, tests green, full autonomy for Light+Medium. Read at loop start. |
-| **IMPROVEMENT_LOOP_REASONING.md** | Logic and reasoning: decision checkpoints, reasoning framework, traceable rationale in summaries. Think before you act. |
-| **HEAVY_TIER_IDEAS.md** | Heavy tier ideas list (cap 50) with state and true completion %. Light and Medium add 1–2 per run. |
-| **SANDBOX_COMPLETION_PERCENTAGE.md** | True completion % for sandboxed ideas; merging should not be taken lightly. |
-| **IMPROVEMENT_LOOP_AUDIT.md** | Full systems audit: safety, durability, accuracy, readiness. Re-run after major changes. |
-| **IMPROVEMENT_LOOP_TEAMS.md** | **Teams** Front: Researchers + Meta-Researchers. Back: File Organizer (recommends new ideas; Heavy needs human approval). |
-| **AUTONOMOUS_LOOP_SETUP.md** | One-time setup for no human intervention (Run Everything or allowlist). |
-| **LOOP_MASTER_ALLOWLIST.md** | Commands for allowlist; use prefix `cd c:\...\OutofRoutebuddy` for minimal entries. |
-| **120_MINUTE_IMPROVEMENT_LOOP.md** | Legacy plan; superseded by IMPROVEMENT_LOOP_ROUTINE. |
-| **pulse_log.txt** | Appended every 30 min by the pulse script (tests, lint, one-line note). |
-| **loop_events.jsonl** | Structured event log (JSONL) from loop listener; used for loop improvement. |
-| **OUTOFROUTEBUDDY_SHIP_INSTRUCTIONS.txt** | Generated in the last 2 hours (or manually). **Copy this to your Desktop** if you want it there: `copy OUTOFROUTEBUDDY_SHIP_INSTRUCTIONS.txt %USERPROFILE%\Desktop\` |
+## Find everything → [IMPROVEMENT_LOOP_INDEX.md](./IMPROVEMENT_LOOP_INDEX.md)
 
-## Scripts (run from repo root)
+**Use the index for maximum findability.** It lists every related file, script, and folder with purpose and location. When you say **GO**, start from the index § 1 "Start here."
 
-| Script | Purpose |
-|--------|--------|
-| **scripts\automation\pulse_check.ps1** | Run every 30 min. Runs unit tests (optional skip with `-Quick`), lint, appends to `pulse_log.txt`. |
-| **scripts\automation\run_8hr_automation.ps1** | Runs for 8 hours: pulse every 30 min; in the last 2 hours calls `write_ship_instructions.ps1` to generate ship instructions. |
-| **scripts\automation\run_120min_loop.ps1** | Runs for 2 hours: pulse every 30 min. Use with IMPROVEMENT_LOOP_ROUTINE.md when user says GO. |
-| **scripts\automation\loop_listener.ps1** | Records loop events (loop_start, phase, pulse, loop_end) to loop_events.jsonl for data and improvement. |
-| **scripts\automation\test_loop_listener.ps1** | Test/simulation: verifies listener is wired and functioning. |
-| **scripts\automation\write_ship_instructions.ps1** | Writes `OUTOFROUTEBUDDY_SHIP_INSTRUCTIONS.txt` (default: Desktop; use `-OutFile` to override). Creates output directory if missing. |
+---
 
 ## Quick start
 
-1. **2-hour improvement loop (routine)** (when user says GO):
-   - **One-time:** Follow `docs/automation/AUTONOMOUS_LOOP_SETUP.md` for no-human-intervention (Run Everything or allowlist).
-   - **Phase 0:** Research: read latest loop summary, CRUCIAL_IMPROVEMENTS, SECURITY_NOTES, FAILING_OR_IGNORED_TESTS.
-   - **Run:** `.\scripts\automation\run_120min_loop.ps1`
-   - **Follow:** `docs/automation/IMPROVEMENT_LOOP_ROUTINE.md` — the agent orchestrates phases and spawns subagents.
+1. **Improvement loop (when user says GO)**
+   - **First time:** [AUTONOMOUS_LOOP_SETUP.md](./AUTONOMOUS_LOOP_SETUP.md) for no-human-intervention.
+   - **Every run:** [IMPROVEMENT_LOOP_COMMON_SENSE.md](./IMPROVEMENT_LOOP_COMMON_SENSE.md) → [IMPROVEMENT_LOOP_REASONING.md](./IMPROVEMENT_LOOP_REASONING.md) → [IMPROVEMENT_LOOP_ROUTINE.md](./IMPROVEMENT_LOOP_ROUTINE.md).
 
-2. **Start the 8-hour run** (pulse every 30 min, ship doc in last 2 hours):
-
-   **Option A — From repo root** (ensure your current directory is the repo root, e.g. `C:\Users\brand\OutofRoutebuddy`):
+2. **8-hour run** (pulse every 30 min, ship doc in last 2 hr):
    ```powershell
    cd c:\Users\brand\OutofRoutebuddy
    .\scripts\automation\run_8hr_automation.ps1
    ```
 
-   **Option B — Batch launcher** (works from any folder; run from repo root or double-click):
-   ```cmd
-   c:\Users\brand\OutofRoutebuddy\run_8hr_automation.bat
-   ```
+3. **Pulse or ship instructions only:** see [IMPROVEMENT_LOOP_INDEX.md](./IMPROVEMENT_LOOP_INDEX.md) § 5 Scripts.
 
-   **Option C — Full path** (no need to cd first):
-   ```powershell
-   & "c:\Users\brand\OutofRoutebuddy\scripts\automation\run_8hr_automation.ps1"
-   ```
-3. **Or** run the pulse manually every 30 min:
-   ```powershell
-   .\scripts\automation\pulse_check.ps1
-   .\scripts\automation\pulse_check.ps1 -Note "description of what you improved"
-   ```
-4. **Generate ship instructions now** (e.g. after the run or anytime):
-   ```powershell
-   .\scripts\automation\write_ship_instructions.ps1
-   ```
-   To save to Desktop if the default path fails:
-   ```powershell
-   .\scripts\automation\write_ship_instructions.ps1 -OutFile "$env:USERPROFILE\Desktop\OUTOFROUTEBUDDY_SHIP_INSTRUCTIONS.txt"
-   ```
+---
 
-Ship instructions are also written here as **OUTOFROUTEBUDDY_SHIP_INSTRUCTIONS.txt**; copy to Desktop if desired.
+## Files in this folder (by group)
+
+### Start here & core routine
+| File | Purpose |
+|------|--------|
+| [IMPROVEMENT_LOOP_INDEX.md](./IMPROVEMENT_LOOP_INDEX.md) | **Master index** — find every loop-related file and script. |
+| [LOOP_MASTER_ROLE.md](./LOOP_MASTER_ROLE.md) | **Loop Master** — trigger: "start master loop". Research all loops, update universal files, then run Improvement Loop. |
+| [IMPROVEMENT_LOOP_ROUTINE.md](./IMPROVEMENT_LOOP_ROUTINE.md) | **Routine** — phases 0–4, run when user says **GO**. |
+| [IMPROVEMENT_LOOP_COMMON_SENSE.md](./IMPROVEMENT_LOOP_COMMON_SENSE.md) | Checkpoint first, tests green, full autonomy for Light+Medium. |
+| [IMPROVEMENT_LOOP_REASONING.md](./IMPROVEMENT_LOOP_REASONING.md) | Logic and reasoning checkpoints; think before you act. |
+| [USER_PREFERENCES_AND_DESIGN_INTENT.md](./USER_PREFERENCES_AND_DESIGN_INTENT.md) | Design intent, must-not-change. Read first (Phase 0.0a). |
+
+### Tiering, focus, metrics
+| File | Purpose |
+|------|--------|
+| [LOOP_TIERING.md](./LOOP_TIERING.md) | Light / Medium / Heavy; question lock; visual approval; revert. |
+| [IMPROVEMENT_LOOP_TEAMS.md](./IMPROVEMENT_LOOP_TEAMS.md) | Researchers, File Organizer; Heavy needs human approval. |
+| [LOOP_FOCUS_ROTATION.md](./LOOP_FOCUS_ROTATION.md) | Focus areas and rotation (Security, UI/UX, Shipability, etc.). |
+| [LOOP_METRICS_TEMPLATE.md](./LOOP_METRICS_TEMPLATE.md) | Metrics per run: tests, lint, checkpoint. |
+| [LOOP_FRONTEND_VS_BACKEND_BREAKDOWN.md](./LOOP_FRONTEND_VS_BACKEND_BREAKDOWN.md) | Target mostly backend (~75–85%); frontend only when obvious. |
+
+### Self-improvement, design, token
+| File | Purpose |
+|------|--------|
+| [CURSOR_SELF_IMPROVEMENT.md](./CURSOR_SELF_IMPROVEMENT.md) | Safe web, Phase 0.3 self-improvement, prompt-injection awareness. |
+| [DESIGN_AND_UX_RESEARCH.md](./DESIGN_AND_UX_RESEARCH.md) | Design research for Phase 0.4 / Phase 3. *(If missing, use docs/ux/UI_CONSISTENCY.md.)* |
+| [TOKEN_REDUCTION_LOOP.md](./TOKEN_REDUCTION_LOOP.md) | Token audit; optional Phase 0.6. *(If missing, skip.)* |
+
+### Sandbox & heavy ideas
+| File | Purpose |
+|------|--------|
+| [SANDBOX_TESTING.md](./SANDBOX_TESTING.md) | Feature testing before merge; sandbox phase. |
+| [SANDBOX_COMPLETION_PERCENTAGE.md](./SANDBOX_COMPLETION_PERCENTAGE.md) | True completion % for sandboxed ideas. |
+| [HEAVY_TIER_IDEAS.md](./HEAVY_TIER_IDEAS.md) | Heavy ideas (cap 50); add 1–2 per run when below 50. |
+
+### Autonomy & allowlist
+| File | Purpose |
+|------|--------|
+| [AUTONOMOUS_LOOP_SETUP.md](./AUTONOMOUS_LOOP_SETUP.md) | One-time: Run Everything or allowlist. |
+| [LOOP_MASTER_ALLOWLIST.md](./LOOP_MASTER_ALLOWLIST.md) | Commands for allowlist; `cd c:\...\OutofRoutebuddy` prefix. |
+| [LOOP_LISTENER.md](./LOOP_LISTENER.md) | Event recording (loop_listener.ps1 → loop_events.jsonl). *(If missing, see routine.)* |
+| [LOOP_VARIANTS.md](./LOOP_VARIANTS.md) | Quick / Standard / Full. *(If missing, see routine § Variants.)* |
+
+### Analysis, audit, summaries
+| File | Purpose |
+|------|--------|
+| [IMPROVEMENT_LOOP_ANALYSIS_AND_IMPROVEMENTS.md](./IMPROVEMENT_LOOP_ANALYSIS_AND_IMPROVEMENTS.md) | Analysis, improvements, priming for next run. |
+| [IMPROVEMENT_LOOP_AUDIT.md](./IMPROVEMENT_LOOP_AUDIT.md) | Blind spots, loose ends; re-run after major changes. |
+| **IMPROVEMENT_LOOP_SUMMARY_&lt;date&gt;.md** | A-grade summary per run. |
+| **120_MINUTE_LOOP_SUMMARY_&lt;date&gt;.md** | Same; alternate naming. Example: [120_MINUTE_LOOP_SUMMARY_2025-03-11.md](./120_MINUTE_LOOP_SUMMARY_2025-03-11.md). |
+
+### For other agents & recorded data (append every run)
+
+| File | Purpose |
+|------|--------|
+| [IMPROVEMENT_LOOP_FOR_OTHER_AGENTS.md](./IMPROVEMENT_LOOP_FOR_OTHER_AGENTS.md) | **Entry point** for other agents: best practices, recorded data, key docs. |
+| [IMPROVEMENT_LOOP_BEST_PRACTICES.md](./IMPROVEMENT_LOOP_BEST_PRACTICES.md) | Best practices for building your own loop; what to record every run. |
+| [IMPROVEMENT_LOOP_RUN_LEDGER.md](./IMPROVEMENT_LOOP_RUN_LEDGER.md) | **Run ledger** — append one block per run in Phase 4.3. |
+| **loop_events.jsonl** | Events from loop_listener.ps1. |
+
+### Synthetic Data Loop (trigger: "Start Synthetic data loop" / "START DATA LOOP")
+
+| File | Purpose |
+|------|--------|
+| [SYNTHETIC_DATA_LOOP_MASTER_PLAN.md](./SYNTHETIC_DATA_LOOP_MASTER_PLAN.md) | Trigger, scope (Hybrid), phases, data-tier linkage, initiation checklist. |
+| [SYNTHETIC_DATA_LOOP_FOR_OTHER_AGENTS.md](./SYNTHETIC_DATA_LOOP_FOR_OTHER_AGENTS.md) | Entry point: read at start; best practices; append ledger at end. |
+| [SYNTHETIC_DATA_LOOP_ROUTINE.md](./SYNTHETIC_DATA_LOOP_ROUTINE.md) | Phases 0–4: Research & checkpoint → Create/gather → Prune & mesh → Quality report → User approval & ledger. |
+| [SYNTHETIC_DATA_LOOP_RUN_LEDGER.md](./SYNTHETIC_DATA_LOOP_RUN_LEDGER.md) | Run ledger — append one block per data-loop run. |
+| **docs/DATA_TIERS.md** | SILVER / PLATINUM / GOLD; used by data loop for create/prune/tier changes. |
+
+### Legacy & other
+| File | Purpose |
+|------|--------|
+| [120_MINUTE_IMPROVEMENT_LOOP.md](./120_MINUTE_IMPROVEMENT_LOOP.md) | Legacy 2‑hr plan; superseded by IMPROVEMENT_LOOP_ROUTINE. |
+| [8_HOUR_IMPROVEMENT_PLAN.md](./8_HOUR_IMPROVEMENT_PLAN.md) | 8‑hour run objectives and pulse. |
+| **pulse_log.txt** | Appended by pulse script (tests, lint, note). |
+| **loop_events.jsonl** | Events from loop_listener.ps1. |
+| **OUTOFROUTEBUDDY_SHIP_INSTRUCTIONS.txt** | Generated ship steps; copy to Desktop if desired. |
+
+---
+
+## Scripts (run from repo root)
+
+| Script | Purpose |
+|--------|--------|
+| **scripts/automation/pulse_check.ps1** | Unit tests, lint, append to pulse_log.txt. |
+| **scripts/automation/loop_listener.ps1** | Record phase/events to loop_events.jsonl. |
+| **scripts/automation/test_loop_listener.ps1** | Verify listener. |
+| **scripts/automation/run_120min_loop.ps1** | Optional timer; work = IMPROVEMENT_LOOP_ROUTINE. |
+| **scripts/automation/run_8hr_automation.ps1** | 8 hr: pulse every 30 min; ship instructions in last 2 hr. |
+| **scripts/automation/write_ship_instructions.ps1** | Write OUTOFROUTEBUDDY_SHIP_INSTRUCTIONS.txt. |
+
+Full paths and one-line purposes: [IMPROVEMENT_LOOP_INDEX.md](./IMPROVEMENT_LOOP_INDEX.md) § 5.
+
+---
+
+## Related outside this folder
+
+| Where | What |
+|-------|------|
+| **docs/AGENTS.md** | Improvement Loop subsection; links to common sense, routine, autonomy. |
+| **docs/README.md** | Doc index; "Automation & improvement loops" → this folder and index. |
+| **.cursor/rules/2-hour-loop.mdc** | Trigger when user says GO. |
+| **.cursor/skills/improvement-loop-wizard/SKILL.md** | Wizard flow. |
+
+All listed in [IMPROVEMENT_LOOP_INDEX.md](./IMPROVEMENT_LOOP_INDEX.md) § 9.

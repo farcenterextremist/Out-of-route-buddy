@@ -15,7 +15,7 @@ For **scheduled runs with no one at the keyboard**, use **Cursor Automations** (
 3. **Trigger:** Choose **Scheduled** (e.g. every 2 weeks, Monday 9am) or **Webhook** (POST to run on demand from CI/cron)
 4. **Repository:** Select your OutOfRouteBuddy repo and branch
 5. **Tools:** Enable **Open pull request** if the automation should make changes and open a PR for review
-6. **Prompt:** Paste the 2-hour loop instructions (see [Automation prompt template](#automation-prompt-template) below)
+6. **Prompt:** Paste the Improvement Loop instructions (see [Automation prompt template](#automation-prompt-template) below)
 7. **Environment:** Enable if the loop needs to run Gradle (tests, lint)
 8. **Save** — webhook URL and API key are generated for webhook triggers
 
@@ -108,7 +108,7 @@ For scheduled runs without opening Cursor:
 
 1. Go to [cursor.com/automations](https://cursor.com/automations)
 2. Create an automation triggered by schedule (e.g. every 2 weeks) or a webhook
-3. Configure the agent with the 2-hour loop routine and your repo
+3. Configure the agent with the Improvement Loop routine and your repo
 
 **Note:** Automations run in Cursor’s cloud; they don’t use your local Cursor settings.
 

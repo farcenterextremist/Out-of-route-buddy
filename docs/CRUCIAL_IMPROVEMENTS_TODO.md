@@ -16,21 +16,18 @@
 
 ## 2. Offline data persistence — **Back-end Engineer**
 
-- **OfflineDataManager:** Two TODOs in `app/.../data/OfflineDataManager.kt`:
-  - `loadOfflineStorage()` — implement actual loading from local storage (SharedPreferences, Room, or existing DB).
-  - `saveOfflineStorage()` — implement actual saving to local storage.
-- Currently these only log; offline trips are not persisted across app restarts. Either implement or document as "future phase" and add a brief to `docs/product/` so Design and QA are aligned.
-- **SyncWorker / backend sync (Codebase Audit improvement 5):** Full sync and offline backend upload are **deferred until backend is available**. Single reference: `SyncWorker.performFullSync()` (see in-code KDoc) and [docs/technical/OFFLINE_PERSISTENCE.md](technical/OFFLINE_PERSISTENCE.md). No behavioral change until backend exists.
+- ✅ **Done.** `OfflineDataManager.loadOfflineStorage()` and `saveOfflineStorage()` use DataStore + Gson. Offline trips and sync state survive app restart. See `docs/technical/OFFLINE_PERSISTENCE.md`.
+- **SyncWorker / backend sync:** Full sync and offline backend upload are **deferred until backend is available**. Single reference: `SyncWorker.performFullSync()` (see in-code KDoc) and [docs/technical/OFFLINE_PERSISTENCE.md](technical/OFFLINE_PERSISTENCE.md). No behavioral change until backend exists.
 
-**Artifacts:** Implementation in `OfflineDataManager.kt` and/or `docs/product/FEATURE_BRIEF_offline_persistence.md`.
+**Artifacts:** Implemented; see OFFLINE_PERSISTENCE.md. Feature brief: `docs/product/FEATURE_BRIEF_offline_persistence.md`.
 
 ---
 
 ## 3. Location jump detection — **Back-end Engineer**
 
-- **TripStateManager:** TODO at line 231: "Implement jump detection" for `locationJumps`. Define what counts as a jump (e.g. implausible speed/distance between samples) and implement or document for a later sprint.
+- ✅ **Done.** `TripStateManager` implements jump detection in `updateGpsMetadata()`: implied speed (distance/time) above `JUMP_SPEED_THRESHOLD_MS` (120 mph) counts as a jump; `locationJumps` is persisted in GPS metadata and to `TripEntity.locationJumpsDetected`. See `docs/technical/JUMP_DETECTION_AND_TRIP_STATE.md` (if present) or in-code KDoc.
 
-**Artifacts:** Implementation in `TripStateManager.kt` and/or short note in `docs/technical/` or feature brief.
+**Artifacts:** Implementation in `TripStateManager.kt`; no further work required for this item.
 
 ---
 
@@ -50,17 +47,17 @@
 - **LocationValidationServiceTest:** Comments reference "PHASE 1 FIXES" (1 failing test) and "REMAINING HEAVY TRAFFIC ENHANCEMENT STEPS". QA to triage: fix in unit suite or ignore with reason. *(Improvement Loop runs unit tests only; no instrumented tests in this environment.)*
 - **ThemeScreenshotTest:** "TODO: Uncomment when Paparazzi is configured." Either add Paparazzi and enable the test or document in `docs/qa/` that screenshot tests are deferred.
 
-**Artifacts:** Fixed tests or `docs/qa/TEST_STRATEGY.md` / test-plan updates and clear `@Ignore` reasons.
+**Artifacts:** `docs/qa/FAILING_OR_IGNORED_TESTS.md`, `docs/qa/TEST_STRATEGY.md`. See FAILING_OR_IGNORED_TESTS for current status (several items resolved).
 
 ---
 
 ## 6. Product roadmap and feature briefs — **Project Design / Creative Manager**
 
-- **docs/product/** currently has only README; no `ROADMAP.md` or `FEATURE_BRIEF_*.md`. Create:
+- ✅ **Done.** `docs/product/ROADMAP.md` exists with high-level themes and next steps. Multiple FEATURE_BRIEF docs exist (Auto drive, Offline persistence, Reports, Stat cards, Monthly stats). Back-end, QA, and UI/UX have a single source of truth.
   - **ROADMAP.md:** High-level themes and "what’s next" (can align with existing `docs/agents/WORKER_TODOS_AND_IDEAS.md`).
   - At least one **FEATURE_BRIEF_** (e.g. Auto drive or Offline persistence) so Back-end, QA, and UI/UX have a single source of truth for behavior and acceptance criteria.
 
-**Artifacts:** `docs/product/ROADMAP.md`, `docs/product/FEATURE_BRIEF_<name>.md`.
+**Artifacts:** `docs/product/ROADMAP.md`, `docs/product/FEATURE_BRIEF_*.md` — maintain and add new briefs as features are prioritized.
 
 ---
 
@@ -97,17 +94,17 @@
 
 ## Summary table
 
-| # | Improvement area              | Owner(s)                    | Priority (suggested) |
-|---|------------------------------|-----------------------------|----------------------|
-| 1 | Build & docs alignment       | DevOps                      | High                 |
-| 2 | Offline data persistence     | Back-end                    | High                 |
-| 3 | Location jump detection      | Back-end                    | Medium               |
-| 4 | Trip history → details       | Front-end                   | Medium               |
-| 5 | Test health (fix or document)| QA                          | High                 |
-| 6 | ROADMAP + FEATURE_BRIEF(s)   | Design / Creative Manager   | High                 |
-| 7 | Security and secrets review  | Security Specialist         | High                 |
-| 8 | Cross-link improvement list  | File Organizer              | Low                  |
-| 9 | Statistics: monthly only     | UI/UX, Front-end, Back-end, QA | High              |
+| # | Improvement area              | Owner(s)                    | Status |
+|---|------------------------------|-----------------------------|--------|
+| 1 | Build & docs alignment       | DevOps                      | In progress (Gradle 9; DEPLOYMENT.md ✅) |
+| 2 | Offline data persistence     | Back-end                    | ✅ Done |
+| 3 | Location jump detection      | Back-end                    | ✅ Done |
+| 4 | Trip history → details       | Front-end                   | Deferred to UI/UX backlog |
+| 5 | Test health (fix or document)| QA                          | In progress (see FAILING_OR_IGNORED_TESTS) |
+| 6 | ROADMAP + FEATURE_BRIEF(s)   | Design / Creative Manager   | ✅ Done |
+| 7 | Security and secrets review  | Security Specialist         | In progress (SECURITY_NOTES.md ✅) |
+| 8 | Cross-link improvement list  | File Organizer              | ✅ Done |
+| 9 | Statistics: monthly only     | UI/UX, Front-end, Back-end, QA | High (deferred until UI approved) |
 
 ---
 

@@ -26,6 +26,9 @@
 | [Engagement / Updates](#2-engagement--updates) | Optional email signup for new updates and features |
 | [Visualization](#3-visualization) | Ranking chart, route deviation map (instant replay) |
 | [Simulation / Synthetic Data](#4-simulation--synthetic-data) | Sandboxed virtual fleet |
+| [UI polish / icons](#5-ui-polish--icons) | Trash can icon beautification |
+| [Navigation / app chrome](#6-navigation--app-chrome) | Scrolling top toolbar/taskbar, hamburger menu left of title |
+| [Branding](#7-branding) | Possible app name change |
 
 ---
 
@@ -124,6 +127,62 @@
 **Dependencies:** Simulation engine or scripted personas, data schema alignment with real app, privacy-safe (no real PII).
 
 **Status:** Sandboxed 100%. Heavy tier. Not in ROADMAP yet.
+
+---
+
+## 5. UI polish / icons
+
+### 5.1 Trash can icon beautification (Heavy)
+
+**Description:** Beautify the trash-can (delete) icons used in the app and make them look more professional. **Take great care in selecting the most aesthetic icon** — consider Material Design 3 delete/trash variants, outline vs filled, stroke weight, and consistency with the rest of the app’s icon set.
+
+**Current usage:** `app:icon="@drawable/ic_delete_trash"` on the delete button in the trip history stat card (`item_trip_history_stat_card.xml`). Replace or refine the drawable so the icon is professional and on-brand.
+
+**Placement:** Delete button(s) in trip history stat card; any other delete/trash actions that share the same or similar icon.
+
+**Acceptance:** Icon chosen is visually consistent with the app; professional look; user approves via **visual approval** (see LOOP_TIERING § Visual Approval Clause — generate image/mockup, user says "approve 100% implement" before implementation).
+
+**Status:** Sandboxed 100%. Heavy tier. Requires visual approval before implementation.
+
+---
+
+## 6. Navigation / app chrome
+
+### 6.1 Scrolling top toolbar / taskbar (Heavy)
+
+**Description:** Add a scrolling top toolbar or taskbar — a persistent top bar that can scroll or adapt (e.g. with content) to keep key actions or navigation visible while using the app.
+
+**Placement:** Top of the main app screen(s). Exact behavior (scroll-with-content vs sticky, height, contents) to be decided with visual approval.
+
+**Dependencies:** Layout changes to main activity/fragments; coordination with existing title/header; visual approval before implementation.
+
+**Status:** Sandboxed 100%. Heavy tier. Requires visual approval before implementation.
+
+---
+
+### 6.2 Hamburger menu to the left of the "Out of route" title (Heavy)
+
+**Description:** Add a hamburger menu icon to the **left** of the "Out of route" title in the app bar. Tapping it opens a navigation drawer or menu (e.g. Settings, History, Help).
+
+**Placement:** App bar / toolbar: `[ hamburger icon ]  Out of route  [ optional other actions ]`. Left side, before the title.
+
+**Dependencies:** Navigation drawer or slide-out menu; wiring to existing destinations (e.g. Settings, Trip History); visual approval before implementation.
+
+**Status:** Sandboxed 100%. Heavy tier. Requires visual approval before implementation.
+
+---
+
+## 7. Branding
+
+### 7.1 Possible app name change (Heavy)
+
+**Description:** Consider renaming the app. New name ideas and criteria can be brainstormed later (e.g. branding, clarity, store discoverability). No change until user approves direction and final name.
+
+**Placement:** Affects app title, launcher name, store listing, and any in-app references to the app name.
+
+**Dependencies:** Name ideas (to be explored later); user approval; string/resources and store asset updates.
+
+**Status:** Sandboxed 100%. Heavy tier. Ideas and options to be thought through later; no implementation without user approval.
 
 ---
 

@@ -8,7 +8,8 @@ alwaysApply: false
 
 When the user invokes the **Blue Team**, **blue team**, or **defenders**, follow the instructions in:
 
-**`docs/agents/roles/blue-team-agent.md`**
+- **Agent:** docs/agents/roles/blue-team-agent.md
+- **Skill:** .cursor/skills/blue-team-skill/SKILL.md (ATT&CK/ATLAS detection mapping, mitigations)
 
 In short:
 - You defend: monitor, detect, and respond. When Red attacks, you check whether your alarm went off.

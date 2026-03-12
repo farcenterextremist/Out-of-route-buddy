@@ -1,0 +1,46 @@
+# Token Loop — Run Ledger
+
+**Purpose:** Chronological record of every Token Loop run. At Step 7, append one block below. Keeps runs easy to find and compare.
+
+**Where else it's documented:**
+- **Snapshot (rollback):** `docs/automation/token_loop_snapshots/<run_id>.json`
+- **Tasks & details:** [TOKEN_LOOP_NEXT_TASKS.md](./TOKEN_LOOP_NEXT_TASKS.md) — one section per run with Rule output vs baseline, what worked, recommended tasks
+- **Rule output trend:** [TOKEN_LOOP_IMPROVEMENT_PLAN.md](./TOKEN_LOOP_IMPROVEMENT_PLAN.md) §4 — optional "Rule output this run" per run
+- **Events:** `docs/automation/token_loop_events.jsonl` — step_start/step_end, metrics
+
+---
+
+## Template (append one block per run)
+
+```markdown
+---
+## Run token-YYYYMMdd-HHmm (YYYY-MM-DD)
+
+- **Summary:** [One line: what this run achieved or focused on.]
+- **Rule output:** always_apply_count **N**, always_apply_lines **N** (target &lt;50).
+- **Snapshot:** [token_loop_snapshots/<run_id>.json](./token_loop_snapshots/<run_id>.json) | **Details:** [TOKEN_LOOP_NEXT_TASKS.md#run-<run_id>](./TOKEN_LOOP_NEXT_TASKS.md)
+- **Steps:** 0–7 completed (Y/N) | token_loop_end (Y/N)
+---
+```
+
+---
+
+## Run token-20260311-2115 (2026-03-11)
+
+- **Summary:** Improvement plan implemented; snapshot fix (always_apply_count from rules array); Step 0/7 wired to improvement plan; full loop run.
+- **Rule output:** always_apply_count **1**, always_apply_lines **43** (target &lt;50).
+- **Snapshot:** [token_loop_snapshots/token-20260311-2115.json](./token_loop_snapshots/token-20260311-2115.json) | **Details:** [TOKEN_LOOP_NEXT_TASKS.md](./TOKEN_LOOP_NEXT_TASKS.md#run-token-20260311-2115-2026-03-11)
+- **Steps:** 0–7 completed Y | token_loop_end Y
+
+---
+
+## Run token-20260311-2031 (2026-03-11)
+
+- **Summary:** First full token loop; snapshot/listener wired; discovered always_apply_count bug (reported 3, correct 1).
+- **Rule output:** always_apply_count **1** (intended; snapshot bug showed 3), always_apply_lines **42**.
+- **Snapshot:** [token_loop_snapshots/token-20260311-2031.json](./token_loop_snapshots/token-20260311-2031.json) | **Details:** [TOKEN_LOOP_NEXT_TASKS.md](./TOKEN_LOOP_NEXT_TASKS.md#run-token-20260311-2031-2026-03-11)
+- **Steps:** 0–7 completed Y | token_loop_end Y
+
+---
+
+*Append a new block at Step 7 of each token loop run.*

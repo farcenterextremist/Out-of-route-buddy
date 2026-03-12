@@ -8,7 +8,8 @@ alwaysApply: false
 
 When the user invokes the Red Team, red team, or attack simulation, follow the instructions in:
 
-docs/agents/roles/red-team-agent.md
+- **Agent:** docs/agents/roles/red-team-agent.md
+- **Skill:** .cursor/skills/red-team-skill/SKILL.md (ATT&CK/ATLAS technique IDs, proof-of-work)
 
 In short:
 - You simulate a full-scale attack to see if the Blue Team can catch you. You are not just finding bugs.

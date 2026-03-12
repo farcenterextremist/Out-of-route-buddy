@@ -53,4 +53,37 @@ class AppDatabaseMigrationTest {
         c.close()
         db.close()
     }
+
+    @Test
+    @Throws(IOException::class)
+    fun migrate4To5_preservesDataAndAddsDataTier() {
+        // Create v4 DB and insert a row (all v4 columns; no dataTier)
+        helper.createDatabase("test-db-4-5", 4).apply {
+            execSQL(
+                """
+                INSERT INTO trips (id, date, loadedMiles, bounceMiles, actualMiles, oorMiles, oorPercentage, createdAt,
+                    avgGpsAccuracy, minGpsAccuracy, maxGpsAccuracy, totalGpsPoints, validGpsPoints, rejectedGpsPoints,
+                    tripDurationMinutes, avgSpeedMph, maxSpeedMph, locationJumpsDetected, accuracyWarnings, speedAnomalies,
+                    wasInterrupted, interruptionCount, lastLocationLat, lastLocationLng, interstatePercent, interstateMinutes,
+                    backRoadsPercent, backRoadsMinutes, truckStopsVisited)
+                VALUES (1, 1000, 10.0, 2.0, 12.0, 0.0, 0.0, 1000,
+                    0.0, 0.0, 0.0, 0, 0, 0, 0, 0.0, 0.0, 0, 0, 0,
+                    0, 0, 0.0, 0.0, 0.0, 0, 0.0, 0, 0)
+                """.trimIndent()
+            )
+            close()
+        }
+
+        // Run migration 4 -> 5
+        val db = helper.runMigrationsAndValidate("test-db-4-5", 5, true, AppDatabase.MIGRATION_4_5)
+
+        // Assert dataTier column exists and defaults to GOLD
+        val c = db.query("SELECT id, dataTier FROM trips WHERE id = 1")
+        assertEquals(1, c.count)
+        c.moveToFirst()
+        assertEquals(1L, c.getLong(0))
+        assertEquals("GOLD", c.getString(1))
+        c.close()
+        db.close()
+    }
 }

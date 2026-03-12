@@ -8,6 +8,7 @@ This document defines the **Master Branch Coordinator** concept and the speciali
 
 **Master Branch Coordinator Agent**  
 - **Purpose:** Orchestrate the team, assign work to the right role(s), and resolve overlaps.  
+- **Skills:** coordinator-delegation (handoffs, role assignment), improvement-loop-wizard (when running GO). Use `.cursor/skills/coordinator-delegation/SKILL.md`, `.cursor/skills/improvement-loop-wizard/SKILL.md`.
 - **Invocation:** Use the coordinator when you want high-level planning, cross-role decisions, or a single point of contact for “who should do what.”
 
 ---

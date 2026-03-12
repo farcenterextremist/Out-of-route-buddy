@@ -1,16 +1,22 @@
 ---
-description: "Improvement Loop — routine. Research first, common sense params, full autonomy for Light+Medium."
+description: "Improvement Loop — routine. Research first, common sense params, full autonomy for Light+Medium. Loop Master: 'start master loop'."
 globs: 
 alwaysApply: false
 ---
 
 # Improvement Loop — Trigger
 
+**Find everything:** Master index of all loop docs, scripts, and .cursor refs: `docs/automation/IMPROVEMENT_LOOP_INDEX.md`.
+
+**When the user says "start master loop":** You are the **Loop Master**. Read `docs/automation/LOOP_MASTER_ROLE.md` and run **Step 0.M** first: research all other loops in the project (Improvement, Token, Cyber Security, Synthetic Data), compare and analyze them, scrutinize for consistency, then update universal files (IMPROVEMENT_LOOP_BEST_PRACTICES, IMPROVEMENT_LOOP_FOR_OTHER_AGENTS, RUN_LEDGER template, LOOP_TIERING as needed). Then run the full Improvement Loop (checkpoint → phases 0–4 → summary → append ledger).
+
 When the user says **GO** (or "start improvement loop", "run improvement loop"):
+
+**Skill:** Invoke **improvement-loop-wizard** (`.cursor/skills/improvement-loop-wizard/SKILL.md`) for step-by-step flow.
 
 1. **Common sense:** Read `docs/automation/IMPROVEMENT_LOOP_COMMON_SENSE.md` at loop start. Checkpoint first, respect design intent, tests green.
 2. **Phase 0 — Autonomy:** If user wants no human intervention, ensure one-time setup per `docs/automation/AUTONOMOUS_LOOP_SETUP.md` (Run Everything or add `cd c:\Users\brand\OutofRoutebuddy` to Command Allowlist).
-3. **Phase 0 — Research:** Read: latest `docs/automation/*_LOOP_SUMMARY_*.md` or `docs/automation/120_MINUTE_LOOP_SUMMARY_*.md`, `docs/CRUCIAL_IMPROVEMENTS_TODO.md`, `docs/REDUNDANT_DEAD_CODE_REPORT.md`, `docs/qa/FAILING_OR_IGNORED_TESTS.md`, `docs/security/SECURITY_NOTES.md`, `docs/automation/LOOP_TIERING.md`.
+3. **Phase 0 — Research:** Read: latest `docs/automation/*_LOOP_SUMMARY_*.md` or `docs/automation/120_MINUTE_LOOP_SUMMARY_*.md`, `docs/CRUCIAL_IMPROVEMENTS_TODO.md`, `docs/REDUNDANT_DEAD_CODE_REPORT.md`, `docs/qa/FAILING_OR_IGNORED_TESTS.md`, `docs/security/SECURITY_NOTES.md`, `docs/automation/LOOP_TIERING.md`, `docs/automation/HEAVY_IDEAS_FAVORITES.md` (surface Heavy favorites first; keep list light).
 4. **Phase 0.1b — Tiering & full autonomy:** Per `docs/automation/LOOP_TIERING.md`, classify tasks as Light/Medium/Heavy. **Light + Medium run without stopping.** Only Heavy prompts: if any Heavy tasks exist, ask user; otherwise execute Light + Medium autonomously.
 5. **Phase 0.3 — Self-improvement:** Follow `docs/automation/CURSOR_SELF_IMPROVEMENT.md` (safe web, context refresh, research 1 item). Drastic changes → suggest, don't implement.
 6. **Execute:** Follow `docs/automation/IMPROVEMENT_LOOP_ROUTINE.md` phases 1–4. Full autonomous: Light + Medium run; Heavy deferred unless user approves.

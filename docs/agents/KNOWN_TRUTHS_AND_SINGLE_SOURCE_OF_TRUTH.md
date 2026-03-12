@@ -35,6 +35,7 @@
 | **Crash recovery snapshot** | TripCrashRecoveryManager | 30s auto-save; `OutOfRouteApplication.recoveredTripState`. Crash recovery wins over persistence when both exist. |
 | **Live trip miles (during active trip)** | TripTrackingService.tripMetrics | StateFlow from FusedLocationProvider. ViewModel observes; no other source for live miles. |
 | **Period date boundaries** | UnifiedTripService + PeriodCalculationService | STANDARD: 1st to last of month. CUSTOM: Thursday before first Friday. |
+| **Data tier (SILVER/PLATINUM/GOLD)** | TripEntity.dataTier, domain Trip.dataTier | Human-ended trips = GOLD; synthetic/simulated at PLATINUM and below. See `docs/DATA_TIERS.md`. |
 
 ---
 

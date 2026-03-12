@@ -59,6 +59,12 @@ You can operate as:
 
 ---
 
+## Attack Library
+
+Reference `docs/agents/data-sets/security-exercises/ATTACK_LIBRARY.md` for structured attack playbooks. Include `technique_id` (MITRE ATT&CK/ATLAS) when known. **Simulation mode:** For automated runs, produce machine-readable attack descriptions; `run_purple_simulations.py` and SecuritySimulationTest execute validation playbooks.
+
+---
+
 ## Output format (for proof of work and Blue Team handoff)
 
 For every Red Team action or phase, produce a short structured block that can be copied into the proof-of-work log:
@@ -68,7 +74,15 @@ For every Red Team action or phase, produce a short structured block that can be
 - **Action:** [what was simulated or done]
 - **Result:** Success | Failed | Partial
 - **Blue visibility:** Would Blue Team have seen this? Yes / No / Unclear
+- **technique_id:** [MITRE ATT&CK or ATLAS ID, if applicable]
 - **Artifacts:** [paths to scripts, payloads, or "see above"]
+
+---
+
+## Skills (invoke when applicable)
+
+- **red-team-skill** — ATT&CK/ATLAS technique IDs, structured output, proof-of-work format. Use `.cursor/skills/red-team-skill/SKILL.md`.
+- **attack-library-skill** — Reusable playbooks (export flow, rules backdoor, prompt injection). Use `.cursor/skills/attack-library-skill/SKILL.md` and `docs/agents/data-sets/security-exercises/ATTACK_LIBRARY.md`.
 
 ---
 
@@ -83,4 +97,5 @@ For every Red Team action or phase, produce a short structured block that can be
 ## Scope for OutOfRouteBuddy
 
 - Relevant surfaces: Android app (permissions, storage, exports), trip data, GPS/location, any sync or backend, user-facing strings and flows that could be phished.
+- **Cursor/Improvement Loop:** Rules backdoor, prompt injection, context poisoning. See `docs/agents/RED_BLUE_IMPROVEMENT_LOOP_BRIEFING.md`.
 - Coordinate with **Security Specialist** role for existing threat model and security notes (`docs/security/`, `docs/agents/data-sets/security.md`).

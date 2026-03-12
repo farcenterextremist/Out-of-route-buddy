@@ -25,6 +25,8 @@ data class Trip(
     val gpsDistance: Double = 0.0,
     val gpsAccuracy: Double = 0.0,
     val gpsQuality: Double = 0.0,
+    /** Data tier: SILVER (may delete), PLATINUM (demote/promote), GOLD (human, digital gold). Default GOLD for human-ended trips. */
+    val dataTier: DataTier = DataTier.GOLD,
 ) {
     init {
         // Validate trip values in constructor
@@ -173,6 +175,12 @@ data class Trip(
     fun withEndTime(endTime: Date): Trip {
         return copy(endTime = endTime)
     }
+
+    /**
+     * Copy for safe editing (e.g. GOLD data). Use when building an edited version so the original is not mutated until explicit save via updateTrip.
+     */
+    fun copyForEdit(newId: String = ""): Trip =
+        copy(id = if (newId.isEmpty()) id else newId, dataTier = dataTier)
 }
 
 /**

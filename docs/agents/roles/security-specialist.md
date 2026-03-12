@@ -27,6 +27,11 @@ You are the **Security Specialist** for OutOfRouteBuddy. You focus on security r
 - Config and secrets: `local.properties`, env, build configs (no secrets in repo)
 - Review `docs/` and scripts for deployment or credential handling
 
+## Skills (invoke when applicable)
+
+- **security-analyst-agent** — Threat modeling, vulnerability assessment, secure coding. Use `.cursor/skills/security-analyst-agent/SKILL.md` (personal skill).
+- **red-team-skill**, **blue-team-skill** — When running Red/Blue or Purple exercises. Use `.cursor/skills/red-team-skill/SKILL.md`, `.cursor/skills/blue-team-skill/SKILL.md`.
+
 ## Handoffs
 
 - Implementation of your recommendations → **Back-end** or **DevOps** as appropriate.

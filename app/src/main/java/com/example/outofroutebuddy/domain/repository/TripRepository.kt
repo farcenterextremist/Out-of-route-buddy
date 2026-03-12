@@ -1,5 +1,6 @@
 package com.example.outofroutebuddy.domain.repository
 
+import com.example.outofroutebuddy.domain.models.DataTier
 import com.example.outofroutebuddy.domain.models.Trip
 import kotlinx.coroutines.flow.Flow
 import java.util.Date
@@ -61,6 +62,14 @@ interface TripRepository {
     fun getTripsByStatus(status: com.example.outofroutebuddy.domain.models.TripStatus): Flow<List<Trip>>
 
     /**
+     * Get trips by data tier (SILVER, PLATINUM, GOLD).
+     *
+     * @param tier The data tier to filter by
+     * @return Flow of trips with the specified tier
+     */
+    fun getTripsByTier(tier: DataTier): Flow<List<Trip>>
+
+    /**
      * Insert a new trip
      *
      * @param trip The trip to insert
@@ -91,6 +100,15 @@ interface TripRepository {
      * @return true if deleted, false if not found or error
      */
     suspend fun deleteTripById(id: String): Boolean
+
+    /**
+     * Set a trip's data tier (promotion/demotion). Returns true if trip was found and updated.
+     *
+     * @param tripId The trip ID
+     * @param tier The new tier (SILVER, PLATINUM, GOLD)
+     * @return true if updated, false if not found or invalid id
+     */
+    suspend fun setTripTier(tripId: String, tier: DataTier): Boolean
 
     /**
      * Get trip statistics for a date range
@@ -125,8 +143,9 @@ interface TripRepository {
 
     /**
      * Delete trips with date strictly before [cutoffDate]. Used for "delete old data from device" flow.
+     * When [maxTier] is null, deletes all tiers; when set, deletes only trips at or below [maxTier] (GOLD never auto-terminated).
      */
-    suspend fun deleteTripsOlderThan(cutoffDate: Date)
+    suspend fun deleteTripsOlderThan(cutoffDate: Date, maxTier: DataTier? = null)
 
     /**
      * Export trip data

@@ -3,10 +3,12 @@ package com.example.outofroutebuddy.data.dao
 import androidx.room.Room
 import com.example.outofroutebuddy.data.AppDatabase
 import com.example.outofroutebuddy.data.entities.TripEntity
+import com.example.outofroutebuddy.domain.models.DataTier
 import com.example.outofroutebuddy.data.util.DateConverter
 import com.google.common.truth.Truth.assertThat
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.flow.first
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -191,6 +193,20 @@ class TripDaoInMemoryTest {
         val result = dao.getTripsOverlappingRange(rangeStart, rangeEnd)
         assertThat(result).hasSize(1)
         assertThat(result.first().tripStartTime).isEqualTo(insideStart)
+    }
+
+    @Test
+    fun getTripsByTier_returnsOnlyMatchingTier() = runBlocking {
+        dao.insertTrip(sampleTrip(0)) // default GOLD
+        dao.insertTrip(sampleTrip(-1).copy(dataTier = DataTier.SILVER))
+
+        val goldTrips = dao.getTripsByTier(DataTier.GOLD).first()
+        val silverTrips = dao.getTripsByTier(DataTier.SILVER).first()
+
+        assertThat(goldTrips).hasSize(1)
+        assertThat(goldTrips[0].dataTier).isEqualTo(DataTier.GOLD)
+        assertThat(silverTrips).hasSize(1)
+        assertThat(silverTrips[0].dataTier).isEqualTo(DataTier.SILVER)
     }
 
     private fun sampleTrip(dateOffsetDays: Int): TripEntity {

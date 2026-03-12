@@ -2,6 +2,7 @@ package com.example.outofroutebuddy.data.dao
 
 import androidx.room.*
 import com.example.outofroutebuddy.data.entities.TripEntity
+import com.example.outofroutebuddy.domain.models.DataTier
 import kotlinx.coroutines.flow.Flow
 import java.util.Date
 
@@ -127,6 +128,13 @@ interface TripDao {
     fun deleteTripsBefore(beforeDate: Date)
 
     /**
+     * Delete trips with date strictly before [beforeDate] and dataTier in [tiers].
+     * Used for tier-scoped retention (e.g. delete only SILVER, or SILVER+PLATINUM).
+     */
+    @Query("DELETE FROM trips WHERE date < :beforeDate AND dataTier IN (:tiers)")
+    fun deleteTripsBeforeWithTiers(beforeDate: Date, tiers: List<String>)
+
+    /**
      * Get the total count of trips
      */
     @Query("SELECT COUNT(*) FROM trips")
@@ -140,4 +148,16 @@ interface TripDao {
         startOfDay: Date,
         endOfDay: Date,
     ): Int
+
+    /**
+     * Get trips by data tier (SILVER, PLATINUM, GOLD).
+     */
+    @Query("SELECT * FROM trips WHERE dataTier = :tier ORDER BY date ASC, id ASC")
+    fun getTripsByTier(tier: DataTier): Flow<List<TripEntity>>
+
+    /**
+     * Get trip IDs by data tier (for bulk ops / counts).
+     */
+    @Query("SELECT id FROM trips WHERE dataTier = :tier")
+    suspend fun getTripIdsByTier(tier: DataTier): List<Long>
 } 

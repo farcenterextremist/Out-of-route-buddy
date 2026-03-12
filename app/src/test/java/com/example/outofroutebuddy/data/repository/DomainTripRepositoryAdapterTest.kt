@@ -2,6 +2,7 @@ package com.example.outofroutebuddy.data.repository
 
 import com.example.outofroutebuddy.data.entities.TripEntity
 import com.example.outofroutebuddy.domain.models.TripStatus
+import com.example.outofroutebuddy.domain.models.DataTier
 import com.example.outofroutebuddy.models.Trip as DataTrip
 import io.mockk.coEvery
 import io.mockk.every
@@ -132,11 +133,11 @@ class DomainTripRepositoryAdapterTest {
     @Test
     fun `deleteTripsOlderThan delegates to data repository`() = runTest {
         val cutoff = Date()
-        coEvery { dataRepository.deleteTripsOlderThan(cutoff) } returns Unit
+        coEvery { dataRepository.deleteTripsOlderThan(cutoff, null) } returns Unit
 
         adapter.deleteTripsOlderThan(cutoff)
 
-        coVerify { dataRepository.deleteTripsOlderThan(cutoff) }
+        coVerify { dataRepository.deleteTripsOlderThan(cutoff, null) }
     }
 
     // ==================== Phase 3: getTripStatistics aggregation tests ====================
@@ -286,6 +287,53 @@ class DomainTripRepositoryAdapterTest {
     fun `deleteTripById returns false for invalid id`() = runTest {
         val deleted = adapter.deleteTripById("invalid")
         assertEquals(false, deleted)
+    }
+
+    @Test
+    fun `getTripsByTier maps entities to domain and emits once`() = runTest {
+        val entity = TripEntity(
+            id = 1L,
+            date = Date(),
+            loadedMiles = 10.0,
+            bounceMiles = 2.0,
+            actualMiles = 12.0,
+            oorMiles = 0.0,
+            oorPercentage = 0.0,
+            dataTier = DataTier.GOLD,
+        )
+        every { dataRepository.getTripEntitiesByTier(DataTier.GOLD) } returns flowOf(listOf(entity))
+
+        val result = adapter.getTripsByTier(DataTier.GOLD).first()
+
+        assertEquals(1, result.size)
+        assertEquals(DataTier.GOLD, result[0].dataTier)
+        assertEquals("1", result[0].id)
+    }
+
+    @Test
+    fun `setTripTier delegates to data layer and returns result`() = runTest {
+        coEvery { dataRepository.setTripTier(1L, DataTier.PLATINUM) } returns true
+
+        val result = adapter.setTripTier("1", DataTier.PLATINUM)
+
+        assertEquals(true, result)
+        coVerify { dataRepository.setTripTier(1L, DataTier.PLATINUM) }
+    }
+
+    @Test
+    fun `setTripTier returns false for invalid id`() = runTest {
+        val result = adapter.setTripTier("x", DataTier.GOLD)
+        assertEquals(false, result)
+    }
+
+    @Test
+    fun `deleteTripsOlderThan with maxTier delegates with param`() = runTest {
+        val cutoff = Date()
+        coEvery { dataRepository.deleteTripsOlderThan(cutoff, DataTier.SILVER) } returns Unit
+
+        adapter.deleteTripsOlderThan(cutoff, DataTier.SILVER)
+
+        coVerify { dataRepository.deleteTripsOlderThan(cutoff, DataTier.SILVER) }
     }
 
     @Test

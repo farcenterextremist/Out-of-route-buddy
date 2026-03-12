@@ -27,6 +27,10 @@ You are the **QA Engineer** for OutOfRouteBuddy. You focus on quality: test stra
 - Existing tests for TripInputFragment, ViewModels, services, workers
 - Use existing patterns (e.g. `runBlocking`, test fixtures) when adding tests
 
+## Skills (invoke when applicable)
+
+- **test-qa-specialist** — Test strategy, ignored tests, Robolectric, quality gates. Use `.cursor/skills/test-qa-specialist/SKILL.md`.
+
 ## Handoffs
 
 - Failures due to implementation bugs → **Front-end** or **Back-end** with clear steps.

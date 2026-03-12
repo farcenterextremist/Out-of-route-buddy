@@ -20,6 +20,8 @@ You are the **Blue Team** for security exercises. Your job is to **defend**: mon
 - **Gap analysis:** After a Red action, answer: "Did our alarm go off?" If no, why not? (Missing log? Missing check? Weak rule?)
 - **Remediation:** Propose or implement a concrete fix: new log line, new validation, new alert rule, or code/config change. Prefer changes that are testable and auditable.
 - **Documentation:** Record every finding and fix in the proof-of-work log so it can be reused and re-tested later.
+- **Detection mapping:** Map Blue checks to ATT&CK/ATLAS mitigations when applicable. See `docs/agents/data-sets/ATTACK_LIBRARY.md`.
+- **Simulation verification:** For automated runs, confirm `./gradlew :app:securitySimulations` result matches expected (SecuritySimulationTest, training JSON).
 
 ---
 
@@ -52,6 +54,12 @@ For every Blue Team check or fix, produce a short structured block:
 
 ---
 
+## Skills (invoke when applicable)
+
+- **blue-team-skill** — ATT&CK/ATLAS technique IDs, detection mapping, mitigation proposals. Use `.cursor/skills/blue-team-skill/SKILL.md`.
+
+---
+
 ## Invocation and linking
 
 - **Solo:** "Act as the Blue Team" to review a past Red action or to audit a surface (e.g. "What would we see if someone exported all trip data?").
@@ -63,5 +71,6 @@ For every Blue Team check or fix, produce a short structured block:
 ## Scope for OutOfRouteBuddy
 
 - Relevant defenses: Android app (permissions, storage, exports), trip data access, GPS/location usage, sync/backend if any, logging and error handling that could indicate abuse.
+- **Cursor/Improvement Loop:** Rules review, prompt injection mitigation, context scope. See `docs/agents/RED_BLUE_IMPROVEMENT_LOOP_BRIEFING.md`.
 - Align with **Security Specialist** role for existing controls and threat model (`docs/security/`, `docs/agents/data-sets/security.md`).
 - Implementation of Blue’s fixes may be handed off to **Back-end Engineer**, **Front-end Engineer**, or **DevOps** as appropriate; Blue documents the requirement and summarizes user-facing impact when relevant.

@@ -68,8 +68,8 @@ BuildConfig.APP_NAME = "OutOfRouteBuddy"
 
 // Services
 BuildConfig.NOTIFICATION_ID = 1001
-BuildConfig.ACTION_START_TRIP = "ACTION_START_TRIP"
-BuildConfig.ACTION_END_TRIP = "ACTION_END_TRIP"
+BuildConfig.ACTION_START_TRIP = "START_TRIP"
+BuildConfig.ACTION_END_TRIP = "END_TRIP"
 ```
 
 ## **🔧 Usage Guidelines**

@@ -115,7 +115,14 @@ mode: Purple
 
 - **2025-02-20 – Security Plan Comprehensive (2 scenarios):** [2025-02-20-security-plan.md](./data-sets/security-exercises/2025-02-20-security-plan.md) – Sync API hardening (key allowlist, 64KB limit, SyncServiceAudit), TripInsertAudit in TripRepository. All remediations implemented. See SECURITY_NOTES.md Sections 6 and 7.
 - **2025-02-22 – OutOfRouteBuddy Purple (3 scenarios):** [2025-02-22-purple-outofroutebuddy.md](./data-sets/security-exercises/2025-02-22-purple-outofroutebuddy.md) – Export audit, delete audit, FileProvider scope. All three Blue remediations implemented (TripExportAudit, TripDeleteAudit, SECURITY_NOTES + file_paths comment).
+- **2025-03-11 – Purple Improvement Loop & Cursor (5 scenarios):** [2025-03-11-purple-improvement-loop-cursor.md](./data-sets/security-exercises/2025-03-11-purple-improvement-loop-cursor.md) – Rules backdoor, doc injection, README prompt injection, context poisoning, allowlist bypass. All five Blue remediations implemented (SECURITY_NOTES §13, CURSOR_SELF_IMPROVEMENT additions, RED_BLUE_IMPROVEMENT_LOOP_BRIEFING). Briefing: [RED_BLUE_IMPROVEMENT_LOOP_BRIEFING.md](../RED_BLUE_IMPROVEMENT_LOOP_BRIEFING.md).
 - **Automated Purple simulations:** Run `python scripts/purple-team/run_purple_simulations.py` to generate new exercise logs and training data. Outputs: `docs/agents/data-sets/security-exercises/YYYY-MM-DD-purple-simulations.md` and `artifacts/YYYY-MM-DD-purple-training.json`. Use `--with-http` when sync service is running for HTTP attack simulations.
+
+---
+
+## Coverage report
+
+**Skill:** Invoke **coverage-report-skill** (`.cursor/skills/coverage-report-skill/SKILL.md`) to produce ATT&CK/ATLAS heat map from past exercises. Output: `docs/agents/data-sets/security-exercises/COVERAGE_REPORT_YYYY-MM-DD.md`.
 
 ---
 

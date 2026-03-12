@@ -492,21 +492,27 @@ class TripInputFragment : Fragment() {
             setMargins(0, 8, 0, 8)
         }
         
-        // Same 3D style as Start Trip / Statistics
-        val apply3DButtonStyle: (com.google.android.material.button.MaterialButton) -> Unit = { btn ->
-            btn.setBackgroundResource(R.drawable.button_3d_material)
+        val applyPrimaryButtonStyle: (com.google.android.material.button.MaterialButton) -> Unit = { btn ->
+            btn.setBackgroundResource(R.drawable.button_primary_material)
+            btn.backgroundTintList = null
+            btn.setTextColor(android.graphics.Color.WHITE)
+            btn.textSize = 16f
+            btn.setTypeface(null, android.graphics.Typeface.BOLD)
+        }
+        val applySecondaryButtonStyle: (com.google.android.material.button.MaterialButton) -> Unit = { btn ->
+            btn.setBackgroundResource(R.drawable.button_secondary_material)
             btn.backgroundTintList = null
             btn.setTextColor(android.graphics.Color.WHITE)
             btn.textSize = 16f
             btn.setTypeface(null, android.graphics.Typeface.BOLD)
         }
 
-        // Button 1: End Trip (top)
+        // Button 1: End Trip (top) - primary
         val endTripButton = com.google.android.material.button.MaterialButton(requireContext()).apply {
             text = "End Trip"
             contentDescription = getString(R.string.end_trip_button_description)
             layoutParams = buttonLayoutParams
-            apply3DButtonStyle(this)
+            applyPrimaryButtonStyle(this)
             setOnClickListener {
                 performButtonHapticFeedback(this)
                 dialog.dismiss()
@@ -518,12 +524,12 @@ class TripInputFragment : Fragment() {
         }
         dialogView.addView(endTripButton)
         
-        // Button 2: Clear Trip (middle)
+        // Button 2: Clear Trip (middle) - secondary
         val clearTripButton = com.google.android.material.button.MaterialButton(requireContext()).apply {
             text = "Clear Trip"
             contentDescription = getString(R.string.cancel_trip_button_description)
             layoutParams = buttonLayoutParams
-            apply3DButtonStyle(this)
+            applySecondaryButtonStyle(this)
             setOnClickListener {
                 dialog.dismiss()
                 showClearTripConfirmation()
@@ -531,12 +537,12 @@ class TripInputFragment : Fragment() {
         }
         dialogView.addView(clearTripButton)
         
-        // Button 3: Continue Trip (bottom)
+        // Button 3: Continue Trip (bottom) - secondary
         val continueTripButton = com.google.android.material.button.MaterialButton(requireContext()).apply {
             text = "Continue Trip"
             contentDescription = getString(R.string.continue_trip_button_description)
             layoutParams = buttonLayoutParams
-            apply3DButtonStyle(this)
+            applySecondaryButtonStyle(this)
             setOnClickListener {
                 dialog.dismiss()
                 TripEndedOverlayService.notifyUserChoseNoContinue(requireContext())
@@ -568,8 +574,15 @@ class TripInputFragment : Fragment() {
             android.widget.LinearLayout.LayoutParams.MATCH_PARENT,
             android.widget.LinearLayout.LayoutParams.WRAP_CONTENT
         ).apply { setMargins(0, 8, 0, 8) }
-        val apply3DButtonStyle: (com.google.android.material.button.MaterialButton) -> Unit = { btn ->
-            btn.setBackgroundResource(R.drawable.button_3d_material)
+        val applyPrimaryButtonStyle: (com.google.android.material.button.MaterialButton) -> Unit = { btn ->
+            btn.setBackgroundResource(R.drawable.button_primary_material)
+            btn.backgroundTintList = null
+            btn.setTextColor(android.graphics.Color.WHITE)
+            btn.textSize = 16f
+            btn.setTypeface(null, android.graphics.Typeface.BOLD)
+        }
+        val applySecondaryButtonStyle: (com.google.android.material.button.MaterialButton) -> Unit = { btn ->
+            btn.setBackgroundResource(R.drawable.button_secondary_material)
             btn.backgroundTintList = null
             btn.setTextColor(android.graphics.Color.WHITE)
             btn.textSize = 16f
@@ -589,7 +602,7 @@ class TripInputFragment : Fragment() {
         val yesButton = com.google.android.material.button.MaterialButton(requireContext()).apply {
             text = getString(R.string.yes_complete_trip)
             layoutParams = buttonLayoutParams
-            apply3DButtonStyle(this)
+            applyPrimaryButtonStyle(this)
             setOnClickListener {
                 actionTaken = true
                 dialog.dismiss()
@@ -606,7 +619,7 @@ class TripInputFragment : Fragment() {
         val noButton = com.google.android.material.button.MaterialButton(requireContext()).apply {
             text = getString(R.string.no_continue_trip)
             layoutParams = buttonLayoutParams
-            apply3DButtonStyle(this)
+            applySecondaryButtonStyle(this)
             setOnClickListener {
                 actionTaken = true
                 dialog.dismiss()

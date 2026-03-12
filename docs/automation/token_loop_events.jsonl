@@ -1,0 +1,37 @@
+{"ts":"2026-03-11T19:44:08Z","event":"token_loop_start","run_id":"token-20260311-1944","note":"run_token_loop.ps1"}
+{"ts":"2026-03-11T20:31:57Z","event":"token_loop_start","run_id":"token-20260311-2031","note":"run_token_loop.ps1"}
+{"ts":"2026-03-11T20:32:22Z","event":"step_start","run_id":"token-20260311-2031","step":"0","note":"deep research"}
+{"ts":"2026-03-11T20:32:39Z","event":"step_end","run_id":"token-20260311-2031","step":"0","note":"1 always-apply rule, 42 lines; 4 other rules; settings OK; 2 prior starts, 0 full runs","metrics_raw":"{\" always_apply_count\\:1,\\always_apply_lines\\:42}"}
+{"ts":"2026-03-11T20:32:40Z","event":"step_start","run_id":"token-20260311-2031","step":"1","note":"audit rules"}
+{"ts":"2026-03-11T20:32:41Z","event":"step_end","run_id":"token-20260311-2031","step":"1","metrics_raw":"{\" always_apply_count\\:1,\\always_apply_lines\\:42}"}
+{"ts":"2026-03-11T20:32:42Z","event":"step_start","run_id":"token-20260311-2031","step":"2","note":"check new always-apply"}
+{"ts":"2026-03-11T20:32:42Z","event":"step_end","run_id":"token-20260311-2031","step":"2","metrics_raw":"{\" conversions_done\\:0}"}
+{"ts":"2026-03-11T20:32:43Z","event":"step_start","run_id":"token-20260311-2031","step":"3","note":"doc references"}
+{"ts":"2026-03-11T20:32:43Z","event":"step_end","run_id":"token-20260311-2031","step":"3"}
+{"ts":"2026-03-11T20:32:46Z","event":"step_start","run_id":"token-20260311-2031","step":"4","note":"conversation reminder"}
+{"ts":"2026-03-11T20:32:46Z","event":"step_end","run_id":"token-20260311-2031","step":"4"}
+{"ts":"2026-03-11T20:32:46Z","event":"step_start","run_id":"token-20260311-2031","step":"5","note":"update doc"}
+{"ts":"2026-03-11T20:32:46Z","event":"step_end","run_id":"token-20260311-2031","step":"5"}
+{"ts":"2026-03-11T20:32:48Z","event":"step_start","run_id":"token-20260311-2031","step":"6","note":"summary"}
+{"ts":"2026-03-11T20:32:49Z","event":"step_end","run_id":"token-20260311-2031","step":"6"}
+{"ts":"2026-03-11T20:33:08Z","event":"step_start","run_id":"token-20260311-2031","step":"7","note":"organize and recommend next tasks"}
+{"ts":"2026-03-11T20:33:37Z","event":"step_end","run_id":"token-20260311-2031","step":"7","note":"TOKEN_LOOP_NEXT_TASKS updated"}
+{"ts":"2026-03-11T20:33:37Z","event":"token_loop_end","run_id":"token-20260311-2031","note":"steps=8","metrics_raw":"{\" steps_completed\\:8}"}
+{"ts":"2026-03-11T21:15:26Z","event":"token_loop_start","run_id":"token-20260311-2115","note":"run_token_loop.ps1"}
+{"ts":"2026-03-11T21:16:22Z","event":"step_start","run_id":"token-20260311-2115","step":"0","note":"read improvement plan; research"}
+{"ts":"2026-03-11T21:16:22Z","event":"step_end","run_id":"token-20260311-2115","step":"0","note":"research_summary: improvement plan and snapshot fix applied"}
+{"ts":"2026-03-11T21:16:22Z","event":"step_start","run_id":"token-20260311-2115","step":"1","note":"audit rules"}
+{"ts":"2026-03-11T21:16:22Z","event":"step_end","run_id":"token-20260311-2115","step":"1","metrics":{"always_apply_count":1,"always_apply_lines":43}}
+{"ts":"2026-03-11T21:16:22Z","event":"step_start","run_id":"token-20260311-2115","step":"2","note":"check new always-apply"}
+{"ts":"2026-03-11T21:16:22Z","event":"step_end","run_id":"token-20260311-2115","step":"2"}
+{"ts":"2026-03-11T21:16:22Z","event":"step_start","run_id":"token-20260311-2115","step":"3","note":"doc references"}
+{"ts":"2026-03-11T21:16:22Z","event":"step_end","run_id":"token-20260311-2115","step":"3"}
+{"ts":"2026-03-11T21:16:22Z","event":"step_start","run_id":"token-20260311-2115","step":"4","note":"conversation reminder"}
+{"ts":"2026-03-11T21:16:22Z","event":"step_end","run_id":"token-20260311-2115","step":"4"}
+{"ts":"2026-03-11T21:16:22Z","event":"step_start","run_id":"token-20260311-2115","step":"5","note":"update doc"}
+{"ts":"2026-03-11T21:16:22Z","event":"step_end","run_id":"token-20260311-2115","step":"5"}
+{"ts":"2026-03-11T21:16:22Z","event":"step_start","run_id":"token-20260311-2115","step":"6","note":"summary"}
+{"ts":"2026-03-11T21:16:22Z","event":"step_end","run_id":"token-20260311-2115","step":"6"}
+{"ts":"2026-03-11T21:16:22Z","event":"step_start","run_id":"token-20260311-2115","step":"7","note":"organize results"}
+{"ts":"2026-03-11T21:16:22Z","event":"step_end","run_id":"token-20260311-2115","step":"7"}
+{"ts":"2026-03-11T21:16:22Z","event":"token_loop_end","run_id":"token-20260311-2115","note":"steps=8","metrics":{"steps_completed":8}}

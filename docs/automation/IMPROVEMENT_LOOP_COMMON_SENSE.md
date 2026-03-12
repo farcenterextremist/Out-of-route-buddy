@@ -10,7 +10,7 @@
 
 | Parameter | Rule |
 |-----------|------|
-| **Pre-loop checkpoint** | Create checkpoint (git commit or tag) before making any changes. Record in summary. Enables "revert" if something breaks. If no checkpoint exists when user says "revert," inform: "No checkpoint found. Create one next run." |
+| **Pre-loop checkpoint** | Create checkpoint (git commit or tag) **before** making any changes. **Required.** Record commit hash or tag in summary. Enables "revert" if something breaks. If no checkpoint exists when user says "revert," inform: "No checkpoint found. Create one next run." |
 | **Read USER_PREFERENCES first** | Read [USER_PREFERENCES_AND_DESIGN_INTENT.md](./USER_PREFERENCES_AND_DESIGN_INTENT.md) before research or changes. Do not drift from design intent. |
 | **No UI changes without permission** | User rule: "DO NOT MAKE ANY UNWARRANTED CHANGES TO THE UI WITHOUT MY PERMISSION." When uncertain → suggest, don't implement. |
 
@@ -28,6 +28,7 @@
 | **No secrets or PII** | Never add API keys, passwords, or PII to logs or code. Grep for coordinates/tripId before committing. |
 | **Additive only (Light)** | Light tier: additive only (strings, docs, comments). No code removal, no refactor, no new logic. |
 | **Small and localized (Medium)** | Medium tier: small, localized change. Low risk. Do not drift from original UI layout. |
+| **Check TODOs during Light/Medium** | Consult CRUCIAL, suggested next steps, and TASKS_INDEX or COMPREHENSIVE_AGENT_TODOS; tick off completed items; add new TODOs when you discover work that should be tracked (e.g. to CRUCIAL, BRAINSTORM_AND_TASKS, or suggested next steps). |
 
 ---
 

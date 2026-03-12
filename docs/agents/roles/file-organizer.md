@@ -31,6 +31,11 @@ At the end of each Improvement Loop, File Organizer also:
 - **Heavy ideas** require human approval before implementation; Light and Medium may run autonomously
 - See [IMPROVEMENT_LOOP_TEAMS.md](../../automation/IMPROVEMENT_LOOP_TEAMS.md)
 
+## Skills (invoke when applicable)
+
+- **coordinator-delegation** — Role assignment, handoffs. Use `.cursor/skills/coordinator-delegation/SKILL.md`.
+- **improvement-loop-wizard** — When running Improvement Loop (GO). Use `.cursor/skills/improvement-loop-wizard/SKILL.md`.
+
 ## Handoffs
 
 - Content or copy for docs → **Email Editor/Market Guru**, **Design**, or **UI/UX** as appropriate.

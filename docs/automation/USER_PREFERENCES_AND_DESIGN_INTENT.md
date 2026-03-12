@@ -1,64 +1,34 @@
-# User Preferences & Design Intent
+# User Preferences and Design Intent
 
-**Purpose:** Capture the user's subtle preferences and original design intent so the Improvement Loop stays aligned. Read this **first** at the start of every loop—"get personal with the code"—before making any changes.
-
-**Rule:** Do not stray from the original design. When in doubt, ask.
-
----
-
-## Must Not Change (Without Permission)
-
-| Preference | Source | Note |
-|------------|--------|------|
-| **No unwarranted UI changes** | User rule | Do not make UI changes without explicit permission. See [SCOPE_AND_BOUNDARIES.md](../SCOPE_AND_BOUNDARIES.md). |
-| **Original UI layout** | LOOP_TIERING | Stay on track; do not drift from the original layout. |
-| **Statistics: monthly only** | User preference (CRUCIAL §9) | Remove weekly/yearly only after user approval. |
-| **No social features, no ads** | GOAL_AND_MISSION | Never. |
-| **Offline-first** | GOAL_AND_MISSION | Prefer local; no cloud-first. |
+**Purpose:** Single place for design intent, must-not-change list, and subtle preferences. The Improvement Loop reads this **first** (Phase 0.0a) and must not drift from it.  
+**References:** [GOAL_AND_MISSION.md](../GOAL_AND_MISSION.md), [IMPROVEMENT_LOOP_ROUTINE.md](./IMPROVEMENT_LOOP_ROUTINE.md)
 
 ---
 
-## Design Intent (Original)
+## Design Intent
 
-- **Trip tracking:** Loaded, bounce, actual miles. Start → End → Clear.
-- **Calendar & stat cards:** Period-based (daily, weekly, monthly). Green start, red end.
-- **Settings:** Theme, units, GPS, notifications. Keep simple.
-- **Recovery:** Trip state persistence; graceful recovery after force-stop.
-
----
-
-## Subtle Preferences (Add Over Time)
-
-*The user can add preferences here as they discover them. Examples:*
-
-| Area | Preference | Example |
-|------|------------|---------|
-| **Colors** | Prefer X over Y | "Keep toolbar background as-is" |
-| **Spacing** | Tight vs loose | "8dp grid; don't add extra padding" |
-| **Typography** | Font sizes, weights | "Body text 14sp; headings 18sp" |
-| **Flow** | Order of screens, buttons | "Trip input stays primary; history secondary" |
-| **Wording** | Labels, strings | "Use 'End trip' not 'Finish trip'" |
-| **Code style** | Kotlin, naming | "Prefer `viewModel` over `vm`" |
+- OutOfRouteBuddy is for **solo drivers** first: advanced analytics and tracking for out-of-route miles.
+- **No social features, no ads, no cloud-first** — see GOAL_AND_MISSION.
+- UI should stay focused: trip input, history, statistics, settings. No unwarranted layout or flow changes.
 
 ---
 
-## Agent Behavior (Heavy Features)
+## Must Not Change (without explicit permission)
 
-**When the user says "implement X feature" (or any Heavy-tier feature):** Do not proceed to implementation. Instead, ask:
-
-> **Would you like to see a generated image or layout or simulate a merge?**
-
-See [LOOP_TIERING.md](./LOOP_TIERING.md) § Question Lock. This applies in any context (loop or ad-hoc).
+- **UI layout and flow** — User rule: *"DO NOT MAKE ANY UNWARRANTED CHANGES TO THE UI WITHOUT MY PERMISSION."* When uncertain → suggest, don't implement.
+- **Statistics scope** — Monthly-only change (CRUCIAL §9) is deferred until user approves; do not remove weekly/yearly without approval.
+- **Persistence and recovery** — Follow KNOWN_TRUTHS; no new persistence paths or schema changes beyond planned migrations without approval.
 
 ---
 
-## How to Use (Improvement Loop)
+## Subtle Preferences
 
-1. **Phase 0.0a:** Read this doc first. Note: "Design intent: X. Must not change: Y. User preferences: Z."
-2. **Before any UI change:** Check against "Must Not Change" and "Subtle Preferences." If uncertain, suggest in summary; do not implement.
-3. **When researching design:** Compare proposals to this doc. Prefer options that align with original intent.
-4. **Summary:** If a preference was clarified this run, add it here (Light task).
+*(Add here any specific preferences you discover or the user states — e.g. "prefer dark mode," "keep version visible in Settings," "no animation on stat cards.")*
+
+- Version or useful info in Settings is acceptable (e.g. "Version 1.0.2" in About).
+- Accessibility (contentDescription, labels) is always in scope as small improvements.
+- One subtle improvement per category per loop (Kaizen); avoid overload.
 
 ---
 
-*Update when the user expresses new preferences. File Organizer can propose additions from summary discussions.*
+*Read this before any research or changes in the Improvement Loop. Update when design intent or preferences change.*

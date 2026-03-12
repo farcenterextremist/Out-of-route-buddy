@@ -1,0 +1,113 @@
+================================================================================
+  OUTOFROUTEBUDDY — THREE-TIER IMPROVEMENT LOOP
+================================================================================
+
+Copy this file to your Desktop:
+  copy OUTOFROUTEBUDDY_THREE_TIER_SETUP.txt %USERPROFILE%\Desktop\
+
+--------------------------------------------------------------------------------
+  OVERVIEW
+--------------------------------------------------------------------------------
+
+The Improvement Loop uses three tiers to categorize tasks. When you say "GO",
+the agent completes tasks from todo lists (CRUCIAL, suggested next steps). No
+fixed duration — we work through the lists.
+
+     +------------------+     +------------------+     +------------------+
+     |      LIGHT       |     |     MEDIUM       |     |      HEAVY       |
+     |  (auto, no gate) | --> |  (auto, no gate) | --> | (human approval) |
+     +------------------+     +------------------+     +------------------+
+              |                        |                        |
+              v                        v                        v
+         Additive only           Small, localized         New features,
+         (docs, verify,          (1-2 files, low          architecture,
+          debug, brainstorm)       risk, refactors)         large refactors)
+
+
+--------------------------------------------------------------------------------
+  LIGHT TIER
+--------------------------------------------------------------------------------
+
+  Runs autonomously. No approval prompts.
+
+  • Verification: doc links, PII grep, CRUCIAL linked
+  • Documentation: cross-links, FAILING_OR_IGNORED_TESTS
+  • Strings / accessibility: contentDescription, string resources
+  • Debugging: document debug steps, add debug logs (additive), verify paths
+  • Brainstorming: add ideas to BRAINSTORM_AND_TASKS
+  • Populate task list: classify ideas into Light/Medium/Heavy
+
+  Rule: Additive only. No code removal, no refactor, no new logic.
+
+  ASCII:
+  ┌─────────────────────────────────────────────────────────┐
+  │  LIGHT = docs + verify + debug + brainstorm + populate  │
+  │  ─────────────────────────────────────────────────────  │
+  │  Safe. Fast. No risk.                                   │
+  └─────────────────────────────────────────────────────────┘
+
+
+--------------------------------------------------------------------------------
+  MEDIUM TIER
+--------------------------------------------------------------------------------
+
+  Runs autonomously when user says GO. Small, localized changes.
+
+  • Ship readiness: version bump, changelog, lint fixes
+  • Dead code removal: 1–2 safest items from REDUNDANT_DEAD_CODE_REPORT
+  • Test fix: fix one trivial ignored test
+  • Medium refactors: extract one function, rename one class, move one file
+  • Sandbox improvement: advance completion % for 1–2 ideas in HEAVY_TIER_IDEAS
+  • Logging: add one clear log in trip start → save path
+
+  Rule: Small, localized. Low risk. One module or fewer.
+
+  ASCII:
+  ┌─────────────────────────────────────────────────────────┐
+  │  MEDIUM = small code + dead code + test fix + refactor   │
+  │  ─────────────────────────────────────────────────────  │
+  │  Localized. Low risk. Supports shipping.                 │
+  └─────────────────────────────────────────────────────────┘
+
+
+--------------------------------------------------------------------------------
+  HEAVY TIER
+--------------------------------------------------------------------------------
+
+  Always requires human approval. Never run autonomously.
+
+  • New features: route deviation map, multi-user, driver ranking
+  • Architecture: Gradle 9 migration, schema changes
+  • Large refactors: statistics monthly-only, repository interface, multi-file
+
+  Gate: Question lock first. "Would you like to see a generated image or
+        layout or simulate a merge?" Then: "approve 100% implement"
+
+  Rule: One by one. Never run the entire Heavy tier at once.
+
+  ASCII:
+  ┌─────────────────────────────────────────────────────────┐
+  │  HEAVY = new features + architecture + large refactors  │
+  │  ─────────────────────────────────────────────────────  │
+  │  Human approval required. Question lock. One at a time.   │
+  └─────────────────────────────────────────────────────────┘
+
+
+--------------------------------------------------------------------------------
+  QUICK REFERENCE
+--------------------------------------------------------------------------------
+
+  LIGHT  |  Additive only.  Docs, verify, debug, brainstorm.
+  MEDIUM |  Small, localized.  Dead code, test fix, medium refactors.
+  HEAVY  |  New features, architecture, large refactors.  Human approval.
+
+  When you say "GO" — Light + Medium run. Heavy deferred.
+  When you say "GO light" — Light only.
+  When you say "GO full" — All phases 0–4.
+
+  Revert: "revert" restores from pre-loop checkpoint.
+
+
+--------------------------------------------------------------------------------
+  See docs/automation/LOOP_TIERING.md for full details.
+================================================================================

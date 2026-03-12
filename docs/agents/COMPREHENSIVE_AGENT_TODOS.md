@@ -12,8 +12,8 @@ Each agent has a single checklist. When a task is done, check it off here and in
 **Agent card:** `docs/agents/roles/design-creative-manager.md`  
 **Data set:** `docs/agents/data-sets/design-creative.md`
 
-- [ ] **CRUCIAL #6** — Create `docs/product/ROADMAP.md`: high-level themes and "what's next" (align with WORKER_TODOS_AND_IDEAS where useful).
-- [ ] **CRUCIAL #6** — Create at least one `docs/product/FEATURE_BRIEF_<name>.md` (e.g. Auto drive or Offline persistence) so Back-end, QA, and UI/UX have a single source of truth.
+- [x] **CRUCIAL #6** — Create `docs/product/ROADMAP.md`. *(Done.)*
+- [x] **CRUCIAL #6** — Create at least one `docs/product/FEATURE_BRIEF_<name>.md`. *(Done: multiple briefs exist.)*
 - [ ] Draft a short product brief for **Auto drive detected** mode (value, when to use it).
 - [ ] Prioritize next 3 features after emulator polish and IMAP (e.g. Auto drive, Reports screen, History improvements).
 - [ ] Align workdays (Sunday 3–4 hr) with a biweekly "sprint" note so the team knows what to batch.
@@ -56,8 +56,8 @@ Each agent has a single checklist. When a task is done, check it off here and in
 **Agent card:** `docs/agents/roles/backend-engineer.md`  
 **Data set:** `docs/agents/data-sets/backend.md`
 
-- [ ] **CRUCIAL #2** — OfflineDataManager: implement `loadOfflineStorage()` and `saveOfflineStorage()` (actual load/save to local storage), or document as future phase and add `docs/product/FEATURE_BRIEF_offline_persistence.md`.
-- [ ] **CRUCIAL #3** — TripStateManager: implement or document location jump detection (line 231).
+- [x] **CRUCIAL #2** — OfflineDataManager: implement `loadOfflineStorage()` and `saveOfflineStorage()`. *(Done: DataStore + Gson; see docs/technical/OFFLINE_PERSISTENCE.md.)*
+- [x] **CRUCIAL #3** — TripStateManager: implement or document location jump detection. *(Done: updateGpsMetadata() implements jump detection; persisted to TripEntity.locationJumpsDetected.)*
 - [ ] **CRUCIAL #9 (Statistics: monthly only)** — In `TripRepository` and `DomainTripRepositoryAdapter`, remove or deprecate `getWeeklyTripStatistics()` and `getYearlyTripStatistics()`; keep `getMonthlyTripStatistics()`. Update all implementations and callers. Ref: `domain/repository/TripRepository.kt`, `data/repository/DomainTripRepositoryAdapter.kt`.
 - [ ] Define **Auto drive detected** logic: what triggers it (e.g. movement + speed threshold, or geofence), and how it starts a trip or shows the button.
 - [ ] Implement trip state persistence so an active trip survives app kill (verify and document).
@@ -87,9 +87,9 @@ Each agent has a single checklist. When a task is done, check it off here and in
 **Agent card:** `docs/agents/roles/qa-engineer.md`  
 **Data set:** `docs/agents/data-sets/qa.md`
 
-- [ ] **CRUCIAL #5** — TripInputViewModelIntegrationTest: fix or document the ignored test (dispatcher conflict with Dispatchers.IO).
-- [ ] **CRUCIAL #5** — TripHistoryByDateViewModelTest: complete with Robolectric/DI or document as integration-only and add to test plan.
-- [ ] **CRUCIAL #5** — LocationValidationServiceTest: fix in unit suite or ignore with reason. (Improvement Loop: unit tests only; no instrumented tests in this environment.)
+- [x] **CRUCIAL #5** — TripInputViewModelIntegrationTest: fix or document. *(Done: resolved per FAILING_OR_IGNORED_TESTS.)*
+- [x] **CRUCIAL #5** — TripHistoryByDateViewModelTest: complete with Robolectric/DI or document as integration-only. *(Done: resolved per FAILING_OR_IGNORED_TESTS.)*
+- [ ] **CRUCIAL #5** — LocationValidationServiceTest: fix in unit suite or ignore with reason.
 - [ ] **CRUCIAL #5** — ThemeScreenshotTest: add Paparazzi and enable, or document in `docs/qa/` that screenshot tests are deferred.
 - [ ] **CRUCIAL #9 (Statistics: monthly only)** — Update tests: remove or adjust assertions for weekly/yearly; mock only `getMonthlyTripStatistics()` where relevant. Ref: `TripStatisticsWiringTest.kt`, `TripInputViewModelIntegrationTest.kt`, `TestConfig.kt` (statistics_button description).
 - [ ] Add test cases for **Auto drive detected** once the flow is defined.
@@ -132,7 +132,7 @@ Each agent has a single checklist. When a task is done, check it off here and in
 **Agent card:** `docs/agents/roles/file-organizer.md`  
 **Data set:** `docs/agents/data-sets/file-organizer.md`
 
-- [ ] **CRUCIAL #8** — Ensure `docs/CRUCIAL_IMPROVEMENTS_TODO.md` is referenced from `docs/agents/WORKER_TODOS_AND_IDEAS.md` (already linked) and optionally from coordinator instructions or README.
+- [x] **CRUCIAL #8** — Ensure `docs/CRUCIAL_IMPROVEMENTS_TODO.md` is referenced from `docs/agents/WORKER_TODOS_AND_IDEAS.md` and optionally from coordinator instructions or README. *(Done.)*
 - [ ] Optionally add one-line in `docs/agents/team-parameters.md` or README: "Current crucial improvement list: docs/CRUCIAL_IMPROVEMENTS_TODO.md."
 - [ ] Propose a small reorg: e.g. `docs/agents/` vs `docs/product/` for roadmaps vs agent instructions, and where "future plans" live.
 - [ ] Ensure EMULATOR_PERFECTION_PLAN, WORKER_TODOS, OPEN_LINE doc, and this COMPREHENSIVE_AGENT_TODOS are linked from README or a single docs index.

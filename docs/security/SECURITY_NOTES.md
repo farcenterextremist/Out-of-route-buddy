@@ -168,3 +168,16 @@ When **Export to PDF/CSV** (or another sensitive flow) is added or significantly
 - **Red Team:** Run a short Purple exercise targeting that flow (e.g. path traversal, share scope). Document what Blue should check; log to `docs/agents/data-sets/security-exercises/`.
 - **Blue Team:** Define what "alarm" means for that surface (what we log or enforce). After Red's action, answer "did the alarm go off?"; if not, document the gap and propose or implement a fix. Every fix should be auditable (file or config we can point to). Where possible, Red re-runs the same attack to verify the fix.
 - **User:** Will be emailed when the review and optional Purple exercise are done (Human-in-the-Loop).
+
+---
+
+## 13. Cursor rules and Improvement Loop integrity (Purple Team 2025-03-11)
+
+**Context:** `.cursor/rules/*.mdc` and `docs/automation/*.md` control agent behavior. Malicious or accidental changes could weaken security (e.g. skip Phase 0.3 self-improvement, skip Phase 1.2 security).
+
+**Recommendations:**
+- **Rules file changes:** Any change to `.cursor/rules/*.mdc` requires **PR review**. There is no automated rule integrity check. Review for suspicious instructions (e.g. "skip Phase", "skip security", "bypass").
+- **Improvement loop docs:** Changes to `docs/automation/IMPROVEMENT_LOOP_ROUTINE.md`, `CURSOR_SELF_IMPROVEMENT.md` require PR review. Phase 0.3 (Cursor self-improvement) and Phase 1.2 (security) must not be marked optional or skippable without explicit user approval.
+- **Command Allowlist:** For Purple exercises and autonomous loops, use Command Allowlist with `cd c:\Users\brand\OutofRoutebuddy` prefix. Avoid Run Everything for untrusted sessions. See `docs/automation/AUTONOMOUS_LOOP_SETUP.md`.
+
+*Added: Purple Team exercise 2025-03-11 (see `docs/agents/data-sets/security-exercises/2025-03-11-purple-improvement-loop-cursor.md`).*

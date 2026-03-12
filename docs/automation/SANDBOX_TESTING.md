@@ -44,7 +44,7 @@ For new app features (auto drive, reports, address input, end-of-trip notificati
 
 ---
 
-## 3. Sandbox Phase in 2-Hour Loop (Optional)
+## 3. Sandbox Phase in Improvement Loop (Optional)
 
 Add a **sandbox phase** before Phase 1 for higher-risk items:
 

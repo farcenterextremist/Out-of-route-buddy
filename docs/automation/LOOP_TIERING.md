@@ -20,7 +20,7 @@
    - **Never run the entire Heavy tier by itself.** Heavy features are implemented **one by one**.
    - **Per-feature gate:** Before implementing each Heavy feature, ask: "Are you ready to implement this new feature? [Feature name]"
    - **Wait for user response** before implementing that feature. Then move to the next (if any); ask again.
-4. **Full autonomous mode:** Light and Medium run **without stopping**. No prompts. Execute all Light and Medium tasks. Heavy tasks → document in summary for next run; do not implement without user approval.
+4. **Full autonomous mode:** Light and Medium run **without stopping**. No prompts. Execute all Light and Medium tasks. **During execution:** Check TODOs (CRUCIAL, suggested next steps, TASKS_INDEX or COMPREHENSIVE_AGENT_TODOS); tick off completed items; add new TODOs when you discover work to track. Heavy tasks → document in summary for next run; do not implement without user approval.
 5. **User response options (when Heavy exists):**
    - "Implement all" (light + medium + heavy)
    - "Light and medium only" (skip heavy; run autonomously)
@@ -47,6 +47,7 @@
 | **Preference capture** | When user clarifies a preference this run, add to [USER_PREFERENCES_AND_DESIGN_INTENT.md](./USER_PREFERENCES_AND_DESIGN_INTENT.md) § Subtle Preferences |
 | **Brainstorming & idea generation** | Based on current context, user feedback, and research: document possible ideas, suggestions, and future improvements. Add to [BRAINSTORM_AND_TASKS.md](./BRAINSTORM_AND_TASKS.md) or suggested next steps. |
 | **Populate task list** | Classify brainstormed ideas into Light/Medium/Heavy; add to CRUCIAL, LOOP_TIERING examples, or FUTURE_IDEAS (sandboxed). Update as we learn. |
+| **Debugging** | Document debug steps, add debug logs (additive), verify debug paths, document in DEBUGGING.md. No logic changes. |
 
 **Rule:** No code removal, no refactor, no new logic. Additive only (strings, docs, comments).
 
@@ -69,6 +70,7 @@
 | **Sandbox testing for merge** | Test new features in sandbox (branch, build variant) before merging into main project. Validate behavior; merge only when safe. |
 | **Advanced beautification & organizing research** | Research color schemes, typography, spacing, elevation, professional UI patterns; document organizing best practices; apply one subtle improvement per loop. |
 | **Code structure review** | Assess one module for feature-based vs layer-based organization; document finding in summary (no change unless user approves). See [REDUNDANT_DEAD_CODE_REPORT.md](../REDUNDANT_DEAD_CODE_REPORT.md) refactor priority quadrant. |
+| **Medium refactors** | Small, localized refactors: extract one function, rename one class, move one file. Low risk. One module or fewer. |
 | **Metadata collection/display** | Add one opt-in metadata collection point (e.g., trip-end rating) or one metadata display (e.g., "Trips this week" in Settings). See [USER_METADATA_USAGE_GUIDE.md](./USER_METADATA_USAGE_GUIDE.md). Store on-device; no PII. |
 | **Pre-loop checkpoint** | Save a copy (git commit/tag) before the Improvement Loop so you can **revert** if something breaks. Say **"revert"** to restore. |
 | **Research improvements & populate tasks** | Research more ways to improve (from user feedback, summaries, industry patterns). Add ideas to [BRAINSTORM_AND_TASKS.md](./BRAINSTORM_AND_TASKS.md); classify and populate CRUCIAL, LOOP_TIERING, or FUTURE_IDEAS. Update task lists as we learn. |
@@ -83,9 +85,12 @@
 | Task type | Examples |
 |-----------|----------|
 | **Featured features** | New features from [FUTURE_IDEAS.md](../product/FUTURE_IDEAS.md) (multi-user sharing, driver ranking, route deviation map, sandboxed virtual fleet, optional email signup for updates, etc.) |
+| **UI polish (icon beautification)** | Trash can / delete icons — make them more professional; **select the most aesthetic icon** with care (e.g. Material Design 3 trash variant). Heavy: requires visual approval. See FUTURE_IDEAS § 5.1. |
+| **Navigation / app chrome** | Scrolling top toolbar/taskbar; hamburger menu to the left of the "Out of route" title. See FUTURE_IDEAS § 6.1, § 6.2. |
+| **Branding** | Possible app name change — ideas to be thought through later. See FUTURE_IDEAS § 7.1. |
 | **ROADMAP features** | Auto drive, Reports screen, address input — **only after sandbox validation** |
 | **Architecture** | Gradle 9 migration, schema changes, new persistence paths |
-| **Refactors** | Statistics monthly-only; repository interface changes |
+| **Large refactors** | Statistics monthly-only; repository interface changes; multi-file refactors; cross-module changes |
 
 **Rule:** New features only. **Must be sandboxed and confirmed working before promotion to Heavy.** See [Sandboxing for new features](#sandboxing-for-new-features) below.
 
@@ -166,7 +171,7 @@ Before implementing **each** Heavy feature:
 ```
 Hold up. Would you like me to implement any of these heavy tasks?
 
-**Heavy tasks (one by one):**
+**Heavy tasks (one by one):** List **favorites first** per [HEAVY_IDEAS_FAVORITES.md](./HEAVY_IDEAS_FAVORITES.md); keep list lightly populated.
 - [Task 1]
 - [Task 2]
 

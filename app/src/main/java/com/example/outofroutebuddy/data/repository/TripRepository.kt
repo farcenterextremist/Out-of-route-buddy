@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.room.*
 import com.example.outofroutebuddy.data.dao.TripDao
 import com.example.outofroutebuddy.data.entities.TripEntity
+import com.example.outofroutebuddy.domain.models.DataTier
 import com.example.outofroutebuddy.models.Trip
 import com.example.outofroutebuddy.util.TimeoutManager
 import com.example.outofroutebuddy.validation.ValidationFramework
@@ -87,6 +88,7 @@ class TripRepository(private val tripDao: TripDao) {
                         backRoadsPercent = gpsMetadata?.get("backRoadsPercent") as? Double ?: 0.0,
                         backRoadsMinutes = gpsMetadata?.get("backRoadsMinutes") as? Int ?: 0,
                         truckStopsVisited = gpsMetadata?.get("truckStopsVisited") as? Int ?: 0,
+                        dataTier = gpsMetadata?.get("dataTier") as? DataTier ?: DataTier.GOLD,
                     )
 
                     // ✅ NEW: Validate entity before database insertion
@@ -219,6 +221,7 @@ class TripRepository(private val tripDao: TripDao) {
                     backRoadsPercent = existing.backRoadsPercent,
                     backRoadsMinutes = existing.backRoadsMinutes,
                     truckStopsVisited = existing.truckStopsVisited,
+                    dataTier = existing.dataTier,
                 )
             tripDao.updateTrip(entity)
             Log.d(TAG, "Successfully updated trip")
@@ -241,6 +244,22 @@ class TripRepository(private val tripDao: TripDao) {
             true
         } catch (e: Exception) {
             Log.e(TAG, "Failed to delete trip: ${e.message}", e)
+            false
+        }
+    }
+
+    /**
+     * Set a trip's data tier. Returns true if trip was found and updated.
+     */
+    suspend fun setTripTier(tripId: Long, tier: DataTier): Boolean {
+        return try {
+            val existing = withContext(Dispatchers.IO) { tripDao.getTripById(tripId) } ?: return false
+            val entity = existing.copy(dataTier = tier)
+            withContext(Dispatchers.IO) { tripDao.updateTrip(entity) }
+            Log.d(TAG, "Successfully set trip $tripId tier to $tier")
+            true
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to set trip tier: ${e.message}", e)
             false
         }
     }
@@ -380,6 +399,22 @@ class TripRepository(private val tripDao: TripDao) {
     }
 
     /**
+     * Get trip entities by data tier (SILVER, PLATINUM, GOLD).
+     */
+    fun getTripEntitiesByTier(tier: DataTier): Flow<List<TripEntity>> {
+        return tripDao.getTripsByTier(tier)
+    }
+
+    /**
+     * Get trip IDs by data tier (for bulk ops / counts).
+     */
+    suspend fun getTripIdsByTier(tier: DataTier): List<Long> {
+        return withContext(Dispatchers.IO) {
+            tripDao.getTripIdsByTier(tier)
+        }
+    }
+
+    /**
      * Get total miles for today
      */
     suspend fun getTodayTotalMiles(): Double {
@@ -450,11 +485,17 @@ class TripRepository(private val tripDao: TripDao) {
 
     /**
      * Delete trips with date strictly before [cutoffDate] (for "delete old data from device").
+     * When [maxTier] is null, deletes all tiers before cutoff. When set, deletes only trips at or below [maxTier] (e.g. SILVER only, or SILVER+PLATINUM).
      */
-    suspend fun deleteTripsOlderThan(cutoffDate: Date) {
+    suspend fun deleteTripsOlderThan(cutoffDate: Date, maxTier: DataTier? = null) {
         try {
-            tripDao.deleteTripsBefore(cutoffDate)
-            Log.d(TAG, "Successfully deleted trips older than $cutoffDate")
+            if (maxTier == null) {
+                tripDao.deleteTripsBefore(cutoffDate)
+            } else {
+                val tiersAtOrBelow = DataTier.entries.take(maxTier.ordinal + 1).map { it.name }
+                tripDao.deleteTripsBeforeWithTiers(cutoffDate, tiersAtOrBelow)
+            }
+            Log.d(TAG, "Successfully deleted trips older than $cutoffDate${if (maxTier != null) " (tier at or below $maxTier)" else ""}")
         } catch (e: Exception) {
             Log.e(TAG, "Failed to delete trips older than $cutoffDate: ${e.message}", e)
             throw RuntimeException("Failed to delete old trip data: ${e.message}", e)

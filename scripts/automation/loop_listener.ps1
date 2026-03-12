@@ -5,7 +5,7 @@
 
 param(
     [Parameter(Mandatory = $true)]
-    [ValidateSet("loop_start", "phase_start", "phase_end", "pulse", "metrics", "loop_end")]
+    [ValidateSet("loop_start", "phase_start", "phase_end", "pulse", "metrics", "loop_end", "cyber_security_simulate", "cyber_security_simulate_result")]
     [string]$Event,
 
     [string]$Phase = "",

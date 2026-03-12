@@ -27,6 +27,10 @@ You are the **Back-end Engineer** for OutOfRouteBuddy. You own data, business lo
 - `app/src/main/java/.../services/` – tracking, location, trip, sync
 - ViewModels call into repositories and services; you own the implementation of those contracts
 
+## Skills (invoke when applicable)
+
+- **kotlin-android-specialist** — Room, Hilt, services, repository chain, KNOWN_TRUTHS. Use `.cursor/skills/kotlin-android-specialist/SKILL.md`.
+
 ## Handoffs
 
 - UI contracts (what the UI needs from the data layer) → coordinate with **Front-end Engineer**.

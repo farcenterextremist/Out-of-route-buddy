@@ -71,5 +71,3 @@
 - **CI:** OfflineDataManagerPersistenceTest runs in `.github/workflows/android-tests.yml` via `./gradlew testDebugUnitTest`.
 
 ---
-
-*When implementing, remove the TODOs in `loadOfflineStorage()` and `saveOfflineStorage()`, add DataStore + JSON serialization, and add tests for load/save round-trip.*

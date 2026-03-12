@@ -4,6 +4,7 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 import androidx.room.TypeConverters
 import com.example.outofroutebuddy.data.util.DateConverter
+import com.example.outofroutebuddy.domain.models.DataTier
 import java.util.Date
 
 /**
@@ -51,6 +52,8 @@ data class TripEntity(
     val backRoadsPercent: Double = 0.0,
     val backRoadsMinutes: Int = 0,
     val truckStopsVisited: Int = 0,
+    /** Data tier: SILVER (may delete), PLATINUM (demote/promote, synthetic ok), GOLD (human, digital gold). */
+    val dataTier: DataTier = DataTier.GOLD,
 ) {
     val dispatchedMiles: Double
         get() = loadedMiles + bounceMiles
