@@ -15,6 +15,7 @@
 | **MainActivityRobolectricTest** (`continueTrip_fromRecovery_usesActivityScopedViewModel_andStartsService`) | Ignored because recovery flow races with Robolectric looper and overlay/service startup. | QA / Front-end | @Ignore added with reason. **Fix by:** Keep covered by instrumented recovery flow or stabilize looper/service wiring in test harness. |
 | **OutOfRouteApplicationTest** (`application_isHealthy_afterInit_returnsTrue`, `application_getDatabaseError_beforeAnyFailure_returnsNull`) | Ignored because Hilt tests run with `HiltTestApplication`, not the concrete `OutOfRouteApplication`. Covered by instrumented `ApplicationInitializationTest`. | QA / Platform | @Ignore added with reason. **Fix by:** Keep covered by instrumented suite or add non-Hilt integration test path. |
 | **PerformanceTestSuite** (`validationPerformance batch validation should maintain performance`) | Flaky; may fail on slower CI/machines due to timing thresholds. | QA / Performance | **Fix by:** Relax timing threshold, add @Ignore with reason, or move to separate performance suite. |
+| **PerformanceTestSuite** (`performanceRegression memory usage should not increase significantly`) | **Status:** Fixed. Was asserting absolute peak used heap ≤75MB; test JVM often has larger heap. Now asserts *increase* from initial <100MB. | QA / Performance | N/A (resolved). |
 
 ---
 

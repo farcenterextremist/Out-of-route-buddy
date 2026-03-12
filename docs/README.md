@@ -59,6 +59,7 @@ Short index of the key docs for OutOfRouteBuddy. Start here for product, archite
 | [automation/IMPROVEMENT_LOOP_RUN_LEDGER.md](./automation/IMPROVEMENT_LOOP_RUN_LEDGER.md) | Run ledger: append one block per improvement loop run (Focus, Variant, Summary link, Metrics, Next). |
 | [automation/IMPROVEMENT_LOOP_REASONING.md](./automation/IMPROVEMENT_LOOP_REASONING.md) | Logic and reasoning: decision checkpoints, reasoning framework, traceable rationale in summaries. |
 | [automation/LOOP_TIERING.md](./automation/LOOP_TIERING.md) | Task tiering: Light (auto), Medium/Heavy (user approval). |
+| [automation/HEAVY_IDEAS_FAVORITES.md](./automation/HEAVY_IDEAS_FAVORITES.md) | User favorites for Heavy ideas; surface favorites first; keep Heavy list lightly populated. |
 | [automation/DESIGN_AND_UX_RESEARCH.md](./automation/DESIGN_AND_UX_RESEARCH.md) | Design research: color schemes, templates, state flows, beautification, professionalism—integrated into loops. |
 | [automation/CURSOR_SELF_IMPROVEMENT.md](./automation/CURSOR_SELF_IMPROVEMENT.md) | Safe web search, prompt-injection protections, contextualization. |
 | [automation/TOKEN_REDUCTION_LOOP.md](./automation/TOKEN_REDUCTION_LOOP.md) | Token reduction: research, strategies, audit loop; run on demand or Phase 0.6. |
@@ -71,6 +72,8 @@ Short index of the key docs for OutOfRouteBuddy. Start here for product, archite
 | [automation/LOOP_LISTENER.md](./automation/LOOP_LISTENER.md) | Loop event recording (JSONL) for data and improvement. |
 | [automation/IMPROVEMENT_LOOP_AUDIT.md](./automation/IMPROVEMENT_LOOP_AUDIT.md) | Blind spots, loose ends, scope summary; re-run after major changes. |
 | [qa/SIMULATIONS_AND_MOCKS.md](./qa/SIMULATIONS_AND_MOCKS.md) | Simulation and mock strategy for tests; MockGpsSynchronizationService, MockTripRepository, etc. |
+| [automation/CYBER_SECURITY_LOOP_MASTER_PLAN.md](./automation/CYBER_SECURITY_LOOP_MASTER_PLAN.md) | Cyber Security Loop: completion %, phases, visual roadmap. |
+| [automation/CYBER_SECURITY_DATA_SUMMARY.md](./automation/CYBER_SECURITY_DATA_SUMMARY.md) | **Cyber Security data: what we collected, what it means, how to use it.** |
 
 ---
 

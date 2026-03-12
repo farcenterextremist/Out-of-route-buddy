@@ -28,7 +28,9 @@
 
 7. **Write an A-grade summary.** Use [LOOP_METRICS_TEMPLATE.md](./LOOP_METRICS_TEMPLATE.md). Output `IMPROVEMENT_LOOP_SUMMARY_<date>.md` with metrics, what was done, reasoning, suggested next steps, next run focus, quality grade.
 
-8. **Append one block to the run ledger.** At the end of every run, add a new section to [IMPROVEMENT_LOOP_RUN_LEDGER.md](./IMPROVEMENT_LOOP_RUN_LEDGER.md) using the template in that file. This keeps a shared, chronological record for us and for other agents.
+8. **Recommend new ideas every run (required).** In the summary, the "File Organizer: recommended new ideas" section must contain **at least 1–2 new ideas** (Light, Medium, or Heavy) and **at least 1–2 new Heavy ideas** (documented in FUTURE_IDEAS and listed in the summary). Do not skip this. See [IMPROVEMENT_LOOP_TEAMS.md](./IMPROVEMENT_LOOP_TEAMS.md) and routine Phase 4.3 item 11.
+
+9. **Append one block to the run ledger.** At the end of every run, add a new section to [IMPROVEMENT_LOOP_RUN_LEDGER.md](./IMPROVEMENT_LOOP_RUN_LEDGER.md) using the template in that file. This keeps a shared, chronological record for us and for other agents.
 
 ---
 

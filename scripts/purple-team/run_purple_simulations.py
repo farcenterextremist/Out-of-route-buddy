@@ -18,7 +18,7 @@ Output:
 
 import argparse
 import json
-import os
+import re
 import subprocess
 import sys
 from datetime import date
@@ -32,9 +32,15 @@ def repo_root() -> Path:
 
 
 def run_gradle_security_tests(repo: Path):
-    """Run SecuritySimulationTest via Gradle. Returns (passed, output)."""
+    """Run SecuritySimulationTest + TripExporterTest (export path traversal) via Gradle. Returns (passed, output)."""
     gradlew = "gradlew.bat" if sys.platform == "win32" else "./gradlew"
-    cmd = [gradlew, ":app:testDebugUnitTest", "--tests", "*SecuritySimulation*", "-q"]
+    # SecuritySimulationTest: validation bypass, path traversal. TripExporterTest: export path traversal (SECURITY_NOTES §5).
+    cmd = [
+        gradlew, ":app:testDebugUnitTest",
+        "--tests", "*SecuritySimulation*",
+        "--tests", "*TripExporter*",
+        "-q",
+    ]
     try:
         result = subprocess.run(
             cmd,
@@ -50,14 +56,44 @@ def run_gradle_security_tests(repo: Path):
         return False, str(e)
 
 
-def build_validation_simulations(tests_passed: bool) -> list:
-    """Build validation_simulations from known playbooks."""
-    playbooks = [
-        ("trip_validation_rejects_nan", "reject", "ValidationFramework, InputValidator"),
-        ("trip_validation_rejects_negative", "reject", "ValidationFramework, InputValidator"),
-        ("trip_validation_rejects_out_of_range", "reject", "InputValidator"),
-        ("input_validator_rejects_path_traversal", "reject", "InputValidator.sanitizeFilePath"),
-    ]
+# Fallback when playbook discovery fails or dir is empty
+DEFAULT_PLAYBOOKS = [
+    ("trip_validation_rejects_nan", "reject", "ValidationFramework, InputValidator"),
+    ("trip_validation_rejects_negative", "reject", "ValidationFramework, InputValidator"),
+    ("trip_validation_rejects_out_of_range", "reject", "InputValidator"),
+    ("input_validator_rejects_path_traversal", "reject", "InputValidator.sanitizeFilePath"),
+]
+
+
+def discover_playbooks(repo: Path) -> list:
+    """Scan attack-playbooks/*.md for simulation_type=validation. Returns [(attack_id, expected, blue_alarm), ...]."""
+    playbooks_dir = repo / "docs" / "agents" / "data-sets" / "attack-playbooks"
+    if not playbooks_dir.exists():
+        return []
+    result = []
+    for md_file in sorted(playbooks_dir.glob("*.md")):
+        try:
+            content = md_file.read_text(encoding="utf-8")
+            # Parse table: | simulation_type | validation | and | expected | reject |
+            sim_match = re.search(r"\|\s*simulation_type\s*\|\s*(\w+)\s*\|", content)
+            exp_match = re.search(r"\|\s*expected\s*\|\s*(\w+)\s*\|", content)
+            alarm_match = re.search(r"\|\s*blue_alarm\s*\|\s*([^|]+)\s*\|", content)
+            id_match = re.search(r"\|\s*id\s*\|\s*([^|]+)\s*\|", content)
+            if sim_match and sim_match.group(1) == "validation":
+                playbook_id = (id_match.group(1).strip() if id_match else md_file.stem).replace("-", "_")
+                expected = exp_match.group(1).strip() if exp_match else "reject"
+                blue_alarm = alarm_match.group(1).strip() if alarm_match else ""
+                result.append((playbook_id, expected, blue_alarm))
+        except Exception:
+            continue
+    return result
+
+
+def build_validation_simulations(tests_passed: bool, repo: Path, use_discovery: bool) -> list:
+    """Build validation_simulations from discovered playbooks or fallback to default."""
+    playbooks = discover_playbooks(repo) if use_discovery else []
+    if not playbooks:
+        playbooks = DEFAULT_PLAYBOOKS
     return [
         {
             "attack": p[0],
@@ -95,6 +131,7 @@ def main() -> int:
     parser.add_argument("--validation-only", action="store_true", help="Skip unit tests")
     parser.add_argument("--full", action="store_true", help="Run full suite (default)")
     parser.add_argument("--with-http", action="store_true", help="Include HTTP simulations (deferred)")
+    parser.add_argument("--discover-playbooks", action="store_true", help="Scan attack-playbooks/*.md for validation playbooks")
     args = parser.parse_args()
 
     repo = repo_root()
@@ -110,7 +147,7 @@ def main() -> int:
         if not tests_passed:
             print(f"SecuritySimulationTest failed:\n{output}", file=sys.stderr)
 
-    validation_sims = build_validation_simulations(tests_passed)
+    validation_sims = build_validation_simulations(tests_passed, repo, args.discover_playbooks)
     synthetic_scenarios = build_synthetic_scenarios()
     http_sims = []  # --with-http deferred
 

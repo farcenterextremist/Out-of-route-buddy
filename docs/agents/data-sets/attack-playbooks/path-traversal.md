@@ -1,29 +1,15 @@
-# Playbook: Path Traversal
+# path-traversal
 
-**id:** path-traversal  
-**name:** Path traversal in file input  
-**surface:** App — InputValidator  
-**simulation_type:** validation  
-**technique_id:** (custom)  
-**expected:** reject  
-**blue_alarm:** InputValidator.sanitizeFilePath rejects traversal patterns
+| Field | Value |
+|-------|-------|
+| id | path-traversal |
+| name | Path traversal in file input |
+| surface | App |
+| simulation_type | validation |
+| expected | reject |
+| blue_alarm | InputValidator.sanitizeFilePath |
+| technique_id | — |
 
----
+## Description
 
-## Red Action
-
-Send path traversal inputs:
-
-- `../../etc/passwd`
-- `~/secret.txt`
-- `/etc/passwd`
-- `C:\Windows\system32`
-
-## Expected Behavior
-
-- InputValidator.sanitizeFilePath returns null for all above
-- No file access outside app-controlled paths
-
-## Simulation
-
-SecuritySimulationTest.kt calls InputValidator.sanitizeFilePath with these inputs; asserts null.
+`../../etc/passwd`, `~/secret.txt`; InputValidator.sanitizeFilePath must reject.

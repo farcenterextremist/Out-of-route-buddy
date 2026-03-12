@@ -50,14 +50,16 @@
 
 | When | Action |
 |------|--------|
-| **Loop start (Step 0)** | Read this doc; note if practices need refresh from latest research; align run with current list. |
-| **Loop end (Step 7)** | Append one line to §3 "What worked / What didn't" for this run (run_id, 1–2 bullets). Add any new practice learned this run to §1 and cite source. |
+| **Loop start (Step 0)** | **Research** popular, current, up-to-date token saving methods and best practices (web search, Cursor/IDE docs). Read this doc; note if practices need refresh from latest research; align run with current list. |
+| **Loop end (Step 7)** | **Take all useful data** from the run and from Step 0 research and **add it to the todo:** append to §3 "What worked / What didn't" for this run (run_id, 1–2 bullets). Add any new practice learned this run to §1 and cite source. Ensure [TOKEN_LOOP_NEXT_TASKS.md](./TOKEN_LOOP_NEXT_TASKS.md) Recommended TODO list includes actionable items from research and run findings. |
 
 ---
 
 ## 3. What worked / What didn't (by run)
 
 *(At Step 7 of each token loop, append one short block below.)*
+
+**token-20260311-2227:** What worked — Full loop 0–7; Step 0 research (2025 practices); progress report wired; listener + snapshot + ledger updated. What didn't — Two always-apply rules (data-separation.mdc + self-improvement.mdc); 53 lines &gt; target 50; consider converting data-separation to glob/description.
 
 **token-20260311-2115:** What worked — Snapshot fix (always_apply_count from rules array); improvement plan read at Step 0; single-quoted metrics for listener. What didn't — (none this run).
 

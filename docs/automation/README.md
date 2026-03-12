@@ -94,6 +94,7 @@ This folder holds **all Improvement Loop docs** (routine, tiering, autonomy, sum
 | [SYNTHETIC_DATA_LOOP_FOR_OTHER_AGENTS.md](./SYNTHETIC_DATA_LOOP_FOR_OTHER_AGENTS.md) | Entry point: read at start; best practices; append ledger at end. |
 | [SYNTHETIC_DATA_LOOP_ROUTINE.md](./SYNTHETIC_DATA_LOOP_ROUTINE.md) | Phases 0–4: Research & checkpoint → Create/gather → Prune & mesh → Quality report → User approval & ledger. |
 | [SYNTHETIC_DATA_LOOP_RUN_LEDGER.md](./SYNTHETIC_DATA_LOOP_RUN_LEDGER.md) | Run ledger — append one block per data-loop run. |
+| [SYNTHETIC_DATA_LOOP_RESEARCH.md](./SYNTHETIC_DATA_LOOP_RESEARCH.md) | Research & self-improvement: data-loop best-practice findings; suggested improvements (update at loop start). |
 | **docs/DATA_TIERS.md** | SILVER / PLATINUM / GOLD; used by data loop for create/prune/tier changes. |
 
 ### Legacy & other

@@ -45,7 +45,7 @@ When the loop **proposes new Heavy ideas** (Phase 4.3 "File Organizer: recommend
 | **One-by-one** | Implementable as a single feature; user can approve or reject per idea. |
 | **Favoritable** | User can mark it in this doc so the Heavy list stays lightly populated. |
 
-**Rule:** Prefer **fewer, higher-quality** Heavy ideas per run over a long unfiltered list. When suggesting new Heavy ideas, add at most 1–2 that meet the bar above, and note: "User can add ✅ in HEAVY_IDEAS_FAVORITES to prioritize."
+**Rule:** **Every run:** Propose **at least 1–2** new Heavy ideas that meet the bar above. Add them to FUTURE_IDEAS and to the Favorites table in this doc. User can add ✅ to prioritize.
 
 ---
 
@@ -55,7 +55,7 @@ When the loop **proposes new Heavy ideas** (Phase 4.3 "File Organizer: recommend
 - **Phase 4.3 (summary):** When listing Heavy tasks or "recommended new ideas":
   - **Surface favorites first** — List Heavy ideas that have ✅ in this doc before others.
   - **Keep list light** — If the full Heavy list is long, summarize as "Favorites (N): [names]. Other Heavy ideas in FUTURE_IDEAS (M) — not favored this run."
-  - **New Heavy ideas** — Propose only 1–2 high-quality ideas per run that meet the quality bar above; remind user they can favorite here.
+  - **New Heavy ideas** — **Every run:** Propose at least 1–2 new Heavy ideas that meet the quality bar above; add them to FUTURE_IDEAS and **add a row for each to the Favorites table** in this doc so the user can add ✅ to prioritize. Remind user they can favorite here.
 
 ---
 

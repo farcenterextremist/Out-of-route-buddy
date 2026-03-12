@@ -43,11 +43,11 @@ Primary research in Phase 0: CRUCIAL, REDUNDANT_DEAD_CODE, FAILING_OR_IGNORED_TE
 |------|--------|
 | **File organization** | Structure summary, docs, and artifacts; propose moves or renames per [file-organizer.md](../agents/roles/file-organizer.md) |
 | **Organizing research** | Best practices for repo layout; when "File Structure" is focus, propose one move/rename (document only; user approves before apply) |
-| **Recommend new ideas** | Propose new tasks to add to Light, Medium, or Heavy (LOOP_TIERING, CRUCIAL, FUTURE_IDEAS) |
+| **Recommend new ideas** | **Every run:** Propose at least 1–2 new tasks for Light, Medium, or Heavy (LOOP_TIERING, CRUCIAL, FUTURE_IDEAS, or suggested next steps). Do not skip. |
 | **Idea placement** | Classify each recommendation: Light (auto), Medium (auto), or Heavy (human approval required) |
 | **Research improvements & populate tasks** | Research more ways to improve; add ideas to [BRAINSTORM_AND_TASKS.md](./BRAINSTORM_AND_TASKS.md); classify and promote 1–2 per loop to CRUCIAL or FUTURE_IDEAS |
-| **Heavy tier population** | **Add at least 1–2 new Heavy ideas per run** when [HEAVY_TIER_IDEAS.md](./HEAVY_TIER_IDEAS.md) is below 50. Light and Medium must produce ideas for Heavy; File Organizer adds to FUTURE_IDEAS and HEAVY_TIER_IDEAS with state (sandbox-ready / sandboxed / proposed). |
-| **Sandbox improvement (every loop)** | **Improve on sandboxed ideas each run.** Add design brief, validation checklist, or advance completion % for 1–2 ideas in HEAVY_TIER_IDEAS. Use [SANDBOX_COMPLETION_PERCENTAGE.md](./SANDBOX_COMPLETION_PERCENTAGE.md) — true % only; merging should not be taken lightly. Report % in summary. |
+| **Heavy tier: add new ideas every run** | **Every run:** Add at least 1–2 new Heavy ideas to [FUTURE_IDEAS.md](../product/FUTURE_IDEAS.md) (sandboxed) and list them in the summary "File Organizer: recommended new ideas." Use [HEAVY_IDEAS_FAVORITES.md](./HEAVY_IDEAS_FAVORITES.md) for quality bar and to surface favorites first. User can add ✅ there to prioritize. |
+| **Sandbox improvement (every loop)** | **Improve on sandboxed ideas each run.** Add design brief, validation checklist, or advance completion % for 1–2 ideas in FUTURE_IDEAS. Use [SANDBOX_COMPLETION_PERCENTAGE.md](./SANDBOX_COMPLETION_PERCENTAGE.md) — true % only; merging should not be taken lightly. Report % in summary. |
 | **Metrics-based recommendations** | Use [LOOP_METRICS_TEMPLATE.md](./LOOP_METRICS_TEMPLATE.md) to recommend next focus (e.g., "Lint warnings increased → next focus: Code Quality") |
 | **Metadata-based recommendations** | When user metadata is available, use signals from [USER_METADATA_USAGE_GUIDE.md](./USER_METADATA_USAGE_GUIDE.md) (e.g., high recovery rate → suggest UI/UX focus for recovery flow) |
 
@@ -75,8 +75,8 @@ When File Organizer recommends new ideas:
 
 1. **Classify** each idea as Light, Medium, or Heavy.
 2. **Light / Medium** — Add to LOOP_TIERING examples, CRUCIAL, or suggested next steps. These may run in the next autonomous loop.
-3. **Heavy** — Add to FUTURE_IDEAS (sandboxed) and [HEAVY_TIER_IDEAS.md](./HEAVY_TIER_IDEAS.md) with state (sandbox-ready / sandboxed / proposed). **Do not implement** until human explicitly approves: "Approve Heavy idea X."
-4. **Cap:** Heavy tier max 50 ideas. When below cap, add at least 1–2 Heavy ideas per run. Light and Medium must produce ideas for Heavy each loop.
+3. **Heavy** — Add to FUTURE_IDEAS (sandboxed) and list in summary "File Organizer: recommended new ideas." **Do not implement** until human explicitly approves. **Every run:** Add at least 1–2 new Heavy ideas (quality bar in HEAVY_IDEAS_FAVORITES); user can add ✅ there to prioritize.
+4. **Required:** Every loop run must recommend at least 1–2 new ideas (any tier) and at least 1–2 new Heavy ideas (documented in FUTURE_IDEAS and listed in summary). Do not skip.
 
 ---
 

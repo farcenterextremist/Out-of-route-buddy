@@ -14,7 +14,7 @@
 
 | Phase | Goal | Actions |
 |-------|------|---------|
-| **0 Research** | Discover new attacks, defenses, techniques | Web search; update ATTACK_LIBRARY; read CYBER_SECURITY_RESEARCH; check CYBER_SECURITY_LOOP_AUDIT for blind spots |
+| **0 Research** | Discover new attacks, defenses, techniques | Read [CYBER_SECURITY_LOOP_MASTER_PLAN](./CYBER_SECURITY_LOOP_MASTER_PLAN.md) at loop start; web search; update ATTACK_LIBRARY; read CYBER_SECURITY_RESEARCH; check CYBER_SECURITY_LOOP_AUDIT for blind spots |
 | **1 Simulate** | Run attacks in safe environment | `./gradlew securitySimulations`; SecuritySimulationTest; run_purple_simulations.py |
 | **2 Purple** | Red attacks, Blue checks, fix if missed | Agent-driven or review simulation results; log to proof of work |
 | **3 Improve** | Update defenses, summary | Implement Blue fixes; write CYBER_SECURITY_LOOP_SUMMARY_YYYY-MM-DD.md |

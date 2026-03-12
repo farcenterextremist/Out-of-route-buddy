@@ -31,3 +31,13 @@ Replace YYYY-MM-DD and the bracketed values with this run's data. Append the blo
 - **Next:** Add pre-loop checkpoint; resolve pre-existing build issues (AAPT errors)
 
 ---
+
+## Run 2026-03-12 (Full — Light/Medium only)
+
+- **Focus:** Security
+- **Variant:** Full (Light + Medium autonomous; Heavy deferred)
+- **Summary:** [IMPROVEMENT_LOOP_SUMMARY_2026-03-12.md](./IMPROVEMENT_LOOP_SUMMARY_2026-03-12.md)
+- **Metrics:** Tests run (all observed PASSED); Lint not run; Files changed 4 (docs); Checkpoint 446d0e3
+- **Next:** Mark Heavy favorites in HEAVY_IDEAS_FAVORITES; next focus UI/UX
+
+---

@@ -48,12 +48,36 @@
 
 ---
 
-## Next (for improvement)
+## Run 2 — 2026-03-11 22:23
 
-1. **Regression baseline:** Add script to diff `validation_passed` across runs.
-2. **Playbook discovery:** Consider auto-discovering playbooks from `attack-playbooks/` in Python script.
-3. **CI rules audit:** Add grep for suspicious patterns in `.cursor/rules` to security-simulations job.
+**Trigger:** User requested "Run Cyber Security Loop" with recording of what works/doesn't.
+
+### Verification (What Works / What Doesn't)
+
+| Component | Status | Notes |
+|-----------|--------|-------|
+| `audit_rules.py` | ✅ Works | Exit 0; no suspicious patterns in .cursor/rules |
+| `prompt_injection_harness.py` | ✅ Works | Produces JSON test cases |
+| `diff_training_runs.py` | ✅ Works | Compares baseline vs current; exit 0 when no regression |
+| `run_purple_simulations.py --full` | ✅ Works | Runs Gradle + validation; produces training JSON |
+| `run_purple_simulations.py --discover-playbooks` | ✅ Works | Scans attack-playbooks/*.md |
+| CI security-simulations job | ✅ Runs | audit_rules.py, then securitySimulations |
+| SecuritySimulationTest | ✅ Pass | 4 playbooks: NaN, negative, out-of-range, path traversal |
+
+### Metrics (unchanged)
+
+- **Validation passed:** 4/4
+- **Synthetic scenarios:** 7 (3 automated, 4 agent-driven)
+
+### Ledger
+
+Pre/during/post recorded in [CYBER_SECURITY_LOOP_RUN_LEDGER.md](./CYBER_SECURITY_LOOP_RUN_LEDGER.md).
+
+### Next (consolidated)
+
+1. Use `diff_training_runs.py` in Phase 3 Improve when multiple training JSONs exist.
+2. Expand prompt-injection harness coverage (OWASP techniques).
 
 ---
 
-*Loop complete. All validations passed. Ledger updated for rollback and improvement tracking.*
+*Loop complete. All validations passed. All components verified. Ledger updated. See [CYBER_SECURITY_DATA_SUMMARY.md](./CYBER_SECURITY_DATA_SUMMARY.md) for data overview and utilization.*

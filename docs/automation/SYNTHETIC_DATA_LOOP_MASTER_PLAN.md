@@ -36,7 +36,7 @@
 
 | Phase | Name | Action |
 |-------|------|--------|
-| 0 | Research & checkpoint | Read DATA_TIERS, routine, for-other-agents; checkpoint (git commit/tag). |
+| 0 | Research & checkpoint | **Research** current/popular data-loop and synthetic-data best practices; update [SYNTHETIC_DATA_LOOP_RESEARCH.md](./SYNTHETIC_DATA_LOOP_RESEARCH.md) (findings + suggested improvements). Read DATA_TIERS, routine, for-other-agents; checkpoint (git commit/tag). |
 | 1 | Create / gather | Generate or gather synthetic data; write to project (e.g. `docs/automation/synthetic_data/` or agreed path). |
 | 2 | Prune & mesh | Propose pruning (SILVER termination, demotions); propose meshing (merge/dedupe). Output proposal file. |
 | 3 | Quality report | Produce quality report and data-analyzing session summary. |
@@ -51,6 +51,7 @@ Detail: [SYNTHETIC_DATA_LOOP_ROUTINE.md](./SYNTHETIC_DATA_LOOP_ROUTINE.md).
 | Doc | Purpose |
 |-----|--------|
 | [SYNTHETIC_DATA_LOOP_FOR_OTHER_AGENTS.md](./SYNTHETIC_DATA_LOOP_FOR_OTHER_AGENTS.md) | Best practices; what to read; ledger at end. |
+| [SYNTHETIC_DATA_LOOP_RESEARCH.md](./SYNTHETIC_DATA_LOOP_RESEARCH.md) | **Research & self-improvement:** findings from data-loop best practices; suggested improvements for routine/next run. Update at loop start (Phase 0). |
 | [docs/DATA_TIERS.md](../DATA_TIERS.md) | Tier semantics, APIs, retention. |
 | [SYNTHETIC_DATA_LOOP_ROUTINE.md](./SYNTHETIC_DATA_LOOP_ROUTINE.md) | Phases 0–4 step-by-step. |
 | [SYNTHETIC_DATA_LOOP_RUN_LEDGER.md](./SYNTHETIC_DATA_LOOP_RUN_LEDGER.md) | Latest run; append after Phase 4. |

@@ -3,7 +3,7 @@
 **Purpose:** Record token-loop events to structured data (JSONL) for analysis and loop improvement. **The listener starts alongside the loop** when you say "start token loop" — we use this data to improve the loop (save token spend, manage context squish). Events are appended to `docs/automation/token_loop_events.jsonl`.
 
 **Script:** `scripts/automation/token_loop_listener.ps1`  
-**Test:** `scripts/automation/test_token_loop_listener.ps1`  
+**Tests:** `scripts/automation/test_token_loop_listener.ps1` (listener only); **all token loop tests:** `scripts/automation/run_token_loop_tests.ps1` (listener + snapshot + events analysis).  
 **Output:** `docs/automation/token_loop_events.jsonl` (one JSON object per line)
 
 ---
@@ -44,6 +44,12 @@ Use the **same RunId** for all events in a single run (e.g. `token-YYYYMMdd-HHmm
 .\scripts\automation\test_token_loop_listener.ps1 -KeepOutput  # Keep test output file
 ```
 
+**Run all token loop tests** (listener + snapshot + events analysis):
+```powershell
+.\scripts\automation\run_token_loop_tests.ps1
+.\scripts\automation\run_token_loop.ps1 -Test   # Same: runs all tests before starting loop
+```
+
 ---
 
 ## Wiring
@@ -80,10 +86,12 @@ Each line is a JSON object:
 
 ## Verification
 
-Run the test to ensure listener is wired and functioning:
+Run the listener test or all token loop tests to ensure everything is wired:
 
 ```powershell
 .\scripts\automation\test_token_loop_listener.ps1
+# Or run all token loop tests (listener + snapshot + events analysis):
+.\scripts\automation\run_token_loop_tests.ps1
 ```
 
 Exit 0 = all tests passed.

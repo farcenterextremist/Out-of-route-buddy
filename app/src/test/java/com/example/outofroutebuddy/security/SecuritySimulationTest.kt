@@ -97,4 +97,58 @@ class SecuritySimulationTest {
         val result = InputValidator.sanitizeFilePath("/etc/passwd")
         assertNull("InputValidator must reject absolute path", result)
     }
+
+    // ==================== trip_validation_rejects_infinity ====================
+
+    @Test
+    fun `trip validation rejects Infinity string`() {
+        val result = InputValidator.sanitizeMiles("Infinity")
+        assertNull("InputValidator must reject Infinity string", result)
+    }
+
+    @Test
+    fun `trip validation rejects Infinity via ValidationFramework`() {
+        val result = ValidationFramework.UnifiedValidation.validateTripInput(
+            loadedMilesText = "Infinity",
+            bounceMilesText = "25.0",
+            isStartingTrip = true,
+        )
+        assertFalse("ValidationFramework must reject Infinity in loaded miles", result.isValid)
+    }
+
+    // ==================== sanitizeFileName rejects path components ====================
+
+    @Test
+    fun `sanitizeFileName rejects path traversal in filename`() {
+        val result = InputValidator.sanitizeFileName("../../etc/passwd")
+        assertNull("InputValidator.sanitizeFileName must reject path traversal", result)
+    }
+
+    @Test
+    fun `sanitizeFileName rejects path with separators`() {
+        val result = InputValidator.sanitizeFileName("path/to/file.csv")
+        assertNull("InputValidator.sanitizeFileName must reject path separators", result)
+    }
+
+    // ==================== empty and whitespace edge cases ====================
+
+    @Test
+    fun `trip validation rejects empty loaded miles`() {
+        val result = ValidationFramework.UnifiedValidation.validateTripInput(
+            loadedMilesText = "",
+            bounceMilesText = "25.0",
+            isStartingTrip = true,
+        )
+        assertFalse("ValidationFramework must reject empty loaded miles", result.isValid)
+    }
+
+    @Test
+    fun `trip validation rejects whitespace only loaded miles`() {
+        val result = ValidationFramework.UnifiedValidation.validateTripInput(
+            loadedMilesText = "   ",
+            bounceMilesText = "25.0",
+            isStartingTrip = true,
+        )
+        assertFalse("ValidationFramework must reject whitespace-only loaded miles", result.isValid)
+    }
 }

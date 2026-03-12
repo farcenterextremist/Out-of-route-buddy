@@ -101,6 +101,8 @@ jobs:
         cache: gradle
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
+    - name: Audit .cursor/rules for suspicious patterns
+      run: python scripts/purple-team/audit_rules.py
     - name: Run security simulations
       run: ./gradlew :app:securitySimulations
     - name: Upload security simulation results

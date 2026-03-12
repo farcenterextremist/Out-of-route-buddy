@@ -92,14 +92,14 @@ When running the loop, invoke the **token loop listener** at start, each step (o
 
 | Step | Action | Time | Listener |
 |------|--------|------|----------|
-| **0. Deep research and analysis** | **At beginning.** (1) Read [TOKEN_LOOP_IMPROVEMENT_PLAN.md](./TOKEN_LOOP_IMPROVEMENT_PLAN.md) (blindspots, rule output baseline, context research) and [TOKEN_SAVING_PRACTICES.md](./TOKEN_SAVING_PRACTICES.md) (standard practices); at start of run, note if practices need refresh from latest research. (2) Analyze current structure with no human in the loop: read latest snapshot (`token_loop_snapshots/`), `token_loop_events.jsonl` (last run, run count, steps completed). (3) List `.cursor/rules/*.mdc` — alwaysApply, globs, line counts, doc references. (4) Review `.vscode/settings.json` (watcher, search exclude). (5) Note: always-apply count/lines, drift from checklist (§3), and one-line research summary for this run. Do not stop for approval. | 5 min | step_start Step=0; step_end with note (e.g. research_summary one-liner) |
+| **0. Deep research and analysis** | **At beginning.** (1) **Research popular, current, up-to-date token saving methods and best practices** (e.g. web search, Cursor/IDE docs, TOKEN_SAVING_PRACTICES); note any new or changed practices. (2) Read [TOKEN_LOOP_IMPROVEMENT_PLAN.md](./TOKEN_LOOP_IMPROVEMENT_PLAN.md) (blindspots, rule output baseline, context research) and [TOKEN_SAVING_PRACTICES.md](./TOKEN_SAVING_PRACTICES.md) (standard practices); at start of run, note if practices need refresh from latest research. (3) Analyze current structure with no human in the loop: read latest snapshot (`token_loop_snapshots/`), `token_loop_events.jsonl` (last run, run count, steps completed). (4) List `.cursor/rules/*.mdc` — alwaysApply, globs, line counts, doc references. (5) Review `.vscode/settings.json` (watcher, search exclude). (6) Note: always-apply count/lines, drift from checklist (§3), and one-line research summary for this run. Do not stop for approval. | 5 min | step_start Step=0; step_end with note (e.g. research_summary one-liner) |
 | 1. **Audit rules** | List `.cursor/rules/*.mdc`; count lines and `alwaysApply`; estimate token cost of always-apply. | 2 min | step_start Step=1; step_end with metrics always_apply_count, always_apply_lines |
 | 2. **Check for new always-apply** | If any new rule is always-apply, consider converting to glob or description-only. | 2 min | step_start Step=2; step_end (optional metrics: conversions_done) |
 | 3. **Doc references** | Ensure no rule inlines large examples; replace with pointers to `docs/` or `@path`. | 3 min | step_start Step=3; step_end |
 | 4. **Conversation reminder** | Note: start fresh when gauge >60% or task switch; front-load context. | 1 min | step_start Step=4; step_end |
 | 5. **Update this doc** | Add any new Cursor features or project-specific findings to §1–2. **Refresh [TOKEN_SAVING_PRACTICES.md](./TOKEN_SAVING_PRACTICES.md)** if new research or practices emerged (add to §1, cite source). | 2 min | step_start Step=5; step_end |
 | 6. **Summary** | One-line note in IMPROVEMENT_LOOP_SUMMARY if run as part of main loop: "Token audit: always-apply 1 rule, ~X lines; no change / Y converted." | 1 min | step_start Step=6; step_end |
-| **7. Organize results and recommend next tasks** | **Towards end.** Organize this run’s results (audit findings, snapshot vs previous, listener metrics). Write or update [TOKEN_LOOP_NEXT_TASKS.md](./TOKEN_LOOP_NEXT_TASKS.md): add a dated section for this run (run_id, date) and a **Recommended TODO tasks for next token loop** list (3–6 concrete tasks, e.g. "Convert rule X to glob", "Trim always-apply rule to &lt;50 lines", "Add search.exclude for Y"). **Append one block to [TOKEN_LOOP_RUN_LEDGER.md](./TOKEN_LOOP_RUN_LEDGER.md)** (summary, rule output, snapshot link, steps completed). **Update [TOKEN_SAVING_PRACTICES.md](./TOKEN_SAVING_PRACTICES.md) §3:** append "What worked / What didn't" for this run (run_id, 1–2 bullets each); add any new practice to §1 if learned this run. Optionally update [TOKEN_LOOP_IMPROVEMENT_PLAN.md](./TOKEN_LOOP_IMPROVEMENT_PLAN.md) with a short "Rule output this run" vs baseline and any new blindspots. Next run reads NEXT_TASKS at Step 0. No human in the loop. | 5 min | step_start Step=7; step_end; token_loop_end with steps_completed=8 |
+| **7. Organize results and recommend next tasks** | **Towards end.** Organize this run’s results (audit findings, snapshot vs previous, listener metrics). **Take all useful data from this run and from Step 0 research and add it to the todo:** Write or update [TOKEN_LOOP_NEXT_TASKS.md](./TOKEN_LOOP_NEXT_TASKS.md): add a dated section for this run (run_id, date) and a **Recommended TODO tasks for next token loop** list (3–6 concrete tasks drawn from research findings, what worked/didn't, and audit — e.g. "Convert rule X to glob", "Trim always-apply rule to &lt;50 lines", "Add search.exclude for Y", "Adopt practice Z from research"). **At the end of the run, give the user a short progress report** (see §4.4 below): rule output vs baseline, steps completed, key findings, and next TODOs. **Append one block to [TOKEN_LOOP_RUN_LEDGER.md](./TOKEN_LOOP_RUN_LEDGER.md)** (summary, rule output, snapshot link, steps completed). **Update [TOKEN_SAVING_PRACTICES.md](./TOKEN_SAVING_PRACTICES.md) §3:** append "What worked / What didn't" for this run (run_id, 1–2 bullets each); add any new practice to §1 if learned this run. Optionally update [TOKEN_LOOP_IMPROVEMENT_PLAN.md](./TOKEN_LOOP_IMPROVEMENT_PLAN.md) with a short "Rule output this run" vs baseline and any new blindspots. Next run reads NEXT_TASKS at Step 0. No human in the loop. | 5 min | step_start Step=7; step_end; token_loop_end with steps_completed=8 |
 
 **At loop start:** `token_loop_start`. **At loop end:** `token_loop_end` with optional metrics (e.g. steps_completed: 8).
 
@@ -107,6 +107,16 @@ When running the loop, invoke the **token loop listener** at start, each step (o
 
 - **Optional Phase 0.6 (Token audit):** After Phase 0.3 (Cursor self-improvement), run steps 1–2 and 6 above (short audit + summary line). Full token loop (all steps) can run on demand or monthly.
 - **Cursor self-improvement doc:** [CURSOR_SELF_IMPROVEMENT.md](./CURSOR_SELF_IMPROVEMENT.md) references this loop and optional Phase 0.6.
+
+### 4.4 Progress report at end of run
+
+At the end of each token loop run (after Step 7), give the user a **short progress report** so they see what was done and what's next:
+
+- **Rule output this run vs baseline:** always_apply_count, always_apply_lines (target &lt;50).
+- **Steps completed:** 0–7 and token_loop_end (Y/N).
+- **Key findings:** One or two bullets from research (Step 0) or audit (e.g. new practice to adopt, drift from checklist).
+- **Next TODOs:** 2–4 concrete tasks from the Recommended TODO list in TOKEN_LOOP_NEXT_TASKS for the next run.
+- **Snapshot:** Link to this run's snapshot JSON (rollback/comparison).
 
 ---
 
@@ -124,7 +134,7 @@ Read all files in @.cursor/rules/ and estimate the token count for each rule. Li
 
 - **At every token loop start:** (1) **Record state** — run `.\scripts\automation\token_loop_state_snapshot.ps1 -RunId <run_id>`. Snapshot saved to `docs/automation/token_loop_snapshots/<run_id>.json` for rollback and progress tracking. Use the **same RunId** for all listener events this run; `run_token_loop.ps1` generates it. (2) **Listener** — `token_loop_start` then **steps 0–7** (step 0 = deep research and analysis; step 7 = organize results and recommend next tasks in TOKEN_LOOP_NEXT_TASKS.md), then `token_loop_end`. **No human in the loop.** We use this data to improve the loop.
 - **Listener:** [TOKEN_LOOP_LISTENER.md](./TOKEN_LOOP_LISTENER.md) — script `scripts/automation/token_loop_listener.ps1`, output `docs/automation/token_loop_events.jsonl`.
-- **Test:** `.\scripts\automation\test_token_loop_listener.ps1` — run to verify listener works.
+- **Tests:** `.\scripts\automation\run_token_loop_tests.ps1` — run all token loop tests (listener + snapshot + events analysis). Or `.\scripts\automation\run_token_loop.ps1 -Test` to run tests before starting a loop.
 - **Run script:** `.\scripts\automation\run_token_loop.ps1` — runs state snapshot + listener start (token_loop_start) and prints RunId; then run the 6 steps and invoke listener at each step and at end.
 
 ---

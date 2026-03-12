@@ -61,10 +61,11 @@ When user says **"Run Cyber Security Loop"** (or "GO security"):
 **Skill:** Invoke **purple-orchestrator-skill** (`.cursor/skills/purple-orchestrator-skill/SKILL.md`) for full Purple flow when running agent-driven exercises.
 
 1. **Check todos upon initiation** — CRUCIAL_IMPROVEMENTS_TODO, TOKEN_LOOP_NEXT_TASKS, CYBER_SECURITY_LOOP_AUDIT, in-progress todos.
-2. Read [docs/automation/CYBER_SECURITY_LOOP_COMMON_SENSE.md](docs/automation/CYBER_SECURITY_LOOP_COMMON_SENSE.md) (checkpoint first, scope lock, no destructive actions)
-2. Follow [docs/automation/CYBER_SECURITY_LOOP_ROUTINE.md](docs/automation/CYBER_SECURITY_LOOP_ROUTINE.md) (Research → Simulate → Purple → Improve)
-3. Run `./gradlew securitySimulations` for automated attack simulations
-4. Proof of work: [docs/agents/security-team-proof-of-work.md](docs/agents/security-team-proof-of-work.md)
+2. Read [docs/automation/CYBER_SECURITY_LOOP_MASTER_PLAN.md](docs/automation/CYBER_SECURITY_LOOP_MASTER_PLAN.md) at loop start (completion %, next items).
+3. Read [docs/automation/CYBER_SECURITY_LOOP_COMMON_SENSE.md](docs/automation/CYBER_SECURITY_LOOP_COMMON_SENSE.md) (checkpoint first, scope lock, no destructive actions)
+4. Follow [docs/automation/CYBER_SECURITY_LOOP_ROUTINE.md](docs/automation/CYBER_SECURITY_LOOP_ROUTINE.md) (Research → Simulate → Purple → Improve)
+5. Run `./gradlew securitySimulations` for automated attack simulations
+6. Proof of work: [docs/agents/security-team-proof-of-work.md](docs/agents/security-team-proof-of-work.md)
 
 ---
 

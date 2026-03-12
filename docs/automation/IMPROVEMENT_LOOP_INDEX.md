@@ -169,6 +169,21 @@
 
 ---
 
+## 10c. Cyber Security Loop (trigger: "Run Cyber Security Loop" / "GO security")
+
+| File | Purpose |
+|------|---------|
+| [CYBER_SECURITY_LOOP_MASTER_PLAN.md](./CYBER_SECURITY_LOOP_MASTER_PLAN.md) | Completion %, phases, visual roadmap; read at loop start. |
+| [CYBER_SECURITY_LOOP_ROUTINE.md](./CYBER_SECURITY_LOOP_ROUTINE.md) | Phases 0–3: Research → Simulate → Purple → Improve. |
+| [CYBER_SECURITY_LOOP_COMMON_SENSE.md](./CYBER_SECURITY_LOOP_COMMON_SENSE.md) | Checkpoint first, scope lock, no destructive actions. |
+| [CYBER_SECURITY_LOOP_AUDIT.md](./CYBER_SECURITY_LOOP_AUDIT.md) | Blind spots, gaps, loose ends. |
+| [CYBER_SECURITY_LOOP_RUN_LEDGER.md](./CYBER_SECURITY_LOOP_RUN_LEDGER.md) | Pre/during/post per run; rollback and improvement. |
+| [CYBER_SECURITY_DATA_SUMMARY.md](./CYBER_SECURITY_DATA_SUMMARY.md) | **Data collected, what it means, how to use it.** |
+| **docs/agents/data-sets/** | ATTACK_LIBRARY, attack-playbooks/, security-exercises/, SYNTHETIC_ATTACK_SCENARIOS. |
+| **scripts/purple-team/** | run_purple_simulations.py, audit_rules.py, diff_training_runs.py, prompt_injection_harness.py. |
+
+---
+
 ## 10. Folder layout (quick reference)
 
 ```

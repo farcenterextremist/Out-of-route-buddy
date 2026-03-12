@@ -88,10 +88,12 @@ Read these files **before** making any changes. (0.0a already read USER_PREFEREN
 | `docs/automation/LOOP_TIERING.md` | Light / Medium / Heavy task definitions; approval gate |
 | `docs/automation/LOOP_FOCUS_ROTATION.md` | This run's focus; bias effort |
 | `docs/automation/HEAVY_IDEAS_FAVORITES.md` | User favorites for Heavy ideas; surface favorites first; keep Heavy list lightly populated; quality bar for new Heavy ideas |
+| `docs/automation/LOOP_LESSONS_LEARNED.md` | Self-improvement: lessons from past runs; read and append 1–3 bullets per run. Skip if missing. |
+| `docs/automation/SELF_IMPROVING_LOOP_RESEARCH.md` | Methods to make the loop self-improving; optional read when adopting new loop optimizations. |
 | `docs/automation/USER_METADATA_USAGE_GUIDE.md` | Metadata (when Data/Metrics focus); skip if missing |
 | `docs/TASKS_INDEX.md` or `docs/agents/COMPREHENSIVE_AGENT_TODOS.md` | Consolidated TODOs; check and update during run. Skip if missing. |
 
-**Output:** One-line research note: "Design intent: [from 0.0a]. Last loop did X; next: Y, Z. This focus: [Security|UI/UX|Shipability|Code Quality|File Structure|Data/Metrics]. Security gaps: A. Smoothness: B. Design: [topic to research]."
+**Output:** One-line research note: "Design intent: [from 0.0a]. Last loop did X; next: Y, Z. This focus: [Security|UI/UX|…]. [Optional: Last run conclusion / This run we will not repeat: … per SELF_IMPROVING_LOOP_RESEARCH.] Security gaps: A. Smoothness: B. Design: [topic]."
 
 ### 0.1b Task classification & approval gate
 
@@ -314,9 +316,10 @@ Pick **one**:
 8. **Research findings** — Design, security, meta-research; metadata (if Data/Metrics focus)
 9. **Files modified** — List with one-line change
 10. **Suggested next steps** — 4–6 items for next loop (see template below); actionable (include commands where helpful)
-11. **File Organizer: recommended new ideas** — Propose new tasks for Light, Medium, or Heavy. **Heavy:** Consult [HEAVY_IDEAS_FAVORITES.md](./HEAVY_IDEAS_FAVORITES.md): surface **favorites first** (ideas with ✅), keep the Heavy list **lightly populated**; when proposing new Heavy ideas, add at most 1–2 that meet the **quality bar** in that doc (aligned with mission, clear placement, sandboxed, one-by-one). Sandbox completion % — Report true % for 1–2 improved ideas (per [SANDBOX_COMPLETION_PERCENTAGE.md](./SANDBOX_COMPLETION_PERCENTAGE.md)). Heavy ideas require human approval; one by one, ask "Are you ready to implement this new feature?" before each. See [IMPROVEMENT_LOOP_TEAMS.md](./IMPROVEMENT_LOOP_TEAMS.md).
+11. **File Organizer: recommended new ideas (required every run)** — **Every run must recommend at least 1–2 new ideas** (Light, Medium, or Heavy). Propose new tasks for Light, Medium, or Heavy; add to LOOP_TIERING examples, CRUCIAL, suggested next steps, or FUTURE_IDEAS. **Heavy:** Add **at least 1–2 new Heavy ideas per run** that meet the quality bar in [HEAVY_IDEAS_FAVORITES.md](./HEAVY_IDEAS_FAVORITES.md) (aligned with mission, clear placement, sandboxed, one-by-one); document them in FUTURE_IDEAS and list in the summary. Surface **favorites first** (ideas with ✅ in HEAVY_IDEAS_FAVORITES); keep the Heavy list lightly populated. Sandbox completion % — Report true % for 1–2 improved ideas (per [SANDBOX_COMPLETION_PERCENTAGE.md](./SANDBOX_COMPLETION_PERCENTAGE.md)). Heavy ideas require human approval before implementation; one by one, ask "Are you ready to implement this new feature?" See [IMPROVEMENT_LOOP_TEAMS.md](./IMPROVEMENT_LOOP_TEAMS.md).
 12. **Next run focus** — Suggested focus for next loop (from File Organizer or metrics)
 13. **Quality Grade** — A/B/C with rationale and one improvement for next run
+14. **Self-improvement (optional):** Append 1–3 bullets to [LOOP_LESSONS_LEARNED.md](./LOOP_LESSONS_LEARNED.md): Learned …; Avoid …; Next run try …. See [SELF_IMPROVING_LOOP_RESEARCH.md](./SELF_IMPROVING_LOOP_RESEARCH.md). Optionally add **Single highest-impact change this run:** [one sentence] and **One thing next run must consider:** [one line].
 
 **4.3b Record run (required):** Append this run to [IMPROVEMENT_LOOP_RUN_LEDGER.md](./IMPROVEMENT_LOOP_RUN_LEDGER.md). Add a new **Run YYYY-MM-DD** section with: Focus, Variant, Summary (link to this summary file), Metrics one-liner (tests, lint, files changed, checkpoint), Next (1–2 bullets). Use the template in the ledger. This keeps a shared record for us and for other agents. See [IMPROVEMENT_LOOP_FOR_OTHER_AGENTS.md](./IMPROVEMENT_LOOP_FOR_OTHER_AGENTS.md).
 

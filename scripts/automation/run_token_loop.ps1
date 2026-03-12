@@ -1,7 +1,7 @@
 # Token Reduction Loop — Start a run and record it via the listener.
 # When user says "start token loop," the listener starts alongside the loop: run this script (or invoke token_loop_start), then run the 6 steps with step_start/step_end, then token_loop_end. Listener data is used to improve the loop (save token spend, manage context squish).
 # Run from repo root: .\scripts\automation\run_token_loop.ps1
-# Optional: .\scripts\automation\run_token_loop.ps1 -Test  (run test_token_loop_listener.ps1 first)
+# Optional: .\scripts\automation\run_token_loop.ps1 -Test  (run all token loop tests first)
 
 param([switch]$Test)
 
@@ -15,8 +15,8 @@ $SnapshotScript = Join-Path $RepoRoot "scripts\automation\token_loop_state_snaps
 $RunId = "token-$((Get-Date).ToString('yyyyMMdd-HHmm'))"
 
 if ($Test) {
-    Write-Host "Running token loop listener tests..."
-    & (Join-Path $RepoRoot "scripts\automation\test_token_loop_listener.ps1")
+    Write-Host "Running all token loop tests..."
+    & (Join-Path $RepoRoot "scripts\automation\run_token_loop_tests.ps1")
     if ($LASTEXITCODE -ne 0) {
         Write-Host "Tests failed. Fix before running token loop."
         exit $LASTEXITCODE

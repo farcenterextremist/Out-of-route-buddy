@@ -97,6 +97,23 @@ if ($stepEvents.Count -gt 0 -and $stepEventsWithStep.Count -lt $stepEvents.Count
     Write-Host "PASS: Step events have step field"
 }
 
+# 6. Verify step_end with metrics produces parsed metrics object (not only metrics_raw)
+$stepEndWithMetrics = $lines | ForEach-Object { $o = $_ | ConvertFrom-Json; if ($o.event -eq "step_end" -and (Get-Member -InputObject $o -Name "metrics" -MemberType Properties -ErrorAction SilentlyContinue)) { $o } } | Select-Object -First 1
+if (-not $stepEndWithMetrics -or -not $stepEndWithMetrics.metrics) {
+    Write-Host "FAIL: step_end with metrics did not produce parsed metrics object (check for metrics_raw only)"
+    $failCount++
+} else {
+    $m = $stepEndWithMetrics.metrics
+    $hasCount = (Get-Member -InputObject $m -Name "always_apply_count" -MemberType Properties -ErrorAction SilentlyContinue)
+    $hasLines = (Get-Member -InputObject $m -Name "always_apply_lines" -MemberType Properties -ErrorAction SilentlyContinue)
+    if (-not $hasCount -or -not $hasLines) {
+        Write-Host "FAIL: metrics object missing always_apply_count or always_apply_lines"
+        $failCount++
+    } else {
+        Write-Host "PASS: step_end metrics parsed (always_apply_count, always_apply_lines)"
+    }
+}
+
 # Cleanup
 if (-not $KeepOutput) {
     Remove-Item $TestEventsFile -Force -ErrorAction SilentlyContinue

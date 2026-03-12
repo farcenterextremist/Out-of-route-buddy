@@ -35,3 +35,21 @@
 {"ts":"2026-03-11T21:16:22Z","event":"step_start","run_id":"token-20260311-2115","step":"7","note":"organize results"}
 {"ts":"2026-03-11T21:16:22Z","event":"step_end","run_id":"token-20260311-2115","step":"7"}
 {"ts":"2026-03-11T21:16:22Z","event":"token_loop_end","run_id":"token-20260311-2115","note":"steps=8","metrics":{"steps_completed":8}}
+{"ts":"2026-03-11T22:27:16Z","event":"token_loop_start","run_id":"token-20260311-2227","note":"run_token_loop.ps1"}
+{"ts":"2026-03-11T22:27:37Z","event":"step_start","run_id":"token-20260311-2227","step":"0","note":"research token saving methods; read improvement plan"}
+{"ts":"2026-03-11T22:27:37Z","event":"step_end","run_id":"token-20260311-2227","step":"0","note":"research_summary: 2025 practices - disable Memories, match model to task, audit always-apply, dynamic context, .cursorignore"}
+{"ts":"2026-03-11T22:27:37Z","event":"step_start","run_id":"token-20260311-2227","step":"1","note":"audit rules"}
+{"ts":"2026-03-11T22:27:38Z","event":"step_end","run_id":"token-20260311-2227","step":"1","metrics":{"always_apply_count":2,"always_apply_lines":53}}
+{"ts":"2026-03-11T22:27:38Z","event":"step_start","run_id":"token-20260311-2227","step":"2","note":"check new always-apply"}
+{"ts":"2026-03-11T22:27:38Z","event":"step_end","run_id":"token-20260311-2227","step":"2"}
+{"ts":"2026-03-11T22:27:38Z","event":"step_start","run_id":"token-20260311-2227","step":"3","note":"doc references"}
+{"ts":"2026-03-11T22:27:38Z","event":"step_end","run_id":"token-20260311-2227","step":"3"}
+{"ts":"2026-03-11T22:27:38Z","event":"step_start","run_id":"token-20260311-2227","step":"4","note":"conversation reminder"}
+{"ts":"2026-03-11T22:27:38Z","event":"step_end","run_id":"token-20260311-2227","step":"4"}
+{"ts":"2026-03-11T22:27:38Z","event":"step_start","run_id":"token-20260311-2227","step":"5","note":"update doc"}
+{"ts":"2026-03-11T22:27:38Z","event":"step_end","run_id":"token-20260311-2227","step":"5"}
+{"ts":"2026-03-11T22:27:38Z","event":"step_start","run_id":"token-20260311-2227","step":"6","note":"summary"}
+{"ts":"2026-03-11T22:27:38Z","event":"step_end","run_id":"token-20260311-2227","step":"6"}
+{"ts":"2026-03-11T22:27:38Z","event":"step_start","run_id":"token-20260311-2227","step":"7","note":"organize results; progress report"}
+{"ts":"2026-03-11T22:27:38Z","event":"step_end","run_id":"token-20260311-2227","step":"7"}
+{"ts":"2026-03-11T22:27:38Z","event":"token_loop_end","run_id":"token-20260311-2227","note":"steps=8","metrics":{"steps_completed":8}}

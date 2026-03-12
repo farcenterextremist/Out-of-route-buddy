@@ -25,6 +25,15 @@
 
 ---
 
+## Run token-20260311-2227 (2026-03-11)
+
+- **Summary:** Launch 3 token loop; Step 0 research (2025 token practices); progress report §4.4 added; two always-apply rules (data-separation + self-improvement) — target one.
+- **Rule output:** always_apply_count **2**, always_apply_lines **53** (target 1 rule, &lt;50 lines).
+- **Snapshot:** [token_loop_snapshots/token-20260311-2227.json](./token_loop_snapshots/token-20260311-2227.json) | **Details:** [TOKEN_LOOP_NEXT_TASKS.md#run-token-20260311-2227-2026-03-11](./TOKEN_LOOP_NEXT_TASKS.md)
+- **Steps:** 0–7 completed Y | token_loop_end Y
+
+---
+
 ## Run token-20260311-2115 (2026-03-11)
 
 - **Summary:** Improvement plan implemented; snapshot fix (always_apply_count from rules array); Step 0/7 wired to improvement plan; full loop run.

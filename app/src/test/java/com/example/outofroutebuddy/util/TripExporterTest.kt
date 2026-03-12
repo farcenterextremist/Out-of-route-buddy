@@ -215,6 +215,27 @@ class TripExporterTest {
         assertTrue("Should contain trip data", lines[1].contains("125.0"))
     }
 
+    // ==================== EXPORT PATH TRAVERSAL (SECURITY) ====================
+    // Blue alarm: FileProvider scope, SECURITY_NOTES §5. TripExporter must only write to context.cacheDir.
+
+    @Test
+    fun `exportToCSV writes only to cacheDir no path traversal`() {
+        val trips = listOf(createTestTrip())
+        val csvFile = tripExporter.exportToCSV(trips)
+        assertTrue("Export must be under cacheDir", csvFile.absolutePath.startsWith(testCacheDir.absolutePath))
+        assertEquals("Export parent must be cacheDir", testCacheDir.absolutePath, csvFile.parentFile?.absolutePath)
+        assertFalse("Filename must not contain path traversal", csvFile.name.contains(".."))
+    }
+
+    @Test
+    fun `exportToPDF writes only to cacheDir no path traversal`() {
+        val trips = listOf(createTestTrip())
+        val pdfFile = tripExporter.exportToPDF(trips)
+        assertTrue("Export must be under cacheDir", pdfFile.absolutePath.startsWith(testCacheDir.absolutePath))
+        assertEquals("Export parent must be cacheDir", testCacheDir.absolutePath, pdfFile.parentFile?.absolutePath)
+        assertFalse("Filename must not contain path traversal", pdfFile.name.contains(".."))
+    }
+
     // ==================== HELPER METHODS ====================
 
     private fun createTestTrip(

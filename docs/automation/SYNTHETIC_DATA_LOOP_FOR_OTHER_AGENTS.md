@@ -10,8 +10,9 @@
 
 1. **This doc** — best practices and ledger requirement.
 2. [SYNTHETIC_DATA_LOOP_MASTER_PLAN.md](./SYNTHETIC_DATA_LOOP_MASTER_PLAN.md) — trigger, scope, phases, data-tier linkage.
-3. [SYNTHETIC_DATA_LOOP_ROUTINE.md](./SYNTHETIC_DATA_LOOP_ROUTINE.md) — phases 0–4 step-by-step.
+3. [SYNTHETIC_DATA_LOOP_ROUTINE.md](./SYNTHETIC_DATA_LOOP_ROUTINE.md) — phases 0–4 step-by-step (Phase 0 includes **research**).
 4. [docs/DATA_TIERS.md](../DATA_TIERS.md) — SILVER / PLATINUM / GOLD semantics and APIs.
+5. **Phase 0.0 — Research:** Before checkpoint, search for **current/popular data-loop and synthetic-data best practices** (e.g. 2024–2025); update [SYNTHETIC_DATA_LOOP_RESEARCH.md](./SYNTHETIC_DATA_LOOP_RESEARCH.md) with findings and 1–2 suggested improvements so the loop is **self-improving**. Use that research to inform the run.
 
 ---
 
@@ -28,6 +29,8 @@
 5. **Write outputs into the project.** Synthetic data, pruning proposal, and quality report go to agreed paths (e.g. `docs/automation/synthetic_data/` or paths noted in the master plan). Reference them in the ledger block.
 
 6. **Append one block to the run ledger.** At the end of every run, append a new block to [SYNTHETIC_DATA_LOOP_RUN_LEDGER.md](./SYNTHETIC_DATA_LOOP_RUN_LEDGER.md) using the template in that file.
+
+7. **Research at start, self-improve.** In Phase 0, research current data-loop/synthetic-data best practices and update [SYNTHETIC_DATA_LOOP_RESEARCH.md](./SYNTHETIC_DATA_LOOP_RESEARCH.md); add 1–2 suggested improvements so the next run or the routine can be updated.
 
 ---
 

@@ -14,11 +14,12 @@
 
 | Step | Action |
 |------|--------|
+| **0.0** | **Research data-loop best practices.** Search for current/popular practices (e.g. "synthetic data pipeline best practices", "data quality loop", "human-in-the-loop data" 2024–2025). Update [SYNTHETIC_DATA_LOOP_RESEARCH.md](./SYNTHETIC_DATA_LOOP_RESEARCH.md): append § Findings (2–4 bullets with "Applies: …" to our loop) and § Suggested improvements (1–2 items for routine or next run). Use findings to inform this run. |
 | 0.1 | Read [SYNTHETIC_DATA_LOOP_MASTER_PLAN.md](./SYNTHETIC_DATA_LOOP_MASTER_PLAN.md), [SYNTHETIC_DATA_LOOP_FOR_OTHER_AGENTS.md](./SYNTHETIC_DATA_LOOP_FOR_OTHER_AGENTS.md), [docs/DATA_TIERS.md](../DATA_TIERS.md). |
-| 0.2 | Check [SYNTHETIC_DATA_LOOP_RUN_LEDGER.md](./SYNTHETIC_DATA_LOOP_RUN_LEDGER.md) for last run and "Next" items. |
+| 0.2 | Check [SYNTHETIC_DATA_LOOP_RUN_LEDGER.md](./SYNTHETIC_DATA_LOOP_RUN_LEDGER.md) for last run and "Next" items; check [SYNTHETIC_DATA_LOOP_RESEARCH.md](./SYNTHETIC_DATA_LOOP_RESEARCH.md) for latest suggested improvements. |
 | 0.3 | Checkpoint: `git add -A && git commit -m "Pre-synthetic-data-loop YYYY-MM-DD"` or `git tag synthetic-data-loop-pre-YYYYMMDD`. Note checkpoint for ledger. |
 
-**Output:** Ready to run; checkpoint recorded.
+**Output:** Research doc updated; ready to run; checkpoint recorded.
 
 ---
 

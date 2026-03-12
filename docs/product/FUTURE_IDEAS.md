@@ -14,7 +14,7 @@
 > Implementation requires user approval. Document here; prioritize in ROADMAP when ready.  
 > The Improvement Loop may improve the sandbox system (index, cross-links, organization) but will not implement these features.
 
-**Sandbox status:** Ideas documented in this file are **100% sandboxed**. You can add Heavy-tier ideas here whenever you choose. Run **Medium tier** Improvement Loop to apply sandbox improvements (index, cross-links, new ideas).
+**Sandbox status:** Ideas documented in this file are **100% sandboxed**. You can add Heavy-tier ideas here whenever you choose. Run **Medium tier** Improvement Loop to apply sandbox improvements (index, cross-links, new ideas). To prioritize which Heavy ideas to implement first, use [HEAVY_IDEAS_FAVORITES.md](../automation/HEAVY_IDEAS_FAVORITES.md).
 
 ---
 
