@@ -2,7 +2,7 @@
 
 **Purpose:** One place to find every kind of task. No duplicate lists; this index points to the authoritative docs and lists only **in-code TODOs** that are not already in CRUCIAL or worker lists.
 
-**Last updated:** 2025-03-11
+**Last updated:** 2026-03-11
 
 ---
 
@@ -15,6 +15,9 @@
 | **Comprehensive agent todos** | Single checklist per agent (CRUCIAL + worker + monthly stats); check off here and in source | [docs/agents/COMPREHENSIVE_AGENT_TODOS.md](agents/COMPREHENSIVE_AGENT_TODOS.md) |
 | **Failing/ignored tests** | QA: which tests are ignored or failing, reason, owner | [docs/qa/FAILING_OR_IGNORED_TESTS.md](qa/FAILING_OR_IGNORED_TESTS.md) |
 | **Product roadmap** | What's next; feature briefs | [docs/product/ROADMAP.md](product/ROADMAP.md) |
+| **OOR view & edge cases study** | Research: good OOR %, over/under, colors (green/blue/red), load-cancelled edge case; future todos | [docs/product/OOR_VIEW_AND_EDGE_CASES_STUDY.md](product/OOR_VIEW_AND_EDGE_CASES_STUDY.md) |
+| **Hub & Loop future TODOs** | Hub, Loop Master, Universal Loop Prompt, sandboxing, full axis — 50 tasks from 2026-03-11 build | [docs/agents/HUB_AND_LOOP_FUTURE_TODOS.md](agents/HUB_AND_LOOP_FUTURE_TODOS.md) |
+| **Cyber Security & Hub 2026-03-11** | 48 TODOs from today's build: Cyber Loop follow-ups, Hub/Universal Loop, cross-loop, scripts | [docs/agents/CYBER_SECURITY_AND_HUB_2026-03-11_TODOS.md](agents/CYBER_SECURITY_AND_HUB_2026-03-11_TODOS.md) |
 
 ---
 

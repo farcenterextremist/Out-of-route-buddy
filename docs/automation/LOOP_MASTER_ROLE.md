@@ -1,71 +1,60 @@
-# Loop Master — Role and Master Loop
+# Loop Master Role — Authority for How Loops Run
 
-**Purpose:** Define the Loop Master role and the **Master Loop** (trigger: **"start master loop"**). The Loop Master researches all loops in the project, compares and scrutinizes them, sets the standard, and updates universal files so all loop-bearing agents can follow and improve.
+**Purpose:** Single authority that defines how all loops (Improvement, Token, Cyber Security, Synthetic Data, or other) are run. Every agent running any loop must read this doc and, when the user says "start master loop", complete **Step 0.M** first.
 
-**Trigger:** User says **"start master loop"**.
-
----
-
-## Loop Master role
-
-- **Authority:** Sets the standard for how loops run and how they are documented. Universal files (best practices, for-other-agents entry point, run ledger template, tier definitions) are updated by the Loop Master so other agents have one source of truth.
-- **Duty:** At the start of every Master Loop run, **research all other loops** in the project, **compare, analyze, and scrutinize** them, then **update universal files** so loop-bearing agents can follow and improve.
-- **Scope:** Improvement Loop is the primary loop the Loop Master runs; the Master step (research + sync) precedes the normal Improvement Loop phases.
+**Hub (advice and rules from all agents):** [docs/agents/data-sets/hub/](../agents/data-sets/hub/) — index at [hub/README.md](../agents/data-sets/hub/README.md).  
+**Full axis (all loops, triggers, outputs):** [LOOPS_AND_IMPROVEMENT_FULL_AXIS.md](./LOOPS_AND_IMPROVEMENT_FULL_AXIS.md).  
+**Universal Loop Prompt (bind every loop):** [UNIVERSAL_LOOP_PROMPT.md](../agents/data-sets/hub/UNIVERSAL_LOOP_PROMPT.md) in the Hub.
 
 ---
 
-## Loops in this project (research these)
+## Who is the Loop Master?
 
-| Loop | Trigger | Key docs |
-|------|---------|----------|
-| **Improvement Loop** | GO, run improvement loop | IMPROVEMENT_LOOP_ROUTINE.md, LOOP_TIERING.md, IMPROVEMENT_LOOP_BEST_PRACTICES.md, IMPROVEMENT_LOOP_RUN_LEDGER.md |
-| **Token Loop** | start token loop | TOKEN_REDUCTION_LOOP.md, TOKEN_LOOP_NEXT_TASKS.md, TOKEN_LOOP_MASTER_PLAN.md |
-| **Cyber Security Loop** | Run Cyber Security Loop, GO security | CYBER_SECURITY_LOOP_ROUTINE.md, CYBER_SECURITY_LOOP_COMMON_SENSE.md |
-| **Synthetic Data Loop** | Start Synthetic data loop, START DATA LOOP | SYNTHETIC_DATA_LOOP_ROUTINE.md, SYNTHETIC_DATA_LOOP_FOR_OTHER_AGENTS.md, SYNTHETIC_DATA_LOOP_RUN_LEDGER.md |
+When the user says **"start master loop"**, you are the **Loop Master**. You orchestrate the Improvement Loop and ensure all other loops are researched, compared, and aligned. The Loop Master does **Step 0.M** before running the full Improvement Loop.
 
-*(Add or remove rows as the project adds or retires loops.)*
+When the user triggers **any other loop** (e.g. "run token loop", "GO", Cyber Security loop, etc.), you are **not** the Loop Master for that run, but you still **read this doc** and the **Hub** at loop start so you follow the same authority and advice.
 
 ---
 
-## Master Loop flow (when user says "start master loop")
+## Step 0.M (only when user says "start master loop")
 
-### Step 0.M — Loop Master step (before Phase 0)
+Before running the Improvement Loop, complete **Step 0.M**:
 
-Do this **first**, before checkpoint and Phase 0 research:
+1. **Research all loops.**  
+   Read [LOOPS_AND_IMPROVEMENT_FULL_AXIS.md](./LOOPS_AND_IMPROVEMENT_FULL_AXIS.md). Identify every loop in the project (Improvement, Token, Cyber Security, Synthetic Data, file-organizer, etc.), their triggers, outputs, and docs/scripts.
 
-1. **Research all other loops** — Read the key docs for each loop listed above (routines, common sense, run ledgers, next-tasks). Identify triggers, phases, what each loop records, and where it writes.
-2. **Compare and analyze** — Note overlaps (e.g. checkpoint, run ledger), gaps (e.g. one loop has no ledger), and drift (e.g. different tier names or phase counts). Scrutinize for consistency with IMPROVEMENT_LOOP_BEST_PRACTICES and IMPROVEMENT_LOOP_FOR_OTHER_AGENTS.
-3. **Set the standard** — Decide what the canonical pattern is (e.g. checkpoint first, tiering Light/Medium/Heavy, append run ledger every run, one entry point for other agents). If another loop’s docs contradict the standard, note it for sync.
-4. **Update universal files** — So all loop-bearing agents can follow and improve:
-   - [IMPROVEMENT_LOOP_BEST_PRACTICES.md](./IMPROVEMENT_LOOP_BEST_PRACTICES.md) — Add or adjust recommendations so they apply across loops where relevant (e.g. “every loop records a run in a ledger”).
-   - [IMPROVEMENT_LOOP_FOR_OTHER_AGENTS.md](./IMPROVEMENT_LOOP_FOR_OTHER_AGENTS.md) — Ensure entry point and links are current; add a one-line list of “other loops in this project” if helpful.
-   - [IMPROVEMENT_LOOP_RUN_LEDGER.md](./IMPROVEMENT_LOOP_RUN_LEDGER.md) — Ensure template and “how to append” are clear; no change if already good.
-   - [LOOP_TIERING.md](./LOOP_TIERING.md) — Keep tier definitions and approval rules the standard for improvement loop; note in doc if other loops use different tiering.
-   - Optional: Add a short “Loop Master findings” subsection to the run summary (e.g. “Other loops reviewed: X. Universal files updated: Y.”).
+2. **Compare and scrutinize.**  
+   Check for consistency: naming, ledger/summary format, use of Hub, use of Loop # and proof of work where applicable. Note drift or gaps.
 
-5. **Then run the Improvement Loop** — Proceed to checkpoint (0.0), Phase 0 research (0.1), tiering (0.1b), and Phases 1–4 per [IMPROVEMENT_LOOP_ROUTINE.md](./IMPROVEMENT_LOOP_ROUTINE.md). Append this run to IMPROVEMENT_LOOP_RUN_LEDGER.md at the end.
+3. **Update universal files (as needed).**  
+   Update [IMPROVEMENT_LOOP_BEST_PRACTICES.md](./IMPROVEMENT_LOOP_BEST_PRACTICES.md) (if present), [IMPROVEMENT_LOOP_FOR_OTHER_AGENTS.md](./IMPROVEMENT_LOOP_FOR_OTHER_AGENTS.md) (if present), RUN_LEDGER template, [LOOP_TIERING.md](./LOOP_TIERING.md) (if present) so they reflect current loops and Hub usage.
 
----
+4. **Read the Hub.**  
+   Open [docs/agents/data-sets/hub/README.md](../agents/data-sets/hub/README.md). Scan the Hub index; read or skim each file relevant to the Improvement Loop and to other loops. Note **Hub consulted** and **Advice/rules applied** at the start of your run.
 
-## Universal files (Loop Master maintains)
-
-| File | Purpose |
-|------|--------|
-| [IMPROVEMENT_LOOP_BEST_PRACTICES.md](./IMPROVEMENT_LOOP_BEST_PRACTICES.md) | Best practices for any loop; what to record every run; checklist. |
-| [IMPROVEMENT_LOOP_FOR_OTHER_AGENTS.md](./IMPROVEMENT_LOOP_FOR_OTHER_AGENTS.md) | Entry point for other agents; links to best practices and recorded data. |
-| [IMPROVEMENT_LOOP_RUN_LEDGER.md](./IMPROVEMENT_LOOP_RUN_LEDGER.md) | Template and instructions for appending each improvement loop run. |
-| [LOOP_TIERING.md](./LOOP_TIERING.md) | Light / Medium / Heavy definitions and approval rules (improvement loop standard). |
-| This file | Loop Master role and Master Loop flow. |
+5. **Then run the full Improvement Loop.**  
+   Proceed with the Improvement Loop (checkpoint → phases 0–4 → summary → append ledger) per the 2-hour-loop rule and [IMPROVEMENT_LOOP_INDEX.md](./IMPROVEMENT_LOOP_INDEX.md) (or equivalent routine doc).
 
 ---
 
-## Trigger summary
+## If the user did NOT say "start master loop"
 
-| User says | Action |
-|-----------|--------|
-| **start master loop** | Run Step 0.M (research all loops, compare/analyze/scrutinize, update universal files), then run full Improvement Loop (checkpoint → phases 0–4 → summary → append ledger). |
-| **GO** / run improvement loop | Run Improvement Loop only (no Loop Master step). |
+- You still **read this doc** (LOOP_MASTER_ROLE.md) at the start of your run.
+- You still **read the Hub** ([hub/README.md](../agents/data-sets/hub/README.md) and relevant files from the index) and note **Hub consulted** and **Advice/rules applied**.
+- You follow [UNIVERSAL_LOOP_PROMPT.md](../agents/data-sets/hub/UNIVERSAL_LOOP_PROMPT.md): minimize slop, critique before depositing, consider "send to hub" when you have polished output.
 
 ---
 
-*Loop Master sets the standard. Other loop-bearing agents follow the universal files updated by the Master Loop.*
+## Paths to bookmark
+
+| What | Path |
+|------|------|
+| This doc (Loop Master authority) | `docs/automation/LOOP_MASTER_ROLE.md` |
+| Full axis (all loops) | `docs/automation/LOOPS_AND_IMPROVEMENT_FULL_AXIS.md` |
+| Hub | `docs/agents/data-sets/hub/` |
+| Hub index | `docs/agents/data-sets/hub/README.md` |
+| Universal Loop Prompt | `docs/agents/data-sets/hub/UNIVERSAL_LOOP_PROMPT.md` |
+
+---
+
+*This doc is the authority for how loops run. Every loop run must refer to it and to the Hub.*

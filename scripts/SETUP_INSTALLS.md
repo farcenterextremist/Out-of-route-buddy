@@ -126,6 +126,6 @@ Use this if you don’t want the full Android Studio IDE.
 |---------------|----------------------------|----------------------|
 | **Java 17**   | Compile Kotlin/Java, run Gradle | JDK 17 (not 21+) |
 | **Android SDK** | Build Android app, run tests    | API 34 (android-34)  |
-| **Gradle**    | Build and test runner      | 8.13 via `gradlew.bat` (no install) |
+| **Gradle**    | Build and test runner      | 9.0.0 via `gradlew.bat` (no install) |
 
 More detail: `docs/DEPLOYMENT.md`.

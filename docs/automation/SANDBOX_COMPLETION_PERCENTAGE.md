@@ -1,41 +1,29 @@
-# Sandbox — True Completion Percentage
+# Sandbox Completion Percentage (Optional)
 
-**Purpose:** Define a **true** percentage of completion for sandboxed ideas. Merging features should not be taken lightly; the percentage reflects real readiness, not just "documented."
+**Purpose:** Optional tracking of how "ready" each sandboxed Heavy idea is before implementation. Use during Medium-tier loop to advance 1–2 ideas (design brief, validation checklist, or %).
 
-**References:** [HEAVY_TIER_IDEAS.md](./HEAVY_TIER_IDEAS.md), [FUTURE_IDEAS.md](../product/FUTURE_IDEAS.md), [SANDBOX_TESTING.md](./SANDBOX_TESTING.md), [LOOP_TIERING.md](./LOOP_TIERING.md)
-
----
-
-## Completion Stages (True %)
-
-| % | Stage | Criteria |
-|---|-------|----------|
-| **0** | Proposed | Idea exists in brainstorm/worker todos; not yet in FUTURE_IDEAS |
-| **20** | Documented | In FUTURE_IDEAS with description, placement, dependencies |
-| **40** | Design brief or validation plan | FEATURE_BRIEF exists, or validation checklist (what to test, how to verify) |
-| **60** | Validated in sandbox | Feature branch or build variant; code exists and runs |
-| **80** | User confirmed behavior | User has seen and confirmed the feature works as expected |
-| **100** | Ready for merge | Visual approval done; user said "approve 100% implement"; safe to merge |
+**References:** [SANDBOX_TESTING.md](./SANDBOX_TESTING.md), [HEAVY_IDEAS_FAVORITES.md](./HEAVY_IDEAS_FAVORITES.md), [FUTURE_IDEAS.md](../product/FUTURE_IDEAS.md)
 
 ---
 
-## Rules
+## What counts as completion %
 
-- **Merging is not taken lightly.** 100% = ready for merge, not "documented."
-- **Documented ≠ 100%.** A feature in FUTURE_IDEAS is at most 20% until it has a design brief (40%) or validation (60%+).
-- **Medium tier improves sandboxed ideas each loop.** Add design brief, validation checklist, or advance one idea's % (e.g. 20→40 by adding FEATURE_BRIEF).
-- **Update HEAVY_TIER_IDEAS** with % when Medium tier advances an idea.
+| Stage | Example % | Meaning |
+|-------|-----------|--------|
+| Documented only | 0–20% | In FUTURE_IDEAS with description; no design brief yet. |
+| Design brief / validation checklist | 20–50% | One-pager or checklist exists; behavior and placement clarified. |
+| User-validated (branch or mock) | 50–80% | Feature branch stub, build variant, or mockup; user has seen and confirmed. |
+| Ready for "approve 100% implement" | 80–100% | All gates in SANDBOX_TESTING § 5 satisfied; awaiting user phrase. |
 
----
-
-## Example
-
-| Idea | Before | Medium tier action | After |
-|------|--------|-------------------|-------|
-| Route deviation map | 20% (documented) | Add validation checklist | 40% |
-| Auto drive detected | 60% (branch exists) | User confirms behavior | 80% |
-| Reports screen | 40% (brief exists) | Validate in branch | 60% |
+**Rule:** Advancing % is **additive only** (docs, briefs, checklists). No code implementation of the Heavy feature until user says "approve 100% implement."
 
 ---
 
-*Integrates with IMPROVEMENT_LOOP_TEAMS and HEAVY_TIER_IDEAS. Medium tier advances % each loop.*
+## How the loop uses this
+
+- **Phase 2.3 (Medium):** When improving sandboxed ideas, optionally note or update completion % for 1–2 ideas (e.g. in this file or in HEAVY_IDEAS_FAVORITES). Report in summary: "Advanced § X.Y to ~N%."
+- **Not required:** If you do not maintain a separate completion file, "improve 1–2 sandboxed ideas" (design brief, checklist, index) is enough; report as "improved N ideas" in summary.
+
+---
+
+*Optional. Integrates with IMPROVEMENT_LOOP_ROUTINE Phase 2.3 and SANDBOX_TESTING promotion flow.*

@@ -2,7 +2,7 @@
 
 **Purpose:** A single scoring framework that analyzes the app across **performance/functionality**, **health**, **testing**, **workflow**, **security**, **data layer**, **build**, **code quality**, **UX/accessibility**, and **documentation**. Use for release readiness, prioritization, and tracking improvement over time.
 
-**Related:** [COVERAGE_SCORE_AND_CRITICAL_AREAS](qa/COVERAGE_SCORE_AND_CRITICAL_AREAS.md), [PROJECT_AUDIT_2025_02_27](PROJECT_AUDIT_2025_02_27.md), [RECENT_FEATURES_ASSESSMENT_AND_IMPROVEMENT_PROMPT](RECENT_FEATURES_ASSESSMENT_AND_IMPROVEMENT_PROMPT.md), [SECURITY_PLAN](security/SECURITY_PLAN.md), [TEST_STRATEGY](qa/TEST_STRATEGY.md).
+**Related:** [COVERAGE_SCORE_AND_CRITICAL_AREAS](qa/COVERAGE_SCORE_AND_CRITICAL_AREAS.md), [PROJECT_AUDIT_2025_02_27](archive/PROJECT_AUDIT_2025_02_27.md), [RECENT_FEATURES_ASSESSMENT_AND_IMPROVEMENT_PROMPT](archive/prompts/RECENT_FEATURES_ASSESSMENT_AND_IMPROVEMENT_PROMPT.md), [SECURITY_PLAN](security/SECURITY_PLAN.md), [TEST_STRATEGY](qa/TEST_STRATEGY.md).
 
 ---
 
@@ -277,7 +277,7 @@ Use these as a starting point; adjust after walking through each dimension. **P*
 ## 8. References
 
 - [COVERAGE_SCORE_AND_CRITICAL_AREAS](qa/COVERAGE_SCORE_AND_CRITICAL_AREAS.md) — testing dimension detail
-- [PROJECT_AUDIT_2025_02_27](PROJECT_AUDIT_2025_02_27.md) — audit IDs (C1–C4, D1–D3, DB, CFG, R, L, S, T)
+- [PROJECT_AUDIT_2025_02_27](archive/PROJECT_AUDIT_2025_02_27.md) — audit IDs (C1–C4, D1–D3, DB, CFG, R, L, S, T)
 - [RECENT_FEATURES_ASSESSMENT_AND_IMPROVEMENT_PROMPT](RECENT_FEATURES_ASSESSMENT_AND_IMPROVEMENT_PROMPT.md) — feature-level scores (78%, 82%, 72%)
 - [SECURITY_PLAN](security/SECURITY_PLAN.md) and [SECURITY_GRADE](security/SECURITY_GRADE.md) — security dimension
 - [QUALITY_AND_ROBUSTNESS_PLAN](QUALITY_AND_ROBUSTNESS_PLAN.md) — D1–D3, L1, R1

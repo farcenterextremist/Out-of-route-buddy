@@ -66,7 +66,7 @@
 | **Logging** | Add one clear log in trip start → save path |
 | **Ship instructions** | Generate or update `Desktop\OUTOFROUTEBUDDY_SHIP_INSTRUCTIONS.txt` with final steps |
 | **Sandboxing** | Add Heavy ideas to FUTURE_IDEAS (100% sandboxed); improve index/cross-links; validate sandboxed features. Runs when you run Medium tier. See [SANDBOX_TESTING.md](./SANDBOX_TESTING.md) |
-| **Sandbox improvement (every loop)** | **Improve on sandboxed ideas each run.** Add design brief, validation checklist, or advance completion % for 1–2 ideas in [HEAVY_TIER_IDEAS.md](./HEAVY_TIER_IDEAS.md). Merging should not be taken lightly; use [true completion %](./SANDBOX_COMPLETION_PERCENTAGE.md). |
+| **Sandbox improvement (every loop)** | **Improve on sandboxed ideas each run.** Add design brief, validation checklist, or advance completion % for 1–2 ideas in [HEAVY_IDEAS_FAVORITES.md](./HEAVY_IDEAS_FAVORITES.md). Merging should not be taken lightly; use [true completion %](./SANDBOX_COMPLETION_PERCENTAGE.md). |
 | **Sandbox testing for merge** | Test new features in sandbox (branch, build variant) before merging into main project. Validate behavior; merge only when safe. |
 | **Advanced beautification & organizing research** | Research color schemes, typography, spacing, elevation, professional UI patterns; document organizing best practices; apply one subtle improvement per loop. |
 | **Code structure review** | Assess one module for feature-based vs layer-based organization; document finding in summary (no change unless user approves). See [REDUNDANT_DEAD_CODE_REPORT.md](../REDUNDANT_DEAD_CODE_REPORT.md) refactor priority quadrant. |
@@ -89,10 +89,13 @@
 | **Navigation / app chrome** | Scrolling top toolbar/taskbar; hamburger menu to the left of the "Out of route" title. See FUTURE_IDEAS § 6.1, § 6.2. |
 | **Branding** | Possible app name change — ideas to be thought through later. See FUTURE_IDEAS § 7.1. |
 | **ROADMAP features** | Auto drive, Reports screen, address input — **only after sandbox validation** |
-| **Architecture** | Gradle 9 migration, schema changes, new persistence paths |
+| **Architecture** | Schema changes, new persistence paths, major toolchain upgrades (e.g. AGP 9) |
 | **Large refactors** | Statistics monthly-only; repository interface changes; multi-file refactors; cross-module changes |
+| **Drastic loop improvements** | Changes to how the loop runs: routine changes, adding/removing phases, changing tier definitions, new loops, major process or automation changes. **Do not auto-implement** — document; add to backlog or FUTURE_IDEAS; require human approval. See [UNIVERSAL_LOOP_PROMPT](../agents/data-sets/hub/UNIVERSAL_LOOP_PROMPT.md). |
 
-**Rule:** New features only. **Must be sandboxed and confirmed working before promotion to Heavy.** See [Sandboxing for new features](#sandboxing-for-new-features) below.
+**Rule:** New features only. **Must be sandboxed and confirmed working before promotion to Heavy.** **Drastic loop improvements** (process/routine changes) are always Heavy — no auto implementation. See [Sandboxing for new features](#sandboxing-for-new-features) below.
+
+**Heavy list cap (~50):** When the number of Heavy ideas in [FUTURE_IDEAS.md](../product/FUTURE_IDEAS.md) reaches **around 50**, the loop switches from **producing** new Heavy ideas to **judging and critiquing** existing ones (e.g. score vs quality bar, suggest merge/remove/defer). When the list drops **below 50** again (e.g. after implementation or pruning), the loop returns to producing new ideas. See [HEAVY_IDEAS_FAVORITES.md](./HEAVY_IDEAS_FAVORITES.md) § Heavy list cap.
 
 ---
 
@@ -149,7 +152,7 @@ New feature ideas **must not** go directly to Heavy. They must be:
 | **Medium** | Ship readiness, backend, sandboxing, research improvements, populate & classify tasks | Yes | Not required |
 | **Heavy** | New features (sandboxed first) | No | **Required** — always human-in-the-loop |
 
-**Rule:** File Organizer (back team) recommends new ideas to Light/Medium/Heavy. Heavy ideas must be approved by a human before implementation. See [IMPROVEMENT_LOOP_TEAMS.md](./IMPROVEMENT_LOOP_TEAMS.md). Light and Medium tiers research improvements and populate [BRAINSTORM_AND_TASKS.md](./BRAINSTORM_AND_TASKS.md); promote 1–2 ideas per loop to CRUCIAL or FUTURE_IDEAS. **Add at least 1–2 Heavy ideas per run** when [HEAVY_TIER_IDEAS.md](./HEAVY_TIER_IDEAS.md) is below 50.
+**Rule:** File Organizer (back team) recommends new ideas to Light/Medium/Heavy. Heavy ideas must be approved by a human before implementation. See [IMPROVEMENT_LOOP_TEAMS.md](./IMPROVEMENT_LOOP_TEAMS.md). Light and Medium tiers research improvements and populate [BRAINSTORM_AND_TASKS.md](./BRAINSTORM_AND_TASKS.md); promote 1–2 ideas per loop to CRUCIAL or FUTURE_IDEAS. **Add at least 1–2 Heavy ideas per run** when Heavy list in [FUTURE_IDEAS.md](../product/FUTURE_IDEAS.md) / [HEAVY_IDEAS_FAVORITES.md](./HEAVY_IDEAS_FAVORITES.md) is below 50.
 
 ---
 

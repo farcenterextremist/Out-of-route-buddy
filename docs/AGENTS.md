@@ -43,6 +43,16 @@ When user says **GO** (or "run improvement loop"):
 
 ---
 
+## Closing crew (Codey)
+
+When you want **code beautification**, **structure polish**, or **micro refactors** (not loop runs):
+
+**Rule:** [.cursor/rules/codey.mdc](.cursor/rules/codey.mdc). **Brief:** [docs/agents/data-sets/hub/2026-03-12_codey_code-structure-and-compiler-brief.md](docs/agents/data-sets/hub/2026-03-12_codey_code-structure-and-compiler-brief.md).
+
+Codey is part of the **closing crew** — final code polish and micro changes after a feature or loop. Codey does **not** run loops or act as Loop Master; loop orchestration stays with [LOOP_MASTER_ROLE.md](docs/automation/LOOP_MASTER_ROLE.md).
+
+---
+
 ## Master Loop (Loop Master)
 
 When user says **"start master loop"**:
@@ -61,11 +71,12 @@ When user says **"Run Cyber Security Loop"** (or "GO security"):
 **Skill:** Invoke **purple-orchestrator-skill** (`.cursor/skills/purple-orchestrator-skill/SKILL.md`) for full Purple flow when running agent-driven exercises.
 
 1. **Check todos upon initiation** — CRUCIAL_IMPROVEMENTS_TODO, TOKEN_LOOP_NEXT_TASKS, CYBER_SECURITY_LOOP_AUDIT, in-progress todos.
-2. Read [docs/automation/CYBER_SECURITY_LOOP_MASTER_PLAN.md](docs/automation/CYBER_SECURITY_LOOP_MASTER_PLAN.md) at loop start (completion %, next items).
-3. Read [docs/automation/CYBER_SECURITY_LOOP_COMMON_SENSE.md](docs/automation/CYBER_SECURITY_LOOP_COMMON_SENSE.md) (checkpoint first, scope lock, no destructive actions)
-4. Follow [docs/automation/CYBER_SECURITY_LOOP_ROUTINE.md](docs/automation/CYBER_SECURITY_LOOP_ROUTINE.md) (Research → Simulate → Purple → Improve)
-5. Run `./gradlew securitySimulations` for automated attack simulations
-6. Proof of work: [docs/agents/security-team-proof-of-work.md](docs/agents/security-team-proof-of-work.md)
+2. **Research first.** Phase 0 must complete before Simulate. (A) Cyber security: CYBER_SECURITY_RESEARCH, web search, ATTACK_LIBRARY, CYBER_SECURITY_LOOP_AUDIT. (B) Loop improvement: LOOP_LESSONS_LEARNED, SELF_IMPROVING_LOOP_RESEARCH, CURSOR_SELF_IMPROVEMENT. Note what you applied.
+3. Read [docs/automation/CYBER_SECURITY_LOOP_MASTER_PLAN.md](docs/automation/CYBER_SECURITY_LOOP_MASTER_PLAN.md) at loop start (completion %, next items).
+4. Read [docs/automation/CYBER_SECURITY_LOOP_COMMON_SENSE.md](docs/automation/CYBER_SECURITY_LOOP_COMMON_SENSE.md) (checkpoint first, scope lock, no destructive actions)
+5. Follow [docs/automation/CYBER_SECURITY_LOOP_ROUTINE.md](docs/automation/CYBER_SECURITY_LOOP_ROUTINE.md) (Research → Simulate → Purple → Improve)
+6. Run `./gradlew securitySimulations` for automated attack simulations
+7. Proof of work: [docs/agents/security-team-proof-of-work.md](docs/agents/security-team-proof-of-work.md)
 
 ---
 
@@ -86,6 +97,8 @@ When user says **"start token loop"** (or "run token reduction loop" / "token au
 
 When user says **"Start Synthetic data loop"**, **"START DATA LOOP"**, or "run synthetic data loop" / "data loop":
 
+**Prepare/warm up:** [docs/automation/DATA_LOOP_WARMUP.md](docs/automation/DATA_LOOP_WARMUP.md) — checklist and rules before running the loop.
+
 1. Read [docs/automation/SYNTHETIC_DATA_LOOP_FOR_OTHER_AGENTS.md](docs/automation/SYNTHETIC_DATA_LOOP_FOR_OTHER_AGENTS.md) and follow the best practices there.
 2. Read [docs/automation/SYNTHETIC_DATA_LOOP_MASTER_PLAN.md](docs/automation/SYNTHETIC_DATA_LOOP_MASTER_PLAN.md) (trigger, scope, phases, data-tier linkage).
 3. Follow [docs/automation/SYNTHETIC_DATA_LOOP_ROUTINE.md](docs/automation/SYNTHETIC_DATA_LOOP_ROUTINE.md) (phases 0–4).
@@ -93,6 +106,19 @@ When user says **"Start Synthetic data loop"**, **"START DATA LOOP"**, or "run s
 5. At the end of every run, append one block to [docs/automation/SYNTHETIC_DATA_LOOP_RUN_LEDGER.md](docs/automation/SYNTHETIC_DATA_LOOP_RUN_LEDGER.md) (template in that file).
 
 *(Data tiers: [docs/DATA_TIERS.md](docs/DATA_TIERS.md).)*
+
+---
+
+## Send to hub
+
+When the user says **"send to hub"**:
+
+1. Save the **precious data** (your completed, polished output) to **`docs/agents/data-sets/hub/`**.
+2. Name files clearly: **`YYYY-MM-DD_<role-or-topic>_<short-description>.<ext>`** (e.g. `2026-03-12_data-loop_loop2-proof-and-benefits.md`).
+3. Optionally add a one-line entry to the Hub index in [docs/agents/data-sets/hub/README.md](docs/agents/data-sets/hub/README.md).
+4. **Hub = this data folder.** Not GitHub. "Send to hub" means: write to `docs/agents/data-sets/hub/`.
+
+*(Full prompt: [docs/agents/data-sets/hub/SEND_TO_HUB_PROMPT.md](docs/agents/data-sets/hub/SEND_TO_HUB_PROMPT.md).)*
 
 ---
 

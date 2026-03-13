@@ -60,7 +60,7 @@
 |------|--------|
 | [SANDBOX_TESTING.md](./SANDBOX_TESTING.md) | Feature testing before merge; sandbox phase in loop. |
 | [SANDBOX_COMPLETION_PERCENTAGE.md](./SANDBOX_COMPLETION_PERCENTAGE.md) | True completion % for sandboxed ideas. |
-| [HEAVY_TIER_IDEAS.md](./HEAVY_TIER_IDEAS.md) | Heavy ideas list (cap 50); add 1–2 per run when below 50. |
+| [HEAVY_IDEAS_FAVORITES.md](./HEAVY_IDEAS_FAVORITES.md) | Heavy ideas (cap 50); favorites; add 1–2 per run when below 50; judge/critique when at cap. |
 
 ---
 
@@ -105,6 +105,7 @@
 
 | File | Purpose |
 |------|--------|
+| [LOOP_DYNAMIC_SHARING.md](./LOOP_DYNAMIC_SHARING.md) | **Shared state** — read loop_shared_events.jsonl (tail) and loop_latest/*.json at start; write at end. Ensures data shared when loops run together. |
 | [IMPROVEMENT_LOOP_FOR_OTHER_AGENTS.md](./IMPROVEMENT_LOOP_FOR_OTHER_AGENTS.md) | **Entry point** for other agents building their own loops: best practices, our recorded data, key docs. |
 | [IMPROVEMENT_LOOP_BEST_PRACTICES.md](./IMPROVEMENT_LOOP_BEST_PRACTICES.md) | Shareable best practices: principles, phase structure, what to record every run, checklist. |
 | [IMPROVEMENT_LOOP_RUN_LEDGER.md](./IMPROVEMENT_LOOP_RUN_LEDGER.md) | **Run ledger** — human-readable log; **append one block per run** in Phase 4.3. |

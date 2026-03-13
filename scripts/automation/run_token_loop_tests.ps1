@@ -10,6 +10,8 @@ for ($i = 0; $i -lt 2; $i++) { $RepoRoot = Split-Path -Parent $RepoRoot }
 Set-Location $RepoRoot
 
 $scripts = @(
+    @{ Name = "Compile (parse)"; Script = "test_token_loop_compile.ps1"; HasKeep = $false },
+    @{ Name = "Wiring"; Script = "test_token_loop_wiring.ps1"; HasKeep = $false },
     @{ Name = "Listener"; Script = "test_token_loop_listener.ps1"; HasKeep = $true },
     @{ Name = "Snapshot"; Script = "test_token_loop_snapshot.ps1"; HasKeep = $true },
     @{ Name = "Events analysis"; Script = "test_token_loop_events_analysis.ps1"; HasKeep = $false }

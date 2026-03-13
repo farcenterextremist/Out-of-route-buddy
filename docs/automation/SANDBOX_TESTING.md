@@ -61,7 +61,7 @@ This keeps the loop autonomous for low-risk items while giving a gate for higher
 
 ## 4. Sandboxed = 100% When Documented
 
-**Heavy-tier ideas** documented in [FUTURE_IDEAS.md](../product/FUTURE_IDEAS.md) are **100% sandboxed**. You can add ideas anytime. Run **Medium tier** Improvement Loop to apply sandbox improvements (index, cross-links, new ideas).
+**Heavy-tier ideas** documented in [FUTURE_IDEAS.md](../product/FUTURE_IDEAS.md) are **100% sandboxed**. You can add ideas anytime. Run **Medium tier** Improvement Loop to apply sandbox improvements (index, cross-links, new ideas). Optional: track readiness with [SANDBOX_COMPLETION_PERCENTAGE.md](./SANDBOX_COMPLETION_PERCENTAGE.md).
 
 ---
 
@@ -96,7 +96,7 @@ Future/planned features are shown in the Help & Info dialog so users know what's
 | **Cursor** | Run in Sandbox + Command Allowlist |
 | **App features** | Feature branch or build variant |
 | **Loop** | Optional sandbox phase for user approval |
-| **Heavy ideas sandboxed** | Document in FUTURE_IDEAS = 100% sandboxed; add anytime; Medium tier runs improvements |
+| **Heavy ideas sandboxed** | Document in FUTURE_IDEAS = 100% sandboxed; add anytime; Medium tier runs improvements; optional % in [SANDBOX_COMPLETION_PERCENTAGE.md](./SANDBOX_COMPLETION_PERCENTAGE.md) |
 | **Sandbox testing for merge** | Test new features in branch/build variant before merging into main; merge only when safe |
 | **Promotion to implementation** | Validate → Confirm → **Question lock** ("image or layout or simulate merge?") → **Visual image/layout/merge** → User says **"approve 100% implement"** → Implement |
 | **User-facing** | Help & Info "Coming soon" section |

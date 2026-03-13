@@ -4,6 +4,8 @@
 - **Save token spend** — Reduce Cursor IDE token usage without sacrificing output quality.
 - **Manage context squish** — Avoid context window bloat (rules, conversation history, file context) so the agent stays effective and we avoid summarization/dropping.
 
+**Expanded scope (this loop is responsible for):** Not only token optimization but also **context compression** (how context is summarized, chunked, or selectively loaded), **embedding** (how codebase/search and retrieval affect what gets sent to the model), **LLM optimization** (prompt design, output control, model choice, caching), and **any other aspects that reduce token spend** (conversation hygiene, rule audit, workspace settings, RAG-style retrieval in Cursor). Research and document all of these; apply what we control; track the rest in the improvement plan.
+
 **How we improve:** We use **listener data** (`token_loop_events.jsonl`) to improve the loop over time — run count, steps completed, always-apply trends, and research notes. See §8.
 
 **Purpose:** Run as a thinking exercise and a periodic loop (e.g. monthly or when usage spikes). **No human in the loop** — the loop runs autonomously; the agent records state, does deep research, runs the audit steps, organizes results, and recommends TODO tasks for the next token loop without stopping for approval.
@@ -110,7 +112,13 @@ When running the loop, invoke the **token loop listener** at start, each step (o
 
 ### 4.4 Progress report at end of run
 
-At the end of each token loop run (after Step 7), give the user a **short progress report** so they see what was done and what's next:
+At the end of each token loop run (after Step 7), give the user a **short progress report** so they see what was done and what's next. **Every report MUST include these three elements:**
+
+1. **Loop #** — The run number (e.g. "Loop #5"). Compute as: count of `token_loop_start` events in `token_loop_events.jsonl` at the end of this run. Always show it first so the user knows which run they're reading.
+2. **Proof of work** — What this run actually did: snapshot taken (run_id, path), steps 0–7 completed (Y/N), listener events recorded, ledger block appended, TOKEN_LOOP_NEXT_TASKS and TOKEN_SAVING_PRACTICES §3 updated. One or two lines; enough to verify the loop ran and artifacts exist.
+3. **How we benefit** — Why this run matters: e.g. lower token spend from fewer/smaller always-apply rules, less context squish, rollback/comparison via snapshots, trend data in events for future runs, concrete next TODOs so the next loop can pick up where we left off.
+
+Then include (as before):
 
 - **Rule output this run vs baseline:** always_apply_count, always_apply_lines (target &lt;50).
 - **Steps completed:** 0–7 and token_loop_end (Y/N).

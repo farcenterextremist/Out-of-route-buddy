@@ -17,6 +17,8 @@ Each agent has a single checklist. When a task is done, check it off here and in
 - [ ] Draft a short product brief for **Auto drive detected** mode (value, when to use it).
 - [ ] Prioritize next 3 features after emulator polish and IMAP (e.g. Auto drive, Reports screen, History improvements).
 - [ ] Align workdays (Sunday 3–4 hr) with a biweekly "sprint" note so the team knows what to batch.
+- [ ] **Get future context:** When adding features that touch real-world workflow (e.g. load cancelled mid-trip, multi-stop), research or get user input before locking semantics. See [OOR_VIEW_AND_EDGE_CASES_STUDY.md](../product/OOR_VIEW_AND_EDGE_CASES_STUDY.md). Add "get future context" to design checklist where applicable.
+- [ ] **Load cancelled / new load mid-trip:** Simulate edge case; get future context (driver/dispatch workflow); decide split vs replace vs multi-segment; document in feature brief or FUTURE_IDEAS. See OOR_VIEW_AND_EDGE_CASES_STUDY § 4–5.
 
 **One idea (backlog):** Driver check-in prompts — After a trip ends, optionally prompt once: "How was the route?" (thumbs up/down or optional note).
 
@@ -62,6 +64,7 @@ Each agent has a single checklist. When a task is done, check it off here and in
 - [ ] Define **Auto drive detected** logic: what triggers it (e.g. movement + speed threshold, or geofence), and how it starts a trip or shows the button.
 - [ ] Implement trip state persistence so an active trip survives app kill (verify and document).
 - [ ] Optional: persist "Driver check-in" (thumbs up/down) if Design approves.
+- [ ] **Load cancelled / new load mid-trip:** With Design, simulate edge case; get future context (how drivers/dispatch log cancelled loads); decide data model (split trip vs replace vs multi-segment). See [OOR_VIEW_AND_EDGE_CASES_STUDY.md](../product/OOR_VIEW_AND_EDGE_CASES_STUDY.md).
 
 **One idea (backlog):** Smart default for bounce miles — remember last used and prefill.
 
@@ -72,7 +75,7 @@ Each agent has a single checklist. When a task is done, check it off here and in
 **Agent card:** `docs/agents/roles/devops-engineer.md`  
 **Data set:** `docs/agents/data-sets/devops.md`
 
-- [ ] **CRUCIAL #1** — Gradle 9 readiness: run build with `--warning-mode all`, document sources in `GRADLE_9_MIGRATION_NOTES.md`, plan plugin updates. Ref: `build_warnings.txt`, `GRADLE_9_MIGRATION_NOTES.md`.
+- [x] **CRUCIAL #1** — Gradle 9 migration: ✅ Done. Project uses Gradle 9.0.0, Kotlin 2.0.21, Compose plugin. Ref: root `GRADLE_9_MIGRATION_NOTES.md`.
 - [x] **CRUCIAL #1** — Update `docs/DEPLOYMENT.md`: set minSdk 24 and Java 17. *(Done: DEPLOYMENT.md already correct.)*
 - [ ] Document how to run the emulator in CI (e.g. static build or smoke test) if we want a "no regressions" gate.
 - [ ] Add a one-line "health" script or target that checks: build, unit tests, and (optional) coordinator email .env present.

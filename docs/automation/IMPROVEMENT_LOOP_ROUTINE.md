@@ -41,6 +41,10 @@
 
 **Variants:** When user says **GO quick** or **GO standard**, use the phase subsets and time allocations in [LOOP_VARIANTS.md](./LOOP_VARIANTS.md). Quick skips most phases; Standard skips or shortens Phase 3.
 
+### 0.0 Health (liveness) at loop start
+
+**Run once at loop start.** Execute `.\scripts\automation\loop_health_check.ps1 -Quick`. If exit code is non-zero, log "Liveness check failed; consider fixing before continuing" and optionally abort or fix environment. See [LOOP_HEALTH_CHECKS.md](./LOOP_HEALTH_CHECKS.md). This keeps health checks running at a constant during the loop (liveness at every phase boundary; readiness = pulse_check at phase end).
+
 ### 0.0a User preferences & design intent (first, before any changes)
 
 **Get personal with the code.** Read [USER_PREFERENCES_AND_DESIGN_INTENT.md](./USER_PREFERENCES_AND_DESIGN_INTENT.md) **first**—before any other research or changes. Learn the subtle details the user prefers so the loop does not stray from the original design.
@@ -67,11 +71,21 @@
 
 **Meta-Researchers:** Use [META_RESEARCH_CHECKLIST.md](./META_RESEARCH_CHECKLIST.md) if it exists; else answer inline: (1) Research quality? (2) Gaps? (3) Suggested improvement? Add one-line meta-note to summary: "Research quality: X. Gaps: Y. Suggested improvement: Z."
 
+### 0.0c Read Hub at loop start (required)
+
+**Apply to your loop:** Per [UNIVERSAL_LOOP_PROMPT.md](../agents/data-sets/hub/UNIVERSAL_LOOP_PROMPT.md): at loop start, open **`docs/agents/data-sets/hub/README.md`**, scan the Hub index table, and read or skim each listed file relevant to this loop (e.g. improvement-loop reports, file-organizer index). Note in your research output: **Hub consulted:** [list files or roles you read]. **Advice/rules applied:** [1–3 bullets from the Hub for this run]. This keeps the loop aligned with what other agents have already established.
+
+### 0.0d Read shared state (required when loops may run together)
+
+**Apply to your loop:** Per [LOOP_DYNAMIC_SHARING.md](./LOOP_DYNAMIC_SHARING.md): at loop start, read **`docs/automation/loop_shared_events.jsonl`** (tail: last 50 lines) and **`docs/automation/loop_latest/token.json`**, **`loop_latest/cyber.json`**, **`loop_latest/synthetic_data.json`** (other loops; skip improvement.json). Note in your research output: **Shared state (other loops):** [what you will use from others — e.g. Token last run summary path, Cyber next_steps, suggested_next_steps]. This ensures when all loops run at the same time, data is shared dynamically and you can react/act on the latest from other loops.
+
 ### 0.1 Research
 
 **Reasoning checkpoint (before research):** "What do I need to know to make good decisions this run? What did last run miss?" See [IMPROVEMENT_LOOP_REASONING.md](./IMPROVEMENT_LOOP_REASONING.md).
 
 **Set this run's focus:** Read last summary; use "Next run focus" if suggested, else next in [LOOP_FOCUS_ROTATION.md](./LOOP_FOCUS_ROTATION.md) order. Default: Security.
+
+**Self-improvement and loop-improvement (required):** Every loop run must include in research the **self-improvement and loop-improvement** docs. Read or skim: [LOOP_LESSONS_LEARNED.md](./LOOP_LESSONS_LEARNED.md), [SELF_IMPROVING_LOOP_RESEARCH.md](./SELF_IMPROVING_LOOP_RESEARCH.md), [CURSOR_SELF_IMPROVEMENT.md](./CURSOR_SELF_IMPROVEMENT.md). Note in your research output what you applied or will apply (e.g. "Avoid X per LOOP_LESSONS_LEARNED"; "Single highest-impact change per SELF_IMPROVING_LOOP_RESEARCH"). **Light and Medium** = auto-implement; **drastic loop improvements** (routine changes, new phases, new loops) = **Heavy** — document only, no auto implementation. See [UNIVERSAL_LOOP_PROMPT](../agents/data-sets/hub/UNIVERSAL_LOOP_PROMPT.md) and [LOOP_TIERING.md](./LOOP_TIERING.md).
 
 Read these files **before** making any changes. (0.0a already read USER_PREFERENCES_AND_DESIGN_INTENT.)
 
@@ -88,12 +102,14 @@ Read these files **before** making any changes. (0.0a already read USER_PREFEREN
 | `docs/automation/LOOP_TIERING.md` | Light / Medium / Heavy task definitions; approval gate |
 | `docs/automation/LOOP_FOCUS_ROTATION.md` | This run's focus; bias effort |
 | `docs/automation/HEAVY_IDEAS_FAVORITES.md` | User favorites for Heavy ideas; surface favorites first; keep Heavy list lightly populated; quality bar for new Heavy ideas |
-| `docs/automation/LOOP_LESSONS_LEARNED.md` | Self-improvement: lessons from past runs; read and append 1–3 bullets per run. Skip if missing. |
-| `docs/automation/SELF_IMPROVING_LOOP_RESEARCH.md` | Methods to make the loop self-improving; optional read when adopting new loop optimizations. |
+| `docs/automation/LOOP_LESSONS_LEARNED.md` | Self-improvement: lessons from past runs; read and append 1–3 bullets per run. **Required in research.** Skip if missing. |
+| `docs/automation/SELF_IMPROVING_LOOP_RESEARCH.md` | Methods to make the loop self-improving; **required in research** when running any loop. |
+| `docs/automation/CURSOR_SELF_IMPROVEMENT.md` | Safe web, prompt-injection awareness, Phase 0.3; **required in research** per universal loop rules. |
+| `docs/automation/DATA_USEFULNESS_AND_PRUNING_RESEARCH.md` | How to evaluate data usefulness and what to prune; Hub/deposit criteria; optional when deciding what to keep or archive. |
 | `docs/automation/USER_METADATA_USAGE_GUIDE.md` | Metadata (when Data/Metrics focus); skip if missing |
 | `docs/TASKS_INDEX.md` or `docs/agents/COMPREHENSIVE_AGENT_TODOS.md` | Consolidated TODOs; check and update during run. Skip if missing. |
 
-**Output:** One-line research note: "Design intent: [from 0.0a]. Last loop did X; next: Y, Z. This focus: [Security|UI/UX|…]. [Optional: Last run conclusion / This run we will not repeat: … per SELF_IMPROVING_LOOP_RESEARCH.] Security gaps: A. Smoothness: B. Design: [topic]."
+**Output:** One-line research note: "Design intent: [from 0.0a]. **Hub consulted:** [from 0.0c]. **Shared state (other loops):** [from 0.0d — what you will use from Token/Cyber/Synthetic Data latest]. Last loop did X; next: Y, Z. This focus: [Security|UI/UX|…]. [Optional: Last run conclusion / This run we will not repeat: … per SELF_IMPROVING_LOOP_RESEARCH.] Security gaps: A. Smoothness: B. Design: [topic]."
 
 ### 0.1b Task classification & approval gate
 
@@ -160,6 +176,8 @@ Per [LOOP_TIERING.md](./LOOP_TIERING.md):
 
 ## Phase 1: Quick Wins + Security + Smoothness
 
+**Health (liveness):** At start of phase run `.\scripts\automation\loop_health_check.ps1 -Quick`. If non-zero, log and consider fixing. See [LOOP_HEALTH_CHECKS.md](./LOOP_HEALTH_CHECKS.md).
+
 **Listener:** Invoke `.\scripts\automation\loop_listener.ps1 -Event phase_start -Phase "1" -Note "Quick wins"` at start; `phase_end` at end. See [LOOP_LISTENER.md](./LOOP_LISTENER.md).
 
 **Reasoning checkpoint (before each change):** "What is my goal? What could go wrong? Is there a simpler option?" See [IMPROVEMENT_LOOP_REASONING.md](./IMPROVEMENT_LOOP_REASONING.md). Apply throughout Phases 1–3.
@@ -209,6 +227,8 @@ Pick **one**:
 
 ## Phase 2: Test Health & Documentation
 
+**Health (liveness):** At start of phase run `.\scripts\automation\loop_health_check.ps1 -Quick`. If non-zero, log and consider fixing. See [LOOP_HEALTH_CHECKS.md](./LOOP_HEALTH_CHECKS.md).
+
 **Listener:** Invoke `loop_listener.ps1 -Event phase_start -Phase "2"` at start; `phase_end` at end.
 
 **Goal:** Fix or document one test; align docs.
@@ -226,17 +246,17 @@ Pick **one**:
 
 ### 2.3 Sandboxing (when Medium approved)
 
-**Every loop:** Medium tier improves on sandboxed ideas. Run **one** sandbox action per [SANDBOX_TESTING.md](./SANDBOX_TESTING.md) and [SANDBOX_COMPLETION_PERCENTAGE.md](./SANDBOX_COMPLETION_PERCENTAGE.md):
+**Every loop:** Medium tier improves on sandboxed ideas. Run **one** sandbox action per [SANDBOX_TESTING.md](./SANDBOX_TESTING.md) and (if present) [SANDBOX_COMPLETION_PERCENTAGE.md](./SANDBOX_COMPLETION_PERCENTAGE.md):
 
 | Action | Example |
 |--------|---------|
 | Document new idea | Add one item to FUTURE_IDEAS.md (from ROADMAP or backlog) |
 | Validate sandboxed feature | Create design brief, feature branch stub, or validation checklist for one FUTURE_IDEAS item |
-| **Improve sandboxed idea** | Add design brief, validation checklist, or advance completion % for 1–2 ideas in HEAVY_TIER_IDEAS. Use [SANDBOX_COMPLETION_PERCENTAGE.md](./SANDBOX_COMPLETION_PERCENTAGE.md). Merging should not be taken lightly. |
+| **Improve sandboxed idea** | Add design brief, validation checklist, or advance completion % for 1–2 ideas in [HEAVY_IDEAS_FAVORITES.md](./HEAVY_IDEAS_FAVORITES.md) / FUTURE_IDEAS. Use SANDBOX_COMPLETION_PERCENTAGE if available. Merging should not be taken lightly. |
 | **Sandbox testing for merge** | Test new features in a branch or build variant before merging into main; validate behavior; merge only when safe |
 | Improve sandbox | Update FUTURE_IDEAS index, add cross-link, or document promotion flow |
 
-**Rule:** Sandboxing is additive (docs, branches, briefs). No implementation of Heavy features without user confirmation. No merge into main without sandbox validation. **Every loop:** Medium tier improves 1–2 sandboxed ideas; report % in summary.
+**Rule:** Sandboxing is additive (docs, branches, briefs). No implementation of Heavy features without user confirmation. No merge into main without sandbox validation. **Every loop:** Medium tier improves 1–2 sandboxed ideas; report progress in summary (e.g. completion % if tracked, or "improved N ideas").
 
 ### 2.5 Unit tests
 
@@ -281,6 +301,8 @@ Pick **one**:
 
 ## Phase 4: Final Pulse & Summary (105–120 min)
 
+**Health (liveness):** At start of phase run `.\scripts\automation\loop_health_check.ps1 -Quick`. If non-zero, log and consider fixing. See [LOOP_HEALTH_CHECKS.md](./LOOP_HEALTH_CHECKS.md).
+
 **Listener:** Invoke `loop_listener.ps1 -Event phase_start -Phase "4"` at start; `phase_end` at end.
 
 **Goal:** Lint, summary, suggested next steps.
@@ -316,12 +338,16 @@ Pick **one**:
 8. **Research findings** — Design, security, meta-research; metadata (if Data/Metrics focus)
 9. **Files modified** — List with one-line change
 10. **Suggested next steps** — 4–6 items for next loop (see template below); actionable (include commands where helpful)
-11. **File Organizer: recommended new ideas (required every run)** — **Every run must recommend at least 1–2 new ideas** (Light, Medium, or Heavy). Propose new tasks for Light, Medium, or Heavy; add to LOOP_TIERING examples, CRUCIAL, suggested next steps, or FUTURE_IDEAS. **Heavy:** Add **at least 1–2 new Heavy ideas per run** that meet the quality bar in [HEAVY_IDEAS_FAVORITES.md](./HEAVY_IDEAS_FAVORITES.md) (aligned with mission, clear placement, sandboxed, one-by-one); document them in FUTURE_IDEAS and list in the summary. Surface **favorites first** (ideas with ✅ in HEAVY_IDEAS_FAVORITES); keep the Heavy list lightly populated. Sandbox completion % — Report true % for 1–2 improved ideas (per [SANDBOX_COMPLETION_PERCENTAGE.md](./SANDBOX_COMPLETION_PERCENTAGE.md)). Heavy ideas require human approval before implementation; one by one, ask "Are you ready to implement this new feature?" See [IMPROVEMENT_LOOP_TEAMS.md](./IMPROVEMENT_LOOP_TEAMS.md).
+11. **File Organizer: recommended new ideas (required every run)** — **Every run must recommend at least 1–2 new ideas** (Light, Medium, or Heavy) **or** (when Heavy list at cap) judge/critique existing Heavy ideas. **Heavy list cap:** Count Heavy ideas in [FUTURE_IDEAS.md](../product/FUTURE_IDEAS.md) or HEAVY_IDEAS_FAVORITES. If **count ≥ 50** → **judge/critique mode:** do **not** add new Heavy ideas; instead **judge and critique** 1–2 existing ideas (e.g. score vs quality bar, suggest merge/remove/defer, improve description). If **count < 50** → **produce mode:** add **at least 1–2 new Heavy ideas** that meet the quality bar in [HEAVY_IDEAS_FAVORITES.md](./HEAVY_IDEAS_FAVORITES.md); document in FUTURE_IDEAS and list in summary. Surface **favorites first** (✅ in HEAVY_IDEAS_FAVORITES). Light/Medium ideas: add to LOOP_TIERING, CRUCIAL, or suggested next steps. Sandbox completion % — Report true % for 1–2 improved ideas when applicable. See [IMPROVEMENT_LOOP_TEAMS.md](./IMPROVEMENT_LOOP_TEAMS.md).
 12. **Next run focus** — Suggested focus for next loop (from File Organizer or metrics)
 13. **Quality Grade** — A/B/C with rationale and one improvement for next run
 14. **Self-improvement (optional):** Append 1–3 bullets to [LOOP_LESSONS_LEARNED.md](./LOOP_LESSONS_LEARNED.md): Learned …; Avoid …; Next run try …. See [SELF_IMPROVING_LOOP_RESEARCH.md](./SELF_IMPROVING_LOOP_RESEARCH.md). Optionally add **Single highest-impact change this run:** [one sentence] and **One thing next run must consider:** [one line].
 
 **4.3b Record run (required):** Append this run to [IMPROVEMENT_LOOP_RUN_LEDGER.md](./IMPROVEMENT_LOOP_RUN_LEDGER.md). Add a new **Run YYYY-MM-DD** section with: Focus, Variant, Summary (link to this summary file), Metrics one-liner (tests, lint, files changed, checkpoint), Next (1–2 bullets). Use the template in the ledger. This keeps a shared record for us and for other agents. See [IMPROVEMENT_LOOP_FOR_OTHER_AGENTS.md](./IMPROVEMENT_LOOP_FOR_OTHER_AGENTS.md).
+
+**4.3c Consider send to hub when done (optional):** Per [UNIVERSAL_LOOP_PROMPT.md](../agents/data-sets/hub/UNIVERSAL_LOOP_PROMPT.md): if this run produced **completed, polished** output that other agents or the next run should use (e.g. proof of work, loop report, index, or a concise summary), consider depositing it to **`docs/agents/data-sets/hub/`** with naming **`YYYY-MM-DD_<role-or-topic>_<short-description>.<ext>`** and optionally add a one-line entry to **`hub/README.md`**. Hub = this data folder; not GitHub. See [SEND_TO_HUB_PROMPT.md](../agents/data-sets/hub/SEND_TO_HUB_PROMPT.md).
+
+**4.3d Write shared state (required):** Per [LOOP_DYNAMIC_SHARING.md](./LOOP_DYNAMIC_SHARING.md): append one **finished** event to **`docs/automation/loop_shared_events.jsonl`** (ts, loop=`improvement`, event=`finished`, run_id, summary_path, next_steps from this run, optional checkpoint) and overwrite **`docs/automation/loop_latest/improvement.json`** with this run's latest output (last_run_ts, last_run_id, summary_path, suggested_next_steps, optional checkpoint and key_decisions). This ensures other loops (Token, Cyber, Synthetic Data) can read your output when they run and react/act appropriately.
 
 Copy into each summary. Update checkboxes as items are completed.
 

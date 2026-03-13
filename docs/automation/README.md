@@ -31,11 +31,15 @@ This folder holds **all Improvement Loop docs** (routine, tiering, autonomy, sum
 ### Start here & core routine
 | File | Purpose |
 |------|--------|
+| [LOOPS_AND_IMPROVEMENT_FULL_AXIS.md](./LOOPS_AND_IMPROVEMENT_FULL_AXIS.md) | **Full axis** — all loops (Improvement, Token, Cyber Security), hub, sandbox; triggers, phases, outputs, logic. |
+| [ALL_LOOPS_FOR_AGENTS_AND_WORKFLOW.md](./ALL_LOOPS_FOR_AGENTS_AND_WORKFLOW.md) | **All loops for each agent** — who runs which loop, full workflow (trigger → phases/steps → outputs). |
 | [IMPROVEMENT_LOOP_INDEX.md](./IMPROVEMENT_LOOP_INDEX.md) | **Master index** — find every loop-related file and script. |
 | [LOOP_MASTER_ROLE.md](./LOOP_MASTER_ROLE.md) | **Loop Master** — trigger: "start master loop". Research all loops, update universal files, then run Improvement Loop. |
 | [IMPROVEMENT_LOOP_ROUTINE.md](./IMPROVEMENT_LOOP_ROUTINE.md) | **Routine** — phases 0–4, run when user says **GO**. |
 | [IMPROVEMENT_LOOP_COMMON_SENSE.md](./IMPROVEMENT_LOOP_COMMON_SENSE.md) | Checkpoint first, tests green, full autonomy for Light+Medium. |
 | [IMPROVEMENT_LOOP_REASONING.md](./IMPROVEMENT_LOOP_REASONING.md) | Logic and reasoning checkpoints; think before you act. |
+| [LOOP_HEALTH_CHECKS.md](./LOOP_HEALTH_CHECKS.md) | **Health checks** — liveness at phase start, readiness (pulse) at phase end; run constantly during loops. |
+| [LOOPS_FULL_VERBOSE_GUIDE.md](./LOOPS_FULL_VERBOSE_GUIDE.md) | **Full verbose guide** — where loops exist, how they're controlled, what task types they request. |
 | [USER_PREFERENCES_AND_DESIGN_INTENT.md](./USER_PREFERENCES_AND_DESIGN_INTENT.md) | Design intent, must-not-change. Read first (Phase 0.0a). |
 
 ### Tiering, focus, metrics
@@ -59,7 +63,8 @@ This folder holds **all Improvement Loop docs** (routine, tiering, autonomy, sum
 |------|--------|
 | [SANDBOX_TESTING.md](./SANDBOX_TESTING.md) | Feature testing before merge; sandbox phase. |
 | [SANDBOX_COMPLETION_PERCENTAGE.md](./SANDBOX_COMPLETION_PERCENTAGE.md) | True completion % for sandboxed ideas. |
-| [HEAVY_TIER_IDEAS.md](./HEAVY_TIER_IDEAS.md) | Heavy ideas (cap 50); add 1–2 per run when below 50. |
+| [HEAVY_IDEAS_FAVORITES.md](./HEAVY_IDEAS_FAVORITES.md) | Favorites table; cap ~50; produce vs judge/critique. |
+| [HEAVY_TIER_TODO_LIST_REFINED.md](./HEAVY_TIER_TODO_LIST_REFINED.md) | **Refined list** of all Heavy-tier todos (FUTURE_IDEAS + CRUCIAL + tiering). |
 
 ### Autonomy & allowlist
 | File | Purpose |
@@ -81,6 +86,7 @@ This folder holds **all Improvement Loop docs** (routine, tiering, autonomy, sum
 
 | File | Purpose |
 |------|--------|
+| [LOOP_DYNAMIC_SHARING.md](./LOOP_DYNAMIC_SHARING.md) | **Shared state** — when loops run together: read loop_shared_events.jsonl (tail) and loop_latest/*.json at start; append event and update loop_latest/&lt;your_loop&gt;.json at end. Research: [LOOP_DYNAMIC_SHARING_RESEARCH.md](./LOOP_DYNAMIC_SHARING_RESEARCH.md). |
 | [IMPROVEMENT_LOOP_FOR_OTHER_AGENTS.md](./IMPROVEMENT_LOOP_FOR_OTHER_AGENTS.md) | **Entry point** for other agents: best practices, recorded data, key docs. |
 | [IMPROVEMENT_LOOP_BEST_PRACTICES.md](./IMPROVEMENT_LOOP_BEST_PRACTICES.md) | Best practices for building your own loop; what to record every run. |
 | [IMPROVEMENT_LOOP_RUN_LEDGER.md](./IMPROVEMENT_LOOP_RUN_LEDGER.md) | **Run ledger** — append one block per run in Phase 4.3. |

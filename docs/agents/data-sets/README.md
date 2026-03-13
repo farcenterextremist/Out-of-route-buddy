@@ -20,6 +20,8 @@ Each file in this folder defines what a role **consumes** (reads, references) an
 
 See **`docs/agents/DATA_SETS_AND_DELEGATION_PLAN.md`** for the full plan and delegation matrix.
 
-## Training and alignment
+## Hub (all agents)
+
+- **[hub/](./hub/)** — Single place for **all agents** to share their **completed, polished** data sets. When a role finishes a report, export, brief, or artifact, deposit it in `hub/`. When the user says **"send to hub"**, agents write output to `hub/` (see [hub/SEND_TO_HUB_PROMPT.md](./hub/SEND_TO_HUB_PROMPT.md)). Not GitHub.
 
 - **[employee-roundtable-transcript.md](./employee-roundtable-transcript.md)** — Simulated 1-hour roundtable among all employees (Coordinator + every role). Each role describes their scope and how they hand off to others. Use this transcript to **train and solidify** employee (agent) skills: include it in context when onboarding a role, refining handoffs, or resolving "who does what."

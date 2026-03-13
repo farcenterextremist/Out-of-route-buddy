@@ -20,6 +20,12 @@
 - **Human-in-the-loop.** HITL pipelines use human review at key decision points; feedback loops: annotate → model predicts → human reviews → retrain/improve. *Applies: we already require user approval before tier changes (Phase 4); we can make "suggest improvements to human data gathering" more explicit in the quality report.*
 - **Continuous improvement.** Data loops improve when runs are logged, findings are reused, and the process is iterated. *Applies: run ledger, "Next" items, and this research doc make the loop self-improving.*
 
+**Loop #2 (2026-03-12):**
+
+- **Iterative generation and validation.** Best practice: define strict schemas first, use parameterized variation, generate in batches, validate each batch (schema checks + human spot-checks), then refine. *Applies: our Phase 1 (create/gather) and Phase 3 (quality report) mirror this; we can add "batch" and "validation checklist" to Phase 3.*
+- **Report Loop # every run.** User request: always report **Loop #** to the user plus proof of work and how we benefit; ledger template updated to include Loop #. *Applies: ledger template and every run block now include Loop #; agent reports to user at end.*
+- **40–60% time / 70% cost.** Industry context: synthetic data in production can cut model/data dev time and cost significantly; 80% synthetic / 20% real can outperform either alone. *Applies: our loop keeps synthetic separate (GOLD untouched) while allowing synthetic to suggest improvements to human data gathering—aligns with hybrid value.*
+
 ---
 
 ## Suggested improvements (for routine or next run)
@@ -30,6 +36,7 @@
 |------------|------------|--------|
 | 2026-03-12 | Add Phase 0 research step: at loop start, search current data-loop/synthetic-data best practices; update this doc; add 1–2 suggested improvements. | Done (this doc + routine updated.) |
 | 2026-03-12 | In quality report (Phase 3), add optional "Validation checklist": schema consistency, tier separation verified, business rules (e.g. GOLD human-only) noted. | Proposed for next run. |
+| 2026-03-12 | **Ledger and report: include Loop # every run;** report to user proof of work and how we benefit. | Done (template + Loop #2 block). |
 | — | *Future: add schema validation step for generated synthetic data (e.g. required fields, tier enum).* | Backlog. |
 
 ---

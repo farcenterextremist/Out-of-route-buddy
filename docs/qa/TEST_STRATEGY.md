@@ -2,7 +2,7 @@
 
 **Owner:** QA Engineer  
 **Purpose:** Define what we test, when, and quality gates. Single source for test approach.  
-**Related:** [SSOT_TEST_SCENARIOS.md](./SSOT_TEST_SCENARIOS.md), [JACOCO_SUITE.md](./JACOCO_SUITE.md), [TEST_PLAN_TEMPLATE.md](./TEST_PLAN_TEMPLATE.md), [FAILING_OR_IGNORED_TESTS.md](./FAILING_OR_IGNORED_TESTS.md), [TEST_FAILURES_DOCUMENTATION.md](../../TEST_FAILURES_DOCUMENTATION.md).
+**Related:** [SSOT_TEST_SCENARIOS.md](./SSOT_TEST_SCENARIOS.md), [JACOCO_SUITE.md](./JACOCO_SUITE.md), [TEST_PLAN_TEMPLATE.md](./TEST_PLAN_TEMPLATE.md), [FAILING_OR_IGNORED_TESTS.md](./FAILING_OR_IGNORED_TESTS.md), [TEST_FAILURES_DOCUMENTATION.md](./TEST_FAILURES_DOCUMENTATION.md).
 
 ---
 
@@ -36,7 +36,7 @@
 
 ## Known issues and workarounds
 
-See [TEST_FAILURES_DOCUMENTATION.md](../../TEST_FAILURES_DOCUMENTATION.md) for:
+See [TEST_FAILURES_DOCUMENTATION.md](./TEST_FAILURES_DOCUMENTATION.md) for:
 
 - PerformanceTestSuite: environment-dependent thresholds (relaxed for CI).
 - Dispatcher-related flakiness: MockGpsSynchronizationServiceTest, TripInputViewModelIntegrationTest (ioDispatcher injection applied where fixed).

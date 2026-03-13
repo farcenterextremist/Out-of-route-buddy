@@ -97,7 +97,7 @@ flowchart TB
 ## How to use
 
 - **All agents:** Read this plan at Cyber Security Loop start (Phase 0). Latest run: [CYBER_SECURITY_LOOP_RUN_LEDGER.md](./CYBER_SECURITY_LOOP_RUN_LEDGER.md). Blind spots: [CYBER_SECURITY_LOOP_AUDIT.md](./CYBER_SECURITY_LOOP_AUDIT.md).
-- **Loop runner:** At Phase 0, read CYBER_SECURITY_LOOP_MASTER_PLAN, CYBER_SECURITY_LOOP_AUDIT, ATTACK_LIBRARY. At Phase 3 Improve, append run to ledger and optionally update this doc's completion %.
+- **Loop runner:** At Phase 0 (Research first), read: (A) Cyber security — CYBER_SECURITY_LOOP_MASTER_PLAN, CYBER_SECURITY_RESEARCH, CYBER_SECURITY_LOOP_AUDIT, ATTACK_LIBRARY; (B) Loop improvement — LOOP_LESSONS_LEARNED, SELF_IMPROVING_LOOP_RESEARCH, CURSOR_SELF_IMPROVEMENT. At Phase 3 Improve, append run to ledger and optionally update this doc's completion %.
 - **Adding items:** Add a row to the right phase; increment total and recompute %.
 
 ---

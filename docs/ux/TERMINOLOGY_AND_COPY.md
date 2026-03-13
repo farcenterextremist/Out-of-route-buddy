@@ -33,7 +33,7 @@
 
 ---
 
-*Ref: [POLISHING_PLAN_PROMPT.md](../POLISHING_PLAN_PROMPT.md) §3; [FEATURE_BRIEF_stat_cards_calendar_history.md](../product/FEATURE_BRIEF_stat_cards_calendar_history.md).*
+*Ref: [POLISHING_PLAN_PROMPT.md](../archive/prompts/POLISHING_PLAN_PROMPT.md) §3; [FEATURE_BRIEF_stat_cards_calendar_history.md](../product/FEATURE_BRIEF_stat_cards_calendar_history.md).*
 
 ---
 

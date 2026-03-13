@@ -38,10 +38,23 @@
 - **Memory:** Disable memories for quick projects to save tokens (e.g. "Hi" with memory can cost thousands of tokens). ([Dre Dyson](https://dredyson.com/token-management-101-a-beginners-guide-to-optimizing-ai-usage-in-cursor-ide/))
 - **Workspace settings:** `files.watcherExclude` and `search.exclude` for `.gradle`, `build`, `.cursor` reduce noise and indexing.
 
+### Context compression
+
+- **Dynamic context (Cursor):** Let the agent pull context on demand; long tool outputs go to files so the agent can read selectively. When context fills, history can be summarized and referenced from files. ([Cursor blog](https://cursor.com/blog/dynamic-context-discovery))
+- **Chunk discipline:** Keep context under ~50k tokens per chunk where possible to maintain quality and avoid "lost in the middle." ([Dre Dyson](https://dredyson.com/7-costly-context-limit-mistakes-in-cursor-ide-and-how-to-fix-them/))
+- **Task-relevant only:** In general LLM research, task-aware compression keeps only task-relevant portions of long context; we apply the same idea — attach only what the task needs.
+
+### Embedding and retrieval
+
+- **@-mention and search:** Use @folder, @symbols, @Docs for targeted context; let the agent find context via codebase search instead of attaching every file. ([Cursor agent best practices](https://cursor.com/blog/agent-best-practices), [Context Management](https://developertoolkit.ai/en/cursor-ide/quick-start/context-management/))
+- **Reference, don't inline:** In rules and prompts, point to files (e.g. `@docs/agents/CODEBASE_OVERVIEW.md`) so the model can pull only what it needs; avoids duplicating large blocks.
+- **Cursor embeddings:** Improved codebase search (Cursor 1.2+) uses embeddings; better search reduces need for huge static context.
+
 ### General LLM / prompt optimization (for reference)
 
-- **Prompt diet:** Remove filler and ceremonial phrasing; condense instructions. Can yield large token reductions. ([Dev.to](https://dev.to/lakshmisravyavedantham/i-put-my-prompts-on-a-diet-and-cut-my-llm-bill-by-72-2425), [Burnwise](https://www.burnwise.io/blog/token-optimization-guide))
+- **Prompt diet:** Remove filler and ceremonial phrasing; condense instructions. Can yield large token reductions (e.g. 30–70%). ([Dev.to](https://dev.to/lakshmisravyavedantham/i-put-my-prompts-on-a-diet-and-cut-my-llm-bill-by-72-2425), [Burnwise](https://www.burnwise.io/blog/token-optimization-guide), [Medium prompt compression](https://medium.com/@sahin.samia/prompt-compression-in-large-language-models-llms-making-every-token-count-078a2d1c7e03))
 - **Output control:** `max_tokens` and format constraints can save 20–40% on output (output tokens often 3–8× cost of input). ([Burnwise](https://www.burnwise.io/blog/token-optimization-guide))
+- **Prompt caching:** Reuse stable prompt prefixes across requests for large savings on cached tokens; effective for multi-turn and contexts &gt;1k tokens. ([Prompt Builder](https://promptbuilder.cc/blog/prompt-caching-token-economics-2025))
 - **Context limit caveat:** Many models degrade before advertised limit (e.g. 200K window unreliable around 130K). ([Zylos](https://zylos.ai/research/2026-01-19-llm-context-management))
 
 ---
@@ -58,6 +71,8 @@
 ## 3. What worked / What didn't (by run)
 
 *(At Step 7 of each token loop, append one short block below.)*
+
+**token-20260311-2305:** What worked — Loop #5; §4.4 updated to require Loop #, proof of work, and how we benefit every run; full 0–7 + listener + ledger + NEXT_TASKS. What didn't — Two always-apply rules (53 lines); target one rule &lt;50 lines; convert data-separation to glob/description.
 
 **token-20260311-2227:** What worked — Full loop 0–7; Step 0 research (2025 practices); progress report wired; listener + snapshot + ledger updated. What didn't — Two always-apply rules (data-separation.mdc + self-improvement.mdc); 53 lines &gt; target 50; consider converting data-separation to glob/description.
 

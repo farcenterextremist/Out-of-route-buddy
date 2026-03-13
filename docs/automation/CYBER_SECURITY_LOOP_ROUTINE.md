@@ -4,7 +4,7 @@
 
 **Trigger:** User says **"Run Cyber Security Loop"** or **"GO security"** — or runs automatically when Improvement Loop has Security focus (Phase 1.2).
 
-**Upon initiation:** Check todos — [CRUCIAL_IMPROVEMENTS_TODO.md](../CRUCIAL_IMPROVEMENTS_TODO.md), [TOKEN_LOOP_NEXT_TASKS.md](./TOKEN_LOOP_NEXT_TASKS.md) (latest run), [CYBER_SECURITY_LOOP_AUDIT.md](./CYBER_SECURITY_LOOP_AUDIT.md) (blind spots), and any in-progress todos. Prioritize from these lists.
+**Upon initiation:** Start with **Phase 0 Research** — do not skip. Check todos — [CRUCIAL_IMPROVEMENTS_TODO.md](../CRUCIAL_IMPROVEMENTS_TODO.md), [TOKEN_LOOP_NEXT_TASKS.md](./TOKEN_LOOP_NEXT_TASKS.md) (latest run), [CYBER_SECURITY_LOOP_AUDIT.md](./CYBER_SECURITY_LOOP_AUDIT.md) (blind spots), and any in-progress todos. Prioritize from these lists.
 
 **References:** [CYBER_SECURITY_LOOP_COMMON_SENSE.md](./CYBER_SECURITY_LOOP_COMMON_SENSE.md), [SIMULATION_ENVIRONMENT.md](./SIMULATION_ENVIRONMENT.md), [IMPROVEMENT_LOOP_ROUTINE.md](./IMPROVEMENT_LOOP_ROUTINE.md), [CYBER_SECURITY_LOOP_AUDIT.md](./CYBER_SECURITY_LOOP_AUDIT.md), [SYNTHETIC_ATTACK_SCENARIOS](../agents/data-sets/SYNTHETIC_ATTACK_SCENARIOS.md)
 
@@ -12,9 +12,11 @@
 
 ## Phases
 
+**Research first.** Phase 0 must complete before Phase 1. Do not skip.
+
 | Phase | Goal | Actions |
 |-------|------|---------|
-| **0 Research** | Discover new attacks, defenses, techniques | Read [CYBER_SECURITY_LOOP_MASTER_PLAN](./CYBER_SECURITY_LOOP_MASTER_PLAN.md) at loop start; web search; update ATTACK_LIBRARY; read CYBER_SECURITY_RESEARCH; check CYBER_SECURITY_LOOP_AUDIT for blind spots |
+| **0 Research** | Discover new attacks, defenses, techniques **and** improve our own loop | **(A) Cyber security research:** Read [CYBER_SECURITY_LOOP_MASTER_PLAN](./CYBER_SECURITY_LOOP_MASTER_PLAN.md) at loop start; read [CYBER_SECURITY_RESEARCH](./CYBER_SECURITY_RESEARCH.md); web search for latest attacks/defenses; update ATTACK_LIBRARY; check [CYBER_SECURITY_LOOP_AUDIT](./CYBER_SECURITY_LOOP_AUDIT.md) for blind spots. **(B) Loop improvement research:** Read [LOOP_LESSONS_LEARNED](./LOOP_LESSONS_LEARNED.md), [SELF_IMPROVING_LOOP_RESEARCH](./SELF_IMPROVING_LOOP_RESEARCH.md), [CURSOR_SELF_IMPROVEMENT](./CURSOR_SELF_IMPROVEMENT.md). Note what you applied. See [UNIVERSAL_LOOP_PROMPT](../agents/data-sets/hub/UNIVERSAL_LOOP_PROMPT.md). |
 | **1 Simulate** | Run attacks in safe environment | `./gradlew securitySimulations`; SecuritySimulationTest; run_purple_simulations.py |
 | **2 Purple** | Red attacks, Blue checks, fix if missed | Agent-driven or review simulation results; log to proof of work |
 | **3 Improve** | Update defenses, summary | Implement Blue fixes; write CYBER_SECURITY_LOOP_SUMMARY_YYYY-MM-DD.md |

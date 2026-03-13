@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.detekt)
     id("kotlin-kapt")
     alias(libs.plugins.hilt.android)
@@ -52,9 +53,7 @@ android {
         buildConfig = true
     }
 
-    composeOptions {
-        kotlinCompilerExtensionVersion = libs.versions.compose.compiler.get()
-    }
+    // Kotlin 2.0+: Compose compiler via org.jetbrains.kotlin.plugin.compose (no kotlinCompilerExtensionVersion)
 
     compileOptions {
         // CFG1: Aligned with root build.gradle.kts (Java 17)
@@ -495,10 +494,20 @@ tasks.register("jacocoSuiteTestsOnly") {
 
 // ==================== CYBER SECURITY LOOP ====================
 
-// Run SecuritySimulationTest + run_purple_simulations.py. Single entry point for attack simulations.
+// Verify purple-team Python scripts are wired and runnable.
+tasks.register<Exec>("purpleScriptTests") {
+    group = "Verification"
+    description = "Run purple-team script tests (audit_rules, harness, diff, run_purple)"
+    workingDir = rootProject.projectDir
+    commandLine("python", "scripts/purple-team/test_purple_scripts.py")
+    isIgnoreExitValue = false
+}
+
+// Run SecuritySimulationTest + TripExporterTest + run_purple_simulations.py. Single entry point for attack simulations.
 tasks.register<Exec>("securitySimulations") {
     group = "Verification"
-    description = "Run security attack simulations (SecuritySimulationTest + Purple training JSON)"
+    description = "Run security attack simulations (SecuritySimulationTest + TripExporterTest + Purple training JSON)"
+    dependsOn("purpleScriptTests")
     workingDir = rootProject.projectDir
     commandLine(
         "python",

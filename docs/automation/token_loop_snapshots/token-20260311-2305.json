@@ -1,0 +1,53 @@
+﻿{
+    "git_head":  "c1a65e637f06d6a3876f1f12bd873829fce61cda",
+    "always_apply_count":  2,
+    "run_id":  "token-20260311-2305",
+    "purpose":  "rollback and progress tracking; what works / what doesn\u0027t",
+    "always_apply_lines":  53,
+    "rules":  [
+                  {
+                      "line_count":  18,
+                      "always_apply":  false,
+                      "name":  "2-hour-loop.mdc"
+                  },
+                  {
+                      "line_count":  14,
+                      "always_apply":  false,
+                      "name":  "blue-team.mdc"
+                  },
+                  {
+                      "line_count":  9,
+                      "always_apply":  true,
+                      "name":  "data-separation.mdc"
+                  },
+                  {
+                      "line_count":  18,
+                      "always_apply":  false,
+                      "name":  "kotlin-best-practices.mdc"
+                  },
+                  {
+                      "line_count":  14,
+                      "always_apply":  false,
+                      "name":  "red-team.mdc"
+                  },
+                  {
+                      "line_count":  44,
+                      "always_apply":  true,
+                      "name":  "self-improvement.mdc"
+                  }
+              ],
+    "ts":  "2026-03-11T23:05:08Z",
+    "settings_snippet":  {
+                             "search_exclude":  {
+                                                    "**/.gradle/**":  true,
+                                                    "**/build/**":  true
+                                                },
+                             "files_watcher_exclude":  {
+                                                           "**/.git/objects/**":  true,
+                                                           "**/.git/subtree-cache/**":  true,
+                                                           "**/.gradle/**":  true,
+                                                           "**/build/**":  true,
+                                                           "**/.cursor/**":  true
+                                                       }
+                         }
+}

@@ -5,8 +5,9 @@
 ### **Development Environment**
 - **Android Studio**: Latest stable version
 - **JDK**: **Version 17 (Java 17)** — required for current Gradle and Kotlin
-- **Gradle**: Version 7.0 or higher (see `GRADLE_9_MIGRATION_NOTES.md` for Gradle 9 / `--warning-mode all`)
+- **Gradle**: **9.0.0** (wrapper). See root `GRADLE_9_MIGRATION_NOTES.md` for migration history and `--warning-mode all`.
 - **Android SDK**: **minSdk 24** (Android 7.0+), targetSdk 34, compileSdk 34
+- **Python** (for coordinator/utility scripts): see [DEV_SETUP.md](DEV_SETUP.md).
 
 ### **System Requirements**
 - **RAM**: Minimum 8GB, recommended 16GB
@@ -20,7 +21,7 @@
 - **App version:** The **source of truth** for `versionCode` and `versionName` is `app/build.gradle.kts`. Update there for each release; keep DEPLOYMENT examples or prose in sync or state "see app/build.gradle.kts for current version."
 - **Release minification:** `isMinifyEnabled = true` and `isShrinkResources = true` for release. Keep [app/proguard-rules.pro](../app/proguard-rules.pro) aligned with real runtime behavior and re-test release builds after any keep-rule changes. See [docs/GRADLE_9_MIGRATION_NOTES.md](GRADLE_9_MIGRATION_NOTES.md) (Release minification).
 - **Lint:** `abortOnError = true`, so lint is a hard release gate. Fix or explicitly suppress real issues before shipping. See [docs/qa/TEST_STRATEGY.md](qa/TEST_STRATEGY.md) (Quality gates) and [docs/technical/CODE_QUALITY_NOTES.md](technical/CODE_QUALITY_NOTES.md) (Linting).
-- **Gradle 9:** Deprecation warnings captured; migration planned. See [docs/GRADLE_9_MIGRATION_NOTES.md](GRADLE_9_MIGRATION_NOTES.md) and `build_warnings.txt` (if present).
+- **Gradle 9:** ✅ Migration complete (Gradle 9.0.0, Kotlin 2.0.21). See root [GRADLE_9_MIGRATION_NOTES.md](../GRADLE_9_MIGRATION_NOTES.md).
 
 ### **Gradle Optimization**
 

@@ -2,6 +2,7 @@ package com.example.outofroutebuddy.utils
 
 import com.example.outofroutebuddy.domain.models.Trip
 import com.example.outofroutebuddy.domain.models.TripStatus
+import com.example.outofroutebuddy.domain.models.DataTier
 import com.example.outofroutebuddy.domain.repository.TripStatistics
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
@@ -34,6 +35,7 @@ class MockTripRepositoryTest {
         actualMiles: Double = 60.0,
         startTime: Date? = null,
         endTime: Date? = null,
+        dataTier: DataTier = DataTier.GOLD,
     ) = Trip(
         id = id,
         loadedMiles = loadedMiles,
@@ -43,7 +45,8 @@ class MockTripRepositoryTest {
         oorPercentage = 0.0,
         startTime = startTime,
         endTime = endTime,
-        status = TripStatus.COMPLETED
+        status = TripStatus.COMPLETED,
+        dataTier = dataTier,
     )
 
     @Test
@@ -276,6 +279,59 @@ class MockTripRepositoryTest {
         mock.setTrips(listOf(trip("t1")))
         mock.setShouldFail(true)
         val success = mock.deleteTrip(trip("t1"))
+        assertFalse(success)
+    }
+
+    // ---------- Data loop: getTripsByTier, setTripTier (tier separation) ----------
+
+    @Test
+    fun `getTripsByTier returns only trips of given tier`() = runTest {
+        val t1 = trip("t1", dataTier = DataTier.GOLD)
+        val t2 = trip("t2", dataTier = DataTier.PLATINUM)
+        val t3 = trip("t3", dataTier = DataTier.PLATINUM)
+        val t4 = trip("t4", dataTier = DataTier.SILVER)
+        mock.setTrips(listOf(t1, t2, t3, t4))
+
+        val gold = mock.getTripsByTier(DataTier.GOLD).first()
+        val platinum = mock.getTripsByTier(DataTier.PLATINUM).first()
+        val silver = mock.getTripsByTier(DataTier.SILVER).first()
+
+        assertEquals(1, gold.size)
+        assertEquals("t1", gold[0].id)
+        assertEquals(2, platinum.size)
+        assertTrue(platinum.map { it.id }.toSet() == setOf("t2", "t3"))
+        assertEquals(1, silver.size)
+        assertEquals("t4", silver[0].id)
+    }
+
+    @Test
+    fun `setTripTier updates tier and getTripsByTier reflects it`() = runTest {
+        val t1 = trip("t1", dataTier = DataTier.PLATINUM)
+        mock.setTrips(listOf(t1))
+
+        val success = mock.setTripTier("t1", DataTier.GOLD)
+        assertTrue(success)
+
+        val gold = mock.getTripsByTier(DataTier.GOLD).first()
+        val platinum = mock.getTripsByTier(DataTier.PLATINUM).first()
+        assertEquals(1, gold.size)
+        assertEquals("t1", gold[0].id)
+        assertEquals(DataTier.GOLD, gold[0].dataTier)
+        assertTrue(platinum.isEmpty())
+    }
+
+    @Test
+    fun `setTripTier returns false for unknown id`() = runTest {
+        mock.setTrips(listOf(trip("t1")))
+        val success = mock.setTripTier("nonexistent", DataTier.GOLD)
+        assertFalse(success)
+    }
+
+    @Test
+    fun `setShouldFail causes setTripTier to return false`() = runTest {
+        mock.setTrips(listOf(trip("t1")))
+        mock.setShouldFail(true)
+        val success = mock.setTripTier("t1", DataTier.PLATINUM)
         assertFalse(success)
     }
 }

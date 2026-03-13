@@ -91,7 +91,7 @@
 | **Integration Tests** | 88% | TripInputViewModelIntegrationTest, TripPersistenceRecoveryTest. |
 | **Performance Tests** | 85% | PerformanceTestSuite; thresholds relaxed for CI; environment-dependent. |
 | **Test Infrastructure** | 90% | MockK, TestDataBuilders, TestLocationUtils; Hilt test modules. |
-| **Documentation** | 85% | TEST_FAILURES_DOCUMENTATION.md; QA docs; some gaps. |
+| **Documentation** | 85% | [TEST_FAILURES_DOCUMENTATION.md](../../qa/TEST_FAILURES_DOCUMENTATION.md); QA docs; some gaps. |
 
 **Overall Testing:** 92%
 

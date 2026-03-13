@@ -13,8 +13,8 @@
 | Principle | Why |
 |-----------|-----|
 | **Checkpoint before any changes** | Enables "revert" if something breaks. One commit or tag; record it in the summary. |
-| **Research first** | Read backlog, test health, security notes, and last run summary before picking tasks. Avoids rework and keeps scope clear. |
-| **Tier tasks (e.g. Light / Medium / Heavy)** | Light + Medium can run autonomously; Heavy needs human approval. Prevents runaway scope. |
+| **Research first** | Read backlog, test health, security notes, **self-improvement and loop-improvement docs** (LOOP_LESSONS_LEARNED, SELF_IMPROVING_LOOP_RESEARCH, CURSOR_SELF_IMPROVEMENT), and last run summary before picking tasks. Avoids rework and keeps scope clear. |
+| **Tier tasks (e.g. Light / Medium / Heavy)** | Light + Medium run **autonomously** (auto-implement). Heavy needs human approval. **Drastic loop improvements** (routine changes, new phases, new loops) are Heavy — document only; do not implement without approval. Prevents runaway scope. |
 | **Reason before each change** | "What is my goal? What could go wrong? Is there a simpler option?" Reduces unintended side effects. |
 | **Tests must pass** | If a change breaks tests, revert it. Do not leave tests red. |
 | **Timebox per task** | e.g. ≤10 min per test fix or dead-code item. If stuck, document and defer. |
@@ -42,7 +42,7 @@ A simple 5-phase structure works well:
 ## 3. What to define upfront
 
 - **Trigger** — e.g. "When user says GO" or a schedule. One clear entry point.
-- **Required reads** — At least: common-sense rules, reasoning checkpoints, and user/design preferences. Read before Phase 0 research.
+- **Required reads** — At least: common-sense rules, reasoning checkpoints, user/design preferences, **and self-improvement/loop-improvement docs** (e.g. LOOP_LESSONS_LEARNED, SELF_IMPROVING_LOOP_RESEARCH, CURSOR_SELF_IMPROVEMENT). Read before Phase 0 research.
 - **Backlog sources** — Where tasks come from (e.g. CRUCIAL, dead-code report, failing tests, security checklist). Read these in Phase 0.
 - **Out of scope** — Explicit list of what the loop must not do (e.g. new features, Gradle migration, instrumented tests in headless env).
 - **Summary format** — One canonical summary file per run (e.g. `IMPROVEMENT_LOOP_SUMMARY_<date>.md`) with: research note, what was done, metrics, suggested next steps, quality grade.

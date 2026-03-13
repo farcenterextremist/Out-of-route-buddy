@@ -1,0 +1,52 @@
+---
+description: "Universal Loop — when running any loop (Improvement, Token, Cyber, etc.): consult Loop Master + Hub, minimize slop, consider send to hub."
+globs:
+  - "docs/automation/**"
+  - "docs/agents/data-sets/hub/**"
+alwaysApply: false
+---
+
+# Universal Loop — Bind Every Loop Run
+
+**When you run any loop** (Improvement, Token, Cyber Security, Synthetic Data, "GO", "start token loop", "start master loop", or other), follow **[UNIVERSAL_LOOP_PROMPT.md](docs/agents/data-sets/hub/UNIVERSAL_LOOP_PROMPT.md)** in the Hub.
+
+**Apply to your loop:** Research = LOOP_LESSONS_LEARNED, SELF_IMPROVING_LOOP_RESEARCH, CURSOR_SELF_IMPROVEMENT; auto-implement Light & Medium; drastic loop changes = Heavy (document only); read Hub at start; read/write shared state (loop_shared_events.jsonl, loop_latest/*.json); consider send to hub when done. **Full:** `docs/agents/data-sets/hub/UNIVERSAL_LOOP_PROMPT.md`
+
+## Seven obligations
+
+1. **Consult the Hub via the Loop Master.**  
+   Read **`docs/automation/LOOP_MASTER_ROLE.md`**. If the user said **"start master loop"**, complete **Step 0.M** first (research all loops, compare, update universal files, read the Hub). Otherwise still read the Hub at the start of your run.
+
+2. **Include self-improvement and loop-improvement in research.**  
+   Every loop run must include in its **research** the **self-improvement and loop-improvement** docs: **`docs/automation/LOOP_LESSONS_LEARNED.md`**, **`docs/automation/SELF_IMPROVING_LOOP_RESEARCH.md`**, **`docs/automation/CURSOR_SELF_IMPROVEMENT.md`**. Note what you applied from these in your research output.
+
+3. **Auto-implement Light and Medium; drastic loop changes = Heavy (document only).**  
+   **Light and Medium** tier improvements run **without stopping** — auto-implement. **Drastic loop changes** (routine, phases, new loops, major process changes) are **Heavy**: document only; do not implement without human approval. See **`docs/automation/LOOP_TIERING.md`**.
+
+4. **Read the Hub at loop start.**  
+   Open **`docs/agents/data-sets/hub/README.md`**. Scan the Hub index; read or skim each file relevant to your loop. Note at run start:  
+   - **Hub consulted:** [files or roles you read].  
+   - **Advice/rules applied:** [1–3 bullets from the Hub for this run].
+
+5. **Minimize AI slop and critique data.**  
+   Output must be **specific, traceable, actionable** (metrics, paths, clear next steps). Before depositing or "send to hub", ask: Is it actionable? Does it reference real artifacts? Would someone reuse it without guessing? Avoid padding and vague "consider X"; prefer one sharp sentence over three vague ones. Use critiquing/slop-minimization skills on loop outputs if available.
+
+6. **When you finish a loop or major artifact, consider "send to hub."**
+   If the run produced **completed, polished** output (proof of work, report, index, data summary), deposit it in **`docs/agents/data-sets/hub/`** with naming **`YYYY-MM-DD_<role-or-topic>_<short-description>.<ext>`** and optionally add a one-line entry to **`hub/README.md`**. Hub = this folder; not GitHub.
+
+## Paths
+
+| What | Path |
+|------|------|
+| Loop Master | `docs/automation/LOOP_MASTER_ROLE.md` |
+| Full axis (all loops) | `docs/automation/LOOPS_AND_IMPROVEMENT_FULL_AXIS.md` |
+| Hub index | `docs/agents/data-sets/hub/README.md` |
+| Send-to-hub prompt | `docs/agents/data-sets/hub/SEND_TO_HUB_PROMPT.md` |
+| Research (required in loop) | `docs/automation/LOOP_LESSONS_LEARNED.md`, `SELF_IMPROVING_LOOP_RESEARCH.md`, `CURSOR_SELF_IMPROVEMENT.md` |
+| Tiering (Light/Medium auto; Heavy = document only) | `docs/automation/LOOP_TIERING.md` |
+| Dynamic sharing (read/write shared state) | `docs/automation/LOOP_DYNAMIC_SHARING.md` |
+| Full prompt | `docs/agents/data-sets/hub/UNIVERSAL_LOOP_PROMPT.md` |
+
+---
+
+*This rule applies when working in `docs/automation/` or `docs/agents/data-sets/hub/`, or when the user triggers any loop. Give this to all agents so every loop run refers to the Hub and produces critiqued, slop-minimized data.*

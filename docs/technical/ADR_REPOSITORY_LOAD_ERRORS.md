@@ -9,4 +9,4 @@
 
 **Implementation:** DomainTripRepositoryAdapter holds `MutableSharedFlow<String>(extraBufferCapacity=1)`, emits `e.message ?: "Load failed"` in each `.catch { }` for getTripById, getTripsByDateRange, getTripsOverlappingDay. Module provides adapter as singleton and provides `adapter.loadErrors` for injection. ViewModels inject `@RepositoryLoadErrors Flow<String>` and expose loadError state; fragments observe and show snackbar.
 
-**References:** docs/QUALITY_AND_ROBUSTNESS_PLAN.md (D1), docs/PROJECT_AUDIT_2025_02_27.md.
+**References:** docs/QUALITY_AND_ROBUSTNESS_PLAN.md (D1), docs/archive/PROJECT_AUDIT_2025_02_27.md.

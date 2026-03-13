@@ -1,8 +1,21 @@
 # Heavy Ideas — Favoriting & Curation
 
-**Purpose:** You tell the agent which Heavy ideas you prefer. The loop uses this to **surface favorites first** and **keep the Heavy list lightly populated** — prioritizing your picks and suggesting pruning or deferring lower-preference items.
+**Purpose:** You tell the agent which Heavy ideas you prefer. The loop uses this to **surface favorites first** and **keep the Heavy list lightly populated** — prioritizing your picks and suggesting pruning or deferring lower-preference items. When the list hits the **cap (~50)**, the loop switches from **producing** new ideas to **judging and critiquing** existing ones until the list drops below the cap.
 
 **References:** [FUTURE_IDEAS.md](../product/FUTURE_IDEAS.md), [LOOP_TIERING.md](./LOOP_TIERING.md), [IMPROVEMENT_LOOP_ROUTINE.md](./IMPROVEMENT_LOOP_ROUTINE.md)
+
+---
+
+## Heavy list cap: produce vs. judge/critique
+
+| Condition | Mode | What the loop does |
+|-----------|------|---------------------|
+| **Heavy list count < 50** | **Produce** | Add at least 1–2 new Heavy ideas per run (quality bar); document in FUTURE_IDEAS and add rows to Favorites table. |
+| **Heavy list count ≥ 50** | **Judge / critique** | Do **not** add new Heavy ideas. Instead: **judge and critique** 1–2 existing Heavy ideas — e.g. score vs quality bar, suggest merge/remove/defer, improve description or placement, note duplicates or low-value items. Report in summary. When ideas are implemented or pruned and count drops **below 50**, return to **produce** mode. |
+
+**How to count:** Count distinct Heavy ideas in [FUTURE_IDEAS.md](../product/FUTURE_IDEAS.md) (or rows in this doc’s Favorites table). Use "around 50" as the threshold (e.g. 48–52); if in doubt, treat ≥ 50 as at cap.
+
+**Rule:** At cap → judge/critique only. Below cap → produce at least 1–2 new Heavy ideas per run.
 
 ---
 
@@ -30,6 +43,11 @@
 | Multi-user data sharing | § 1.1 | |
 | Driver ranking | § 1.2 | |
 | Ranking chart | § 1.3 | |
+| **OOR percentage goal / target** | **§ 8.1** | |
+| **End-of-day trip summary notification (opt-in)** | **§ 9.1** | |
+| **OOR over/under view with color semantics** | **§ 10.1** | |
+| **Load cancelled mid-trip / new load (get future context)** | **§ 11.1** | |
+| **Text command: "Send to hub"** | **§ 12.1** | |
 
 ---
 
@@ -45,17 +63,17 @@ When the loop **proposes new Heavy ideas** (Phase 4.3 "File Organizer: recommend
 | **One-by-one** | Implementable as a single feature; user can approve or reject per idea. |
 | **Favoritable** | User can mark it in this doc so the Heavy list stays lightly populated. |
 
-**Rule:** **Every run:** Propose **at least 1–2** new Heavy ideas that meet the bar above. Add them to FUTURE_IDEAS and to the Favorites table in this doc. User can add ✅ to prioritize.
+**Rule:** When **below cap** (< 50): Propose **at least 1–2** new Heavy ideas that meet the bar above. Add them to FUTURE_IDEAS and to the Favorites table in this doc. When **at or above cap** (≥ 50): Do not add new Heavy ideas; **judge and critique** 1–2 existing ideas instead (see § Heavy list cap). User can add ✅ to prioritize.
 
 ---
 
 ## Loop integration
 
-- **Phase 0:** Read this file during Research. Note in research output: "Heavy favorites: [list favored ideas]; list lightly populated per user preferences."
+- **Phase 0:** Read this file during Research. Note in research output: "Heavy favorites: [list]; list count: [N]; mode: [produce | judge/critique]."
 - **Phase 4.3 (summary):** When listing Heavy tasks or "recommended new ideas":
   - **Surface favorites first** — List Heavy ideas that have ✅ in this doc before others.
   - **Keep list light** — If the full Heavy list is long, summarize as "Favorites (N): [names]. Other Heavy ideas in FUTURE_IDEAS (M) — not favored this run."
-  - **New Heavy ideas** — **Every run:** Propose at least 1–2 new Heavy ideas that meet the quality bar above; add them to FUTURE_IDEAS and **add a row for each to the Favorites table** in this doc so the user can add ✅ to prioritize. Remind user they can favorite here.
+  - **Cap rule:** If Heavy list **count ≥ 50** → **judge/critique mode:** do not add new Heavy ideas; judge and critique 1–2 existing ideas (quality bar, merge/remove/defer, improve description). If count **< 50** → **produce mode:** propose at least 1–2 new Heavy ideas that meet the quality bar; add to FUTURE_IDEAS and add a row for each to the Favorites table. Remind user they can favorite here.
 
 ---
 

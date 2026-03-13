@@ -34,4 +34,4 @@ Use a consistent `TAG` per class (e.g. `companion object { private const val TAG
 
 ---
 
-*Part of the Polishing Plan; see [POLISHING_PLAN_PROMPT.md](../POLISHING_PLAN_PROMPT.md).*
+*Part of the Polishing Plan; see [POLISHING_PLAN_PROMPT.md](../archive/prompts/POLISHING_PLAN_PROMPT.md).*

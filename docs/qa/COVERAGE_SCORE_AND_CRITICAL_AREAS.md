@@ -1,7 +1,7 @@
 # OutOfRouteBuddy — Test Suite Effective Coverage Score & Critical Areas
 
 **Purpose:** Score the app’s test-suite effectiveness, list critical gaps, and support a data-driven improvement plan.  
-**Related:** [JACOCO_SUITE.md](./JACOCO_SUITE.md), [TEST_STRATEGY.md](./TEST_STRATEGY.md), [QUALITY_AND_ROBUSTNESS_PLAN.md](../QUALITY_AND_ROBUSTNESS_PLAN.md), [PROJECT_AUDIT_2025_02_27.md](../PROJECT_AUDIT_2025_02_27.md).
+**Related:** [JACOCO_SUITE.md](./JACOCO_SUITE.md), [TEST_STRATEGY.md](./TEST_STRATEGY.md), [QUALITY_AND_ROBUSTNESS_PLAN.md](../QUALITY_AND_ROBUSTNESS_PLAN.md), [PROJECT_AUDIT_2025_02_27.md](../archive/PROJECT_AUDIT_2025_02_27.md).
 
 ---
 
@@ -14,7 +14,7 @@
 | **Critical-path coverage** | **5** | Application: OutOfRouteApplicationTest (clearRecoveredState; isHealthy/getDatabaseError covered in instrumented). MainActivity: TEST_STRATEGY. Workers: WorkManagerInitializerTest, SyncWorkerRobolectricTest. BackgroundSyncService/OfflineSyncCoordinator: integration/manual and PerformanceTuningTest; see P4. Persistence/recovery: TripStatePersistence and TripCrashRecoveryManager used in integration tests; OfflineDataManager load/save in OfflineDataManagerPersistenceTest (one test @Ignore). |
 | **JaCoCo configuration** | **5** | Thresholds (70% overall, 60% branch, 75% line), shared filters, and `jacocoSuite` are well defined; report is not generated until the suite compiles and runs. |
 | **Edge-case & failure coverage** | **4** | T4/T5/D1: Migration deferred; insert/delete failure, empty list, invalid ID in DomainTripRepositoryAdapterTest. Adapter logs on failure (D1). FAILING_OR_IGNORED_TESTS has reason and owner for each. |
-| **Stability & maintainability** | **4** | TestDispatcher used in integration tests (TripInputViewModelIntegrationTest, DataManagementViewModelTest). Run reliably: `gradlew --stop` then `gradlew jacocoSuiteTestsOnly` with no other Gradle/IDE locks; see docs/qa/JACOCO_SUITE.md. FAILING_OR_IGNORED_TESTS and TEST_FAILURES_DOCUMENTATION aligned. |
+| **Stability & maintainability** | **4** | TestDispatcher used in integration tests (TripInputViewModelIntegrationTest, DataManagementViewModelTest). Run reliably: `gradlew --stop` then `gradlew jacocoSuiteTestsOnly` with no other Gradle/IDE locks; see docs/qa/JACOCO_SUITE.md. FAILING_OR_IGNORED_TESTS and [TEST_FAILURES_DOCUMENTATION.md](./TEST_FAILURES_DOCUMENTATION.md) aligned. |
 
 **Overall effective coverage score: 4.3 / 5** — Dimensions: Suite 4, Breadth 4, Critical-path 5, JaCoCo 5, Edge-case 4, Stability 4. To reach **4.5/5**: raise Suite runnability to 5 (e.g. jacocoCoverageVerification passes). **Current decision:** CI gate uses `jacocoSuiteTestsOnly` as the accepted pass (see TEST_STRATEGY.md); coverage ramp to pass full jacocoSuite is planned in a later phase.
 

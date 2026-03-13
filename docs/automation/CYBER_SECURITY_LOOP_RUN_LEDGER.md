@@ -86,3 +86,24 @@
 | run_purple_simulations.py --discover-playbooks | ✅ Works | Scans attack-playbooks/*.md; fallback to hardcoded |
 | CI security-simulations job | ✅ Runs | audit_rules.py, then securitySimulations |
 | SecuritySimulationTest | ✅ Pass | 4 playbooks: NaN, negative, out-of-range, path traversal |
+
+---
+
+## Run 3 — 2026-03-11 23:04 (Loop #3)
+
+### Pre-loop
+- **Checkpoint:** c1a65e637f06d6a3876f1f12bd873829fce61cda
+- **Git status:** Modified (TripExporterTest wired, test_purple_scripts, purpleScriptTests)
+- **Timestamp:** 2026-03-11 23:04:47
+
+### During
+- **Phase 0 (Research):** Done — read CYBER_SECURITY_LOOP_MASTER_PLAN, CYBER_SECURITY_LOOP_AUDIT
+- **Phase 1 (Simulate):** Pass (exit 0) — purpleScriptTests + securitySimulations (SecuritySimulationTest + TripExporterTest)
+- **Phase 2 (Purple):** Done — all 4 validation playbooks passed; no Blue fixes needed
+- **Phase 3 (Improve):** Done — ledger updated
+
+### Post-loop
+- **Proof of work:** [2026-03-11-purple-simulations.md](../agents/data-sets/security-exercises/2026-03-11-purple-simulations.md)
+- **Training JSON:** [2026-03-11-purple-training.json](../agents/data-sets/security-exercises/artifacts/2026-03-11-purple-training.json)
+- **Validation passed:** 4/4
+- **Next:** Use diff_training_runs when multiple dates exist; expand prompt-injection harness

@@ -4,6 +4,33 @@
 
 ---
 
+## Run token-20260311-2305 (2026-03-11)
+
+**Previous state (rollback):** Snapshot `docs/automation/token_loop_snapshots/token-20260311-2305.json`. Git HEAD at run start: `c1a65e637f06d6a3876f1f12bd873829fce61cda`.
+
+**Rule output this run vs baseline:**
+- **always_apply_count:** 2 (baseline 1) — self-improvement.mdc + data-separation.mdc. Target: 1.
+- **always_apply_lines:** 53 (baseline 42; target &lt;50).
+- **Progress report:** TOKEN_REDUCTION_LOOP §4.4 now requires every report to include **Loop #**, **proof of work**, and **how we benefit**.
+
+**What worked:**
+- Loop #5 completed; §4.4 updated so every run reports Loop #, proof of work, and benefits to the user.
+- All steps 0–7 + token_loop_end; listener events recorded; ledger and NEXT_TASKS updated.
+
+**What didn't / to fix:**
+- Same as prior run: two always-apply rules; 53 lines &gt; 50. Convert data-separation to glob or description-only.
+
+**Recommended TODO tasks for next token loop:**
+
+- [ ] Convert data-separation.mdc to glob-scoped or agent-decided so only one rule is always-apply (self-improvement.mdc).
+- [ ] Trim always-apply total to &lt;50 lines.
+- [ ] Add .cursorignore for build, node_modules, generated if not present.
+- [ ] **Every run:** Report to user with Loop #, proof of work, and how we benefit (now in §4.4).
+- [ ] If Cursor releases new context/token features, add to TOKEN_REDUCTION_LOOP §1–2 and TOKEN_SAVING_PRACTICES §1.
+- [ ] **Step 0 research (expanded scope):** Include **context compression**, **embedding/retrieval**, and **LLM optimization** in every run's research; see TOKEN_LOOP_IMPROVEMENT_PLAN §2 and TOKEN_SAVING_PRACTICES (context compression, embedding, LLM optimization sections). Our duties are not only token optimization but all levers that reduce token spend.
+
+---
+
 ## Run token-20260311-2227 (2026-03-11)
 
 **Previous state (rollback):** Snapshot `docs/automation/token_loop_snapshots/token-20260311-2227.json`. Git HEAD at run start: `446d0e31cb82ab6a2e8574c5ecad7c29bb8636fa`.

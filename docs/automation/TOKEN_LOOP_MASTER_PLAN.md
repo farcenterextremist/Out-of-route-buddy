@@ -14,13 +14,13 @@
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│  TOKEN LOOP MASTER PLAN — Completion: 18/23 = 78%                            │
+│  TOKEN LOOP MASTER PLAN — Completion: 21/26 = 81%                            │
 ├─────────────────────────────────────────────────────────────────────────────┤
-│  [████████████████████████████████████████████░░░░░░░░░░░░] 78%             │
+│  [████████████████████████████████████████████████░░░░░░░░] 81%             │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │  Phase 1: Foundation        [█████] 5/5   │  Phase 2: Wiring & data [███░░] 3/5 │
 │  Phase 3: Agent visibility [█████] 2/2   │  Phase 4: Master plan    [██░░] 2/4 │
-│  Phase 5: Improvement plan  [█] 1/1       │  Phase 6: Testing       [███] 3/3 │
+│  Phase 5: Improvement plan  [█] 1/1       │  Phase 6: Testing       [██████] 6/6 │
 │  Phase 7: Study and implement [██░] 2/3  │                                      │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
@@ -131,9 +131,9 @@ flowchart LR
 | Phase 3: Agent visibility | 2 | 2 | 100% |
 | Phase 4: Master plan | 2 | 4 | 50% |
 | Phase 5: Improvement plan | 1 | 1 | 100% |
-| Phase 6: Testing | 3 | 3 | 100% |
+| Phase 6: Testing | 6 | 6 | 100% |
 | Phase 7: Study and implement | 2 | 3 | 67% |
-| **Total** | **18** | **23** | **78%** |
+| **Total** | **21** | **26** | **81%** |
 
 *(Update the visual progress bar and this table at Step 7 when checkboxes or phase items change.)*
 
@@ -152,8 +152,11 @@ flowchart LR
 | [x] | Snapshot script test | test_token_loop_snapshot.ps1: output schema, always_apply_count/lines derived from rules array |
 | [x] | Listener test (existing) | test_token_loop_listener.ps1; validates JSONL and event types; metrics parsing check added |
 | [x] | Events analysis test (optional) | test_token_loop_events_analysis.ps1 validates token_loop_events.jsonl structure and run shape |
+| [x] | Wiring test | test_token_loop_wiring.ps1: required docs and scripts exist; TOKEN_REDUCTION_LOOP contains Step 0/7, NEXT_TASKS, token_loop_start/end |
+| [x] | Compile (parse) test | test_token_loop_compile.ps1: all token loop PowerShell scripts parse without syntax errors |
+| [x] | Test runner | run_token_loop_tests.ps1 runs compile, wiring, listener, snapshot, events analysis; run_token_loop.ps1 -Test runs same |
 
-**Phase 6 completion:** 3/3 = **100%**
+**Phase 6 completion:** 6/6 = **100%**
 
 ---
 

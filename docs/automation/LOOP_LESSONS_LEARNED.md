@@ -1,23 +1,22 @@
-# Improvement Loop — Lessons Learned
+# Loop Lessons Learned
 
-**Purpose:** Persistent memory for the Improvement Loop. Each run **reads** this at Phase 0 and **appends** 1–3 bullets at Phase 4 so the next run avoids repeated mistakes and reinforces what works. See [SELF_IMPROVING_LOOP_RESEARCH.md](./SELF_IMPROVING_LOOP_RESEARCH.md).
+**Purpose:** Capture lessons from past loop runs so future runs avoid repeating mistakes. Required reading in loop research (Phase 0 / Step 0). See [UNIVERSAL_LOOP_PROMPT](../agents/data-sets/hub/UNIVERSAL_LOOP_PROMPT.md).
 
-**Format per run:** Add a dated block with: Learned …; Avoid …; Next run try …
-
----
-
-## Template (append each run)
-
-```markdown
-### YYYY-MM-DD
-- **Learned:** …
-- **Avoid:** …
-- **Next run try:** …
-```
+**References:** [IMPROVEMENT_LOOP_ROUTINE.md](./IMPROVEMENT_LOOP_ROUTINE.md), [CURSOR_SELF_IMPROVEMENT.md](./CURSOR_SELF_IMPROVEMENT.md)
 
 ---
 
-## Lessons
+## Lessons (add as discovered)
 
-*(Entries added by each run below.)*
+| Lesson | Source | Apply |
+|--------|--------|-------|
+| **Avoid unwarranted UI changes** | User preference | Do not change UI without explicit approval. |
+| **Checkpoint before Phase 1** | CYBER_SECURITY_LOOP_COMMON_SENSE | Create git commit/tag before simulations; enables rollback. |
+| **Loop # + proof + benefits every run** | Token Loop §4.4 | Every loop report must include Loop #, proof of work, and how we benefit. |
+| **Hub consulted at start** | UNIVERSAL_LOOP_PROMPT | Read hub/README and relevant Hub files; note "Hub consulted" and "Advice applied." |
+| **Drastic = Heavy** | LOOP_TIERING | Routine changes, new phases, new loops = document only; no auto-implement. |
+| **Specific over vague** | Anti-slop | Prefer concrete metrics, file paths, clear next steps over generic summaries. |
 
+---
+
+*Update when new lessons emerge from loop runs. Agents: note "Avoid X per LOOP_LESSONS_LEARNED" in research output.*

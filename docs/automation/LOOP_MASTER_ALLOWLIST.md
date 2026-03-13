@@ -66,6 +66,10 @@ cd c:\Users\brand\OutofRoutebuddy; .\scripts\automation\test_loop_listener.ps1
 ## Optional (if loop uses these)
 
 ```
+cd c:\Users\brand\OutofRoutebuddy; .\scripts\automation\loop_health_check.ps1 -Quick
+```
+
+```
 cd c:\Users\brand\OutofRoutebuddy; .\gradlew.bat jacocoSuiteTestsOnly --no-daemon
 ```
 

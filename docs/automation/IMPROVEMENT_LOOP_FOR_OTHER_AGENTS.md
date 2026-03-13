@@ -8,7 +8,11 @@
 
 ## Upon initiation (first step)
 
+**Read the Hub via the Loop Master.** Before any research or changes, read [UNIVERSAL_LOOP_PROMPT.md](../agents/data-sets/hub/UNIVERSAL_LOOP_PROMPT.md). Then open [hub/README.md](../agents/data-sets/hub/README.md) and the Hub index; read or skim the listed files relevant to your loop. Note "Hub consulted" and "Advice/rules applied" in your research. This ensures every loop run refers to the advice and rules in the Hub and minimizes slop.
+
 **Check todos.** Before research or changes, check the relevant todo lists: [CRUCIAL_IMPROVEMENTS_TODO.md](../CRUCIAL_IMPROVEMENTS_TODO.md), [TOKEN_LOOP_NEXT_TASKS.md](./TOKEN_LOOP_NEXT_TASKS.md) (latest run), and any in-progress or conversation todos. Prioritize tasks from these lists.
+
+**Read shared state (when loops may run together).** Per [LOOP_DYNAMIC_SHARING.md](./LOOP_DYNAMIC_SHARING.md): at loop start, read **loop_shared_events.jsonl** (tail: last 50 lines) and **loop_latest/token.json**, **loop_latest/cyber.json**, **loop_latest/synthetic_data.json**. Note in research: **Shared state (other loops):** [what you will use]. At loop end, append a **finished** event to loop_shared_events.jsonl and update **loop_latest/improvement.json**. This ensures data is shared dynamically when multiple loops run at the same time.
 
 ---
 
@@ -18,9 +22,11 @@
 
 2. **Checkpoint before any changes.** Save a copy (git commit or tag) so the user can say "revert" if something breaks. Note the checkpoint in your summary and in the ledger block.
 
-3. **Respect design intent.** Read [USER_PREFERENCES_AND_DESIGN_INTENT.md](./USER_PREFERENCES_AND_DESIGN_INTENT.md) before research or changes. No unwarranted UI changes without permission.
+3. **Research includes self-improvement and loop-improvement.** Every loop run must include in Phase 0 research: [LOOP_LESSONS_LEARNED.md](./LOOP_LESSONS_LEARNED.md), [SELF_IMPROVING_LOOP_RESEARCH.md](./SELF_IMPROVING_LOOP_RESEARCH.md), [CURSOR_SELF_IMPROVEMENT.md](./CURSOR_SELF_IMPROVEMENT.md). Note what you applied in your research output. **Auto-implement Light and Medium**; put **drastic loop improvements** (routine changes, new phases, new loops) in **Heavy** — document only, require human approval. See [UNIVERSAL_LOOP_PROMPT](../agents/data-sets/hub/UNIVERSAL_LOOP_PROMPT.md) and [LOOP_TIERING.md](./LOOP_TIERING.md).
 
-4. **Research before doing.** Read the docs listed in Phase 0.1 (CRUCIAL, last summary, FAILING_OR_IGNORED_TESTS, security, etc.). Classify tasks as Light / Medium / Heavy per [LOOP_TIERING.md](./LOOP_TIERING.md). Do not implement Heavy without user approval.
+4. **Respect design intent.** Read [USER_PREFERENCES_AND_DESIGN_INTENT.md](./USER_PREFERENCES_AND_DESIGN_INTENT.md) before research or changes. No unwarranted UI changes without permission.
+
+5. **Research before doing.** Read the docs listed in Phase 0.1 (CRUCIAL, last summary, FAILING_OR_IGNORED_TESTS, security, **self-improvement/loop-improvement**, etc.). Classify tasks as Light / Medium / Heavy per [LOOP_TIERING.md](./LOOP_TIERING.md). Do not implement Heavy without user approval.
 
 5. **One improvement per category per loop (Kaizen).** Avoid overload. Timebox (e.g. no more than 10 min per test fix).
 
@@ -28,7 +34,7 @@
 
 7. **Write an A-grade summary.** Use [LOOP_METRICS_TEMPLATE.md](./LOOP_METRICS_TEMPLATE.md). Output `IMPROVEMENT_LOOP_SUMMARY_<date>.md` with metrics, what was done, reasoning, suggested next steps, next run focus, quality grade.
 
-8. **Recommend new ideas every run (required).** In the summary, the "File Organizer: recommended new ideas" section must contain **at least 1–2 new ideas** (Light, Medium, or Heavy) and **at least 1–2 new Heavy ideas** (documented in FUTURE_IDEAS and listed in the summary). Do not skip this. See [IMPROVEMENT_LOOP_TEAMS.md](./IMPROVEMENT_LOOP_TEAMS.md) and routine Phase 4.3 item 11.
+8. **Recommend new ideas every run (required).** In the summary, the "File Organizer: recommended new ideas" section must contain **at least 1–2 new ideas** (Light, Medium, or Heavy) **or** (when Heavy list ≥ 50) **judge/critique** 1–2 existing Heavy ideas. When Heavy list **< 50**, include **at least 1–2 new Heavy ideas** (in FUTURE_IDEAS and summary). Do not skip. See [HEAVY_IDEAS_FAVORITES.md](./HEAVY_IDEAS_FAVORITES.md) § Heavy list cap and [IMPROVEMENT_LOOP_TEAMS.md](./IMPROVEMENT_LOOP_TEAMS.md).
 
 9. **Append one block to the run ledger.** At the end of every run, add a new section to [IMPROVEMENT_LOOP_RUN_LEDGER.md](./IMPROVEMENT_LOOP_RUN_LEDGER.md) using the template in that file. This keeps a shared, chronological record for us and for other agents.
 

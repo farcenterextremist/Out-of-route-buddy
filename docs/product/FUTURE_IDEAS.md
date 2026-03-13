@@ -29,6 +29,11 @@
 | [UI polish / icons](#5-ui-polish--icons) | Trash can icon beautification |
 | [Navigation / app chrome](#6-navigation--app-chrome) | Scrolling top toolbar/taskbar, hamburger menu left of title |
 | [Branding](#7-branding) | Possible app name change |
+| [Goals & progress](#8-goals--progress) | OOR percentage goal / target |
+| [Notifications](#9-notifications) | End-of-day trip summary (opt-in) |
+| [OOR display](#10-oor-display) | OOR over/under view with color semantics (green/blue/red) |
+| [Edge cases](#11-edge-cases) | Load cancelled mid-trip, new load; get future context |
+| [Agent hub & voice](#12-agent-hub--voice) | Text command "send to hub" |
 
 ---
 
@@ -183,6 +188,76 @@
 **Dependencies:** Name ideas (to be explored later); user approval; string/resources and store asset updates.
 
 **Status:** Sandboxed 100%. Heavy tier. Ideas and options to be thought through later; no implementation without user approval.
+
+---
+
+## 8. Goals & progress
+
+### 8.1 OOR percentage goal / target (Heavy)
+
+**Description:** User sets a target out-of-route percentage (e.g. 10%); the app shows progress toward that goal (e.g. "This month: 12% OOR vs goal 10%" or a simple progress indicator). Supports mission: "report and improve OOR performance."
+
+**Placement:** Statistics section (period summary) or Settings (goal setting). Single screen or row; no new data model beyond one stored preference and existing monthly stats.
+
+**Dependencies:** One preference (target OOR %); read-only use of existing getMonthlyTripStatistics(); visual approval before implementation.
+
+**Status:** Sandboxed 100%. Heavy tier. Requires visual approval before implementation.
+
+---
+
+## 9. Notifications
+
+### 9.1 End-of-day trip summary notification (opt-in) (Heavy)
+
+**Description:** Optional push notification when the day ends, summarizing that day’s trips (e.g. "3 trips today, 8% OOR"). Opt-in only; off by default. Supports solo drivers gaining useful data without requiring them to open the app.
+
+**Placement:** Settings (opt-in toggle); system notification (e.g. after midnight or at a user-chosen "end of day" time). Uses existing trip data; no server required (local scheduling).
+
+**Dependencies:** WorkManager or AlarmManager for daily trigger; notification channel; SettingsManager for opt-in preference; visual approval before implementation.
+
+**Status:** Sandboxed 100%. Heavy tier. Requires visual approval before implementation.
+
+---
+
+## 10. OOR display
+
+### 10.1 OOR over/under view with color semantics (Heavy)
+
+**Description:** Show OOR as **over/under** (e.g. "Under by 2.5%" or "Over by 10%") and use color to signal quality: **negative OOR** (under route) = bright matrix green; **zero / low positive** = glowey blue; **excess OOR** (high positive) = red. Applies to day indicators, trip cards, or statistics row. Thresholds can align with existing efficiency rating (e.g. Excellent/Good/Fair/Poor). See [OOR_VIEW_AND_EDGE_CASES_STUDY.md](./OOR_VIEW_AND_EDGE_CASES_STUDY.md).
+
+**Placement:** Calendar dots, trip history cards, statistics row, or period summary. Accessibility: do not rely on color alone (e.g. "Under"/"Over" label or icon).
+
+**Dependencies:** Design approval for thresholds and exact colors; contrast/accessibility check; visual approval before implementation.
+
+**Status:** Sandboxed 100%. Heavy tier. Requires visual approval. Study session doc created; implementation deferred.
+
+---
+
+## 11. Edge cases
+
+### 11.1 Load cancelled mid-trip / new load given (Heavy — get future context)
+
+**Description:** Edge case: user has a load **cancelled halfway through** and is given **another load**. Need to simulate and design how the app handles this — e.g. save first segment as partial trip and start new trip for new load, or replace load in place, or support multi-segment trips. **Get future context:** Research or user input on how drivers/dispatch handle cancelled-load workflow before locking data model.
+
+**Placement:** Trip start/end flow; possibly new "Load cancelled" or "Change load" action. Back-end (data model), Design (workflow), UI/UX (flows).
+
+**Dependencies:** Future context (driver/dispatch semantics); design decision: split vs replace vs multi-segment; schema/UX if multi-segment. See [OOR_VIEW_AND_EDGE_CASES_STUDY.md](./OOR_VIEW_AND_EDGE_CASES_STUDY.md) § 4.
+
+**Status:** Sandboxed 100%. Heavy tier. Study session doc created; get-future-context todo added; implementation deferred until design and context are clear.
+
+---
+
+## 12. Agent hub & text command
+
+### 12.1 Text command: "Send to hub" (Heavy)
+
+**Description:** When the user says **"send to hub"** (in chat to an agent, or in-app as a text command), the meaning is: put the completed, precious data **here** — `docs/agents/data-sets/hub/`. **Not GitHub.** The hub is our shared data folder for agent outputs. In-app: a future feature could let the user type "send to hub" to export current trip/stats to a file that lands in or syncs to the hub.
+
+**Placement:** Agent behavior: respond to "send to hub" by writing to `docs/agents/data-sets/hub/` (see [SEND_TO_HUB_PROMPT.md](../../agents/data-sets/hub/SEND_TO_HUB_PROMPT.md)). In-app: optional text field or command UI; export flow to hub path or user-accessible file.
+
+**Dependencies:** Agent prompt is live. In-app text command would need export format and UX; hub path is `docs/agents/data-sets/hub/`.
+
+**Status:** Sandboxed 100% for in-app UI. Agent instruction doc and prompt in place. **Do not add in-app UI without explicit approval.**
 
 ---
 

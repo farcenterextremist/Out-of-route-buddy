@@ -4,6 +4,28 @@ Short index of the key docs for OutOfRouteBuddy. Start here for product, archite
 
 **Quick links:** [Goal & Mission](./GOAL_AND_MISSION.md) | [Self-Improvement Plan](./SELF_IMPROVEMENT_PLAN.md) | [Cursor Self-Improvement](./automation/CURSOR_SELF_IMPROVEMENT.md) | [Scope & Boundaries](./SCOPE_AND_BOUNDARIES.md) | [ROADMAP](./product/ROADMAP.md) | [CRUCIAL_IMPROVEMENTS](./CRUCIAL_IMPROVEMENTS_TODO.md) | [**Tasks index (all TODOs)**](./TASKS_INDEX.md) | [Known Truths](./agents/KNOWN_TRUTHS_AND_SINGLE_SOURCE_OF_TRUTH.md) | [ARCHITECTURE](./ARCHITECTURE.md)
 
+**Structure:** Where everything lives and where to put new docs: [agents/FILE_STRUCTURE.md](./agents/FILE_STRUCTURE.md). One-off prompts and completed brainstorms: [archive/README.md](./archive/README.md).
+
+---
+
+## Where do I find…? (by audience)
+
+| I am / I want… | Start here |
+|----------------|------------|
+| **Product / roadmap / feature briefs** | [product/ROADMAP.md](./product/ROADMAP.md), [product/](./product/) |
+| **All tasks and TODOs** | [TASKS_INDEX.md](./TASKS_INDEX.md) |
+| **Canonical app behavior (SSOT)** | [agents/KNOWN_TRUTHS_AND_SINGLE_SOURCE_OF_TRUTH.md](./agents/KNOWN_TRUTHS_AND_SINGLE_SOURCE_OF_TRUTH.md) |
+| **Tests, coverage, failing tests** | [qa/README.md](./qa/README.md), [qa/FAILING_OR_IGNORED_TESTS.md](./qa/FAILING_OR_IGNORED_TESTS.md), [qa/TEST_FAILURES_DOCUMENTATION.md](./qa/TEST_FAILURES_DOCUMENTATION.md) |
+| **Wiring, persistence, technical notes** | [technical/WIRING_MAP.md](./technical/WIRING_MAP.md), [technical/](./technical/) |
+| **Improvement / token / cyber loops** | [automation/README.md](./automation/README.md), [automation/LOOP_MASTER_ROLE.md](./automation/LOOP_MASTER_ROLE.md) |
+| **Security** | [security/SECURITY_NOTES.md](./security/SECURITY_NOTES.md) |
+| **Release / store / go-no-go** | [release/](./release/) |
+| **Dev setup (Python for scripts)** | [DEV_SETUP.md](./DEV_SETUP.md) |
+| **Old prompts or completed brainstorms** | [archive/README.md](./archive/README.md), [archive/prompts/](./archive/prompts/) |
+| **One-off or multi-phase plans** | [plans/README.md](./plans/README.md) |
+
+**Rule:** New docs go in the right subfolder (product, agents, qa, technical, ux, security, release, automation, readiness, comms, archive, plans). Keep `docs/` root for this index and north-star docs only. See [agents/FILE_STRUCTURE.md](./agents/FILE_STRUCTURE.md) for the full map and rules.
+
 ---
 
 ## Core docs
@@ -60,6 +82,8 @@ Short index of the key docs for OutOfRouteBuddy. Start here for product, archite
 | [automation/IMPROVEMENT_LOOP_REASONING.md](./automation/IMPROVEMENT_LOOP_REASONING.md) | Logic and reasoning: decision checkpoints, reasoning framework, traceable rationale in summaries. |
 | [automation/LOOP_TIERING.md](./automation/LOOP_TIERING.md) | Task tiering: Light (auto), Medium/Heavy (user approval). |
 | [automation/HEAVY_IDEAS_FAVORITES.md](./automation/HEAVY_IDEAS_FAVORITES.md) | User favorites for Heavy ideas; surface favorites first; keep Heavy list lightly populated. |
+| [automation/SELF_IMPROVING_LOOP_RESEARCH.md](./automation/SELF_IMPROVING_LOOP_RESEARCH.md) | Self-improving loop methods: lessons-learned, single-improvement, metrics delta. |
+| [automation/LOOP_LESSONS_LEARNED.md](./automation/LOOP_LESSONS_LEARNED.md) | Lessons from past runs; read in Phase 0, append in Phase 4. |
 | [automation/DESIGN_AND_UX_RESEARCH.md](./automation/DESIGN_AND_UX_RESEARCH.md) | Design research: color schemes, templates, state flows, beautification, professionalism—integrated into loops. |
 | [automation/CURSOR_SELF_IMPROVEMENT.md](./automation/CURSOR_SELF_IMPROVEMENT.md) | Safe web search, prompt-injection protections, contextualization. |
 | [automation/TOKEN_REDUCTION_LOOP.md](./automation/TOKEN_REDUCTION_LOOP.md) | Token reduction: research, strategies, audit loop; run on demand or Phase 0.6. |
@@ -74,6 +98,11 @@ Short index of the key docs for OutOfRouteBuddy. Start here for product, archite
 | [qa/SIMULATIONS_AND_MOCKS.md](./qa/SIMULATIONS_AND_MOCKS.md) | Simulation and mock strategy for tests; MockGpsSynchronizationService, MockTripRepository, etc. |
 | [automation/CYBER_SECURITY_LOOP_MASTER_PLAN.md](./automation/CYBER_SECURITY_LOOP_MASTER_PLAN.md) | Cyber Security Loop: completion %, phases, visual roadmap. |
 | [automation/CYBER_SECURITY_DATA_SUMMARY.md](./automation/CYBER_SECURITY_DATA_SUMMARY.md) | **Cyber Security data: what we collected, what it means, how to use it.** |
+| [automation/LOOP_MASTER_ROLE.md](./automation/LOOP_MASTER_ROLE.md) | **Loop Master:** authority for how all loops run; Step 0.M when "start master loop". |
+| [automation/LOOPS_AND_IMPROVEMENT_FULL_AXIS.md](./automation/LOOPS_AND_IMPROVEMENT_FULL_AXIS.md) | Full axis: all loops, triggers, outputs; used by Loop Master (Step 0.M). |
+| [agents/data-sets/hub/README.md](./agents/data-sets/hub/README.md) | **Hub:** shared polished data; index of reports and proof of work; "send to hub" = write here. |
+| [agents/data-sets/hub/UNIVERSAL_LOOP_PROMPT.md](./agents/data-sets/hub/UNIVERSAL_LOOP_PROMPT.md) | **Universal Loop Prompt:** every loop consults Hub + Loop Master, minimizes slop. |
+| [agents/HUB_AND_LOOP_FUTURE_TODOS.md](./agents/HUB_AND_LOOP_FUTURE_TODOS.md) | **63 future TODOs:** metadata loading, Hub evolution, Loop Master, cross-loop consistency, slop minimization, onboarding, scripts, metrics. |
 
 ---
 

@@ -23,11 +23,23 @@ python scripts/purple-team/run_purple_simulations.py --validation-only
 - `docs/agents/data-sets/security-exercises/artifacts/YYYY-MM-DD-purple-training.json`
 - `docs/agents/data-sets/security-exercises/YYYY-MM-DD-purple-simulations.md`
 
+## test_purple_scripts.py
+
+Verifies all purple-team scripts are wired and runnable.
+
+**Usage:**
+```bash
+python scripts/purple-team/test_purple_scripts.py
+```
+
+Runs: audit_rules, prompt_injection_harness, diff_training_runs, run_purple_simulations --validation-only.
+Invoked automatically by `./gradlew securitySimulations` (purpleScriptTests task).
+
 ## Integration Points
 
 | Integration | Command |
 |-------------|---------|
-| **Gradle** | `./gradlew securitySimulations` |
+| **Gradle** | `./gradlew securitySimulations` (includes purpleScriptTests) |
 | **CI** | security-simulations job in android-tests.yml |
 | **Improvement Loop** | Phase 1.2 when Security focus |
 

@@ -7,10 +7,10 @@
 
 ## 1. Build & docs alignment — **DevOps Engineer**
 
-- **Gradle 9 readiness:** Build currently reports "Deprecated Gradle features were used in this build, making it incompatible with Gradle 9.0." Run with `--warning-mode all` to identify sources; document in `GRADLE_9_MIGRATION_NOTES.md` and plan plugin updates. *(Ref: `build_warnings.txt`, `GRADLE_9_MIGRATION_NOTES.md`.)*
+- **Gradle 9 migration:** ✅ **Done.** Project now uses **Gradle 9.0.0** with Kotlin 2.0.21, Compose Compiler plugin, and AGP 8.13. Wrapper updated; `buildDir` replaced with `layout.buildDirectory`; Kotlin/Compose/KSP versions aligned. See `GRADLE_9_MIGRATION_NOTES.md`. *(Removed from heavy list — migration complete.)*
 - **DEPLOYMENT.md vs actual build:** ✅ **Done.** `docs/DEPLOYMENT.md` now correctly states minSdk 24 and Java 17.
 
-**Artifacts:** Updated `docs/DEPLOYMENT.md`, updated `GRADLE_9_MIGRATION_NOTES.md`.
+**Artifacts:** Updated `docs/DEPLOYMENT.md`, `GRADLE_9_MIGRATION_NOTES.md`; Gradle 9.0.0, Kotlin 2.0.21, `gradle-wrapper.properties`, `build.gradle.kts`, `libs.versions.toml`, `app/build.gradle.kts`.
 
 ---
 
@@ -96,7 +96,7 @@
 
 | # | Improvement area              | Owner(s)                    | Status |
 |---|------------------------------|-----------------------------|--------|
-| 1 | Build & docs alignment       | DevOps                      | In progress (Gradle 9; DEPLOYMENT.md ✅) |
+| 1 | Build & docs alignment       | DevOps                      | ✅ Done (Gradle 9.0.0 ✅; DEPLOYMENT.md ✅) |
 | 2 | Offline data persistence     | Back-end                    | ✅ Done |
 | 3 | Location jump detection      | Back-end                    | ✅ Done |
 | 4 | Trip history → details       | Front-end                   | Deferred to UI/UX backlog |
@@ -105,6 +105,7 @@
 | 7 | Security and secrets review  | Security Specialist         | In progress (SECURITY_NOTES.md ✅) |
 | 8 | Cross-link improvement list  | File Organizer              | ✅ Done |
 | 9 | Statistics: monthly only     | UI/UX, Front-end, Back-end, QA | High (deferred until UI approved) |
+| — | **Hub & Loop system**        | All agents / Loop Master      | 50 TODOs in [HUB_AND_LOOP_FUTURE_TODOS.md](agents/HUB_AND_LOOP_FUTURE_TODOS.md) (Hub, Loop Master, Universal Loop Prompt, sandboxing, full axis). 48 in [CYBER_SECURITY_AND_HUB_2026-03-11_TODOS.md](agents/CYBER_SECURITY_AND_HUB_2026-03-11_TODOS.md) (today's build follow-ups) if present. |
 
 ---
 

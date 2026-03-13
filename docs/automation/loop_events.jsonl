@@ -5,3 +5,4 @@
 {"ts":"2026-03-11T17:35:46Z","event":"loop_start","run_id":"run-20260311-1735","note":"Light tier only"}
 {"ts":"2026-03-11T17:37:04Z","event":"pulse","run_id":"run-20260311-1737","note":"Phase 2: Light tier complete","metrics":{"tests":"passed"}}
 {"ts":"2026-03-11T17:38:09Z","event":"loop_end","run_id":"run-20260311-1738","note":"Light tier complete"}
+{"ts":"2026-03-12T23:26:53Z","event":"pulse","run_id":"run-20260312-2326","note":"Loop health check","metrics":{"tests":"passed"}}
