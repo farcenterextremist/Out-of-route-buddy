@@ -13,7 +13,9 @@
 
 **Framework (PDCA / Kaizen):** Phase 0 = Plan; Phase 1–3 = Do; Phase 4 = Check; Phase 4.3 = Act. **Kaizen rule:** One improvement per category per loop to avoid overload.
 
-**Tiering:** Tasks are Light (auto), Medium (auto when autonomous), or Heavy (human approval always). See [LOOP_TIERING.md](./LOOP_TIERING.md). **Full autonomy:** Light and Medium run without stopping; Heavy deferred or documented for next run. See [IMPROVEMENT_LOOP_COMMON_SENSE.md](./IMPROVEMENT_LOOP_COMMON_SENSE.md) § Full Autonomous Mode.
+**Tiering:** Tasks are Light (auto), Medium (auto when autonomous), or Heavy (human approval always). See [LOOP_TIERING.md](./LOOP_TIERING.md). **Full autonomy:** Light and Medium run without stopping; Heavy deferred or documented for next run. See [IMPROVEMENT_LOOP_COMMON_SENSE.md](./IMPROVEMENT_LOOP_COMMON_SENSE.md) § Full Autonomous Mode. **Production-stage (100% approved):** Approved Heavy items are reclassified to **Medium execution queue** and must run first each loop (current: #7, #8, #9, #17, #20). They may not complete in one run; require incremental progress.
+
+**Frontend implementation authority:** Only **Master Loop** may implement frontend/UI changes. Non-master loops can research and propose only. Any automated frontend change must pass [FRONTEND_CHANGE_AUTOMATION_GATE.md](./FRONTEND_CHANGE_AUTOMATION_GATE.md) (hard-stop checks + OBS/SSS thresholds + proof-of-quality evidence).
 
 **Visual approval clause:** Heavy features (100% sandboxed) require a simple visual image + user says **"approve 100% implement"** before implementation. See LOOP_TIERING § Visual Approval Clause.
 
@@ -24,6 +26,10 @@
 **Loop listener:** Record events for data and improvement. `pulse_check.ps1` invokes the listener. When running phases (agent-driven), invoke `loop_listener.ps1` at phase boundaries. See [LOOP_LISTENER.md](./LOOP_LISTENER.md). Run `test_loop_listener.ps1` to verify wiring.
 
 **Task-based execution:** The agent completes tasks from CRUCIAL, suggested next steps, and todo lists. No fixed duration. Run `pulse_check.ps1` at phase boundaries.
+
+**Consistency contract (required):** Follow [LOOP_CONSISTENCY_STANDARD.md](./LOOP_CONSISTENCY_STANDARD.md). Every run must include `Loop Consistency Check` and record `Consistency score: X/10` in the summary.
+
+**Diagnostic sweep (required for substantial runs):** Pair health checks with [LOOP_DIAGNOSTIC_SWEEP.md](./LOOP_DIAGNOSTIC_SWEEP.md). Loops must actively search for problems (lints, ignored tests, hotspots, residual risk), not only run tests.
 
 ---
 
@@ -44,6 +50,33 @@
 ### 0.0 Health (liveness) at loop start
 
 **Run once at loop start.** Execute `.\scripts\automation\loop_health_check.ps1 -Quick`. If exit code is non-zero, log "Liveness check failed; consider fixing before continuing" and optionally abort or fix environment. See [LOOP_HEALTH_CHECKS.md](./LOOP_HEALTH_CHECKS.md). This keeps health checks running at a constant during the loop (liveness at every phase boundary; readiness = pulse_check at phase end).
+
+### 0.0f Diagnostic baseline (recommended every run; required for substantial runs)
+
+Run a focused diagnostic sweep per [LOOP_DIAGNOSTIC_SWEEP.md](./LOOP_DIAGNOSTIC_SWEEP.md):
+
+- read lints for touched files or likely target areas,
+- review failing or ignored tests relevant to the run,
+- search for one likely hotspot using targeted search,
+- and note one residual risk.
+
+When you want a repeatable baseline before doing the judgment-heavy part, run:
+
+```powershell
+.\scripts\automation\run_loop_diagnostic_baseline.ps1
+```
+
+Use the script output as the starting point, then add the run-specific interpretation that the script cannot know on its own.
+
+For substantial coding runs or when the loop is about to touch build, test, or automation wiring, prefer one consolidated readiness sweep early in the run:
+
+```powershell
+.\scripts\automation\run_simple_debug_cleanup.ps1
+```
+
+Use this as a heavier-but-repeatable debugging baseline, not as a replacement for every phase-end pulse. The normal pulse remains the lightweight default; the consolidated script is the deep-debug pass when broader proof is useful.
+
+Add a `Diagnostic Sweep` block to the summary.
 
 ### 0.0a User preferences & design intent (first, before any changes)
 
@@ -79,13 +112,23 @@
 
 **Apply to your loop:** Per [LOOP_DYNAMIC_SHARING.md](./LOOP_DYNAMIC_SHARING.md): at loop start, read **`docs/automation/loop_shared_events.jsonl`** (tail: last 50 lines) and **`docs/automation/loop_latest/token.json`**, **`loop_latest/cyber.json`**, **`loop_latest/synthetic_data.json`** (other loops; skip improvement.json). Note in your research output: **Shared state (other loops):** [what you will use from others — e.g. Token last run summary path, Cyber next_steps, suggested_next_steps]. This ensures when all loops run at the same time, data is shared dynamically and you can react/act on the latest from other loops.
 
+### 0.0e Continuity baseline (recommended; required after loop/gate/shared-state edits)
+
+Run:
+
+```powershell
+.\scripts\automation\run_loop_continuity_tests.ps1
+```
+
+If any suite fails, either fix the drift before proceeding or log why this run is documentation-only and not changing behavior.
+
 ### 0.1 Research
 
 **Reasoning checkpoint (before research):** "What do I need to know to make good decisions this run? What did last run miss?" See [IMPROVEMENT_LOOP_REASONING.md](./IMPROVEMENT_LOOP_REASONING.md).
 
 **Set this run's focus:** Read last summary; use "Next run focus" if suggested, else next in [LOOP_FOCUS_ROTATION.md](./LOOP_FOCUS_ROTATION.md) order. Default: Security.
 
-**Self-improvement and loop-improvement (required):** Every loop run must include in research the **self-improvement and loop-improvement** docs. Read or skim: [LOOP_LESSONS_LEARNED.md](./LOOP_LESSONS_LEARNED.md), [SELF_IMPROVING_LOOP_RESEARCH.md](./SELF_IMPROVING_LOOP_RESEARCH.md), [CURSOR_SELF_IMPROVEMENT.md](./CURSOR_SELF_IMPROVEMENT.md). Note in your research output what you applied or will apply (e.g. "Avoid X per LOOP_LESSONS_LEARNED"; "Single highest-impact change per SELF_IMPROVING_LOOP_RESEARCH"). **Light and Medium** = auto-implement; **drastic loop improvements** (routine changes, new phases, new loops) = **Heavy** — document only, no auto implementation. See [UNIVERSAL_LOOP_PROMPT](../agents/data-sets/hub/UNIVERSAL_LOOP_PROMPT.md) and [LOOP_TIERING.md](./LOOP_TIERING.md).
+**Self-improvement and loop-improvement (required):** Every loop run must include in research the **self-improvement and loop-improvement** docs. Read or skim: [LOOP_LESSONS_LEARNED.md](./LOOP_LESSONS_LEARNED.md), [SELF_IMPROVING_LOOP_RESEARCH.md](./SELF_IMPROVING_LOOP_RESEARCH.md), [CURSOR_SELF_IMPROVEMENT.md](./CURSOR_SELF_IMPROVEMENT.md), and [QUALITY_STANDARDS_AND_PROOF.md](./QUALITY_STANDARDS_AND_PROOF.md). Note in your research output what you applied or will apply (e.g. "Avoid X per LOOP_LESSONS_LEARNED"; "Single highest-impact change per SELF_IMPROVING_LOOP_RESEARCH"; "Proof of quality gate evidence for this run: Y"). **Light and Medium** = auto-implement; **drastic loop improvements** (routine changes, new phases, new loops) = **Heavy** — document only, no auto implementation. See [UNIVERSAL_LOOP_PROMPT](../agents/data-sets/hub/UNIVERSAL_LOOP_PROMPT.md) and [LOOP_TIERING.md](./LOOP_TIERING.md).
 
 Read these files **before** making any changes. (0.0a already read USER_PREFERENCES_AND_DESIGN_INTENT.)
 
@@ -101,11 +144,13 @@ Read these files **before** making any changes. (0.0a already read USER_PREFEREN
 | `docs/automation/DESIGN_AND_UX_RESEARCH.md` or `docs/ux/UI_CONSISTENCY.md` | Design research; fallback to UI_CONSISTENCY if DESIGN_AND_UX missing |
 | `docs/automation/LOOP_TIERING.md` | Light / Medium / Heavy task definitions; approval gate |
 | `docs/automation/LOOP_FOCUS_ROTATION.md` | This run's focus; bias effort |
-| `docs/automation/HEAVY_IDEAS_FAVORITES.md` | User favorites for Heavy ideas; surface favorites first; keep Heavy list lightly populated; quality bar for new Heavy ideas |
+| `docs/automation/HEAVY_IDEAS_FAVORITES.md` | User favorites for Heavy ideas; surface favorites first; **§ Production stage (100% approved):** when Light/Medium run, include incremental work on these critical features — time and patience; may not be complete in one go. |
 | `docs/automation/LOOP_LESSONS_LEARNED.md` | Self-improvement: lessons from past runs; read and append 1–3 bullets per run. **Required in research.** Skip if missing. |
 | `docs/automation/SELF_IMPROVING_LOOP_RESEARCH.md` | Methods to make the loop self-improving; **required in research** when running any loop. |
 | `docs/automation/CURSOR_SELF_IMPROVEMENT.md` | Safe web, prompt-injection awareness, Phase 0.3; **required in research** per universal loop rules. |
+| `docs/automation/QUALITY_STANDARDS_AND_PROOF.md` | Quality standards baseline + mandatory proof-of-quality evidence format for summary grading. |
 | `docs/automation/DATA_USEFULNESS_AND_PRUNING_RESEARCH.md` | How to evaluate data usefulness and what to prune; Hub/deposit criteria; optional when deciding what to keep or archive. |
+| `docs/automation/AUTOMATION_TO_PROMPT_RESEARCH.md` | How to convert regular automations into prompt-driven LOOP GATES; include one applied note when process automation is touched. |
 | `docs/automation/USER_METADATA_USAGE_GUIDE.md` | Metadata (when Data/Metrics focus); skip if missing |
 | `docs/TASKS_INDEX.md` or `docs/agents/COMPREHENSIVE_AGENT_TODOS.md` | Consolidated TODOs; check and update during run. Skip if missing. |
 
@@ -118,17 +163,18 @@ Read these files **before** making any changes. (0.0a already read USER_PREFEREN
 Per [LOOP_TIERING.md](./LOOP_TIERING.md):
 
 1. **Classify** each task from research (CRUCIAL, REDUNDANT_DEAD_CODE, suggested next steps) as Light, Medium, or Heavy.
-2. **Include sandboxing** as a Medium task when applicable: document new idea in FUTURE_IDEAS, validate a sandboxed feature, or improve sandbox workflow. See [SANDBOX_TESTING.md](./SANDBOX_TESTING.md).
-3. **Full autonomy:** Light and Medium run **without stopping**. No prompts. Execute all Light and Medium tasks.
-4. **During Light and Medium runs:** **Check TODOs** — Before and during Phases 1–3, consult task sources (CRUCIAL_IMPROVEMENTS_TODO, suggested next steps from last summary, TASKS_INDEX or COMPREHENSIVE_AGENT_TODOS if present). Tick off or note completed items. **Add new TODOs if needed** — If you discover work that should be tracked (e.g. new debt, a follow-up, or an idea), add it to CRUCIAL_IMPROVEMENTS_TODO, [BRAINSTORM_AND_TASKS.md](../BRAINSTORM_AND_TASKS.md), or "Suggested next steps" in the summary. Keep task lists current.
-5. **Heavy only:** If any Heavy tasks exist, stop and prompt:
+2. **Include sandboxing (required every main loop run)** as a Medium task: document new idea in FUTURE_IDEAS, validate a sandboxed feature, or improve sandbox workflow. See [SANDBOX_TESTING.md](./SANDBOX_TESTING.md).
+3. **Execute approved-from-Heavy Medium queue first** when running Light/Medium: run concrete incremental work for approved items ([HEAVY_IDEAS_FAVORITES.md](./HEAVY_IDEAS_FAVORITES.md) § Production stage; current #7, #8, #9, #17, #20) before optional Medium tasks.
+4. **Full autonomy:** Light and Medium run **without stopping**. No prompts. Execute all Light and Medium tasks.
+5. **During Light and Medium runs:** **Check TODOs** — Before and during Phases 1–3, consult task sources (CRUCIAL_IMPROVEMENTS_TODO, suggested next steps from last summary, TASKS_INDEX or COMPREHENSIVE_AGENT_TODOS if present). Tick off or note completed items. **Add new TODOs if needed** — If you discover work that should be tracked (e.g. new debt, a follow-up, or an idea), add it to CRUCIAL_IMPROVEMENTS_TODO, [BRAINSTORM_AND_TASKS.md](../BRAINSTORM_AND_TASKS.md), or "Suggested next steps" in the summary. Keep task lists current.
+6. **Heavy only:** If any Heavy tasks exist, stop and prompt:
    > **Hold up. Would you like me to implement these heavy tasks?**
-   > 
+   >
    > **Heavy tasks:** [list — surface **favorites first** per HEAVY_IDEAS_FAVORITES.md; then others. Keep list light.]
-   > 
+   >
    > **Options:** "Implement all" | "Light and medium only" | or specify tasks
-6. **Wait for user response** before implementing Heavy (if any).
-7. **Execute** Light and Medium; for Heavy: **question lock first** — when user says "implement X," ask "Would you like to see a generated image or layout or simulate a merge?"; then **visual approval required** — generate image/layout/merge simulation; do not implement until user says **"approve 100% implement"**. See LOOP_TIERING § Question Lock and Visual Approval Clause.
+7. **Wait for user response** before implementing Heavy (if any).
+8. **Execute** Light and Medium; for Heavy: **question lock first** — when user says "implement X," ask "Would you like to see a generated image or layout or simulate a merge?"; then **visual approval required** — generate image/layout/merge simulation; do not implement until user says **"approve 100% implement"**. See LOOP_TIERING § Question Lock and Visual Approval Clause.
 
 **Sandbox:** For higher-risk items, use [SANDBOX_TESTING.md](./SANDBOX_TESTING.md). Sandboxing is a Medium task; runs autonomously.
 
@@ -169,6 +215,8 @@ Per [LOOP_TIERING.md](./LOOP_TIERING.md):
 | Log findings | Note 2–3 actionable items in research note; add to summary under "Design Research". |
 
 **Output:** One-line design note: "Researched X; findings: A, B. Gaps: C." Apply at most one subtle improvement in Phase 3.
+
+**When judging UI quality:** Use [docs/ux/PLEASANTNESS_AND_FLOW_STANDARD.md](../ux/PLEASANTNESS_AND_FLOW_STANDARD.md) so "pleasant" and "professional" are scored instead of guessed.
 
 **Medium tier — Advanced beautification & organizing research:** When running Medium, include deeper research: advanced color theory, typography hierarchy, organizing best practices (file structure, doc layout), professional fleet/driver app patterns. Document findings; apply one subtle improvement per loop.
 
@@ -221,6 +269,7 @@ Pick **one**:
 ### 1.4 Pulse check
 
 - Run: `.\scripts\automation\pulse_check.ps1 -Note "Phase 1: Quick wins, security, smoothness"`
+- Optional deeper first pass: `.\scripts\automation\pulse_check.ps1 -UseSimpleDebugCleanup -Note "Phase 1: consolidated debug cleanup"`
 - Ensure tests pass.
 
 ---
@@ -258,6 +307,18 @@ Pick **one**:
 
 **Rule:** Sandboxing is additive (docs, branches, briefs). No implementation of Heavy features without user confirmation. No merge into main without sandbox validation. **Every loop:** Medium tier improves 1–2 sandboxed ideas; report progress in summary (e.g. completion % if tracked, or "improved N ideas").
 
+### 2.4 Sandboxing verification (required every main loop run)
+
+- Record one explicit verification line in working notes and summary:
+  - `Sandboxing status: pass/fail`
+  - `Sandbox action executed: [what was done]`
+  - `Sandbox artifact path: [file/path]`
+- When the sandbox action involves `virtual fleet` or shared-pool work, also record:
+  - `Synthetic batch ids: [ids or none]`
+  - `Reference datasets used: [source names or none]`
+  - `Contamination check: [pass/fail + what was checked]`
+- If no sandbox action was executed, mark as `fail` and add a top-priority next step to restore compliance next run.
+
 ### 2.5 Unit tests
 
 - Run: `.\gradlew.bat :app:testDebugUnitTest --no-daemon`
@@ -281,21 +342,25 @@ Pick **one**:
 
 - One string fix: typo, contentDescription, or clearer label per TERMINOLOGY_AND_COPY.md.
 - Example: Add contentDescription to a key icon if missing.
+- **Master Loop only:** Non-master loops must log this as a proposal, not implement.
 
 ### 3.2 Stat card / UI consistency (10 min)
 
 - Per UI_CONSISTENCY.md — verify 6dp elevation, 12dp corner radius, 16dp padding.
 - **Apply design research:** Use findings from Phase 0.4 (DESIGN_AND_UX_RESEARCH.md). One subtle improvement: OOR contrast, divider, spacing, or color tweak for professionalism/beautification.
 - Examples: Adjust one color for better contrast; add 1–2dp spacing on 8dp grid; improve state flow (loading/empty) per research.
+- **Automation gate required:** If implementing, run the frontend gate and record OBS/SSS + decision in summary.
 
 ### 3.3 Useful information
 
 - One small useful info: e.g. version in Settings (if not done), or period mode hint.
 - **Constraint:** No unwarranted UI changes without user permission. Drastic design changes → suggest in summary, don't implement.
+- **Master Loop only:** Non-master loops must defer implementation to Master Loop.
 
 ### 3.4 Pulse check
 
 - Run: `.\scripts\automation\pulse_check.ps1 -Note "Phase 3: UI polish, smoothness"`
+- If script-heavy or build-health changes were made, use `-UseSimpleDebugCleanup` once before ending the phase so detekt joins the readiness evidence.
 
 ---
 
@@ -319,6 +384,7 @@ Pick **one**:
 ### 4.2 Final pulse
 
 - Run: `.\scripts\automation\pulse_check.ps1 -Note "Phase 4: Final. Lint reviewed."`
+- Use `-UseSimpleDebugCleanup` here only when the run materially changed build, lint, or automation behavior and you want one final consolidated proof pass.
 
 ### 4.3 Write summary
 
@@ -339,11 +405,19 @@ Pick **one**:
 9. **Files modified** — List with one-line change
 10. **Suggested next steps** — 4–6 items for next loop (see template below); actionable (include commands where helpful)
 11. **File Organizer: recommended new ideas (required every run)** — **Every run must recommend at least 1–2 new ideas** (Light, Medium, or Heavy) **or** (when Heavy list at cap) judge/critique existing Heavy ideas. **Heavy list cap:** Count Heavy ideas in [FUTURE_IDEAS.md](../product/FUTURE_IDEAS.md) or HEAVY_IDEAS_FAVORITES. If **count ≥ 50** → **judge/critique mode:** do **not** add new Heavy ideas; instead **judge and critique** 1–2 existing ideas (e.g. score vs quality bar, suggest merge/remove/defer, improve description). If **count < 50** → **produce mode:** add **at least 1–2 new Heavy ideas** that meet the quality bar in [HEAVY_IDEAS_FAVORITES.md](./HEAVY_IDEAS_FAVORITES.md); document in FUTURE_IDEAS and list in summary. Surface **favorites first** (✅ in HEAVY_IDEAS_FAVORITES). Light/Medium ideas: add to LOOP_TIERING, CRUCIAL, or suggested next steps. Sandbox completion % — Report true % for 1–2 improved ideas when applicable. See [IMPROVEMENT_LOOP_TEAMS.md](./IMPROVEMENT_LOOP_TEAMS.md).
-12. **Next run focus** — Suggested focus for next loop (from File Organizer or metrics)
-13. **Quality Grade** — A/B/C with rationale and one improvement for next run
-14. **Self-improvement (optional):** Append 1–3 bullets to [LOOP_LESSONS_LEARNED.md](./LOOP_LESSONS_LEARNED.md): Learned …; Avoid …; Next run try …. See [SELF_IMPROVING_LOOP_RESEARCH.md](./SELF_IMPROVING_LOOP_RESEARCH.md). Optionally add **Single highest-impact change this run:** [one sentence] and **One thing next run must consider:** [one line].
+12. **Proof of quality** — Required evidence bundle per [QUALITY_STANDARDS_AND_PROOF.md](./QUALITY_STANDARDS_AND_PROOF.md): liveness, readiness (tests/lint), change proof, residual risks, and traceability links.
+13. **Loop effectiveness** — What worked vs what did not; completion ratio of planned tasks; one bottleneck.
+14. **Useful data generated** — Key artifacts/data produced this run and why each is reusable.
+15. **Loop performance & health** — Liveness/readiness status, test/lint durations (if available), failures fixed, gate pass/fail.
+16. **Interesting metrics** — 3–5 extra insights (e.g., warning delta, hub artifacts count, shared-state freshness, production-stage progress increments).
+17. **Next run focus** — Suggested focus for next loop (from File Organizer or metrics)
+18. **Quality Grade** — A/B/C with rationale and one improvement for next run
+19. **Self-improvement (optional):** Append 1–3 bullets to [LOOP_LESSONS_LEARNED.md](./LOOP_LESSONS_LEARNED.md): Learned …; Avoid …; Next run try …. See [SELF_IMPROVING_LOOP_RESEARCH.md](./SELF_IMPROVING_LOOP_RESEARCH.md). Optionally add **Single highest-impact change this run:** [one sentence] and **One thing next run must consider:** [one line].
+20. **Frontend automation gate (when UI touched)** — Include `Frontend Automation Gate` block from [FRONTEND_CHANGE_AUTOMATION_GATE.md](./FRONTEND_CHANGE_AUTOMATION_GATE.md): hard-stop checks, OBS/SSS, decision, evidence.
+21. **Loop consistency check** — Include `Loop Consistency Check` block from [LOOP_CONSISTENCY_STANDARD.md](./LOOP_CONSISTENCY_STANDARD.md) and record `Consistency score: X/10`.
+22. **Sandboxing verification** — Include `Sandboxing status (pass/fail)`, `Sandbox action executed`, and `Sandbox artifact path` to verify sandboxing ran this main loop.
 
-**4.3b Record run (required):** Append this run to [IMPROVEMENT_LOOP_RUN_LEDGER.md](./IMPROVEMENT_LOOP_RUN_LEDGER.md). Add a new **Run YYYY-MM-DD** section with: Focus, Variant, Summary (link to this summary file), Metrics one-liner (tests, lint, files changed, checkpoint), Next (1–2 bullets). Use the template in the ledger. This keeps a shared record for us and for other agents. See [IMPROVEMENT_LOOP_FOR_OTHER_AGENTS.md](./IMPROVEMENT_LOOP_FOR_OTHER_AGENTS.md).
+**4.3b Record run (required):** Append this run to [IMPROVEMENT_LOOP_RUN_LEDGER.md](./IMPROVEMENT_LOOP_RUN_LEDGER.md). Add a new **Run YYYY-MM-DD** section with: Focus, Variant, Summary (link to this summary file), Metrics one-liner (tests, lint, files changed, checkpoint), **Sandboxing (pass/fail, action, artifact path)**, Next (1–2 bullets). Use the template in the ledger. This keeps a shared record for us and for other agents. See [IMPROVEMENT_LOOP_FOR_OTHER_AGENTS.md](./IMPROVEMENT_LOOP_FOR_OTHER_AGENTS.md).
 
 **4.3c Consider send to hub when done (optional):** Per [UNIVERSAL_LOOP_PROMPT.md](../agents/data-sets/hub/UNIVERSAL_LOOP_PROMPT.md): if this run produced **completed, polished** output that other agents or the next run should use (e.g. proof of work, loop report, index, or a concise summary), consider depositing it to **`docs/agents/data-sets/hub/`** with naming **`YYYY-MM-DD_<role-or-topic>_<short-description>.<ext>`** and optionally add a one-line entry to **`hub/README.md`**. Hub = this data folder; not GitHub. See [SEND_TO_HUB_PROMPT.md](../agents/data-sets/hub/SEND_TO_HUB_PROMPT.md).
 

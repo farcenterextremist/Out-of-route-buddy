@@ -76,6 +76,8 @@ class TripStatePersistence(
         bounceMiles: Double? = null,
         tripStartTime: Date? = null,
         tripEndTime: Date? = null,
+        pickupAddress: String = "",
+        dropoffAddress: String = "",
     ): Long {
         return withContext(Dispatchers.IO) {
             try {
@@ -94,6 +96,8 @@ class TripStatePersistence(
                 gpsMetadata["tripTimeZoneId"] = TimeZone.getDefault().id
                 // Human-ended trips are GOLD tier (digital gold; parse carefully, copy when needed).
                 gpsMetadata["dataTier"] = DataTier.GOLD
+                if (pickupAddress.isNotBlank()) gpsMetadata["pickupAddress"] = pickupAddress
+                if (dropoffAddress.isNotBlank()) gpsMetadata["dropoffAddress"] = dropoffAddress
 
                 // Create trip entity (data layer Trip for repository)
                 val dataTrip = DataTrip(

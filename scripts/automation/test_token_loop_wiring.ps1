@@ -17,12 +17,15 @@ Write-Host ""
 # 1. Required docs exist
 $requiredDocs = @(
     "TOKEN_REDUCTION_LOOP.md",
+    "TOKEN_LOOP_EVENT_ANOMALIES.md",
     "TOKEN_LOOP_NEXT_TASKS.md",
     "TOKEN_LOOP_IMPROVEMENT_PLAN.md",
     "TOKEN_SAVING_PRACTICES.md",
     "TOKEN_LOOP_RUN_LEDGER.md",
     "TOKEN_LOOP_MASTER_PLAN.md",
-    "TOKEN_LOOP_LISTENER.md"
+    "TOKEN_LOOP_LISTENER.md",
+    "OPENAI_API_USAGE_MONITORING.md",
+    "LLM_LOOP.md"
 )
 foreach ($doc in $requiredDocs) {
     $path = Join-Path $docsDir $doc
@@ -36,9 +39,16 @@ foreach ($doc in $requiredDocs) {
 
 # 2. Required scripts exist
 $requiredScripts = @(
+    "complete_token_loop_run.ps1",
+    "compare_token_rule_overhead.ps1",
+    "monitor_openai_api_usage.ps1",
+    "run_llm_loop.ps1",
     "token_loop_state_snapshot.ps1",
     "token_loop_listener.ps1",
     "run_token_loop.ps1",
+    "test_complete_token_loop_run.ps1",
+    "test_compare_token_rule_overhead.ps1",
+    "test_monitor_openai_api_usage.ps1",
     "test_token_loop_listener.ps1",
     "test_token_loop_snapshot.ps1",
     "test_token_loop_events_analysis.ps1",

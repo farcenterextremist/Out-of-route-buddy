@@ -269,7 +269,8 @@ class MockGpsSynchronizationServiceTest {
     @Test
     fun `actualMiles updates in real time from mock GPS data`() =
         runTest {
-            viewModel.calculateTrip(100.0, 25.0, 125.0)
+            // Start at 0 so GPS emissions (including 0.0) are not ignored by recovered-trip guard
+            viewModel.calculateTrip(100.0, 25.0, 0.0)
             testDispatcher.scheduler.advanceUntilIdle()
 
             mockTripMetricsFlow.value = TripMetrics(0.0, 0.0)
@@ -429,7 +430,9 @@ class MockGpsSynchronizationServiceTest {
             // When: Emit many rapid GPS updates
             val startTime = System.currentTimeMillis()
             repeat(100) { index ->
-                mockGpsService.emitDistance(index.toDouble())
+                val d = index.toDouble()
+                mockTripMetricsFlow.value = TripMetrics(d, 0.0)
+                mockGpsService.emitDistance(d)
                 testDispatcher.scheduler.advanceUntilIdle()
             }
             val endTime = System.currentTimeMillis()
@@ -454,6 +457,7 @@ class MockGpsSynchronizationServiceTest {
             val preciseDistances = listOf(0.001, 0.01, 0.1, 1.0, 10.0, 100.0, 1000.0)
 
             preciseDistances.forEach { distance ->
+                mockTripMetricsFlow.value = TripMetrics(distance, 0.0)
                 mockGpsService.emitDistance(distance)
                 testDispatcher.scheduler.advanceUntilIdle()
 
@@ -465,11 +469,12 @@ class MockGpsSynchronizationServiceTest {
     @Test
     fun `GPS service error handling`() =
         runTest {
-            // Given: Active trip
-            viewModel.calculateTrip(100.0, 25.0, 125.0)
+            // Given: Active trip from 0 mi (non-zero seed would ignore metrics <= 0 as "unseeded recovery")
+            viewModel.calculateTrip(100.0, 25.0, 0.0)
             testDispatcher.scheduler.advanceUntilIdle()
 
             // When: GPS service encounters an error (simulated by invalid data)
+            mockTripMetricsFlow.value = TripMetrics(-1.0, 0.0)
             mockGpsService.emitDistance(-1.0) // Invalid negative distance
             testDispatcher.scheduler.advanceUntilIdle()
 
@@ -486,6 +491,7 @@ class MockGpsSynchronizationServiceTest {
             viewModel.calculateTrip(100.0, 25.0, 125.0)
             testDispatcher.scheduler.advanceUntilIdle()
 
+            mockTripMetricsFlow.value = TripMetrics(50.0, 0.0)
             mockGpsService.emitDistance(50.0)
             testDispatcher.scheduler.advanceUntilIdle()
             assertEquals("Initial distance should be 50", 50.0, viewModel.uiState.value.actualMiles, 0.01)
@@ -495,6 +501,7 @@ class MockGpsSynchronizationServiceTest {
             assertEquals("Distance should persist during pause", 50.0, viewModel.uiState.value.actualMiles, 0.01)
 
             // When: Resume GPS updates
+            mockTripMetricsFlow.value = TripMetrics(75.0, 0.0)
             mockGpsService.emitDistance(75.0)
             testDispatcher.scheduler.advanceUntilIdle()
             assertEquals("Distance should update after resume", 75.0, viewModel.uiState.value.actualMiles, 0.01)

@@ -1,0 +1,38 @@
+---
+description: "Universal spawn governance for multi-agent loop work."
+globs:
+  - "docs/automation/**"
+  - "docs/agents/data-sets/hub/**"
+alwaysApply: false
+---
+
+# Agent Spawn Universal Rule
+
+Before spawning:
+1. Read:
+   - docs/automation/LOOP_GATES.md
+   - docs/automation/LOOP_CONSISTENCY_STANDARD.md
+   - docs/automation/LOOP_DYNAMIC_SHARING.md
+2. Define spawn intent in 1 line: role, scope, output artifact.
+
+Spawn limits:
+- Max 4 agents in parallel.
+- One owner agent merges all outputs.
+
+Each spawned agent must return:
+- artifact_path
+- evidence (tests/checks run)
+- continuity risks
+- next_steps (1-3)
+
+After all agents finish:
+1. Run continuity checks:
+   - .\scripts\automation\run_loop_continuity_tests.ps1
+2. If polished output exists, send to hub and index it.
+3. Write shared state via dedupe-safe writer:
+   - .\scripts\automation\write_loop_shared_state.ps1 ...
+
+Guardrails:
+- Non-master loops do not implement UI changes.
+- Heavy changes require approval gate.
+- No destructive deletes outside cleanup allowlist (see docs/agents/CLEANUP_DATA_DELETION_PROMPT.md).

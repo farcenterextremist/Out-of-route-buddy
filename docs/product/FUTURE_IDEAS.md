@@ -33,7 +33,9 @@
 | [Notifications](#9-notifications) | End-of-day trip summary (opt-in) |
 | [OOR display](#10-oor-display) | OOR over/under view with color semantics (green/blue/red) |
 | [Edge cases](#11-edge-cases) | Load cancelled mid-trip, new load; get future context |
-| [Agent hub & voice](#12-agent-hub--voice) | Text command "send to hub" |
+| [Agent hub & text command](#12-agent-hub--text-command) | Text command "send to hub" |
+| [Sandbox tooling](#13-sandbox-tooling) | Lightweight feature preview container for fully sandboxed features |
+| [Extended heavy backlog](#14-extended-heavy-backlog) | Additional sandboxed Heavy features to reach list cap |
 
 ---
 
@@ -127,11 +129,17 @@
 - **Future improvements** — Stress-test backend, UI, and reporting with high volume or edge cases
 - **Anything** — Flexible sandbox for experimentation, demos, or research
 
-**Placement:** Separate simulation layer or service; could feed into a test/dev environment or a synthetic-data pipeline.
+**Placement:** Separate simulation layer or service; could feed into a test/dev environment, a synthetic-data pipeline, or the shared local reporting pool.
 
-**Dependencies:** Simulation engine or scripted personas, data schema alignment with real app, privacy-safe (no real PII).
+**Dependencies:** Simulation engine or scripted personas, data schema alignment with real app, privacy-safe (no real PII), and additive export into the shared local pool.
 
-**Status:** Sandboxed 100%. Heavy tier. Not in ROADMAP yet.
+**Shared-pool contract:**
+- **Synthetic only** — Virtual-fleet output must remain **PLATINUM** or **SILVER**; never **GOLD**
+- **No Room contamination** — Virtual-fleet rows must not be inserted into the app's production `trips` table
+- **Export path** — Synthetic batches may be exported to the shared local reporting pool, where they stay queryable and removable by batch id
+- **Reference data** — External fleet/trucking datasets may improve realism, but must stay tagged as reference-only, not firsthand trip truth
+
+**Status:** Approved for implementation. Production path uses a separate sandbox service plus shared-pool export; OutOfRouteBuddy human Room data remains the source of truth.
 
 ---
 
@@ -258,6 +266,72 @@
 **Dependencies:** Agent prompt is live. In-app text command would need export format and UX; hub path is `docs/agents/data-sets/hub/`.
 
 **Status:** Sandboxed 100% for in-app UI. Agent instruction doc and prompt in place. **Do not add in-app UI without explicit approval.**
+
+---
+
+## 13. Sandbox tooling
+
+### 13.1 Lightweight feature preview container (Heavy)
+
+**Description:** Build a minimal "feature preview container" so a user can preview any fully sandboxed feature before implementation. The container should be lightweight, isolated, and reversible.
+
+**Intent:** Validate concept and UX early without merging full production logic. This is a preview-only shell for sandboxed features.
+
+**Placement:** Sandbox build variant or isolated preview screen/container (non-production path) with one feature mounted at a time.
+
+**Minimum scope:**
+- Bare-minimum container UI shell
+- Feature selector for sandboxed entries
+- Preview mode label/watermark
+- No production data mutation by default
+
+**Dependencies:** Sandbox gating docs, feature-flag or build-variant strategy, visual approval before implementation.
+
+**Validation checklist (30% starter):**
+1. Pick container strategy (build variant vs isolated host screen)
+2. Define preview data source (mock/synthetic only)
+3. Define "safe off switch" (flag or route guard)
+4. Define one pilot feature for preview mount
+
+**Status:** Sandboxed 100%. Heavy tier. Use question lock + visual approval before implementation.
+
+---
+
+## 14. Extended heavy backlog
+
+All items below are sandboxed Heavy ideas (future features), documented for staged evaluation.
+
+| ID | Idea | Placement | Notes | Status |
+| --- | --- | --- | --- | --- |
+| 14.1 | Predictive OOR risk scoring | Statistics / trip details | Forecast likely off-route risk before trip close. | Sandboxed 100% |
+| 14.2 | Fuel cost overlay per deviation | Trip history / stats | Estimate fuel impact of route deviation. | Sandboxed 100% |
+| 14.3 | Driver coaching timeline | History detail view | Time-ordered coaching hints per trip. | Sandboxed 100% |
+| 14.4 | Geofence hotspot atlas | Map analytics module | Aggregate frequent deviation hotspots. | Sandboxed 100% |
+| 14.5 | Weather and traffic context enrich | Trip metadata pipeline | Attach weather/traffic context to deviations. | Sandboxed 100% |
+| 14.6 | Load type impact analyzer | Reports/statistics | Compare OOR by load type/category. | Sandboxed 100% |
+| 14.7 | Alternative route recommendation sandbox | Preview container | Show candidate safer routes post-trip. | Sandboxed 100% |
+| 14.8 | Shift fatigue signal estimator | Trip analytics | Heuristic fatigue flags from trip patterns. | Sandboxed 100% |
+| 14.9 | Anomaly replay debugger | Internal diagnostics screen | Replay anomalous route moments for QA. | Sandboxed 100% |
+| 14.10 | Policy rules engine (sandbox) | Backend rules module | Configurable OOR policy checks. | Sandboxed 100% |
+| 14.11 | Team benchmark cohorts | Multi-user analytics | Compare against similar route cohorts. | Sandboxed 100% |
+| 14.12 | Privacy-preserving telemetry exporter | Export pipeline | Share aggregate-only telemetry safely. | Sandboxed 100% |
+| 14.13 | Offline conflict visualizer | Sync/debug UI | Show pending/merged sync conflicts clearly. | Sandboxed 100% |
+| 14.14 | Trip correction wizard | Trip edit workflow | Guided correction for partially wrong trips. | Sandboxed 100% |
+| 14.15 | Smart notification scheduler | Notification settings | Best-time daily summaries and nudges. | Sandboxed 100% |
+| 14.16 | Voice note to trip metadata | Trip-end flow | Attach short notes to trip events. | Sandboxed 100% |
+| 14.17 | Incident tagging workflow | Trip details / exports | Standardized tags for incidents/deviations. | Sandboxed 100% |
+| 14.18 | Route compliance heatmap calendar | Calendar analytics | Calendar heatmap for compliance trends. | Sandboxed 100% |
+| 14.19 | AI trip summary draft assistant | Summary export tool | Draft concise trip summaries for review. | Sandboxed 100% |
+| 14.20 | Custom KPI builder (advanced) | Statistics settings | User-defined KPI formulas and thresholds. | Sandboxed 100% |
+| 14.21 | Multi-stop segment planner | Trip planning sandbox | Segment-aware planning and analysis. | Sandboxed 100% |
+| 14.22 | Dispatch handoff package export | Export/share | Structured package for dispatcher handoff. | Sandboxed 100% |
+| 14.23 | Attachment evidence locker | Trip details | Attach photos/docs to trip records. | Sandboxed 100% |
+| 14.24 | Webhook integration sandbox | Integration layer | Outbound events to external systems. | Sandboxed 100% |
+| 14.25 | Enterprise SSO groundwork | Auth platform | SSO-ready architecture preparation. | Sandboxed 100% |
+| 14.26 | Data retention policy simulator | Settings/admin tools | Simulate retention rules before applying. | Sandboxed 100% |
+| 14.27 | Audit trail explorer | Diagnostics/audit view | Readable history of key app actions. | Sandboxed 100% |
+| 14.28 | Synthetic-to-human parity checker | Data quality tooling | Compare synthetic behavior to real-world patterns. | Sandboxed 100% |
+| 14.29 | Documentation lint remediation automation | Tooling/process | Automated docs lint normalization workflow. | Sandboxed 100% |
 
 ---
 

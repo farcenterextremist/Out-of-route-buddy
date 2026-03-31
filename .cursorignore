@@ -1,0 +1,6 @@
+﻿**/.gradle/**
+**/.pytest_cache/**
+**/__pycache__/**
+**/build/**
+**/node_modules/**
+**/out/**

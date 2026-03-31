@@ -4,6 +4,80 @@
 
 ---
 
+## Run token-20260316-0147 (2026-03-16)
+
+**Previous state:** Snapshot `docs/automation/token_loop_snapshots/token-20260316-0147.json`.
+
+**Rule output:** always_apply_count **1**, always_apply_lines **45** (target 1, <50). **What worked:** Loop #8 preflight passed; data-separation.mdc converted from always-apply to scoped globs; token practices refreshed with prompt-caching and rule/skill-discipline guidance; workspace excludes expanded for generated/cache folders. **What didn't:** `.cursorignore` creation was blocked during the original loop run, so settings-based excludes had to carry the load until a later follow-up.
+
+**Recommended TODOs for next token loop:**
+- [x] Retry `.cursorignore` creation if permissions/config allow it, mirroring the safe generated-folder excludes already added to `.vscode/settings.json`.
+- [ ] Audit whether any of the newer loop rules (`universal-loop`, `loop-automation-boosters`, `loop-continuity-enforcement`) can be shortened or merged without losing clarity.
+- [x] Add a lightweight script/report that compares current rule overhead against the latest snapshot so Step 1 does not rely on manual counting.
+- [x] Track one more metric in listener notes: whether rules, skills, settings, or cache/index hygiene changed during the run.
+- [x] Add a helper or validation guard for listener step calls so manual runs cannot accidentally emit a stray event under a new auto-generated RunId.
+- [ ] Review stale or overlapping skills/rules quarterly so guidance stays focused instead of expanding forever.
+- [x] Document known historical token event anomalies so future runs can distinguish real history gaps from runs that should not be backfilled.
+
+**Post-master follow-up (2026-03-16):**
+- `.cursorignore` now exists at the workspace root with safe generated/cache excludes mirroring current workspace settings.
+- Preferred token closeout is now `scripts/automation/complete_token_loop_run.ps1`, so shared-state closeout happens before `token_loop_end`.
+- Rule-overhead comparison is now available via `scripts/automation/compare_token_rule_overhead.ps1`, with coverage in `test_compare_token_rule_overhead.ps1`.
+- Listener metrics now have a lightweight change-surface shape for `changed_rules`, `changed_skills`, `changed_settings`, and `changed_cache_index_hygiene`.
+- Optional OpenAI API usage monitoring is now available via `scripts/automation/monitor_openai_api_usage.ps1`, with compact snapshots under `docs/automation/api_usage_snapshots/`.
+- `start llm loop` now has a compatibility entrypoint via `scripts/automation/run_llm_loop.ps1`, which currently delegates to the token-audit lane while keeping token-loop history and docs valid.
+- The broader local-first direction is now documented in `docs/automation/LLM_LOOP.md`, with `Ollama` as the default local provider for Cursor-side automation.
+- Known historical anomalies are recorded in `docs/automation/TOKEN_LOOP_EVENT_ANOMALIES.md`:
+  - `token-20260311-1944` = incomplete historical start
+  - `token-20260316-0152` = orphan Step 0 misfire run id
+
+**LLM-loop next-phase seeds (2026-03-17):**
+- [ ] Add a lightweight `Ollama` health/helper script so `run_llm_loop.ps1` can record installed/running local models without turning the loop into a heavy benchmark.
+- [ ] Decide whether Step 5 should record `llm_provider`, `local_runtime`, and `local_model` in live runs whenever `start llm loop` is used.
+- [ ] Evaluate 2-4 small open-source models through `Ollama` for code-editing usefulness, short outputs, and responsiveness on this machine.
+- [ ] Decide whether OpenAI-specific monitoring should stay separate or be generalized behind a provider-neutral monitor contract later.
+
+---
+
+## Run token-20260313-1843 (2026-03-13)
+
+**Previous state:** Snapshot `docs/automation/token_loop_snapshots/token-20260313-1843.json`.
+
+**Rule output:** always_apply_count **2**, always_apply_lines **53** (target 1, &lt;50). **What worked:** Loop #7; full 0–7 + token_loop_end; ledger + NEXT_TASKS + TOKEN_SAVING_PRACTICES §3 updated. **What didn't:** Two always-apply; convert data-separation to glob/description.
+
+**Recommended TODOs for next token loop:** Convert data-separation.mdc to glob or agent-decided; trim always-apply to &lt;50 lines; add .cursorignore if missing; report Loop # + proof of work + benefits; Step 0 include context compression, embedding, LLM optimization; read Hub and NEXT_TASKS.
+
+---
+
+## Run token-20260313-1756 (2026-03-13)
+
+**Previous state (rollback):** Snapshot `docs/automation/token_loop_snapshots/token-20260313-1756.json`. Git HEAD at run start: `0349d7806c2e454020f99fb79ca7a961df1131d9`.
+
+**Rule output this run vs baseline:**
+- **always_apply_count:** 2 (baseline 1) — self-improvement.mdc + data-separation.mdc. Target: 1.
+- **always_apply_lines:** 53 (baseline 42; target &lt;50).
+- **Rules:** 8 total (added codey.mdc, universal-loop.mdc since Loop #5).
+
+**Hub consulted:** hub/README.md, Loop #5 report, data-organized index. **Advice applied:** §4.4 Loop # + proof of work + benefits; expanded scope (context compression, embedding, LLM optimization).
+
+**What worked:**
+- Loop #6 completed; all steps 0–7 + token_loop_end; listener events recorded; ledger and NEXT_TASKS updated; TOKEN_SAVING_PRACTICES §3 updated.
+- Step 0 research included Hub, NEXT_TASKS, and expanded scope (context compression, embedding, LLM optimization).
+
+**What didn't / to fix:**
+- Same as prior runs: two always-apply rules; 53 lines &gt; 50. Convert data-separation.mdc to glob or description-only.
+
+**Recommended TODO tasks for next token loop:**
+
+- [ ] Convert data-separation.mdc to glob-scoped or agent-decided so only one rule is always-apply (self-improvement.mdc).
+- [ ] Trim always-apply total to &lt;50 lines.
+- [ ] Add .cursorignore for build, node_modules, generated if not present.
+- [ ] **Every run:** Report Loop #, proof of work, and how we benefit (§4.4).
+- [ ] **Step 0 research:** Include context compression, embedding/retrieval, LLM optimization; read Hub and NEXT_TASKS.
+- [ ] If Cursor releases new context/token features, add to TOKEN_REDUCTION_LOOP §1–2 and TOKEN_SAVING_PRACTICES §1.
+
+---
+
 ## Run token-20260311-2305 (2026-03-11)
 
 **Previous state (rollback):** Snapshot `docs/automation/token_loop_snapshots/token-20260311-2305.json`. Git HEAD at run start: `c1a65e637f06d6a3876f1f12bd873829fce61cda`.

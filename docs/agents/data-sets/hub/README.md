@@ -35,6 +35,15 @@
 | 2026-03-11 | [2026-03-11_cyber-security_purple-training.json](./2026-03-11_cyber-security_purple-training.json) | cyber-security | Structured training data: validation_simulations, synthetic_scenarios, summary for Red/Blue agents. |
 | 2026-03-11 | [2026-03-11_cyber-security_data-summary-and-utilization.md](./2026-03-11_cyber-security_data-summary-and-utilization.md) | cyber-security | Data collected, what it means, how to use (regression, few-shot, metrics, rollback). |
 | 2026-03-12 | [2026-03-12_codey_code-structure-and-compiler-brief.md](./2026-03-12_codey_code-structure-and-compiler-brief.md) | Codey | Code structure best practices, compiler-impact research, refactor strategy, Kotlin/Android alignment for OutOfRouteBuddy. |
+| 2026-03-13 | [2026-03-13_data-loop_loop3-quality-summary.md](./2026-03-13_data-loop_loop3-quality-summary.md) | data-loop | Loop #3: quality summary, proof of work, benefits; validation checklist and provenance; full outputs in synthetic_data/. |
+| 2026-03-13 | [2026-03-13_master-loop_loop-gates-summary.md](./2026-03-13_master-loop_loop-gates-summary.md) | master-loop | LOOP GATES run: policy wiring for production-stage incremental progress, test/lint verification, shared-state + ledger updates. |
+| 2026-03-13 | [2026-03-13_master-loop_ready-metrics-summary.md](./2026-03-13_master-loop_ready-metrics-summary.md) | master-loop | LOOP GATES + neat metrics run: #20 architecture checklist increment, readiness checks green, shared-state/hub updates. |
+| 2026-03-14 | [2026-03-14_data-loop_loop4-quality-summary.md](./2026-03-14_data-loop_loop4-quality-summary.md) | data-loop | Loop #4: Provenance standard in quality report; quality metrics/feedback research; proof of work and benefits. |
+| 2026-03-13 | [2026-03-13_master-loop_mini-architecture-guard-summary.md](./2026-03-13_master-loop_mini-architecture-guard-summary.md) | master-loop | Mini loop: #20 architecture guard with stable drawer regression checks, focused tests/lint, pulse, and shared-state sync. |
+| 2026-03-13 | [2026-03-13_cyber-security_loop5-proof-of-work-and-benefits.md](./2026-03-13_cyber-security_loop5-proof-of-work-and-benefits.md) | cyber-security | Loop #5: LOOP GATES run; 4/4 validation passed; proof of work, benefits; hub + shared state updated. |
+| 2026-03-13 | [2026-03-13_cyber-security_purple-training.json](./2026-03-13_cyber-security_purple-training.json) | cyber-security | Loop #5 training: validation_simulations, synthetic_scenarios for Red/Blue; regression baseline. |
+| 2026-03-15 | [2026-03-15_master-loop_role-cube-and-mini-loop-summary.md](./2026-03-15_master-loop_role-cube-and-mini-loop-summary.md) | master-loop | Research-backed role cube plus light mini-loop summary: listener, liveness, continuity, and shared-state findings. |
+| 2026-03-16 | [2026-03-16_master-loop_contract-standardization-and-token-baseline.md](./2026-03-16_master-loop_contract-standardization-and-token-baseline.md) | master-loop | Step 0.M contract standardization pass: corrected cyber progress math, tightened lane receipts, and captured the pre-master token baseline. |
 
 ---
 

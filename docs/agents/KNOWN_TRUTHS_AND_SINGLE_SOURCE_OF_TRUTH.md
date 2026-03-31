@@ -34,6 +34,7 @@
 | **Active (in-progress) trip state** | TripPersistenceManager + TripStateManager | SharedPreferences `trip_persistence` (24h); TripStateManager in-memory Flow synced from it. |
 | **Crash recovery snapshot** | TripCrashRecoveryManager | 30s auto-save; `OutOfRouteApplication.recoveredTripState`. Crash recovery wins over persistence when both exist. |
 | **Live trip miles (during active trip)** | TripTrackingService.tripMetrics | StateFlow from FusedLocationProvider. ViewModel observes; no other source for live miles. |
+| **Background tracking after app dismissed (recents swipe)** | `app_settings` key `continue_tracking_after_app_dismissed` (default **true**) | **On (recommended):** If the user closes or swipes the app away during a trip, GPS keeps running (foreground service + recovery) for coordinate accuracy. **Off:** Swiping the app from recents stops the tracking service and GPS; trip state stays persisted so the user can reopen and resume. Toggle lives under Settings → Location & tracking. |
 | **Period date boundaries** | UnifiedTripService + PeriodCalculationService | STANDARD: 1st to last of month. CUSTOM: Thursday before first Friday. |
 | **Data tier (SILVER/PLATINUM/GOLD)** | TripEntity.dataTier, domain Trip.dataTier | Human-ended trips = GOLD; synthetic/simulated at PLATINUM and below. See `docs/DATA_TIERS.md`. |
 
@@ -52,10 +53,13 @@
 ## Key truths (no contradictions)
 
 - **Only End trip writes to the trip store.** Clear trip never inserts. OfflineDataManager (when implemented) is for offline queue/sync, not for bypassing Clear semantics.
+- **Shared-pool export is additive only.** Outbound GOLD exports for the local shared pool are copies of Room-backed trips, not a second source of truth for statistics, calendar, or history.
+- **Virtual fleet is not stored in Room trips.** Synthetic fleet batches stay outside the production `trips` table and must remain PLATINUM/SILVER, never GOLD.
 - **UI → ViewModel → data:** No UI talks to Room or SharedPreferences directly. TripInputFragment binds to TripInputViewModel; ViewModel uses TripRepository (domain), TripTrackingService, TripPersistenceManager, PreferencesManager, UnifiedTripService, etc.
 - **Repository chain:** Domain TripRepository ← DomainTripRepositoryAdapter ← data TripRepository ← TripDao ← Room (`trips` table).
 - **Recovery precedence:** (1) OutOfRouteApplication.recoveredTripState → (2) TripPersistenceManager.loadSavedTripState() → (3) inactive.
 - **UnifiedLocationService** is not the source for live trip miles; TripTrackingService is.
+- **Auto / background tracking mode:** With **Continue tracking after app is closed** enabled (default), accidentally closing the app does **not** stop GPS; tracking continues for best accuracy. Users who prefer to stop GPS when the app task is removed from recents can turn this **off** in Settings (see SSOT row above).
 - **Security:** No PII in logs; trip/location data on-device only. See `docs/security/SECURITY_NOTES.md`.
 - **Deferred:** OfflineDataManager, SyncWorker/BackgroundSyncService do not write trip data to Room; stubs only. periodStatistics in UiState is not bound to any view; only monthlyStatistics drives the visible stats row.
 - **Back-end policy (Board-adopted):** No new persistence paths for trip data. Any new feature that "saves" trip-related data must go through the existing repository chain and respect End vs Clear. When OfflineDataManager/SyncWorker are implemented, they must not bypass Clear semantics or create a second source for monthly stats or calendar. Period boundaries stay in UnifiedTripService + PeriodCalculationService; document changes in this doc.

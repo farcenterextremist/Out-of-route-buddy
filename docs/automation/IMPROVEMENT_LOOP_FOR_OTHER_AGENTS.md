@@ -18,25 +18,28 @@
 
 ## Best practices (follow these)
 
-1. **Read the routine first.** Follow [IMPROVEMENT_LOOP_ROUTINE.md](./IMPROVEMENT_LOOP_ROUTINE.md). Read [IMPROVEMENT_LOOP_COMMON_SENSE.md](./IMPROVEMENT_LOOP_COMMON_SENSE.md) and [IMPROVEMENT_LOOP_REASONING.md](./IMPROVEMENT_LOOP_REASONING.md) at loop start.
+1. **Read the routine first.** Follow [IMPROVEMENT_LOOP_ROUTINE.md](./IMPROVEMENT_LOOP_ROUTINE.md). Read [IMPROVEMENT_LOOP_COMMON_SENSE.md](./IMPROVEMENT_LOOP_COMMON_SENSE.md), [IMPROVEMENT_LOOP_REASONING.md](./IMPROVEMENT_LOOP_REASONING.md), and [LOOP_CONSISTENCY_STANDARD.md](./LOOP_CONSISTENCY_STANDARD.md) at loop start.
 
 2. **Checkpoint before any changes.** Save a copy (git commit or tag) so the user can say "revert" if something breaks. Note the checkpoint in your summary and in the ledger block.
 
 3. **Research includes self-improvement and loop-improvement.** Every loop run must include in Phase 0 research: [LOOP_LESSONS_LEARNED.md](./LOOP_LESSONS_LEARNED.md), [SELF_IMPROVING_LOOP_RESEARCH.md](./SELF_IMPROVING_LOOP_RESEARCH.md), [CURSOR_SELF_IMPROVEMENT.md](./CURSOR_SELF_IMPROVEMENT.md). Note what you applied in your research output. **Auto-implement Light and Medium**; put **drastic loop improvements** (routine changes, new phases, new loops) in **Heavy** — document only, require human approval. See [UNIVERSAL_LOOP_PROMPT](../agents/data-sets/hub/UNIVERSAL_LOOP_PROMPT.md) and [LOOP_TIERING.md](./LOOP_TIERING.md).
 
 4. **Respect design intent.** Read [USER_PREFERENCES_AND_DESIGN_INTENT.md](./USER_PREFERENCES_AND_DESIGN_INTENT.md) before research or changes. No unwarranted UI changes without permission.
+   - **Frontend implementation restriction:** Non-master loops do not implement frontend/UI changes. Research and proposal only; implementation is reserved for Master Loop via [FRONTEND_CHANGE_AUTOMATION_GATE.md](./FRONTEND_CHANGE_AUTOMATION_GATE.md).
 
-5. **Research before doing.** Read the docs listed in Phase 0.1 (CRUCIAL, last summary, FAILING_OR_IGNORED_TESTS, security, **self-improvement/loop-improvement**, etc.). Classify tasks as Light / Medium / Heavy per [LOOP_TIERING.md](./LOOP_TIERING.md). Do not implement Heavy without user approval.
+5. **Research before doing.** Read the docs listed in Phase 0.1 (CRUCIAL, last summary, FAILING_OR_IGNORED_TESTS, security, **self-improvement/loop-improvement**, etc.). Classify tasks as Light / Medium / Heavy per [LOOP_TIERING.md](./LOOP_TIERING.md). Do not implement Heavy without user approval. **Approved-from-Heavy queue items** (#7, #8, #9, #17, #20) are Medium execution queue work and should execute first each loop.
 
-5. **One improvement per category per loop (Kaizen).** Avoid overload. Timebox (e.g. no more than 10 min per test fix).
+6. **One improvement per category per loop (Kaizen).** Avoid overload. Timebox (e.g. no more than 10 min per test fix).
 
-6. **Tests must pass.** If a change breaks tests, revert that change and report in the summary. Do not leave tests red.
+7. **Tests must pass.** If a change breaks tests, revert that change and report in the summary. Do not leave tests red.
 
-7. **Write an A-grade summary.** Use [LOOP_METRICS_TEMPLATE.md](./LOOP_METRICS_TEMPLATE.md). Output `IMPROVEMENT_LOOP_SUMMARY_<date>.md` with metrics, what was done, reasoning, suggested next steps, next run focus, quality grade.
+8. **Write an A-grade summary.** Use [LOOP_METRICS_TEMPLATE.md](./LOOP_METRICS_TEMPLATE.md). Output `IMPROVEMENT_LOOP_SUMMARY_<date>.md` with metrics, what was done, reasoning, suggested next steps, next run focus, quality grade.
 
-8. **Recommend new ideas every run (required).** In the summary, the "File Organizer: recommended new ideas" section must contain **at least 1–2 new ideas** (Light, Medium, or Heavy) **or** (when Heavy list ≥ 50) **judge/critique** 1–2 existing Heavy ideas. When Heavy list **< 50**, include **at least 1–2 new Heavy ideas** (in FUTURE_IDEAS and summary). Do not skip. See [HEAVY_IDEAS_FAVORITES.md](./HEAVY_IDEAS_FAVORITES.md) § Heavy list cap and [IMPROVEMENT_LOOP_TEAMS.md](./IMPROVEMENT_LOOP_TEAMS.md).
+9. **Recommend new ideas every run (required).** In the summary, the "File Organizer: recommended new ideas" section must contain **at least 1–2 new ideas** (Light, Medium, or Heavy) **or** (when Heavy list ≥ 50) **judge/critique** 1–2 existing Heavy ideas. When Heavy list **< 50**, include **at least 1–2 new Heavy ideas** (in FUTURE_IDEAS and summary). Do not skip. See [HEAVY_IDEAS_FAVORITES.md](./HEAVY_IDEAS_FAVORITES.md) § Heavy list cap and [IMPROVEMENT_LOOP_TEAMS.md](./IMPROVEMENT_LOOP_TEAMS.md).
 
-9. **Append one block to the run ledger.** At the end of every run, add a new section to [IMPROVEMENT_LOOP_RUN_LEDGER.md](./IMPROVEMENT_LOOP_RUN_LEDGER.md) using the template in that file. This keeps a shared, chronological record for us and for other agents.
+10. **Append one block to the run ledger.** At the end of every run, add a new section to [IMPROVEMENT_LOOP_RUN_LEDGER.md](./IMPROVEMENT_LOOP_RUN_LEDGER.md) using the template in that file. This keeps a shared, chronological record for us and for other agents.
+11. **Report consistency score.** In your summary include `Loop Consistency Check` and `Consistency score: X/10` per [LOOP_CONSISTENCY_STANDARD.md](./LOOP_CONSISTENCY_STANDARD.md).
+12. **Verify sandboxing ran.** Every main loop run must execute one sandbox action and include in summary: `Sandboxing status (pass/fail)`, `Sandbox action executed`, and `Sandbox artifact path`.
 
 ---
 

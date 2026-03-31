@@ -1,5 +1,8 @@
 package com.example.outofroutebuddy.data.archive
 
+import com.example.outofroutebuddy.domain.data.SharedPoolExportReason
+import com.example.outofroutebuddy.domain.data.SharedPoolExportReceipt
+import com.example.outofroutebuddy.domain.data.TripSharedPoolExportService
 import com.example.outofroutebuddy.domain.models.Trip
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertTrue
@@ -17,7 +20,21 @@ class DefaultTripArchiveServiceTest {
 
     @Before
     fun setUp() {
-        service = DefaultTripArchiveService()
+        service = DefaultTripArchiveService(
+            object : TripSharedPoolExportService {
+                override suspend fun exportGoldTrips(
+                    trips: List<Trip>,
+                    reason: SharedPoolExportReason,
+                ): Result<SharedPoolExportReceipt> =
+                    Result.success(
+                        SharedPoolExportReceipt(
+                            batchId = "test-batch",
+                            filePath = "",
+                            exportedTripCount = trips.size,
+                        ),
+                    )
+            },
+        )
     }
 
     @Test

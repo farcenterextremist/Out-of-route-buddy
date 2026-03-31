@@ -1,0 +1,26 @@
+---
+description: "Enforce loop continuity checks when loop/gate/shared-state docs or scripts change."
+globs:
+  - "docs/automation/**"
+  - "scripts/automation/**"
+alwaysApply: false
+---
+
+# Loop Continuity Enforcement
+
+When changing loop architecture, gates, or shared-state behavior:
+
+1. Run continuity checks:
+   - `.\scripts\automation\run_loop_continuity_tests.ps1`
+
+2. If continuity checks fail:
+   - Fix contract or shared-state drift before finalizing.
+   - Report exact failing suite and reason.
+
+3. Keep shared-state evolution safe:
+   - Prefer additive fields.
+   - If breaking shape change is needed, add a versioned path/contract plan.
+
+4. Require architecture traceability:
+   - Reference `docs/automation/LOOP_GATE_ARCHITECTURE_BLUEPRINT.md`
+   - Reference `docs/automation/LOOP_CONTINUITY_TEST_PLAN.md`

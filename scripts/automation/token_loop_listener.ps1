@@ -1,5 +1,5 @@
 # Token Reduction Loop Listener — Record token-loop events for analysis and improvement.
-# Run from repo root: .\scripts\automation\token_loop_listener.ps1 -Event <event> -Step <step> -Note <note> -Metrics <json>
+# Run from repo root: .\scripts\automation\token_loop_listener.ps1 -Event <event> -Step <step> -Note <note> -Metrics <json> -RunId <run_id>
 # Or with metrics from file (avoids PowerShell quoting): -MetricsPath path\to\metrics.json
 # Events: token_loop_start, step_start, step_end, token_loop_end
 # Data is appended to docs/automation/token_loop_events.jsonl (JSONL format).
@@ -18,8 +18,9 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
-$RepoRoot = $PSScriptRoot
-for ($i = 0; $i -lt 2; $i++) { $RepoRoot = Split-Path -Parent $RepoRoot }
+. (Join-Path $PSScriptRoot "loop_run_contract.ps1")
+
+$RepoRoot = Get-LoopAutomationRepoRoot -ScriptRoot $PSScriptRoot
 
 if ($OutFile) {
     $EventsFile = $OutFile
@@ -30,7 +31,7 @@ $logDir = Split-Path -Parent $EventsFile
 if (-not (Test-Path $logDir)) { New-Item -ItemType Directory -Path $logDir -Force | Out-Null }
 
 $ts = Get-Date -Format "yyyy-MM-ddTHH:mm:ssZ"
-if (-not $RunId) { $RunId = "token-$((Get-Date).ToString('yyyyMMdd-HHmm'))" }
+if (-not $RunId) { $RunId = New-LoopRunId -Prefix "token" }
 
 $payloadObj = [PSCustomObject]@{
     ts     = $ts

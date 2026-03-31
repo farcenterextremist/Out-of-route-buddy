@@ -82,6 +82,7 @@ These close the gap identified by the explore agent: **no previous test asserted
   - Unit: `.\gradlew.bat :app:testDebugUnitTest`
   - Instrumented (device/emulator): `.\gradlew.bat :app:connectedDebugAndroidTest`
   - Both: `.\gradlew.bat :app:testDebugUnitTest :app:connectedDebugAndroidTest`
+  - If instrumented tests are included in the loop/run, prefer `.\scripts\run-instrumented-tests-with-shared-pool-sync.ps1` so shared-pool sync and the frontend analyzer both run afterward
 
 ---
 

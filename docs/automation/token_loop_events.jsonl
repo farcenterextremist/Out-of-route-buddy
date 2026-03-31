@@ -71,3 +71,57 @@
 {"ts":"2026-03-11T23:06:08Z","event":"step_end","run_id":"token-20260311-2305","step":"7","note":"NEXT_TASKS and ledger updated"}
 {"ts":"2026-03-11T23:06:08Z","event":"token_loop_end","run_id":"token-20260311-2305","note":"steps=8","metrics":{"steps_completed":8}}
 {"ts":"2026-03-11T23:06:43Z","event":"step_end","run_id":"token-20260311-2305","step":"1","note":"audit done","metrics":{"always_apply_count":2,"always_apply_lines":53}}
+{"ts":"2026-03-13T17:56:09Z","event":"token_loop_start","run_id":"token-20260313-1756","note":"run_token_loop.ps1"}
+{"ts":"2026-03-13T17:56:33Z","event":"step_start","run_id":"token-20260313-1756","step":"0","note":"deep research"}
+{"ts":"2026-03-13T17:56:33Z","event":"step_end","run_id":"token-20260313-1756","step":"0","note":"Hub consulted; NEXT_TASKS read; context compression/embedding/LLM opt in scope; 2 always-apply 53 lines"}
+{"ts":"2026-03-13T17:56:33Z","event":"step_start","run_id":"token-20260313-1756","step":"1","note":"audit rules"}
+{"ts":"2026-03-13T17:56:33Z","event":"step_end","run_id":"token-20260313-1756","step":"1","note":"audit done","metrics":{"always_apply_count":2,"always_apply_lines":53}}
+{"ts":"2026-03-13T17:56:34Z","event":"step_start","run_id":"token-20260313-1756","step":"2","note":"check new always-apply"}
+{"ts":"2026-03-13T17:56:34Z","event":"step_end","run_id":"token-20260313-1756","step":"2","note":"data-separation candidate for glob"}
+{"ts":"2026-03-13T17:56:37Z","event":"step_start","run_id":"token-20260313-1756","step":"3","note":"doc references"}
+{"ts":"2026-03-13T17:56:38Z","event":"step_end","run_id":"token-20260313-1756","step":"3","note":"rules point to docs"}
+{"ts":"2026-03-13T17:56:38Z","event":"step_start","run_id":"token-20260313-1756","step":"4","note":"conversation reminder"}
+{"ts":"2026-03-13T17:56:38Z","event":"step_end","run_id":"token-20260313-1756","step":"4","note":"gauge \u003e60%; front-load context"}
+{"ts":"2026-03-13T17:56:38Z","event":"step_start","run_id":"token-20260313-1756","step":"5","note":"update doc"}
+{"ts":"2026-03-13T17:56:38Z","event":"step_end","run_id":"token-20260313-1756","step":"5","note":"TOKEN_SAVING_PRACTICES current"}
+{"ts":"2026-03-13T17:56:39Z","event":"step_start","run_id":"token-20260313-1756","step":"6","note":"summary"}
+{"ts":"2026-03-13T17:56:39Z","event":"step_end","run_id":"token-20260313-1756","step":"6","note":"Token audit: 2 always-apply 53 lines"}
+{"ts":"2026-03-13T17:56:49Z","event":"step_start","run_id":"token-20260313-1756","step":"7","note":"organize results"}
+{"ts":"2026-03-13T17:56:49Z","event":"step_end","run_id":"token-20260313-1756","step":"7","note":"NEXT_TASKS and ledger updated"}
+{"ts":"2026-03-13T17:56:49Z","event":"token_loop_end","run_id":"token-20260313-1756","note":"steps=8","metrics":{"steps_completed":8}}
+{"ts":"2026-03-13T18:43:55Z","event":"token_loop_start","run_id":"token-20260313-1843","note":"run_token_loop.ps1"}
+{"ts":"2026-03-13T18:44:12Z","event":"step_start","run_id":"token-20260313-1843","step":"0","note":"deep research"}
+{"ts":"2026-03-13T18:44:12Z","event":"step_end","run_id":"token-20260313-1843","step":"0","note":"Hub+NEXT_TASKS; context compression/embedding/LLM scope; 2 always-apply 53 lines"}
+{"ts":"2026-03-13T18:44:12Z","event":"step_start","run_id":"token-20260313-1843","step":"1","note":"audit"}
+{"ts":"2026-03-13T18:44:12Z","event":"step_end","run_id":"token-20260313-1843","step":"1","metrics":{"always_apply_count":2,"always_apply_lines":53}}
+{"ts":"2026-03-13T18:44:14Z","event":"step_start","run_id":"token-20260313-1843","step":"2","note":"new always-apply"}
+{"ts":"2026-03-13T18:44:14Z","event":"step_end","run_id":"token-20260313-1843","step":"2","note":"data-separation for glob"}
+{"ts":"2026-03-13T18:44:14Z","event":"step_start","run_id":"token-20260313-1843","step":"3","note":"doc refs"}
+{"ts":"2026-03-13T18:44:14Z","event":"step_end","run_id":"token-20260313-1843","step":"3","note":"rules?docs"}
+{"ts":"2026-03-13T18:44:14Z","event":"step_start","run_id":"token-20260313-1843","step":"4","note":"conversation"}
+{"ts":"2026-03-13T18:44:14Z","event":"step_end","run_id":"token-20260313-1843","step":"4","note":"gauge\u003e60%"}
+{"ts":"2026-03-13T18:44:14Z","event":"step_start","run_id":"token-20260313-1843","step":"5","note":"update doc"}
+{"ts":"2026-03-13T18:44:14Z","event":"step_end","run_id":"token-20260313-1843","step":"5"}
+{"ts":"2026-03-13T18:44:14Z","event":"step_start","run_id":"token-20260313-1843","step":"6","note":"summary"}
+{"ts":"2026-03-13T18:44:14Z","event":"step_end","run_id":"token-20260313-1843","step":"6","note":"2 always-apply 53 lines"}
+{"ts":"2026-03-13T18:44:14Z","event":"step_start","run_id":"token-20260313-1843","step":"7","note":"organize"}
+{"ts":"2026-03-13T18:44:14Z","event":"step_end","run_id":"token-20260313-1843","step":"7"}
+{"ts":"2026-03-13T18:44:14Z","event":"token_loop_end","run_id":"token-20260313-1843","note":"steps=8","metrics":{"steps_completed":8}}
+{"ts":"2026-03-16T01:47:42Z","event":"token_loop_start","run_id":"token-20260316-0147","note":"manual run + tests"}
+{"ts":"2026-03-16T01:52:55Z","event":"step_start","run_id":"token-20260316-0152","step":"0","note":"deep research"}
+{"ts":"2026-03-16T01:52:55Z","event":"step_end","run_id":"token-20260316-0147","step":"0","note":"Cursor dynamic context ~47% token savings; OpenAI prompt caching refreshed; rule/skill discipline and settings hygiene reviewed"}
+{"ts":"2026-03-16T01:52:55Z","event":"step_start","run_id":"token-20260316-0147","step":"1","note":"audit rules"}
+{"ts":"2026-03-16T01:52:55Z","event":"step_end","run_id":"token-20260316-0147","step":"1","note":"audit complete","metrics":{"always_apply_count":1,"always_apply_lines":45}}
+{"ts":"2026-03-16T01:52:56Z","event":"step_start","run_id":"token-20260316-0147","step":"2","note":"check new always-apply"}
+{"ts":"2026-03-16T01:52:56Z","event":"step_end","run_id":"token-20260316-0147","step":"2","note":"data-separation converted to scoped globs"}
+{"ts":"2026-03-16T01:52:56Z","event":"step_start","run_id":"token-20260316-0147","step":"3","note":"doc references"}
+{"ts":"2026-03-16T01:52:56Z","event":"step_end","run_id":"token-20260316-0147","step":"3","note":"docs refreshed; no new global rule added"}
+{"ts":"2026-03-16T01:52:56Z","event":"step_start","run_id":"token-20260316-0147","step":"4","note":"conversation reminder"}
+{"ts":"2026-03-16T01:52:56Z","event":"step_end","run_id":"token-20260316-0147","step":"4","note":"keep prompts concise; stable prefix first; new chat when gauge \u003e60%"}
+{"ts":"2026-03-16T01:52:56Z","event":"step_start","run_id":"token-20260316-0147","step":"5","note":"update docs"}
+{"ts":"2026-03-16T01:52:56Z","event":"step_end","run_id":"token-20260316-0147","step":"5","note":"TOKEN_REDUCTION_LOOP, TOKEN_SAVING_PRACTICES, IMPROVEMENT_PLAN, BRIEFING updated"}
+{"ts":"2026-03-16T01:52:56Z","event":"step_start","run_id":"token-20260316-0147","step":"6","note":"summary"}
+{"ts":"2026-03-16T01:52:56Z","event":"step_end","run_id":"token-20260316-0147","step":"6","note":"Token audit: 1 always-apply 45 lines"}
+{"ts":"2026-03-16T01:52:56Z","event":"step_start","run_id":"token-20260316-0147","step":"7","note":"organize results"}
+{"ts":"2026-03-16T01:52:56Z","event":"step_end","run_id":"token-20260316-0147","step":"7","note":"NEXT_TASKS and ledger updated"}
+{"ts":"2026-03-16T01:52:56Z","event":"token_loop_end","run_id":"token-20260316-0147","note":"steps=8","metrics":{"steps_completed":8}}

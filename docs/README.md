@@ -86,6 +86,7 @@ Short index of the key docs for OutOfRouteBuddy. Start here for product, archite
 | [automation/LOOP_LESSONS_LEARNED.md](./automation/LOOP_LESSONS_LEARNED.md) | Lessons from past runs; read in Phase 0, append in Phase 4. |
 | [automation/DESIGN_AND_UX_RESEARCH.md](./automation/DESIGN_AND_UX_RESEARCH.md) | Design research: color schemes, templates, state flows, beautification, professionalism—integrated into loops. |
 | [automation/CURSOR_SELF_IMPROVEMENT.md](./automation/CURSOR_SELF_IMPROVEMENT.md) | Safe web search, prompt-injection protections, contextualization. |
+| [automation/LLM_LOOP.md](./automation/LLM_LOOP.md) | Permanent local-first LLM loop contract; `Ollama`-first, with token audit as a stable lane. |
 | [automation/TOKEN_REDUCTION_LOOP.md](./automation/TOKEN_REDUCTION_LOOP.md) | Token reduction: research, strategies, audit loop; run on demand or Phase 0.6. |
 | [automation/TOKEN_LOOP_LISTENER.md](./automation/TOKEN_LOOP_LISTENER.md) | Token loop listener: events, wiring, test; output token_loop_events.jsonl. |
 | [automation/TOKEN_LOOP_NEXT_TASKS.md](./automation/TOKEN_LOOP_NEXT_TASKS.md) | Recommended TODO tasks for next token loop (updated at Step 7 each run; read at Step 0). |

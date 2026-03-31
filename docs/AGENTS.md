@@ -20,8 +20,18 @@
 | [docs/automation/CURSOR_SELF_IMPROVEMENT.md](docs/automation/CURSOR_SELF_IMPROVEMENT.md) | Safe web search, prompt-injection protections, contextualization |
 | [docs/automation/SANDBOX_TESTING.md](docs/automation/SANDBOX_TESTING.md) | Feature testing before merge; sandbox phase |
 | [docs/automation/AUTONOMOUS_LOOP_SETUP.md](docs/automation/AUTONOMOUS_LOOP_SETUP.md) | Full automation (zero human intervention) |
+| [docs/automation/LOOP_GATES.md](docs/automation/LOOP_GATES.md) | **Required at start and end of every loop** — read order, Hub/shared state, log "Hub consulted" & "Advice applied"; at end: hub deposit, hub/README.md, loop_shared_events.jsonl, loop_latest/&lt;loop&gt;.json |
 
 **Improvement Loop — find everything:** [docs/automation/IMPROVEMENT_LOOP_INDEX.md](docs/automation/IMPROVEMENT_LOOP_INDEX.md) (master index of all loop docs, scripts, .cursor rules/skills).
+
+### Android UX & Material 3
+
+| Skill | Use when |
+|-------|----------|
+| [android-m3-design-study](.cursor/skills/android-m3-design-study/SKILL.md) | Structured intermediate study (weeks, habits, doc links; see `reference.md`). |
+| [android-material-ui-audit](.cursor/skills/android-material-ui-audit/SKILL.md) | Theme/layout/a11y audit before or alongside frontend fixes. |
+| [frontend-pleasantness-reviewer](.cursor/skills/frontend-pleasantness-reviewer/SKILL.md) | Rubric-based pleasantness and flow. |
+| [frontend-screenshot-reviewer](.cursor/skills/frontend-screenshot-reviewer/SKILL.md) | Evidence-based visual review from screenshots. |
 
 ---
 
@@ -80,16 +90,16 @@ When user says **"Run Cyber Security Loop"** (or "GO security"):
 
 ---
 
-## Token loop
+## LLM loop / Token loop
 
-When user says **"start token loop"** (or "run token reduction loop" / "token audit"):
+When user says **"start llm loop"** or **"start token loop"** (or "run token reduction loop" / "token audit"):
 
 **Skill:** Invoke **token-conservationist** (personal skill) for context compression and token-saving patterns.
 
 1. **Record current state** — Run `.\scripts\automation\token_loop_state_snapshot.ps1 -RunId <run_id>`. Snapshot → `docs/automation/token_loop_snapshots/<run_id>.json` (rollback + progress tracking). Use the **same RunId** for all listener events this run.
-2. **Start the listener** — Run `.\scripts\automation\run_token_loop.ps1` (it runs state snapshot + token_loop_start and prints RunId), or invoke `token_loop_listener.ps1 -Event token_loop_start` with the same RunId.
+2. **Start the loop entrypoint** — For the permanent top-level local-first path, prefer `.\scripts\automation\run_llm_loop.ps1`. For the stable token-audit lane directly, `.\scripts\automation\run_token_loop.ps1` is still valid. Both preserve the same token listener and state history.
 3. Run **steps 0–7** from [docs/automation/TOKEN_REDUCTION_LOOP.md](docs/automation/TOKEN_REDUCTION_LOOP.md): Step 0 = deep research and analysis; Step 7 = organize results and recommend next tasks in TOKEN_LOOP_NEXT_TASKS.md. Invoke the listener at each step and at end (token_loop_end). No human in the loop.
-4. **Goals:** Save token spend; manage context squish. Listener data (`token_loop_events.jsonl`) is used to improve the loop. All agents get Golden Storage Rules and Token Boss via the always-apply rule (self-improvement.mdc); [Token Initiative policy reference](docs/agents/TOKEN_INITIATIVE_BRIEFING.md). Token saving recommendations (easy to see): briefing §Token saving recommendations, [TOKEN_LOOP_NEXT_TASKS](docs/automation/TOKEN_LOOP_NEXT_TASKS.md), [TOKEN_LOOP_MASTER_PLAN](docs/automation/TOKEN_LOOP_MASTER_PLAN.md) (completion % and visual).
+4. **Goals:** Save token spend; manage context squish; keep local-first LLM workflow useful and scriptable in Cursor. Listener data (`token_loop_events.jsonl`) is used to improve the loop. All agents get Golden Storage Rules and Token Boss via the always-apply rule (self-improvement.mdc); [Token Initiative policy reference](docs/agents/TOKEN_INITIATIVE_BRIEFING.md). Token saving recommendations (easy to see): briefing §Token saving recommendations, [TOKEN_LOOP_NEXT_TASKS](docs/automation/TOKEN_LOOP_NEXT_TASKS.md), [TOKEN_LOOP_MASTER_PLAN](docs/automation/TOKEN_LOOP_MASTER_PLAN.md) (completion % and visual). Default local provider = `Ollama` on the desktop/Cursor side; the Android app itself is still just the codebase being edited.
 
 ---
 

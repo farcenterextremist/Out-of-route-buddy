@@ -2,6 +2,10 @@
 
 **Objective:** Create, prune, and mesh synthetic/simulated data; produce quality reports; user approves tier changes before application.
 
+**Consistency contract (required):** Follow [LOOP_CONSISTENCY_STANDARD.md](./LOOP_CONSISTENCY_STANDARD.md). Include `Loop Consistency Check` and `Consistency score: X/10` in quality report/ledger output.
+
+**Health + diagnostics:** Pair loop health checks with [LOOP_DIAGNOSTIC_SWEEP.md](./LOOP_DIAGNOSTIC_SWEEP.md) so the data loop looks for weak spots, stale assumptions, and residual risk rather than only producing artifacts.
+
 **Trigger:** User says **"Start Synthetic data loop"**, **"START DATA LOOP"**, or "run synthetic data loop" / "data loop".
 
 **For other agents:** Read [SYNTHETIC_DATA_LOOP_FOR_OTHER_AGENTS.md](./SYNTHETIC_DATA_LOOP_FOR_OTHER_AGENTS.md) at loop start. At the end of every run, append one block to [SYNTHETIC_DATA_LOOP_RUN_LEDGER.md](./SYNTHETIC_DATA_LOOP_RUN_LEDGER.md).
@@ -14,10 +18,12 @@
 
 | Step | Action |
 |------|--------|
-| **0.0** | **Research data-loop best practices.** Search for current/popular practices (e.g. "synthetic data pipeline best practices", "data quality loop", "human-in-the-loop data" 2024–2025). Update [SYNTHETIC_DATA_LOOP_RESEARCH.md](./SYNTHETIC_DATA_LOOP_RESEARCH.md): append § Findings (2–4 bullets with "Applies: …" to our loop) and § Suggested improvements (1–2 items for routine or next run). Use findings to inform this run. |
+| **0.0a** | Run liveness if this is a substantial run or if loop docs/scripts changed: `scripts/automation/loop_health_check.ps1 -Quick`. |
+| **0.0** | **Research data-loop best practices.** Search for current/popular practices (e.g. "synthetic data pipeline best practices", "data quality loop", "human-in-the-loop data" 2024–2025). Read [QUALITY_STANDARDS_AND_PROOF.md](./QUALITY_STANDARDS_AND_PROOF.md) and decide the proof-of-quality evidence bundle for this run. Update [SYNTHETIC_DATA_LOOP_RESEARCH.md](./SYNTHETIC_DATA_LOOP_RESEARCH.md): append § Findings (2–4 bullets with "Applies: …" to our loop) and § Suggested improvements (1–2 items for routine or next run). Use findings to inform this run. |
 | 0.1 | Read [SYNTHETIC_DATA_LOOP_MASTER_PLAN.md](./SYNTHETIC_DATA_LOOP_MASTER_PLAN.md), [SYNTHETIC_DATA_LOOP_FOR_OTHER_AGENTS.md](./SYNTHETIC_DATA_LOOP_FOR_OTHER_AGENTS.md), [docs/DATA_TIERS.md](../DATA_TIERS.md). |
 | 0.2 | Check [SYNTHETIC_DATA_LOOP_RUN_LEDGER.md](./SYNTHETIC_DATA_LOOP_RUN_LEDGER.md) for last run and "Next" items; check [SYNTHETIC_DATA_LOOP_RESEARCH.md](./SYNTHETIC_DATA_LOOP_RESEARCH.md) for latest suggested improvements. |
 | 0.3 | Checkpoint: `git add -A && git commit -m "Pre-synthetic-data-loop YYYY-MM-DD"` or `git tag synthetic-data-loop-pre-YYYYMMDD`. Note checkpoint for ledger. |
+| 0.4 | Run a short diagnostic sweep: review quality/report gaps, recent warnings, or likely stale data assumptions; record one residual risk in the report. |
 
 **Output:** Research doc updated; ready to run; checkpoint recorded.
 
@@ -28,9 +34,9 @@
 | Step | Action |
 |------|--------|
 | 1.1 | Decide focus: create new synthetic data, or gather existing (e.g. from simulations, exports). |
-| 1.2 | If creating: generate synthetic/simulated trips (PLATINUM or SILVER tier per DATA_TIERS). Write to project path (e.g. `docs/automation/synthetic_data/` or agreed path). |
+| 1.2 | If creating: generate synthetic/simulated trips (PLATINUM or SILVER tier per DATA_TIERS). Write to project path (e.g. `docs/automation/synthetic_data/` or agreed path). For virtual-fleet runs, assign a batch id and record whether output stays outside the production Room `trips` table. |
 | 1.3 | If gathering: collect from repo (e.g. test fixtures, simulation outputs); document source and tier. |
-| 1.4 | List created/gathered artifacts in a short manifest (path + tier + count). |
+| 1.4 | List created/gathered artifacts in a short manifest (path + tier + count). Include reference datasets used and whether they are synthetic inputs or reference-only context. |
 
 **Output:** Synthetic data files and/or manifest.
 
@@ -54,7 +60,7 @@
 |------|--------|
 | 3.1 | Summarize data quality: counts by tier, coverage, gaps, anomalies. |
 | 3.2 | Optional: data-analyzing session notes (what was explored, findings). |
-| 3.3 | Write report to `docs/automation/synthetic_data/quality_report_YYYY-MM-DD.md` (or path in master plan). |
+| 3.3 | Write report to `docs/automation/synthetic_data/quality_report_YYYY-MM-DD.md` (or path in master plan). Include a **Proof of Quality** block: liveness/readiness evidence, change evidence, residual risk, and traceability links. Include **Loop Consistency Check** with `Consistency score: X/10` per `LOOP_CONSISTENCY_STANDARD.md`. For virtual-fleet runs, include batch ids, dataset sources, and contamination-check evidence proving synthetic rows stayed separate from GOLD/Room production data. |
 
 **Output:** Quality report (and optional session notes).
 
@@ -66,7 +72,7 @@
 |------|--------|
 | 4.1 | Present to user: pruning/mesh proposal and quality report. Ask: "Approve tier changes / deletes? (yes / no / partial list)." |
 | 4.2 | If user approves (all or partial): apply **only** approved items (`setTripTier`, `deleteTripsOlderThan`, or listed deletes). If no approval: do not apply; note in ledger. |
-| 4.3 | Append one block to [SYNTHETIC_DATA_LOOP_RUN_LEDGER.md](./SYNTHETIC_DATA_LOOP_RUN_LEDGER.md) using the template there. Include: Focus, Outputs, Tier changes applied, Metrics (checkpoint), Next. |
+| 4.3 | Append one block to [SYNTHETIC_DATA_LOOP_RUN_LEDGER.md](./SYNTHETIC_DATA_LOOP_RUN_LEDGER.md) using the template there. Include: Focus, Outputs, Tier changes applied, Metrics (checkpoint), **Proof of quality**, **Loop consistency check (score X/10)**, Next. Use [LOOP_CONSISTENCY_LEDGER_SNIPPET.md](./LOOP_CONSISTENCY_LEDGER_SNIPPET.md) for the consistency block. |
 
 **Output:** Ledger block appended; tier changes applied only if approved.
 

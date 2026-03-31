@@ -16,6 +16,7 @@ import com.example.outofroutebuddy.util.AppLogger
 import com.example.outofroutebuddy.util.LogRotationManager
 import com.google.firebase.FirebaseApp
 import com.google.firebase.analytics.FirebaseAnalytics
+import com.example.outofroutebuddy.data.backup.TripBackupManager
 import com.example.outofroutebuddy.services.OfflineSyncCoordinator
 import com.example.outofroutebuddy.workers.WorkManagerInitializer
 import dagger.hilt.android.HiltAndroidApp
@@ -119,6 +120,9 @@ open class OutOfRouteApplication : Application() {
     // H1: Inject DatabaseHealthCheck for startup integrity check
     @Inject
     lateinit var databaseHealthCheck: DatabaseHealthCheck
+
+    @Inject
+    lateinit var tripBackupManager: TripBackupManager
 
     /** H1: Scope for one-shot health check and other app-level coroutines. Cancelled in onTerminate(). */
     private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
@@ -351,6 +355,7 @@ open class OutOfRouteApplication : Application() {
             // ✅ REFACTORED: Firebase is now initialized lazily on-demand.
             initializeCriticalComponents()
             scheduleAutomaticTripPruning()
+            scheduleAutoBackup()
 
             // Log app launch event
             logAnalyticsEvent(
@@ -493,6 +498,25 @@ open class OutOfRouteApplication : Application() {
             } catch (e: Exception) {
                 Log.e(TAG, "Automatic prune failed", e)
                 reportErrorToCrashlytics("Automatic trip pruning failed", e)
+            }
+        }
+    }
+
+    /**
+     * Silently backs up trip data to the device Downloads folder on every cold start.
+     * Runs on IO dispatcher; failures are logged but never crash the app.
+     */
+    private fun scheduleAutoBackup() {
+        applicationScope.launch(Dispatchers.IO) {
+            try {
+                if (!isHealthy()) {
+                    Log.w(TAG, "Skipping auto-backup: app is not healthy")
+                    return@launch
+                }
+                val ok = tripBackupManager.autoBackupIfNeeded()
+                if (ok) Log.i(TAG, "Auto-backup completed on startup")
+            } catch (e: Exception) {
+                Log.e(TAG, "Auto-backup failed (non-fatal)", e)
             }
         }
     }

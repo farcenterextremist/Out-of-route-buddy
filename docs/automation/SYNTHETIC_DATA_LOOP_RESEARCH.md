@@ -26,6 +26,15 @@
 - **Report Loop # every run.** User request: always report **Loop #** to the user plus proof of work and how we benefit; ledger template updated to include Loop #. *Applies: ledger template and every run block now include Loop #; agent reports to user at end.*
 - **40–60% time / 70% cost.** Industry context: synthetic data in production can cut model/data dev time and cost significantly; 80% synthetic / 20% real can outperform either alone. *Applies: our loop keeps synthetic separate (GOLD untouched) while allowing synthetic to suggest improvements to human data gathering—aligns with hybrid value.*
 
+**Loop #3 (2026-03-12):**
+
+- **Traceability and lineage.** Best practice: capture lineage (what, when, where, why, who, how); use correlation IDs end-to-end for record-level traceability; emit lineage/quality events from every stage. *Applies: our ledger block (Loop #, checkpoint, outputs) and manifest (source, tier, path) give lightweight lineage; we can add "Provenance" to quality report (source doc, run date, loop #).*
+- **Schema-first and validation.** Configure schema that mirrors real data; document constraints; validate schema in generated data. *Applies: DATA_TIERS and TripEntity.dataTier are schema; quality report validation checklist (tier separation, GOLD human-only) aligns.*
+
+**Loop #4 (2026-03-14):**
+
+- **Quality metrics and feedback.** Evaluation frameworks (e.g. SynthEval, SynQP) assess fidelity, privacy, and utility; feedback loops with verification (human or model) prevent model collapse when retraining on synthetic data. *Applies: our quality report + validation checklist + provenance give a light fidelity/utility view; when we add generated synthetic trips, consider a small "quality metrics" subsection (e.g. tier mix, schema compliance).*
+
 ---
 
 ## Suggested improvements (for routine or next run)
@@ -37,6 +46,7 @@
 | 2026-03-12 | Add Phase 0 research step: at loop start, search current data-loop/synthetic-data best practices; update this doc; add 1–2 suggested improvements. | Done (this doc + routine updated.) |
 | 2026-03-12 | In quality report (Phase 3), add optional "Validation checklist": schema consistency, tier separation verified, business rules (e.g. GOLD human-only) noted. | Proposed for next run. |
 | 2026-03-12 | **Ledger and report: include Loop # every run;** report to user proof of work and how we benefit. | Done (template + Loop #2 block). |
+| 2026-03-12 | In quality report, add optional "Provenance" line: source doc, run date, Loop # (lightweight lineage). | Done (Loop #4: every quality report includes Provenance.) |
 | — | *Future: add schema validation step for generated synthetic data (e.g. required fields, tier enum).* | Backlog. |
 
 ---

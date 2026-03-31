@@ -71,6 +71,8 @@
 | **One-time autonomy** | [AUTONOMOUS_LOOP_SETUP.md](./AUTONOMOUS_LOOP_SETUP.md) | Run Everything or allowlist; no human prompts. |
 | **Allowlist** | [LOOP_MASTER_ALLOWLIST.md](./LOOP_MASTER_ALLOWLIST.md) | Commands for allowlist; `cd c:\...\OutofRoutebuddy` prefix. |
 | **Pulse** | `scripts/automation/pulse_check.ps1` | Unit tests, lint, append to pulse_log.txt. |
+| **Deep debug sweep** | `scripts/automation/run_simple_debug_cleanup.ps1` | Consolidated unit tests + lint + detekt pass for substantial runs and automation/build changes. |
+| **Diagnostic baseline** | `scripts/automation/run_loop_diagnostic_baseline.ps1` | Repeatable problem-hunt baseline: health snapshot, ignored tests, hotspot search, and report presence. |
 | **Loop listener** | `scripts/automation/loop_listener.ps1` | Record phase/events to loop_events.jsonl. |
 | **Test listener** | `scripts/automation/test_loop_listener.ps1` | Verify listener wiring. |
 | **120 min timer** | `scripts/automation/run_120min_loop.ps1` | Optional timer; actual work is IMPROVEMENT_LOOP_ROUTINE. |
@@ -98,6 +100,7 @@
 |------|--------|
 | [IMPROVEMENT_LOOP_ANALYSIS_AND_IMPROVEMENTS.md](./IMPROVEMENT_LOOP_ANALYSIS_AND_IMPROVEMENTS.md) | Analysis, suggested improvements, priming for next run. Optional Phase 0 read. |
 | [IMPROVEMENT_LOOP_AUDIT.md](./IMPROVEMENT_LOOP_AUDIT.md) | Blind spots, loose ends; re-run after major changes. |
+| [MASTER_LOOP_IMPROVEMENT_AND_OPTIMIZATION_PLAN.md](./MASTER_LOOP_IMPROVEMENT_AND_OPTIMIZATION_PLAN.md) | Master plan for turning repeatable loop work into lighter, scriptable steps with rollout slices. |
 
 ---
 

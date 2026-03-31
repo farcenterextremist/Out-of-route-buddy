@@ -1,7 +1,9 @@
-# Loop latest outputs
+# loop_latest — latest output per loop
 
-**Purpose:** One JSON file per loop with that loop’s **latest run output** (summary path, suggested next steps, checkpoint). Each loop writes only its own file so there are no write conflicts when multiple loops run at the same time.
+Each loop writes **one** JSON file here at **loop end** (see [LOOP_GATES.md](../LOOP_GATES.md), [LOOP_DYNAMIC_SHARING.md](../LOOP_DYNAMIC_SHARING.md)).
 
-**Usage:** At **loop start**, every loop reads the **other** loops’ files here (e.g. Improvement reads token.json, cyber.json, synthetic_data.json) to react/act on the latest from others. At **loop end**, every loop overwrites its own file (e.g. Improvement writes improvement.json).
+**Convention:** `docs/automation/loop_latest/<loop_name>.json`  
+Examples: `token.json`, `improvement.json`, `cyber.json`, `synthetic_data.json`, `file_organizer.json`.
 
-**Convention:** See [LOOP_DYNAMIC_SHARING.md](../LOOP_DYNAMIC_SHARING.md). Files: `improvement.json`, `token.json`, `cyber.json`, `synthetic_data.json`. Shape: `loop`, `last_run_ts`, `last_run_id`, `summary_path`, `suggested_next_steps`, optional `checkpoint`, `key_decisions`.
+**At loop start:** Read all `*.json` in this directory (other loops’ latest).  
+**At loop end:** Overwrite your loop’s file with `last_run_ts`, `summary_path`, `suggested_next_steps`, etc.

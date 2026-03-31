@@ -1,5 +1,5 @@
 # Improvement Loop Listener — Record events for better data and loop improvement.
-# Run from repo root: .\scripts\automation\loop_listener.ps1 -Event <event> -Phase <phase> -Note <note> -Metrics <json>
+# Run from repo root: .\scripts\automation\loop_listener.ps1 -Event <event> -Phase <phase> -Note <note> -Metrics <json> -RunId <run_id>
 # Events: loop_start, phase_start, phase_end, pulse, metrics, loop_end
 # Data is appended to docs/automation/loop_events.jsonl (JSONL format, one JSON object per line).
 
@@ -16,8 +16,9 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
-$RepoRoot = $PSScriptRoot
-for ($i = 0; $i -lt 2; $i++) { $RepoRoot = Split-Path -Parent $RepoRoot }
+. (Join-Path $PSScriptRoot "loop_run_contract.ps1")
+
+$RepoRoot = Get-LoopAutomationRepoRoot -ScriptRoot $PSScriptRoot
 
 if ($OutFile) {
     $EventsFile = $OutFile
@@ -28,7 +29,7 @@ $logDir = Split-Path -Parent $EventsFile
 if (-not (Test-Path $logDir)) { New-Item -ItemType Directory -Path $logDir -Force | Out-Null }
 
 $ts = Get-Date -Format "yyyy-MM-ddTHH:mm:ssZ"
-if (-not $RunId) { $RunId = "run-$((Get-Date).ToString('yyyyMMdd-HHmm'))" }
+if (-not $RunId) { $RunId = New-LoopRunId -Prefix "run" }
 
 $payloadObj = [PSCustomObject]@{
     ts     = $ts

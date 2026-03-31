@@ -8,6 +8,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.Window
 import android.view.WindowManager
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.DialogFragment
 import com.example.outofroutebuddy.R
 import com.example.outofroutebuddy.databinding.DialogCustomCalendarBinding
@@ -52,7 +53,7 @@ class CustomCalendarDialog : DialogFragment() {
     
     private var periodStartDate: CalendarDay? = null
     private var periodEndDate: CalendarDay? = null
-    /** Start-of-day time in millis for dates that have at least one saved (ended) trip. Used to decorate calendar. */
+    /** Start-of-day time in millis for dates that have at least one saved (ended) trip. */
     private var datesWithTripsMillis: Set<Long> = emptySet()
     
     companion object {
@@ -64,13 +65,12 @@ class CustomCalendarDialog : DialogFragment() {
             periodMode: PeriodMode,
             referenceDate: Date,
             onHistoryDateClicked: (Date) -> Unit,
-            datesWithTrips: List<Date> = emptyList()
+            datesWithTrips: List<Date> = emptyList(),
         ): CustomCalendarDialog {
             return CustomCalendarDialog().apply {
                 arguments = Bundle().apply {
                     putSerializable(ARG_PERIOD_MODE, periodMode)
                     putSerializable(ARG_REFERENCE_DATE, referenceDate)
-                    // Normalize to start-of-day so DaysWithTripsDecorator matches correctly (prevents date drift)
                     putLongArray(ARG_DATES_WITH_TRIPS, datesWithTrips.map { it.startOfDay().time }.toLongArray())
                 }
                 this.onHistoryDateClicked = onHistoryDateClicked
@@ -165,15 +165,14 @@ class CustomCalendarDialog : DialogFragment() {
         calendar.addDecorator(StartDateDecorator(start))
         calendar.addDecorator(EndDateDecorator(end))
         val today = CalendarDay.today()
-        // ✅ Today + saved trip: orange circle (takes precedence over separate black/yellow)
+        // Orange circle when today has trips; amber fill for other trip days (original calendar UX).
         if (datesWithTripsMillis.isNotEmpty()) {
             calendar.addDecorator(TodayWithTripsDecorator(today, datesWithTripsMillis, start, end))
         }
-        // ✅ Current date (today) with black circle when not a boundary and not "today with trips"
         calendar.addDecorator(CurrentDateDecorator(today, start, end, datesWithTripsMillis))
-        // ✅ Days with saved trips: yellowish circle; skip today (handled by orange above)
         if (datesWithTripsMillis.isNotEmpty()) {
-            calendar.addDecorator(DaysWithTripsDecorator(datesWithTripsMillis, start, end, today))
+            val tripDayColor = ContextCompat.getColor(requireContext(), R.color.calendar_day_has_trip_fill)
+            calendar.addDecorator(DaysWithTripsDecorator(datesWithTripsMillis, start, end, today, tripDayColor))
         }
         
         // ✅ SINGLE-DAY SELECTION: Only the tapped day is highlighted (not the whole period)
@@ -197,14 +196,11 @@ class CustomCalendarDialog : DialogFragment() {
     }
 
     /**
-     * Refreshes the calendar dots (yellow/orange) after trip data changes (e.g. a trip was deleted).
-     * Call this when a child dialog (e.g. TripHistoryByDateDialog) notifies that a trip was deleted
-     * so the calendar updates without needing to close and reopen.
+     * Refreshes trip dots (orange/amber) after data changes (e.g. trip deleted from history dialog).
      */
     fun refreshDatesWithTrips(datesWithTrips: List<Date>) {
         datesWithTripsMillis = datesWithTrips.map { it.startOfDay().time }.toSet()
-        val calendar = binding.calendarView
-        calendar.removeDecorators()
+        binding.calendarView.removeDecorators()
         setupCalendar()
     }
     
@@ -349,7 +345,7 @@ class EndDateDecorator(private val endDate: CalendarDay) : DayViewDecorator {
 /**
  * ✅ DECORATOR: Highlight current date (today) with black circle.
  * Only applies when today is not the period start or end (those keep green/red).
- * Skips when today has saved trips (that day uses orange via TodayWithTripsDecorator).
+ * Skips when today has saved trips (orange “today + trips” decorator).
  */
 class CurrentDateDecorator(
     private val today: CalendarDay,
@@ -360,7 +356,7 @@ class CurrentDateDecorator(
     override fun shouldDecorate(day: CalendarDay): Boolean {
         if (day != today) return false
         if (day == startDate || day == endDate) return false
-        // Don't draw black when today has saved trips; orange circle is used instead
+        // Don't draw black when today has a trip OOR marker (tier decorator)
         val cal = java.util.Calendar.getInstance()
         cal.set(day.year, day.month - 1, day.day, 0, 0, 0)
         cal.set(java.util.Calendar.MILLISECOND, 0)
@@ -381,14 +377,13 @@ class CurrentDateDecorator(
 }
 
 /**
- * ✅ DECORATOR: When today has at least one saved trip, show orange circle (combines "current date" + "has trips").
- * Skips boundary dates (start/end keep green/red).
+ * When today has at least one saved trip, keep the circle black (same as today-without-trips).
  */
 class TodayWithTripsDecorator(
     private val today: CalendarDay,
     private val datesWithTripsMillis: Set<Long>,
     private val periodStartDate: CalendarDay?,
-    private val periodEndDate: CalendarDay?
+    private val periodEndDate: CalendarDay?,
 ) : DayViewDecorator {
     override fun shouldDecorate(day: CalendarDay): Boolean {
         if (day != today) return false
@@ -403,7 +398,7 @@ class TodayWithTripsDecorator(
         view.setBackgroundDrawable(
             android.graphics.drawable.GradientDrawable().apply {
                 shape = android.graphics.drawable.GradientDrawable.OVAL
-                setColor(0xFFFF9800.toInt()) // Orange (Material 500)
+                setColor(0xFF000000.toInt())
                 setSize(48, 48)
             }
         )
@@ -412,16 +407,14 @@ class TodayWithTripsDecorator(
 }
 
 /**
- * ✅ DECORATOR: Mark days that have at least one saved (ended) trip.
- * Shows a translucent yellowish circle so users know which days are clickable for trip history.
- * Skips boundary dates (start/end) so green/red circles take precedence.
- * Skips today (handled by TodayWithTripsDecorator with orange when today has trips).
+ * Days with saved trips: theme fill from [R.color.calendar_day_has_trip_fill]; skips today and period boundaries.
  */
 class DaysWithTripsDecorator(
     private val datesWithTripsMillis: Set<Long>,
     private val periodStartDate: CalendarDay?,
     private val periodEndDate: CalendarDay?,
-    private val today: CalendarDay? = null
+    private val today: CalendarDay? = null,
+    private val fillColor: Int = 0xFFE65100.toInt(),
 ) : DayViewDecorator {
     override fun shouldDecorate(day: CalendarDay): Boolean {
         if (day == periodStartDate || day == periodEndDate) return false
@@ -431,14 +424,12 @@ class DaysWithTripsDecorator(
         cal.set(java.util.Calendar.MILLISECOND, 0)
         return datesWithTripsMillis.contains(cal.timeInMillis)
     }
-    
+
     override fun decorate(view: DayViewFacade) {
-        view.setBackgroundDrawable(
-            android.graphics.drawable.GradientDrawable().apply {
-                shape = android.graphics.drawable.GradientDrawable.OVAL
-                setColor(0x40FFE082.toInt()) // Yellowish #FFE082 at ~25% opacity for light/dark visibility
-                setSize(44, 44)
-            }
-        )
+        val circle = android.graphics.drawable.GradientDrawable().apply {
+            shape = android.graphics.drawable.GradientDrawable.OVAL
+            setColor(fillColor)
+        }
+        view.setBackgroundDrawable(android.graphics.drawable.InsetDrawable(circle, 6))
     }
 }

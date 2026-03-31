@@ -1,16 +1,22 @@
 package com.example.outofroutebuddy.presentation.ui.trip
 
-import android.Manifest
 import android.widget.EditText
+import androidx.lifecycle.ViewModelProvider
+import androidx.navigation.fragment.NavHostFragment
 import android.widget.TextView
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.outofroutebuddy.MainActivity
 import com.example.outofroutebuddy.R
+import com.example.outofroutebuddy.presentation.viewmodel.TripInputViewModel
+import com.example.outofroutebuddy.data.PreferencesManager
+import com.example.outofroutebuddy.data.TripPersistenceManager
+import com.example.outofroutebuddy.ui.TripInputRobolectricHelpers
 import com.google.android.material.button.MaterialButton
 import com.google.common.truth.Truth.assertThat
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
+import javax.inject.Inject
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -29,25 +35,35 @@ class TripInputFragmentBehaviorRobolectricTest {
     @get:Rule
     val hiltRule = HiltAndroidRule(this)
 
+    @Inject
+    lateinit var preferencesManager: PreferencesManager
+
+    @Inject
+    lateinit var tripPersistenceManager: TripPersistenceManager
+
     @Before
     fun setUp() {
         hiltRule.inject()
+        // Avoid TripRecoveryDialog overlaying TripInput during Robolectric runs
+        tripPersistenceManager.clearSavedTripState()
     }
 
     private fun launchFragment(): Pair<MainActivity, TripInputFragment> {
+        TripInputRobolectricHelpers.prepareApplicationForMainActivityTripFlow(preferencesManager)
         val activity = Robolectric.buildActivity(MainActivity::class.java).setup().get()
-        val fragment = TripInputFragment()
-        activity.supportFragmentManager
-            .beginTransaction()
-            .add(android.R.id.content, fragment)
-            .commitNow()
-
-        // Grant location permissions required for start flow
-        Shadows.shadowOf(activity).grantPermissions(
-            Manifest.permission.ACCESS_FINE_LOCATION,
-            Manifest.permission.ACCESS_COARSE_LOCATION
-        )
+        Shadows.shadowOf(android.os.Looper.getMainLooper()).idle()
+        val navHost =
+            activity.supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment
+        val fragment =
+            navHost.childFragmentManager.fragments.filterIsInstance<TripInputFragment>().firstOrNull()
+                ?: error("TripInputFragment not in NavHost (check nav_graph start destination)")
         return activity to fragment
+    }
+
+    /** Robolectric rarely dismisses the background-reliability AlertDialog in time; VM start matches production trip state. */
+    private fun startTripViaViewModel(activity: MainActivity) {
+        ViewModelProvider(activity)[TripInputViewModel::class.java].calculateTrip(10.0, 2.0, 0.0)
+        repeat(25) { Shadows.shadowOf(android.os.Looper.getMainLooper()).idle() }
     }
 
     @Test
@@ -58,9 +74,9 @@ class TripInputFragmentBehaviorRobolectricTest {
         root.findViewById<EditText>(R.id.loaded_miles_input).setText("10")
         root.findViewById<EditText>(R.id.bounce_miles_input).setText("2")
 
-        val startButton = root.findViewById<MaterialButton>(R.id.start_trip_button)
-        startButton.performClick()
+        startTripViaViewModel(activity)
 
+        val startButton = root.findViewById<MaterialButton>(R.id.start_trip_button)
         // After starting, button text should change to End Trip and pause visible
         assertThat(startButton.text.toString().lowercase()).contains("end")
         val pauseVisible = root.findViewById<MaterialButton>(R.id.pause_button).visibility == android.view.View.VISIBLE
@@ -77,9 +93,8 @@ class TripInputFragmentBehaviorRobolectricTest {
 
         root.findViewById<EditText>(R.id.loaded_miles_input).setText("10")
         root.findViewById<EditText>(R.id.bounce_miles_input).setText("2")
+        startTripViaViewModel(activity)
         val startButton = root.findViewById<MaterialButton>(R.id.start_trip_button)
-        startButton.performClick()
-
         val pauseButton = root.findViewById<MaterialButton>(R.id.pause_button)
         // Pause (icon switches to play)
         pauseButton.performClick()
@@ -97,10 +112,8 @@ class TripInputFragmentBehaviorRobolectricTest {
 
         root.findViewById<EditText>(R.id.loaded_miles_input).setText("10")
         root.findViewById<EditText>(R.id.bounce_miles_input).setText("2")
+        startTripViaViewModel(activity)
         val startButton = root.findViewById<MaterialButton>(R.id.start_trip_button)
-        startButton.performClick()
-
-        // Click again to trigger end dialog
         startButton.performClick()
         org.robolectric.Shadows.shadowOf(android.os.Looper.getMainLooper()).idle()
 
@@ -175,15 +188,26 @@ class TripInputFragmentBehaviorRobolectricTest {
 
         root.findViewById<EditText>(R.id.loaded_miles_input).setText("10")
         root.findViewById<EditText>(R.id.bounce_miles_input).setText("2")
+        startTripViaViewModel(activity)
         val startButton = root.findViewById<MaterialButton>(R.id.start_trip_button)
         startButton.performClick()
-
-        // Trigger confirmation dialog
-        startButton.performClick()
+        org.robolectric.Shadows.shadowOf(android.os.Looper.getMainLooper()).idle()
 
         val dialog = org.robolectric.shadows.ShadowAlertDialog.getLatestAlertDialog()
-        val negative = dialog.getButton(android.app.AlertDialog.BUTTON_NEGATIVE)
-        negative.performClick()
+        assertThat(dialog).isNotNull()
+        // Custom end dialog: "Continue Trip" keeps the trip active (no platform negative button)
+        fun findContinueTrip(v: android.view.View?): MaterialButton? {
+            if (v is MaterialButton && v.text.toString().contains("Continue Trip", ignoreCase = true)) return v
+            if (v is android.view.ViewGroup) {
+                for (i in 0 until v.childCount) {
+                    findContinueTrip(v.getChildAt(i))?.let { return it }
+                }
+            }
+            return null
+        }
+        val continueTrip = findContinueTrip(dialog!!.window?.decorView)
+        assertThat(continueTrip).isNotNull()
+        continueTrip!!.performClick()
 
         activity.supportFragmentManager.executePendingTransactions()
         org.robolectric.Shadows.shadowOf(android.os.Looper.getMainLooper()).idle()
@@ -201,10 +225,8 @@ class TripInputFragmentBehaviorRobolectricTest {
 
         root.findViewById<EditText>(R.id.loaded_miles_input).setText("10")
         root.findViewById<EditText>(R.id.bounce_miles_input).setText("2")
+        startTripViaViewModel(activity)
         val startButton = root.findViewById<MaterialButton>(R.id.start_trip_button)
-        startButton.performClick()
-
-        // Show confirmation dialog
         startButton.performClick()
         org.robolectric.Shadows.shadowOf(android.os.Looper.getMainLooper()).idle()
 
@@ -244,8 +266,8 @@ class TripInputFragmentBehaviorRobolectricTest {
 
         root.findViewById<EditText>(R.id.loaded_miles_input).setText("10")
         root.findViewById<EditText>(R.id.bounce_miles_input).setText("2")
+        startTripViaViewModel(activity)
         val startButton = root.findViewById<MaterialButton>(R.id.start_trip_button)
-        startButton.performClick()
         startButton.performClick() // Open End Trip dialog
         org.robolectric.Shadows.shadowOf(android.os.Looper.getMainLooper()).idle()
 
@@ -270,7 +292,18 @@ class TripInputFragmentBehaviorRobolectricTest {
 
         val clearDialog = org.robolectric.shadows.ShadowAlertDialog.getLatestAlertDialog()
         assertThat(clearDialog).isNotNull()
-        val clearMessage = org.robolectric.Shadows.shadowOf(clearDialog).message?.toString() ?: ""
+        val clearMessage =
+            org.robolectric.Shadows.shadowOf(clearDialog).message?.toString()
+                ?: run {
+                    fun collectText(v: android.view.View?): String {
+                        if (v is android.widget.TextView && v.text.isNotBlank()) return v.text.toString()
+                        if (v is android.view.ViewGroup) {
+                            return (0 until v.childCount).joinToString(" ") { collectText(v.getChildAt(it)) }
+                        }
+                        return ""
+                    }
+                    collectText(clearDialog.window?.decorView)
+                }
         assertThat(clearMessage).contains("not be saved")
         assertThat(clearMessage).contains("not count")
     }

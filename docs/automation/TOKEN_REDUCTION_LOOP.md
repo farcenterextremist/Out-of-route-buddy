@@ -1,4 +1,6 @@
-# Token Reduction Loop — Think, Research, Implement, Repeat
+# Token Reduction Loop — LLM Loop Token-Audit Lane
+
+**LLM-loop note:** This document now represents the **token-audit lane** inside the broader [LLM_LOOP.md](./LLM_LOOP.md) contract. The existing token-loop scripts, run IDs, events, and ledgers remain the compatibility surface for this lane.
 
 **Goals (reinstated):**
 - **Save token spend** — Reduce Cursor IDE token usage without sacrificing output quality.
@@ -8,13 +10,17 @@
 
 **How we improve:** We use **listener data** (`token_loop_events.jsonl`) to improve the loop over time — run count, steps completed, always-apply trends, and research notes. See §8.
 
-**Purpose:** Run as a thinking exercise and a periodic loop (e.g. monthly or when usage spikes). **No human in the loop** — the loop runs autonomously; the agent records state, does deep research, runs the audit steps, organizes results, and recommends TODO tasks for the next token loop without stopping for approval.
+**Purpose:** Run as a thinking exercise and a periodic loop (e.g. monthly or when usage spikes). **No human in the loop** — the agent records state, does deep research, runs the audit steps, organizes results, and recommends TODO tasks for the next token loop without stopping for approval. Inside the broader LLM loop, this lane remains focused on token spend, context compression, prompt shape, and lightweight automation overhead.
+
+**Consistency contract (required):** Follow [LOOP_CONSISTENCY_STANDARD.md](./LOOP_CONSISTENCY_STANDARD.md). Include `Loop Consistency Check` and `Consistency score: X/10` in the end-of-run progress report and ledger note.
+
+**Health + diagnostics:** Token work should also use [LOOP_HEALTH_CHECKS.md](./LOOP_HEALTH_CHECKS.md) and [LOOP_DIAGNOSTIC_SWEEP.md](./LOOP_DIAGNOSTIC_SWEEP.md) when the loop changes rules, listener wiring, shared state, or token automation scripts.
 
 **Established:** 2025-03-11  
-**Trigger:** User says **"start token loop"** or "run token reduction loop" or "token audit." **No human in the loop** — run autonomously. When you start the token loop:
+**Trigger:** User says **"start token loop"** or "run token reduction loop" or "token audit." Inside the permanent broader local-first contract, **"start llm loop"** now uses the LLM loop as the top-level trigger and the token-audit lane remains one of its stable lanes. **No human in the loop** — run autonomously. When you start the token loop:
 1. **Record current state** (for rollback and progress tracking — what works / what doesn’t). Run `.\scripts\automation\token_loop_state_snapshot.ps1 -RunId <run_id>`; snapshot goes to `docs/automation/token_loop_snapshots/<run_id>.json`. Use the **same RunId** for the listener and all step events this run (e.g. `token-YYYYMMdd-HHmm`). `.\scripts\automation\run_token_loop.ps1` generates RunId and runs snapshot + listener start.
 2. **Deep research and analysis** (Step 0) — see §4.2. Analyze current structure; no human in the loop.
-3. **Start the listener** (`token_loop_start`), then run steps 0–7 with step_start/step_end, then `token_loop_end`. All agents get Golden Storage Rules and Token Boss via the always-apply rule (self-improvement.mdc). See [TOKEN_INITIATIVE_BRIEFING.md](docs/agents/TOKEN_INITIATIVE_BRIEFING.md) as full policy reference.
+3. **Start the listener** (`token_loop_start`), then run steps 0–7 with step_start/step_end, then close the run with `complete_token_loop_run.ps1` (preferred) or the manual `finish_loop_run.ps1` + `token_loop_end` sequence. All agents get Golden Storage Rules and Token Boss via the always-apply rule (self-improvement.mdc). See [TOKEN_INITIATIVE_BRIEFING.md](docs/agents/TOKEN_INITIATIVE_BRIEFING.md) as full policy reference.
 
 ---
 
@@ -41,6 +47,7 @@ Cursor's context budget is consumed by:
 
 - **Audit:** List `.cursor/rules/*.mdc`; note which have `alwaysApply: true`. Only one rule should be always-apply if possible; keep it under ~50 lines.
 - **Convert:** Prefer `globs` (e.g. `app/**/*.kt`) or agent-decided (`description` set, `alwaysApply: false`) for feature/style rules.
+- **Rule discipline:** If a rule is safety-critical but not globally relevant, scope it to the files or folders where it matters instead of paying for it in every chat.
 - **Reference, don't inline:** In rules, point to files (e.g. `@docs/agents/CODEBASE_OVERVIEW.md`) instead of pasting long examples.
 
 ### 2.2 Conversation hygiene
@@ -59,10 +66,17 @@ Cursor's context budget is consumed by:
 - Use **stronger model** for: multi-file features, complex debugging, architecture decisions.
 - Switch via Cmd/Ctrl+/ or model picker.
 
-### 2.5 Workspace settings (already helping)
+### 2.5 Skills and tooling
+
+- Prefer a **focused skill** over a new global rule when the guidance is specialized or only relevant for a named workflow.
+- Audit whether existing skills/rules already cover the job before adding a new one; duplicate guidance costs tokens and causes drift.
+- Keep tool output selective: targeted searches, narrow file reads, and short progress updates beat broad dumps.
+
+### 2.6 Workspace settings (already helping)
 
 - `files.watcherExclude` and `search.exclude` for `.gradle`, `build`, `.cursor` reduce noise and indexing.
 - Java lightweight mode and disabled auto-build reduce background work.
+- Add `.cursorignore` when permissions allow it; otherwise keep the same exclusions in workspace settings so generated folders stay out of search/index paths.
 
 ---
 
@@ -72,10 +86,12 @@ Use this checklist when running the token loop. Update as you make changes.
 
 - [ ] **Always-apply rules:** Only one rule has `alwaysApply: true` (self-improvement.mdc). Keep it under ~55 lines; token-awareness added in a few bullets.
 - [ ] **Other rules:** red-team, blue-team, 2-hour-loop, kotlin-best-practices use `alwaysApply: false`; kotlin scoped to `app/**/*.kt`.
+- [ ] **Safety rules are scoped:** data-separation and other policy-heavy rules use globs or description-only unless they truly apply to every chat.
 - [ ] **Doc references:** Rules reference `docs/...` instead of inlining long content.
 - [ ] **Context docs:** CODEBASE_OVERVIEW, KNOWN_TRUTHS, GOAL_AND_MISSION kept concise; linked from AGENTS.md.
 - [ ] **Conversation hygiene:** Operator starts new chats when shifting tasks or when gauge is high; front-loads context in first message when possible.
 - [ ] **Settings:** `.vscode/settings.json` excludes build/cache from watcher and search.
+- [ ] **Cacheable prompt shape:** Stable instructions go first, volatile run-specific details go later so prompt caching can help on long repeated prompts.
 
 ---
 
@@ -84,6 +100,7 @@ Use this checklist when running the token loop. Update as you make changes.
 ### 4.1 When to run
 
 - **Start token loop:** When you say **"start token loop"** — (1) **Record current state** with `token_loop_state_snapshot.ps1 -RunId <run_id>` (rollback + progress tracking). (2) Start the **listener** (`token_loop_start` with same RunId), then run **steps 0–7** (step 0 = deep research and analysis of current structure; step 7 = organize results and recommend TODO tasks for next token loop). **No human in the loop** — run autonomously. Use the same RunId for all listener events this run; `run_token_loop.ps1` generates it. All agents get Golden Storage Rules via the always-apply rule. Listener data is used to improve the loop (§8).
+- **Start llm loop:** Use `run_llm_loop.ps1` as the permanent broader local-first entrypoint. The token-audit lane remains the first stable lane under that contract and keeps token-loop history intact. See [LLM_LOOP.md](./LLM_LOOP.md).
 - **On demand:** Same as above; also "run token reduction loop" or "token audit."
 - **Periodically:** e.g. monthly, or when Cursor usage dashboard shows higher-than-usual burn.
 - **Optional in Improvement Loop:** As Phase 0.6 (see below).
@@ -94,16 +111,17 @@ When running the loop, invoke the **token loop listener** at start, each step (o
 
 | Step | Action | Time | Listener |
 |------|--------|------|----------|
-| **0. Deep research and analysis** | **At beginning.** (1) **Research popular, current, up-to-date token saving methods and best practices** (e.g. web search, Cursor/IDE docs, TOKEN_SAVING_PRACTICES); note any new or changed practices. (2) Read [TOKEN_LOOP_IMPROVEMENT_PLAN.md](./TOKEN_LOOP_IMPROVEMENT_PLAN.md) (blindspots, rule output baseline, context research) and [TOKEN_SAVING_PRACTICES.md](./TOKEN_SAVING_PRACTICES.md) (standard practices); at start of run, note if practices need refresh from latest research. (3) Analyze current structure with no human in the loop: read latest snapshot (`token_loop_snapshots/`), `token_loop_events.jsonl` (last run, run count, steps completed). (4) List `.cursor/rules/*.mdc` — alwaysApply, globs, line counts, doc references. (5) Review `.vscode/settings.json` (watcher, search exclude). (6) Note: always-apply count/lines, drift from checklist (§3), and one-line research summary for this run. Do not stop for approval. | 5 min | step_start Step=0; step_end with note (e.g. research_summary one-liner) |
-| 1. **Audit rules** | List `.cursor/rules/*.mdc`; count lines and `alwaysApply`; estimate token cost of always-apply. | 2 min | step_start Step=1; step_end with metrics always_apply_count, always_apply_lines |
+| **0. Deep research and analysis** | **At beginning.** (1) **Research popular, current, up-to-date token saving methods and best practices** (e.g. web search, Cursor/IDE docs, TOKEN_SAVING_PRACTICES); note any new or changed practices. (2) Read [TOKEN_LOOP_IMPROVEMENT_PLAN.md](./TOKEN_LOOP_IMPROVEMENT_PLAN.md) (blindspots, rule output baseline, context research), [TOKEN_SAVING_PRACTICES.md](./TOKEN_SAVING_PRACTICES.md) (standard practices), and [QUALITY_STANDARDS_AND_PROOF.md](./QUALITY_STANDARDS_AND_PROOF.md) (proof-of-quality evidence rules); at start of run, note if practices need refresh from latest research. (3) Analyze current structure with no human in the loop: read latest snapshot (`token_loop_snapshots/`), `token_loop_events.jsonl` (last run, run count, steps completed). (4) List `.cursor/rules/*.mdc` — alwaysApply, globs, line counts, doc references, and whether any safety rule should be scoped tighter. (5) Review `.vscode/settings.json` and `.cursorignore` if present (watcher/search/index exclusions). (6) Audit prompt-cache friendliness: keep stable instructions first and run-specific details later when prompts are long/repeated. (7) Note: always-apply count/lines, drift from checklist (§3), and one-line research summary for this run. Do not stop for approval. | 5 min | step_start Step=0; step_end with note (e.g. research_summary one-liner) |
+| **0.5 Diagnostic sweep** | If this run changes loop docs, rules, or token scripts: run liveness, continuity tests, and a targeted problem-hunt pass per `LOOP_DIAGNOSTIC_SWEEP.md`. Record one residual risk. | 2 min | optional step note |
+| 1. **Audit rules** | List `.cursor/rules/*.mdc`; count lines and `alwaysApply`; estimate token cost of always-apply. Prefer `scripts/automation/compare_token_rule_overhead.ps1` so this step compares the current rule state against the latest token snapshot instead of relying on manual counting. | 2 min | step_start Step=1; step_end with metrics always_apply_count, always_apply_lines |
 | 2. **Check for new always-apply** | If any new rule is always-apply, consider converting to glob or description-only. | 2 min | step_start Step=2; step_end (optional metrics: conversions_done) |
 | 3. **Doc references** | Ensure no rule inlines large examples; replace with pointers to `docs/` or `@path`. | 3 min | step_start Step=3; step_end |
 | 4. **Conversation reminder** | Note: start fresh when gauge >60% or task switch; front-load context. | 1 min | step_start Step=4; step_end |
-| 5. **Update this doc** | Add any new Cursor features or project-specific findings to §1–2. **Refresh [TOKEN_SAVING_PRACTICES.md](./TOKEN_SAVING_PRACTICES.md)** if new research or practices emerged (add to §1, cite source). | 2 min | step_start Step=5; step_end |
+| 5. **Update this doc** | Add any new Cursor features or project-specific findings to §1–2. **Refresh [TOKEN_SAVING_PRACTICES.md](./TOKEN_SAVING_PRACTICES.md)** if new research or practices emerged (add to §1, cite source). Record whether rules/skills/settings/cache-index hygiene changed this run. If the broader LLM loop used a provider-specific API workflow, optionally record that via the relevant provider monitor. For the default local-first `Ollama` path, keep monitoring lightweight and prefer listener notes over heavy dashboards. | 2 min | step_start Step=5; step_end |
 | 6. **Summary** | One-line note in IMPROVEMENT_LOOP_SUMMARY if run as part of main loop: "Token audit: always-apply 1 rule, ~X lines; no change / Y converted." | 1 min | step_start Step=6; step_end |
-| **7. Organize results and recommend next tasks** | **Towards end.** Organize this run’s results (audit findings, snapshot vs previous, listener metrics). **Take all useful data from this run and from Step 0 research and add it to the todo:** Write or update [TOKEN_LOOP_NEXT_TASKS.md](./TOKEN_LOOP_NEXT_TASKS.md): add a dated section for this run (run_id, date) and a **Recommended TODO tasks for next token loop** list (3–6 concrete tasks drawn from research findings, what worked/didn't, and audit — e.g. "Convert rule X to glob", "Trim always-apply rule to &lt;50 lines", "Add search.exclude for Y", "Adopt practice Z from research"). **At the end of the run, give the user a short progress report** (see §4.4 below): rule output vs baseline, steps completed, key findings, and next TODOs. **Append one block to [TOKEN_LOOP_RUN_LEDGER.md](./TOKEN_LOOP_RUN_LEDGER.md)** (summary, rule output, snapshot link, steps completed). **Update [TOKEN_SAVING_PRACTICES.md](./TOKEN_SAVING_PRACTICES.md) §3:** append "What worked / What didn't" for this run (run_id, 1–2 bullets each); add any new practice to §1 if learned this run. Optionally update [TOKEN_LOOP_IMPROVEMENT_PLAN.md](./TOKEN_LOOP_IMPROVEMENT_PLAN.md) with a short "Rule output this run" vs baseline and any new blindspots. Next run reads NEXT_TASKS at Step 0. No human in the loop. | 5 min | step_start Step=7; step_end; token_loop_end with steps_completed=8 |
+| **7. Organize results and recommend next tasks** | **Towards end.** Organize this run’s results (audit findings, snapshot vs previous, listener metrics). **Take all useful data from this run and from Step 0 research and add it to the todo:** Write or update [TOKEN_LOOP_NEXT_TASKS.md](./TOKEN_LOOP_NEXT_TASKS.md): add a dated section for this run (run_id, date) and a **Recommended TODO tasks for next token loop** list (3–6 concrete tasks drawn from research findings, what worked/didn't, and audit — e.g. "Convert rule X to glob", "Trim always-apply rule to &lt;50 lines", "Add search.exclude for Y", "Adopt practice Z from research"). **At the end of the run, give the user a short progress report** (see §4.4 below): rule output vs baseline, steps completed, key findings, and next TODOs. **Append one block to [TOKEN_LOOP_RUN_LEDGER.md](./TOKEN_LOOP_RUN_LEDGER.md)** (summary, rule output, snapshot link, steps completed, proof-of-quality evidence, and consistency score using [LOOP_CONSISTENCY_LEDGER_SNIPPET.md](./LOOP_CONSISTENCY_LEDGER_SNIPPET.md)). **Update [TOKEN_SAVING_PRACTICES.md](./TOKEN_SAVING_PRACTICES.md) §3:** append "What worked / What didn't" for this run (run_id, 1–2 bullets each); add any new practice to §1 if learned this run. Optionally update [TOKEN_LOOP_IMPROVEMENT_PLAN.md](./TOKEN_LOOP_IMPROVEMENT_PLAN.md) with a short "Rule output this run" vs baseline and any new blindspots. Next run reads NEXT_TASKS at Step 0. **Preferred closeout:** run `complete_token_loop_run.ps1` so shared-state writes succeed before `token_loop_end` is emitted. No human in the loop. | 5 min | step_start Step=7; step_end; `complete_token_loop_run.ps1` (preferred) or `token_loop_end` after manual closeout |
 
-**At loop start:** `token_loop_start`. **At loop end:** `token_loop_end` with optional metrics (e.g. steps_completed: 8).
+**At loop start:** `token_loop_start`. **At loop end:** prefer `complete_token_loop_run.ps1`; if closing manually, run `finish_loop_run.ps1` before `token_loop_end` with optional metrics (e.g. steps_completed: 8).
 
 ### 4.3 Integration with Improvement Loop
 
@@ -125,6 +143,8 @@ Then include (as before):
 - **Key findings:** One or two bullets from research (Step 0) or audit (e.g. new practice to adopt, drift from checklist).
 - **Next TODOs:** 2–4 concrete tasks from the Recommended TODO list in TOKEN_LOOP_NEXT_TASKS for the next run.
 - **Snapshot:** Link to this run's snapshot JSON (rollback/comparison).
+- **Proof of quality:** Include liveness/readiness evidence and residual risk in one short bullet (see `QUALITY_STANDARDS_AND_PROOF.md`).
+- **Loop consistency check:** Include pass/fail for the universal contract items and `Consistency score: X/10` (see `LOOP_CONSISTENCY_STANDARD.md`).
 
 ---
 
@@ -132,7 +152,7 @@ Then include (as before):
 
 Use in Ask mode for a quick audit:
 
-```
+```text
 Read all files in @.cursor/rules/ and estimate the token count for each rule. List them sorted by size, largest first. Identify which rules are set to alwaysApply: true and calculate the total token cost of always-applied rules. Suggest which rules could be changed from alwaysApply to glob-scoped or agent-decided without losing effectiveness.
 ```
 
@@ -141,9 +161,12 @@ Read all files in @.cursor/rules/ and estimate the token count for each rule. Li
 ## 7. Listener & Wiring
 
 - **At every token loop start:** (1) **Record state** — run `.\scripts\automation\token_loop_state_snapshot.ps1 -RunId <run_id>`. Snapshot saved to `docs/automation/token_loop_snapshots/<run_id>.json` for rollback and progress tracking. Use the **same RunId** for all listener events this run; `run_token_loop.ps1` generates it. (2) **Listener** — `token_loop_start` then **steps 0–7** (step 0 = deep research and analysis; step 7 = organize results and recommend next tasks in TOKEN_LOOP_NEXT_TASKS.md), then `token_loop_end`. **No human in the loop.** We use this data to improve the loop.
+- **Broader local-first entrypoint:** `.\scripts\automation\run_llm_loop.ps1` — permanent top-level entrypoint for the local-first LLM loop; preferred when the user says `start llm loop`. Default provider strategy lives in [LLM_LOOP.md](./LLM_LOOP.md).
 - **Listener:** [TOKEN_LOOP_LISTENER.md](./TOKEN_LOOP_LISTENER.md) — script `scripts/automation/token_loop_listener.ps1`, output `docs/automation/token_loop_events.jsonl`.
-- **Tests:** `.\scripts\automation\run_token_loop_tests.ps1` — run all token loop tests (listener + snapshot + events analysis). Or `.\scripts\automation\run_token_loop.ps1 -Test` to run tests before starting a loop.
-- **Run script:** `.\scripts\automation\run_token_loop.ps1` — runs state snapshot + listener start (token_loop_start) and prints RunId; then run the 6 steps and invoke listener at each step and at end.
+- **Rule overhead compare:** `.\scripts\automation\compare_token_rule_overhead.ps1` — compares current `.cursor/rules` overhead to the latest token snapshot (or a specified snapshot path) and can write a JSON report.
+- **Provider-specific API usage monitor:** `.\scripts\automation\monitor_openai_api_usage.ps1` — optional lightweight snapshot for OpenAI-backed loop work; writes compact JSON to `docs/automation/api_usage_snapshots/`. This is optional inside the broader LLM loop and is not needed for the default local `Ollama` path. See [OPENAI_API_USAGE_MONITORING.md](./OPENAI_API_USAGE_MONITORING.md).
+- **Tests:** `.\scripts\automation\run_token_loop_tests.ps1` — run all token loop tests (listener + completion helper + rule-overhead compare + snapshot + events analysis). Or `.\scripts\automation\run_token_loop.ps1 -Test` to run tests before starting a loop.
+- **Run script:** `.\scripts\automation\run_token_loop.ps1` — runs state snapshot + listener start (token_loop_start) and prints RunId; then run the 6 steps and close with `.\scripts\automation\complete_token_loop_run.ps1` (preferred) or the manual finish-wrapper + listener sequence.
 
 ---
 
@@ -164,6 +187,8 @@ Read all files in @.cursor/rules/ and estimate the token count for each rule. Li
 | Are we completing all 8 steps? | For each run_id, count step_end events; compare to 8. |
 | Is always-apply rule count/lines trending down? | From step_end metrics (step 1), plot always_apply_count / always_apply_lines over time. |
 | When did we last run? | Max ts where event == "token_loop_end". |
+
+**Known historical anomalies:** If the analysis finds old incomplete or orphan token run ids, record them in [TOKEN_LOOP_EVENT_ANOMALIES.md](./TOKEN_LOOP_EVENT_ANOMALIES.md) before considering any history repair.
 
 ### Example PowerShell one-liners
 

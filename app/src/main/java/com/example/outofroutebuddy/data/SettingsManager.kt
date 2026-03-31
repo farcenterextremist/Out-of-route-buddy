@@ -49,6 +49,13 @@ class SettingsManager @Inject constructor(
     
     fun isAutoSaveTripEnabled(): Boolean = prefs.getBoolean("auto_save_trip", true)
     fun setAutoSaveTripEnabled(enabled: Boolean) = prefs.edit {putBoolean("auto_save_trip", enabled)}
+
+    /**
+     * When true (default): removing the app from recents during a trip does not stop GPS; service recovers for accuracy.
+     * When false: task removal stops the foreground service; user can reopen and resume from persisted state.
+     */
+    fun shouldContinueTrackingAfterAppDismissed(): Boolean =
+        prefs.getBoolean("continue_tracking_after_app_dismissed", true)
     
     // Advanced Settings
     fun isBatteryOptimizationEnabled(): Boolean = prefs.getBoolean("battery_optimization", true)
@@ -79,6 +86,13 @@ class SettingsManager @Inject constructor(
     /** Debug only: verbose logging flag (no PII in logs). Gated by BuildConfig.DEBUG in UI. */
     fun isVerboseLoggingEnabled(): Boolean = prefs.getBoolean("verbose_logging", false)
     fun setVerboseLoggingEnabled(enabled: Boolean) = prefs.edit { putBoolean("verbose_logging", enabled) }
+
+    fun isShowPauseButtonEnabled(): Boolean = prefs.getBoolean("show_pause_button", false)
+
+    /** Ludacris: optional live trip card rows. Keys unchanged since first ship (`ludicrous_show_*`). */
+    fun isLudacrisShowTimeZones(): Boolean = prefs.getBoolean("ludicrous_show_time_zones", false)
+    fun isLudacrisShowElevation(): Boolean = prefs.getBoolean("ludicrous_show_elevation", false)
+    fun isLudacrisShowMaxSpeed(): Boolean = prefs.getBoolean("ludicrous_show_max_speed", false)
     
     /**
      * Convert miles to the user's preferred unit

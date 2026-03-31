@@ -2,7 +2,7 @@
 
 **Purpose:** Single place to track improvements to the Cyber Security Loop. Completion % and a visual make it easy for all agents to see progress. Update this doc when items are done or new items are added.
 
-**References:** [CYBER_SECURITY_LOOP_ROUTINE.md](./CYBER_SECURITY_LOOP_ROUTINE.md), [CYBER_SECURITY_LOOP_AUDIT.md](./CYBER_SECURITY_LOOP_AUDIT.md), [ATTACK_LIBRARY](../agents/data-sets/ATTACK_LIBRARY.md), [CYBER_SECURITY_LOOP_RUN_LEDGER.md](./CYBER_SECURITY_LOOP_RUN_LEDGER.md)
+**References:** [CYBER_SECURITY_LOOP_ROUTINE.md](./CYBER_SECURITY_LOOP_ROUTINE.md), [CYBER_SECURITY_LOOP_AUDIT.md](./CYBER_SECURITY_LOOP_AUDIT.md), [ATTACK_LIBRARY](../agents/data-sets/ATTACK_LIBRARY.md), [CYBER_SECURITY_LOOP_RUN_LEDGER.md](./CYBER_SECURITY_LOOP_RUN_LEDGER.md), [QUALITY_STANDARDS_AND_PROOF.md](./QUALITY_STANDARDS_AND_PROOF.md)
 
 **Completion %:** `(completed items / total plan items) × 100`. Recompute when you update checkboxes.
 
@@ -12,13 +12,13 @@
 
 ## Visual — Cyber Security Loop improvement roadmap
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│  CYBER SECURITY LOOP MASTER PLAN — Completion: 9/9 = 100%                   │
+│  CYBER SECURITY LOOP MASTER PLAN — Completion: 6/9 = 67%                    │
 ├─────────────────────────────────────────────────────────────────────────────┤
-│  [████████████████████████████████████████████████████████] 100%             │
+│  [███████████████████████████████████████░░░░░░░░░░░░░░░] 67%                │
 ├─────────────────────────────────────────────────────────────────────────────┤
-│  Phase 1: Tests and Playbooks [████] 4/4  │  Phase 2: Automation [███] 3/3  │
+│  Phase 1: Tests and Playbooks [████] 4/4  │  Phase 2: Automation [░░░] 0/3  │
 │  Phase 3: Visibility         [██] 2/2   │                                   │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
@@ -86,9 +86,9 @@ flowchart TB
 | Phase | Completed | Total | % |
 |-------|-----------+-------+---|
 | Phase 1: Tests and Playbooks | 4 | 4 | 100% |
-| Phase 2: Automation | 3 | 3 | 100% |
+| Phase 2: Automation | 0 | 3 | 0% |
 | Phase 3: Visibility | 2 | 2 | 100% |
-| **Total** | **9** | **9** | **100%** |
+| **Total** | **6** | **9** | **67%** |
 
 *(Update the visual progress bar and this table when checkboxes or phase items change.)*
 
@@ -97,7 +97,7 @@ flowchart TB
 ## How to use
 
 - **All agents:** Read this plan at Cyber Security Loop start (Phase 0). Latest run: [CYBER_SECURITY_LOOP_RUN_LEDGER.md](./CYBER_SECURITY_LOOP_RUN_LEDGER.md). Blind spots: [CYBER_SECURITY_LOOP_AUDIT.md](./CYBER_SECURITY_LOOP_AUDIT.md).
-- **Loop runner:** At Phase 0 (Research first), read: (A) Cyber security — CYBER_SECURITY_LOOP_MASTER_PLAN, CYBER_SECURITY_RESEARCH, CYBER_SECURITY_LOOP_AUDIT, ATTACK_LIBRARY; (B) Loop improvement — LOOP_LESSONS_LEARNED, SELF_IMPROVING_LOOP_RESEARCH, CURSOR_SELF_IMPROVEMENT. At Phase 3 Improve, append run to ledger and optionally update this doc's completion %.
+- **Loop runner:** At Phase 0 (Research first), read: (A) Cyber security — CYBER_SECURITY_LOOP_MASTER_PLAN, CYBER_SECURITY_RESEARCH, CYBER_SECURITY_LOOP_AUDIT, ATTACK_LIBRARY; (B) Loop improvement — LOOP_LESSONS_LEARNED, SELF_IMPROVING_LOOP_RESEARCH, CURSOR_SELF_IMPROVEMENT, QUALITY_STANDARDS_AND_PROOF. At Phase 3 Improve, append run to ledger with proof-of-quality evidence and optionally update this doc's completion %.
 - **Adding items:** Add a row to the right phase; increment total and recompute %.
 
 ---

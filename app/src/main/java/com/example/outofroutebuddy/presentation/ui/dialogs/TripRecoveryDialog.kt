@@ -7,7 +7,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
+import com.google.android.material.button.MaterialButton
 import android.widget.TextView
 import androidx.fragment.app.DialogFragment
 import com.example.outofroutebuddy.R
@@ -53,13 +53,24 @@ class TripRecoveryDialog : DialogFragment() {
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        arguments?.let { args ->
-            savedState = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                args.getSerializable(ARG_SAVED_STATE, TripPersistenceManager.SavedTripState::class.java)!!
-            } else {
-                @Suppress("DEPRECATION")
-                args.getSerializable(ARG_SAVED_STATE) as TripPersistenceManager.SavedTripState
+        try {
+            arguments?.let { args ->
+                savedState = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    args.getSerializable(ARG_SAVED_STATE, TripPersistenceManager.SavedTripState::class.java)
+                        ?: throw IllegalArgumentException("Missing saved state")
+                } else {
+                    @Suppress("DEPRECATION")
+                    (args.getSerializable(ARG_SAVED_STATE) as? TripPersistenceManager.SavedTripState)
+                        ?: throw IllegalArgumentException("Missing or invalid saved state")
+                }
+            } ?: run {
+                dismiss()
+                return
             }
+        } catch (e: Exception) {
+            android.util.Log.e("TripRecoveryDialog", "Failed to restore saved state", e)
+            dismiss()
+            return
         }
     }
     
@@ -79,8 +90,8 @@ class TripRecoveryDialog : DialogFragment() {
     private fun setupViews(dialog: Dialog) {
         val titleText = dialog.findViewById<TextView>(R.id.text_recovery_title)
         val tripInfoText = dialog.findViewById<TextView>(R.id.text_trip_info)
-        val continueButton = dialog.findViewById<Button>(R.id.button_continue_trip)
-        val newTripButton = dialog.findViewById<Button>(R.id.button_start_new)
+        val continueButton = dialog.findViewById<MaterialButton>(R.id.button_continue_trip)
+        val newTripButton = dialog.findViewById<MaterialButton>(R.id.button_start_new)
         
         // Set title
         titleText.text = "Trip Recovery"
@@ -90,6 +101,11 @@ class TripRecoveryDialog : DialogFragment() {
             appendLine("Loaded: ${String.format("%.1f", savedState.loadedMiles)} mi")
             appendLine("Bounce: ${String.format("%.1f", savedState.bounceMiles)} mi")
             appendLine("Actual: ${String.format("%.1f", savedState.actualMiles)} mi")
+            if (savedState.backgroundTrackingDegraded && savedState.backgroundTrackingReasons.isNotEmpty()) {
+                appendLine()
+                appendLine("Background tracking warnings:")
+                savedState.backgroundTrackingReasons.forEach { appendLine("• $it") }
+            }
         }
         
         tripInfoText.text = tripInfo

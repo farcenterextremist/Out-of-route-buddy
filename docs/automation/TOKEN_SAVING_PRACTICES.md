@@ -14,7 +14,14 @@
 
 - **Always-apply:** Only one rule should be always-apply; keep it under ~50 lines (~500 tokens). Every always-apply rule is sent on every prompt. ([Developer Toolkit](https://developertoolkit.ai/en/cursor-ide/advanced-techniques/token-management/))
 - **Convert others:** Use glob-scoped (e.g. `app/**/*.kt`) or agent-decided (`description` set, `alwaysApply: false`) for feature/style rules.
+- **Scope safety rules:** Keep safety/policy rules targeted to the files or flows they govern unless they truly apply to every task.
 - **Reference, don't inline:** In rules, point to files (e.g. `@docs/agents/CODEBASE_OVERVIEW.md`) instead of pasting long examples.
+
+### Skills and prompts
+
+- **Prefer focused skills:** Use an existing skill for specialized workflows instead of creating another always-on rule.
+- **Avoid guidance overlap:** Before adding a skill or rule, check whether the same advice already lives in a rule, skill, or canonical doc.
+- **Cache-friendly prompts:** Put stable instructions and reusable examples first, and variable request details later, so prompt caching can hit on repeated long prompts. ([OpenAI prompt caching](https://platform.openai.com/docs/guides/prompt-caching))
 
 ### Conversation
 
@@ -37,6 +44,7 @@
 - **Dynamic context discovery:** Cursor loads less upfront; agent pulls what it needs; long tool outputs go to files. Keeps context under ~50k tokens per chunk where possible. ([Cursor blog](https://cursor.com/blog/dynamic-context-discovery), [Developer Toolkit](https://developertoolkit.ai/en/cursor-ide/advanced-techniques/token-management/))
 - **Memory:** Disable memories for quick projects to save tokens (e.g. "Hi" with memory can cost thousands of tokens). ([Dre Dyson](https://dredyson.com/token-management-101-a-beginners-guide-to-optimizing-ai-usage-in-cursor-ide/))
 - **Workspace settings:** `files.watcherExclude` and `search.exclude` for `.gradle`, `build`, `.cursor` reduce noise and indexing.
+- **Ignore generated paths:** `.cursorignore` is useful when available; if it is missing or blocked, keep equivalent exclusions in workspace settings so generated folders do not bloat search/index context.
 
 ### Context compression
 
@@ -54,7 +62,7 @@
 
 - **Prompt diet:** Remove filler and ceremonial phrasing; condense instructions. Can yield large token reductions (e.g. 30–70%). ([Dev.to](https://dev.to/lakshmisravyavedantham/i-put-my-prompts-on-a-diet-and-cut-my-llm-bill-by-72-2425), [Burnwise](https://www.burnwise.io/blog/token-optimization-guide), [Medium prompt compression](https://medium.com/@sahin.samia/prompt-compression-in-large-language-models-llms-making-every-token-count-078a2d1c7e03))
 - **Output control:** `max_tokens` and format constraints can save 20–40% on output (output tokens often 3–8× cost of input). ([Burnwise](https://www.burnwise.io/blog/token-optimization-guide))
-- **Prompt caching:** Reuse stable prompt prefixes across requests for large savings on cached tokens; effective for multi-turn and contexts &gt;1k tokens. ([Prompt Builder](https://promptbuilder.cc/blog/prompt-caching-token-economics-2025))
+- **Prompt caching:** Reuse stable prompt prefixes across requests for large savings on cached tokens; effective for multi-turn and contexts &gt;1k tokens. Official OpenAI guidance: automatic caching begins at 1024+ tokens, can cut input-token cost up to 90%, and works best when static content is at the front and variable content is at the end. ([OpenAI prompt caching](https://platform.openai.com/docs/guides/prompt-caching))
 - **Context limit caveat:** Many models degrade before advertised limit (e.g. 200K window unreliable around 130K). ([Zylos](https://zylos.ai/research/2026-01-19-llm-context-management))
 
 ---
@@ -71,6 +79,14 @@
 ## 3. What worked / What didn't (by run)
 
 *(At Step 7 of each token loop, append one short block below.)*
+
+**token-20260313-1843:** What worked — Loop #7; full 0–7 + listener + ledger + NEXT_TASKS. What didn't — Two always-apply (53 lines); convert data-separation to glob/description.
+
+**token-20260316-0147:** What worked — Preflight liveness + token-loop tests passed; data-separation rule converted from always-apply to scoped globs; workspace excludes expanded for generated/cache folders. What didn't — `.cursorignore` creation was blocked during the original loop run, so settings-based excludes carried the fallback until the later follow-up.
+
+**post-20260316-follow-up:** What worked — `.cursorignore` was created successfully with the same safe generated/cache excludes already used in workspace settings; token closeout now prefers `complete_token_loop_run.ps1`; historical anomalies are documented in `TOKEN_LOOP_EVENT_ANOMALIES.md`. What didn't — old token history still contains one incomplete start and one orphan run id, both intentionally documented rather than silently rewritten.
+
+**token-20260313-1756:** What worked — Loop #6 completed; full 0–7 + listener + ledger + NEXT_TASKS; Step 0 included Hub, NEXT_TASKS, context compression/embedding/LLM scope. What didn't — Two always-apply rules (53 lines); target one rule &lt;50 lines; convert data-separation to glob/description.
 
 **token-20260311-2305:** What worked — Loop #5; §4.4 updated to require Loop #, proof of work, and how we benefit every run; full 0–7 + listener + ledger + NEXT_TASKS. What didn't — Two always-apply rules (53 lines); target one rule &lt;50 lines; convert data-separation to glob/description.
 

@@ -1,0 +1,21 @@
+{
+  "version": "1.0.0",
+  "defaults": {
+    "dry_run": true,
+    "quarantine_first": true,
+    "quarantine_hold_days": 7
+  },
+  "classes": {
+    "hot": {
+      "ttl_days": 14
+    },
+    "warm": {
+      "ttl_days": 30,
+      "keep_latest": 3
+    },
+    "cold": {
+      "ttl_days": null,
+      "keep_latest": null
+    }
+  }
+}

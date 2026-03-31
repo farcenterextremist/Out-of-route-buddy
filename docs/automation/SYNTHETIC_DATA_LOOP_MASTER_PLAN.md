@@ -6,7 +6,7 @@
 
 **Scope:** Hybrid — trigger in Cursor; loop may invoke subagents/tasks; writes reports, synthetic data, and pruning lists into the project; user reviews and approves before applying tier changes or large edits.
 
-**Related:** [docs/DATA_TIERS.md](../DATA_TIERS.md) (SILVER / PLATINUM / GOLD), [IMPROVEMENT_LOOP_FOR_OTHER_AGENTS.md](./IMPROVEMENT_LOOP_FOR_OTHER_AGENTS.md) (checkpoint, ledger pattern), [TOKEN_INITIATIVE_BRIEFING.md](../agents/TOKEN_INITIATIVE_BRIEFING.md) (token saving).
+**Related:** [docs/DATA_TIERS.md](../DATA_TIERS.md) (SILVER / PLATINUM / GOLD), [IMPROVEMENT_LOOP_FOR_OTHER_AGENTS.md](./IMPROVEMENT_LOOP_FOR_OTHER_AGENTS.md) (checkpoint, ledger pattern), [TOKEN_INITIATIVE_BRIEFING.md](../agents/TOKEN_INITIATIVE_BRIEFING.md) (token saving), [QUALITY_STANDARDS_AND_PROOF.md](./QUALITY_STANDARDS_AND_PROOF.md) (proof-of-quality requirements).
 
 ---
 
@@ -36,11 +36,11 @@
 
 | Phase | Name | Action |
 |-------|------|--------|
-| 0 | Research & checkpoint | **Research** current/popular data-loop and synthetic-data best practices; update [SYNTHETIC_DATA_LOOP_RESEARCH.md](./SYNTHETIC_DATA_LOOP_RESEARCH.md) (findings + suggested improvements). Read DATA_TIERS, routine, for-other-agents; checkpoint (git commit/tag). |
+| 0 | Research & checkpoint | **Research** current/popular data-loop and synthetic-data best practices; update [SYNTHETIC_DATA_LOOP_RESEARCH.md](./SYNTHETIC_DATA_LOOP_RESEARCH.md) (findings + suggested improvements). Read DATA_TIERS, routine, for-other-agents, and QUALITY_STANDARDS_AND_PROOF; checkpoint (git commit/tag). |
 | 1 | Create / gather | Generate or gather synthetic data; write to project (e.g. `docs/automation/synthetic_data/` or agreed path). |
 | 2 | Prune & mesh | Propose pruning (SILVER termination, demotions); propose meshing (merge/dedupe). Output proposal file. |
-| 3 | Quality report | Produce quality report and data-analyzing session summary. |
-| 4 | User approval & ledger | User approves tier changes / big edits; agent applies only approved items; append one block to [SYNTHETIC_DATA_LOOP_RUN_LEDGER.md](./SYNTHETIC_DATA_LOOP_RUN_LEDGER.md). |
+| 3 | Quality report | Produce quality report and data-analyzing session summary with a required Proof of Quality block (evidence + residual risk + traceability). |
+| 4 | User approval & ledger | User approves tier changes / big edits; agent applies only approved items; append one block to [SYNTHETIC_DATA_LOOP_RUN_LEDGER.md](./SYNTHETIC_DATA_LOOP_RUN_LEDGER.md) including proof-of-quality evidence. |
 
 Detail: [SYNTHETIC_DATA_LOOP_ROUTINE.md](./SYNTHETIC_DATA_LOOP_ROUTINE.md).
 
@@ -64,8 +64,8 @@ Detail: [SYNTHETIC_DATA_LOOP_ROUTINE.md](./SYNTHETIC_DATA_LOOP_ROUTINE.md).
 |--------|------------------|
 | Synthetic data (if created) | Project path TBD (e.g. `docs/automation/synthetic_data/` or export file). |
 | Pruning proposal | Markdown or JSON list (trip IDs, tier changes, deletes). |
-| Quality report | Markdown summary; optional data-analyzing session notes. |
-| Ledger block | Appended to SYNTHETIC_DATA_LOOP_RUN_LEDGER.md. |
+| Quality report | Markdown summary; optional data-analyzing session notes; required Proof of Quality block. |
+| Ledger block | Appended to SYNTHETIC_DATA_LOOP_RUN_LEDGER.md with Proof of quality evidence. |
 
 ---
 

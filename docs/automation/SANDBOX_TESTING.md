@@ -59,6 +59,26 @@ This keeps the loop autonomous for low-risk items while giving a gate for higher
 
 ---
 
+## 3b. Lightweight feature preview container (sandbox concept)
+
+For fully sandboxed Heavy ideas, a future validation path is a **minimal preview container**:
+
+- Bare-minimum preview host (isolated screen or build variant)
+- Mount one sandboxed feature at a time
+- Preview label/watermark so it is not mistaken for production
+- Mock/synthetic data only by default; no production mutation
+
+For `virtual fleet` and shared-pool work, sandboxing also means:
+
+- Synthetic trips stay outside the app's production Room `trips` table
+- Synthetic trips never use the `GOLD` tier
+- Shared-pool exports are additive copies, not a new source of truth for trip history/statistics
+- External fleet/freight datasets remain reference-only and keep provenance fields
+
+Reference idea: `docs/product/FUTURE_IDEAS.md` § 13.1.
+
+---
+
 ## 4. Sandboxed = 100% When Documented
 
 **Heavy-tier ideas** documented in [FUTURE_IDEAS.md](../product/FUTURE_IDEAS.md) are **100% sandboxed**. You can add ideas anytime. Run **Medium tier** Improvement Loop to apply sandbox improvements (index, cross-links, new ideas). Optional: track readiness with [SANDBOX_COMPLETION_PERCENTAGE.md](./SANDBOX_COMPLETION_PERCENTAGE.md).
@@ -79,6 +99,8 @@ New feature ideas **must not** go directly to implementation. Per [LOOP_TIERING.
 
 **Goal:** 100% confidence that a feature is ready before implementation. No implementation without question lock, visual approval, and "approve 100% implement."
 
+**Approved implementation note:** When the user has approved a sandboxed feature for execution, keep the contamination rules in the implementation summary so later loops do not regress the separation contract.
+
 ---
 
 ## 6. Future Features in Help & Info
@@ -96,6 +118,7 @@ Future/planned features are shown in the Help & Info dialog so users know what's
 | **Cursor** | Run in Sandbox + Command Allowlist |
 | **App features** | Feature branch or build variant |
 | **Loop** | Optional sandbox phase for user approval |
+| **Main loop verification** | Every main loop run must record sandbox status: pass/fail, action, artifact path |
 | **Heavy ideas sandboxed** | Document in FUTURE_IDEAS = 100% sandboxed; add anytime; Medium tier runs improvements; optional % in [SANDBOX_COMPLETION_PERCENTAGE.md](./SANDBOX_COMPLETION_PERCENTAGE.md) |
 | **Sandbox testing for merge** | Test new features in branch/build variant before merging into main; merge only when safe |
 | **Promotion to implementation** | Validate → Confirm → **Question lock** ("image or layout or simulate merge?") → **Visual image/layout/merge** → User says **"approve 100% implement"** → Implement |

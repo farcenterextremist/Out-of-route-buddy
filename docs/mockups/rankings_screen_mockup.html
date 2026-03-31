@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rankings Screen Mockup - OutOfRouteBuddy</title>
+<link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --brand-header-top: #1A4A44;
+    --brand-header-deep: #0F2E2A;
+    --brand-on-header: #F5FFFE;
+    --brand-on-header-muted: #B2DFDB;
+    --page-bg: #F5F5F5;
+    --card-bg: #FFFFFF;
+    --text-primary: #000000;
+    --text-secondary: #757575;
+    --divider: #E0E0E0;
+    --accent: #9E9E9E;
+    --surface-container: #F0F4F4;
+  }
+
+  .dark {
+    --page-bg: #121212;
+    --card-bg: #1E1E1E;
+    --text-primary: #FFFFFF;
+    --text-secondary: #B3B3B3;
+    --divider: #424242;
+    --surface-container: #252525;
+    --brand-header-deep: #0A1F1C;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Roboto', sans-serif;
+    background: #1a1a2e;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    padding: 24px;
+  }
+
+  .controls {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    justify-content: center;
+    max-width: 700px;
+  }
+  .controls button {
+    padding: 8px 20px;
+    border: 2px solid #B2DFDB;
+    background: transparent;
+    color: #B2DFDB;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.2s;
+  }
+  .controls button:hover, .controls button.active {
+    background: #B2DFDB;
+    color: #0F2E2A;
+  }
+  .sep {
+    color: #555;
+    display: flex;
+    align-items: center;
+    padding: 0 4px;
+    font-size: 18px;
+  }
+
+  .label {
+    color: #B2DFDB;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 8px;
+    text-align: center;
+  }
+  .sublabel {
+    color: #666;
+    font-size: 11px;
+    margin-bottom: 20px;
+    text-align: center;
+  }
+
+  .phone-frame {
+    width: 380px;
+    min-height: 780px;
+    background: var(--page-bg);
+    border-radius: 32px;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    border: 3px solid #333;
+    position: relative;
+    transition: background 0.3s;
+  }
+
+  .header {
+    background: linear-gradient(45deg, #111, #212121);
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .header::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      90deg,
+      rgba(255,255,255,0.03) 0px,
+      rgba(255,255,255,0.03) 2px,
+      transparent 2px,
+      transparent 8px
+    );
+  }
+  .header-back {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 20px;
+    color: #fff;
+    cursor: pointer;
+    opacity: 0.9;
+  }
+  .header-title {
+    font-family: 'Roboto', sans-serif;
+    font-size: 20px;
+    font-weight: 500;
+    color: #fff;
+    letter-spacing: 1px;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+    z-index: 1;
+  }
+
+  .scroll-content {
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    max-height: 680px;
+    overflow-y: auto;
+  }
+  .scroll-content::-webkit-scrollbar { width: 4px; }
+  .scroll-content::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 2px; }
+
+  .card {
+    background: var(--card-bg);
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+    padding: 16px;
+    transition: background 0.3s, box-shadow 0.3s;
+  }
+
+  /* Score Hero */
+  .score-hero { text-align: center; padding: 24px 16px; }
+  .cohort-badge {
+    display: inline-block;
+    background: var(--surface-container);
+    border: 1px solid var(--divider);
+    border-radius: 16px;
+    padding: 4px 14px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    margin-bottom: 12px;
+  }
+  .score-number {
+    font-size: 64px;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1;
+  }
+  .score-label {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-top: 4px;
+  }
+  .tier-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 14px;
+    padding: 6px 18px;
+    border-radius: 20px;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+  }
+  .tier-diamond { background: linear-gradient(135deg, #B9F2FF, #80DEEA); color: #004D40; }
+  .tier-platinum { background: linear-gradient(135deg, #E5E4E2, #BDBDBD); color: #212121; }
+  .tier-gold { background: linear-gradient(135deg, #FFD700, #FFC107); color: #33200A; }
+  .tier-silver { background: linear-gradient(135deg, #C0C0C0, #9E9E9E); color: #212121; }
+  .tier-bronze { background: linear-gradient(135deg, #CD7F32, #A1662F); color: #FFF8E1; }
+
+  .rank-position {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    margin-top: 10px;
+    font-size: 14px;
+    color: var(--text-secondary);
+  }
+  .rank-position strong {
+    color: var(--text-primary);
+    font-size: 16px;
+  }
+
+  /* Breakdown */
+  .breakdown-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 14px;
+  }
+  .breakdown-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+  .breakdown-label {
+    font-size: 13px;
+    color: var(--text-secondary);
+    width: 120px;
+    flex-shrink: 0;
+  }
+  .breakdown-weight {
+    font-size: 10px;
+    color: var(--accent);
+    width: 32px;
+    text-align: right;
+    flex-shrink: 0;
+    margin-left: 4px;
+  }
+  .tread-track {
+    flex: 1;
+    height: 12px;
+    margin: 0 8px;
+    border-radius: 2px;
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(to bottom, #CFD8DC, #ECEFF1, #CFD8DC);
+  }
+  .tread-fill {
+    height: 100%;
+    border-radius: 2px;
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(to bottom, #37474F, #607D8B, #37474F);
+    transition: width 0.8s ease;
+  }
+  .tread-fill::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      repeating-linear-gradient(
+        -30deg,
+        transparent 0px, transparent 3px,
+        rgba(255,255,255,0.12) 3px, rgba(255,255,255,0.12) 4.5px
+      );
+  }
+  .tread-track::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      repeating-linear-gradient(
+        -30deg,
+        transparent 0px, transparent 3px,
+        rgba(0,0,0,0.04) 3px, rgba(0,0,0,0.04) 4.5px
+      );
+    pointer-events: none;
+  }
+  .dark .tread-track {
+    background: linear-gradient(to bottom, #37474F, #263238, #37474F);
+  }
+  .dark .tread-fill {
+    background: linear-gradient(to bottom, #B0BEC5, #78909C, #B0BEC5);
+  }
+  .dark .tread-fill::after {
+    background:
+      repeating-linear-gradient(
+        -30deg,
+        transparent 0px, transparent 3px,
+        rgba(0,0,0,0.15) 3px, rgba(0,0,0,0.15) 4.5px
+      );
+  }
+  .dark .tread-track::after {
+    background:
+      repeating-linear-gradient(
+        -30deg,
+        transparent 0px, transparent 3px,
+        rgba(255,255,255,0.04) 3px, rgba(255,255,255,0.04) 4.5px
+      );
+  }
+  .breakdown-value {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-primary);
+    width: 30px;
+    text-align: right;
+  }
+
+  /* Progression */
+  .progression-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .progression-info { flex: 1; }
+  .progression-label {
+    font-size: 12px;
+    color: var(--text-secondary);
+  }
+  .progression-target {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-top: 2px;
+  }
+  .progression-bar-container {
+    width: 100%;
+    height: 6px;
+    background: var(--surface-container);
+    border-radius: 3px;
+    margin-top: 8px;
+    overflow: hidden;
+  }
+  .progression-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #1565C0, #42A5F5);
+    border-radius: 3px;
+    transition: width 1s ease;
+  }
+  .progression-trips {
+    font-size: 11px;
+    color: var(--text-secondary);
+    margin-top: 4px;
+  }
+  .progression-icon {
+    font-size: 28px;
+    flex-shrink: 0;
+  }
+
+  /* Fleet Info */
+  .fleet-info-card { padding: 14px 16px; }
+  .fleet-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .fleet-icon { font-size: 24px; flex-shrink: 0; }
+  .fleet-text { flex: 1; }
+  .fleet-label {
+    font-size: 13px;
+    color: var(--text-primary);
+  }
+  .fleet-sub {
+    font-size: 11px;
+    color: var(--text-secondary);
+    margin-top: 2px;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .card { animation: fadeIn 0.5s ease both; }
+  .card:nth-child(1) { animation-delay: 0.1s; }
+  .card:nth-child(2) { animation-delay: 0.25s; }
+  .card:nth-child(3) { animation-delay: 0.4s; }
+  .card:nth-child(4) { animation-delay: 0.55s; }
+
+  @keyframes countUp {
+    from { opacity: 0; transform: scale(0.5); }
+    to { opacity: 1; transform: scale(1); }
+  }
+  .score-number { animation: countUp 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) 0.3s both; }
+</style>
+</head>
+<body>
+
+<div class="label">OutOfRouteBuddy — Rankings Screen Mockup</div>
+<div class="sublabel">Toggle theme, cohort, and tier to preview different states. Scroll the phone to see the full screen.</div>
+
+<div class="controls">
+  <button class="active" onclick="setTheme('light')">☀ Light</button>
+  <button onclick="setTheme('dark')">🌙 Dark</button>
+  <span class="sep">|</span>
+  <button onclick="setCohort('newcomer')">Newcomer</button>
+  <button class="active" onclick="setCohort('regular')">Regular</button>
+  <button onclick="setCohort('experienced')">Experienced</button>
+  <button onclick="setCohort('legend')">Legend</button>
+  <span class="sep">|</span>
+  <button onclick="setTier('diamond')">💎 Diamond</button>
+  <button class="active" onclick="setTier('gold')">🥇 Gold</button>
+  <button onclick="setTier('silver')">🥈 Silver</button>
+  <button onclick="setTier('bronze')">🥉 Bronze</button>
+</div>
+
+<div class="phone-frame" id="phone">
+  <div class="header">
+    <span class="header-back">&#8592;</span>
+    <div class="header-title">Rankings</div>
+  </div>
+
+  <div class="scroll-content">
+    <!-- Score Hero Card -->
+    <div class="card score-hero">
+      <div class="cohort-badge" id="cohort-badge">REGULAR COHORT • 11-30 trips</div>
+      <div class="score-number" id="score-number">74</div>
+      <div class="score-label">Overall Score</div>
+      <div class="tier-badge tier-gold" id="tier-badge">♦ Gold</div>
+      <div class="rank-position">
+        Rank <strong id="rank-num">#3</strong> of <span id="cohort-size">5</span> drivers
+      </div>
+    </div>
+
+    <!-- Score Breakdown (tire treads) -->
+    <div class="card" id="breakdown-card">
+      <div class="breakdown-title">Score Breakdown</div>
+      <div class="breakdown-row" id="row-oor">
+        <span class="breakdown-label">OOR Efficiency</span>
+        <div class="tread-track"><div class="tread-fill" id="fill-oor" style="width:82%"></div></div>
+        <span class="breakdown-value" id="val-oor">82</span>
+        <span class="breakdown-weight">40%</span>
+      </div>
+      <div class="breakdown-row" id="row-con">
+        <span class="breakdown-label">Consistency</span>
+        <div class="tread-track"><div class="tread-fill" id="fill-con" style="width:68%"></div></div>
+        <span class="breakdown-value" id="val-con">68</span>
+        <span class="breakdown-weight">25%</span>
+      </div>
+      <div class="breakdown-row" id="row-vol">
+        <span class="breakdown-label">Trip Volume</span>
+        <div class="tread-track"><div class="tread-fill" id="fill-vol" style="width:53%"></div></div>
+        <span class="breakdown-value" id="val-vol">53</span>
+        <span class="breakdown-weight">15%</span>
+      </div>
+      <div class="breakdown-row" id="row-gps">
+        <span class="breakdown-label">GPS Quality</span>
+        <div class="tread-track"><div class="tread-fill" id="fill-gps" style="width:91%"></div></div>
+        <span class="breakdown-value" id="val-gps">91</span>
+        <span class="breakdown-weight">10%</span>
+      </div>
+      <div class="breakdown-row" id="row-disc">
+        <span class="breakdown-label">Route Discipline</span>
+        <div class="tread-track"><div class="tread-fill" id="fill-disc" style="width:75%"></div></div>
+        <span class="breakdown-value" id="val-disc">75</span>
+        <span class="breakdown-weight">10%</span>
+      </div>
+    </div>
+
+    <!-- Cohort Progression -->
+    <div class="card progression-card" id="progression-card">
+      <div class="progression-info">
+        <div class="progression-label">Next Cohort</div>
+        <div class="progression-target" id="next-cohort">Experienced • Road Tested</div>
+        <div class="progression-bar-container">
+          <div class="progression-bar-fill" id="progression-fill" style="width: 53%;"></div>
+        </div>
+        <div class="progression-trips" id="progression-trips">16 of 30 trips • 14 more to go</div>
+      </div>
+      <div class="progression-icon">🏆</div>
+    </div>
+
+    <!-- Fleet Info (replaces leaderboard) -->
+    <div class="card fleet-info-card">
+      <div class="fleet-row">
+        <div class="fleet-icon">&#128666;</div>
+        <div class="fleet-text">
+          <div class="fleet-label">Ranked against <strong id="fleet-count">5</strong> drivers in your cohort</div>
+          <div class="fleet-sub" id="fleet-sub">Virtual fleet • Real drivers coming soon</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const cohorts = {
+  newcomer: {
+    name: 'Newcomer', subtitle: 'Just Getting Started', range: '1-10 trips',
+    next: 'Regular \u2022 Finding Your Groove', fill: 60,
+    trips: '6 of 10 trips \u2022 4 more to go', icon: '\ud83c\udf31', size: 4,
+    drivers: [
+      { name: 'The Eager Learner', oor: '5.1%', trips: 8, score: 72, tier: '#FFD700', rank: 1 },
+      { name: 'You', oor: '6.8%', trips: 6, score: 61, tier: '#C0C0C0', rank: 2, isUser: true },
+      { name: 'The Newbie', oor: '9.2%', trips: 4, score: 45, tier: '#CD7F32', rank: 3 },
+      { name: 'Day One Driver', oor: '12.0%', trips: 2, score: 28, tier: '#CD7F32', rank: 4 },
+    ]
+  },
+  regular: {
+    name: 'Regular', subtitle: 'Finding Your Groove', range: '11-30 trips',
+    next: 'Experienced \u2022 Road Tested', fill: 53,
+    trips: '16 of 30 trips \u2022 14 more to go', icon: '\ud83c\udfc6', size: 5,
+    drivers: [
+      { name: 'The Efficient', oor: '2.8%', trips: 18, score: 89, tier: '#FFD700', rank: 1 },
+      { name: 'The Optimizer', oor: '3.1%', trips: 22, score: 81, tier: '#FFD700', rank: 2 },
+      { name: 'You', oor: '4.2%', trips: 16, score: 74, tier: '#FFD700', rank: 3, isUser: true },
+      { name: 'The Rookie', oor: '6.5%', trips: 14, score: 58, tier: '#C0C0C0', rank: 4 },
+      { name: 'The Local Runner', oor: '8.1%', trips: 12, score: 42, tier: '#CD7F32', rank: 5 },
+    ]
+  },
+  experienced: {
+    name: 'Experienced', subtitle: 'Road Tested', range: '31-75 trips',
+    next: 'Legend \u2022 Fleet Legend', fill: 64,
+    trips: '48 of 75 trips \u2022 27 more to go', icon: '\u2b50', size: 6,
+    drivers: [
+      { name: 'The Veteran', oor: '1.9%', trips: 68, score: 95, tier: '#B9F2FF', rank: 1 },
+      { name: 'The Steady Hand', oor: '2.4%', trips: 55, score: 88, tier: '#FFD700', rank: 2 },
+      { name: 'The Night Owl', oor: '3.3%', trips: 42, score: 79, tier: '#FFD700', rank: 3 },
+      { name: 'You', oor: '3.8%', trips: 48, score: 76, tier: '#FFD700', rank: 4, isUser: true },
+      { name: 'The Highway King', oor: '5.0%', trips: 38, score: 62, tier: '#C0C0C0', rank: 5 },
+      { name: 'The Wanderer', oor: '7.2%', trips: 34, score: 48, tier: '#CD7F32', rank: 6 },
+    ]
+  },
+  legend: {
+    name: 'Legend', subtitle: 'Fleet Legend', range: '76+ trips',
+    next: null, fill: 100,
+    trips: null, icon: '\ud83d\udc51', size: 4,
+    drivers: [
+      { name: 'The Veteran', oor: '1.5%', trips: 112, score: 97, tier: '#B9F2FF', rank: 1 },
+      { name: 'You', oor: '2.1%', trips: 94, score: 91, tier: '#B9F2FF', rank: 2, isUser: true },
+      { name: 'The Road Scholar', oor: '2.8%', trips: 88, score: 85, tier: '#E5E4E2', rank: 3 },
+      { name: 'The Long Hauler', oor: '4.1%', trips: 78, score: 72, tier: '#FFD700', rank: 4 },
+    ]
+  }
+};
+
+const tiers = {
+  diamond: { cls: 'tier-diamond', text: '\u2666 Diamond', score: 93, rank: 1,
+    bars: { oor: 96, con: 92, vol: 88, gps: 95, disc: 91 } },
+  gold: { cls: 'tier-gold', text: '\u2666 Gold', score: 74, rank: 3,
+    bars: { oor: 82, con: 68, vol: 53, gps: 91, disc: 75 } },
+  silver: { cls: 'tier-silver', text: '\u2666 Silver', score: 55, rank: 5,
+    bars: { oor: 62, con: 51, vol: 40, gps: 78, disc: 55 } },
+  bronze: { cls: 'tier-bronze', text: '\u2666 Bronze', score: 38, rank: 7,
+    bars: { oor: 41, con: 35, vol: 28, gps: 60, disc: 38 } },
+};
+
+let currentCohort = 'regular';
+let currentTier = 'gold';
+
+function setTheme(mode) {
+  document.getElementById('phone').classList.toggle('dark', mode === 'dark');
+  document.querySelectorAll('.controls button').forEach(b => {
+    if (b.textContent.includes('Light') || b.textContent.includes('Dark'))
+      b.classList.toggle('active', b.textContent.toLowerCase().includes(mode));
+  });
+}
+
+function setCohort(key) {
+  currentCohort = key;
+  const c = cohorts[key];
+  document.getElementById('cohort-badge').textContent = c.name.toUpperCase() + ' COHORT \u2022 ' + c.range;
+  document.getElementById('cohort-size').textContent = c.size;
+  document.getElementById('fleet-count').textContent = c.size;
+
+  if (c.next) {
+    document.getElementById('progression-card').style.display = 'flex';
+    document.getElementById('next-cohort').textContent = c.next;
+    document.getElementById('progression-fill').style.width = c.fill + '%';
+    document.getElementById('progression-trips').textContent = c.trips;
+  } else {
+    document.getElementById('progression-card').style.display = 'none';
+  }
+
+  // Update user score based on cohort
+  const userDriver = c.drivers.find(d => d.isUser);
+  if (userDriver) {
+    document.getElementById('score-number').textContent = userDriver.score;
+    document.getElementById('rank-num').textContent = '#' + userDriver.rank;
+  }
+
+  document.querySelectorAll('.controls button').forEach(b => {
+    if (['Newcomer','Regular','Experienced','Legend'].includes(b.textContent))
+      b.classList.toggle('active', b.textContent.toLowerCase() === key);
+  });
+}
+
+function renderAllTreads(scores) {
+  document.getElementById('fill-oor').style.width = scores.oor + '%';
+  document.getElementById('fill-con').style.width = scores.con + '%';
+  document.getElementById('fill-vol').style.width = scores.vol + '%';
+  document.getElementById('fill-gps').style.width = scores.gps + '%';
+  document.getElementById('fill-disc').style.width = scores.disc + '%';
+  document.getElementById('val-oor').textContent = scores.oor;
+  document.getElementById('val-con').textContent = scores.con;
+  document.getElementById('val-vol').textContent = scores.vol;
+  document.getElementById('val-gps').textContent = scores.gps;
+  document.getElementById('val-disc').textContent = scores.disc;
+}
+
+function setTier(key) {
+  currentTier = key;
+  const t = tiers[key];
+  const badge = document.getElementById('tier-badge');
+  badge.className = 'tier-badge ' + t.cls;
+  badge.textContent = t.text;
+  document.getElementById('score-number').textContent = t.score;
+  document.getElementById('rank-num').textContent = '#' + t.rank;
+
+  renderAllTreads(t.bars);
+
+  document.querySelectorAll('.controls button').forEach(b => {
+    const txt = b.textContent.replace(/[^\w\s]/g, '').trim();
+    if (['Diamond','Gold','Silver','Bronze'].includes(txt))
+      b.classList.toggle('active', txt.toLowerCase() === key);
+  });
+}
+
+// Render initial treads
+renderAllTreads(tiers.gold.bars);
+</script>
+</body>
+</html>

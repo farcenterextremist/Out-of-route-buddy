@@ -13,6 +13,9 @@ $scripts = @(
     @{ Name = "Compile (parse)"; Script = "test_token_loop_compile.ps1"; HasKeep = $false },
     @{ Name = "Wiring"; Script = "test_token_loop_wiring.ps1"; HasKeep = $false },
     @{ Name = "Listener"; Script = "test_token_loop_listener.ps1"; HasKeep = $true },
+    @{ Name = "Completion helper"; Script = "test_complete_token_loop_run.ps1"; HasKeep = $false },
+    @{ Name = "Rule overhead compare"; Script = "test_compare_token_rule_overhead.ps1"; HasKeep = $false },
+    @{ Name = "OpenAI API usage monitor"; Script = "test_monitor_openai_api_usage.ps1"; HasKeep = $false },
     @{ Name = "Snapshot"; Script = "test_token_loop_snapshot.ps1"; HasKeep = $true },
     @{ Name = "Events analysis"; Script = "test_token_loop_events_analysis.ps1"; HasKeep = $false }
 )

@@ -82,10 +82,13 @@ We are responsible for **all levers that reduce token spend**, not only "token o
 
 - Minimize always-apply rule size (target &lt;50 lines; ~500 tokens).
 - Use glob/description for all other rules.
+- Scope safety rules to the files or workflows they govern rather than making them global by default.
 - New chat when gauge &gt;60%; front-load only what's needed.
 - **Context compression:** Prefer agent-driven discovery; avoid attaching full files when @ or search suffice; keep conversation and history from growing unbounded.
 - **Embedding/retrieval:** Use @folder, @symbols, @Docs; let agent pull context; reference docs instead of inlining.
 - **LLM optimization:** Concise prompts; faster model for simple tasks; note output control and caching when available.
+- **Prompt caching:** Keep stable instructions first and volatile task details later so repeated long prompts can reuse cached prefixes.
+- **Settings hygiene:** Use `.cursorignore` when possible; otherwise keep equivalent watcher/search excludes in workspace settings.
 - **Update [TOKEN_SAVING_PRACTICES.md](./TOKEN_SAVING_PRACTICES.md) each run:** at start (read/refresh from research), at end (record what worked/didn't in §3; add new practices to §1 if learned).
 - Optional: add estimated tokens per rule in snapshot (e.g. line_count × 10) for trend over runs.
 
@@ -126,6 +129,15 @@ We are responsible for **all levers that reduce token spend**, not only "token o
 - always_apply_lines: **43** (baseline 42)
 - Snapshot metrics parsed: **Y**
 - Notes: Snapshot fix applied (count from rules array); listener step_end Step 1 used single-quoted metrics; improvement plan read at Step 0.
+
+---
+
+**Run token-20260316-0147 (2026-03-16):**
+
+- always_apply_count: **1** (baseline 1)
+- always_apply_lines: **45** (baseline 42)
+- Snapshot metrics parsed: **Y**
+- Notes: data-separation.mdc converted from always-apply to scoped globs; token practices refreshed with prompt-caching guidance; workspace search/watcher exclusions expanded; `.cursorignore` was added in a later follow-up; historical anomalies are now documented in `TOKEN_LOOP_EVENT_ANOMALIES.md`.
 
 ---
 

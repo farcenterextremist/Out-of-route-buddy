@@ -49,6 +49,13 @@ This folder holds **all Improvement Loop docs** (routine, tiering, autonomy, sum
 | [IMPROVEMENT_LOOP_TEAMS.md](./IMPROVEMENT_LOOP_TEAMS.md) | Researchers, File Organizer; Heavy needs human approval. |
 | [LOOP_FOCUS_ROTATION.md](./LOOP_FOCUS_ROTATION.md) | Focus areas and rotation (Security, UI/UX, Shipability, etc.). |
 | [LOOP_METRICS_TEMPLATE.md](./LOOP_METRICS_TEMPLATE.md) | Metrics per run: tests, lint, checkpoint. |
+| [FRONTEND_CHANGE_AUTOMATION_GATE.md](./FRONTEND_CHANGE_AUTOMATION_GATE.md) | Master-loop-only UI automation gate (obvious benefit + subtlety scoring). |
+| [QUALITY_STANDARDS_AND_PROOF.md](./QUALITY_STANDARDS_AND_PROOF.md) | Quality bar baseline (ISO/DORA/SRE) and mandatory proof-of-quality evidence for loop summaries. |
+| [LOOP_CONSISTENCY_STANDARD.md](./LOOP_CONSISTENCY_STANDARD.md) | Universal run contract and `Consistency score (X/10)` required across all loops. |
+| [LOOP_GATE_ARCHITECTURE_BLUEPRINT.md](./LOOP_GATE_ARCHITECTURE_BLUEPRINT.md) | Deep architecture blueprint for deterministic loops, idempotent gates, and schema-safe shared state. |
+| [LOOP_CONTINUITY_TEST_PLAN.md](./LOOP_CONTINUITY_TEST_PLAN.md) | Continuity test strategy for loop gates and shared-state contracts. |
+| [SKILL_AUTOSELECT_MATRIX.md](./SKILL_AUTOSELECT_MATRIX.md) | Phrase-to-skill selector for faster, consistent loop automation decisions. |
+| [MARKDOWNLINT_REMEDIATION_PLAN.md](./MARKDOWNLINT_REMEDIATION_PLAN.md) | Phased plan to reduce legacy markdownlint noise safely. |
 | [LOOP_FRONTEND_VS_BACKEND_BREAKDOWN.md](./LOOP_FRONTEND_VS_BACKEND_BREAKDOWN.md) | Target mostly backend (~75–85%); frontend only when obvious. |
 
 ### Self-improvement, design, token
@@ -79,6 +86,7 @@ This folder holds **all Improvement Loop docs** (routine, tiering, autonomy, sum
 |------|--------|
 | [IMPROVEMENT_LOOP_ANALYSIS_AND_IMPROVEMENTS.md](./IMPROVEMENT_LOOP_ANALYSIS_AND_IMPROVEMENTS.md) | Analysis, improvements, priming for next run. |
 | [IMPROVEMENT_LOOP_AUDIT.md](./IMPROVEMENT_LOOP_AUDIT.md) | Blind spots, loose ends; re-run after major changes. |
+| [MASTER_LOOP_IMPROVEMENT_AND_OPTIMIZATION_PLAN.md](./MASTER_LOOP_IMPROVEMENT_AND_OPTIMIZATION_PLAN.md) | Master plan for lightening repeatable loop work with reusable scripts, gates, and rollout slices. |
 | **IMPROVEMENT_LOOP_SUMMARY_&lt;date&gt;.md** | A-grade summary per run. |
 | **120_MINUTE_LOOP_SUMMARY_&lt;date&gt;.md** | Same; alternate naming. Example: [120_MINUTE_LOOP_SUMMARY_2025-03-11.md](./120_MINUTE_LOOP_SUMMARY_2025-03-11.md). |
 
@@ -118,9 +126,17 @@ This folder holds **all Improvement Loop docs** (routine, tiering, autonomy, sum
 
 | Script | Purpose |
 |--------|--------|
-| **scripts/automation/pulse_check.ps1** | Unit tests, lint, append to pulse_log.txt. |
+| **scripts/automation/pulse_check.ps1** | Unit tests, lint, append to pulse_log.txt; optional `-UseSimpleDebugCleanup` routes through the consolidated deeper sweep. |
+| **scripts/automation/run_simple_debug_cleanup.ps1** | Quick local debug/cleanup sweep: optional clean + assemble, unit tests, lint, and detekt with a single summary block. |
+| **scripts/automation/run_loop_diagnostic_baseline.ps1** | Repeatable loop problem-hunt baseline: liveness snapshot, ignored-test review, hotspot search, and report presence. |
 | **scripts/automation/loop_listener.ps1** | Record phase/events to loop_events.jsonl. |
 | **scripts/automation/test_loop_listener.ps1** | Verify listener. |
+| **scripts/automation/run_loop_continuity_tests.ps1** | Run loop gate + shared-state continuity checks. |
+| **scripts/automation/test_loop_gate_contract.ps1** | Validate loop governance contract wiring across key docs. |
+| **scripts/automation/test_shared_state_contract.ps1** | Validate shared-state event/latest-file structure and required keys. |
+| **scripts/automation/test_shared_state_schema.ps1** | Validate shared-state field types and detect duplicate finished `loop\|run_id` keys. |
+| **scripts/automation/write_loop_shared_state.ps1** | Dedupe-safe writer for loop end-state (`loop_shared_events.jsonl` + `loop_latest/<loop>.json`). |
+| **scripts/automation/test_write_loop_shared_state.ps1** | Verifies writer blocks duplicate `loop\|run_id` appends and still updates latest-state file. |
 | **scripts/automation/run_120min_loop.ps1** | Optional timer; work = IMPROVEMENT_LOOP_ROUTINE. |
 | **scripts/automation/run_8hr_automation.ps1** | 8 hr: pulse every 30 min; ship instructions in last 2 hr. |
 | **scripts/automation/write_ship_instructions.ps1** | Write OUTOFROUTEBUDDY_SHIP_INSTRUCTIONS.txt. |
@@ -136,6 +152,17 @@ Full paths and one-line purposes: [IMPROVEMENT_LOOP_INDEX.md](./IMPROVEMENT_LOOP
 | **docs/AGENTS.md** | Improvement Loop subsection; links to common sense, routine, autonomy. |
 | **docs/README.md** | Doc index; "Automation & improvement loops" → this folder and index. |
 | **.cursor/rules/2-hour-loop.mdc** | Trigger when user says GO. |
+| **.cursor/rules/loop-automation-boosters.mdc** | Loop governance helpers for consistency, hub handoff, shared-state, readiness, and Heavy gates. |
+| **.cursor/rules/loop-continuity-enforcement.mdc** | Continuity check enforcement when loop/gate/shared-state docs/scripts change. |
 | **.cursor/skills/improvement-loop-wizard/SKILL.md** | Wizard flow. |
+| **.cursor/skills/loop-quality-proof/SKILL.md** | Quality standards and proof-of-quality workflow skill. |
+| **.cursor/skills/loop-consistency-auditor/SKILL.md** | Cross-loop consistency scoring skill (`Consistency score X/10`). |
+| **.cursor/skills/hub-handoff-curator/SKILL.md** | Hub artifact quality and handoff curation skill. |
+| **.cursor/skills/shared-state-reconciler/SKILL.md** | Shared-state validation/reconciliation skill for concurrent loops. |
+| **.cursor/skills/loop-ledger-normalizer/SKILL.md** | Cross-loop ledger template normalization skill. |
+| **.cursor/skills/loop-readiness-benchmarker/SKILL.md** | Liveness/readiness trend and reliability benchmarking skill. |
+| **.cursor/skills/heavy-approval-governor/SKILL.md** | Heavy-tier approval and visual-gate enforcement skill. |
+| **.cursor/skills/loop-architecture-blueprinter/SKILL.md** | Architecture design skill for deterministic loops, idempotent gates, and schema-safe evolution. |
+| **.cursor/skills/loop-continuity-test-engineer/SKILL.md** | Continuity testing skill for gate and shared-state regression prevention. |
 
 All listed in [IMPROVEMENT_LOOP_INDEX.md](./IMPROVEMENT_LOOP_INDEX.md) § 9.

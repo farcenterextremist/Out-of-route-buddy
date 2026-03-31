@@ -25,6 +25,8 @@ data class Trip(
     val gpsDistance: Double = 0.0,
     val gpsAccuracy: Double = 0.0,
     val gpsQuality: Double = 0.0,
+    val pickupAddress: String = "",
+    val dropoffAddress: String = "",
     /** Data tier: SILVER (may delete), PLATINUM (demote/promote), GOLD (human, digital gold). Default GOLD for human-ended trips. */
     val dataTier: DataTier = DataTier.GOLD,
 ) {

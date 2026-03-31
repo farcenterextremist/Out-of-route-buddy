@@ -1,100 +1,92 @@
-# Loop dynamic sharing — convention and wiring
+# Loop dynamic sharing — shared state across loops
 
-**Purpose:** When you run **any loop** (especially when multiple loops may run at the same time), read and write **shared state** so data is shared dynamically and other agents can react/act on the latest outputs. This ensures 100% that concurrent or sequential loop runs see each other's data.
+**Purpose:** When multiple loops run (in sequence or in parallel), they share state via **`loop_shared_events.jsonl`** and **`loop_latest/<loop>.json`**. Every loop must **read** at start and **write** at end so data stays dynamic and other agents can react.
 
-**Research:** [LOOP_DYNAMIC_SHARING_RESEARCH.md](./LOOP_DYNAMIC_SHARING_RESEARCH.md) — problem, design, event shape.
-
----
-
-## 1. Shared state locations
-
-| What | Path | Who writes | Mode |
-|------|------|------------|------|
-| **Shared event log** | `docs/automation/loop_shared_events.jsonl` | Every loop | Append one JSON line per event |
-| **Per-loop latest** | `docs/automation/loop_latest/<loop>.json` | Each loop writes only its own file | Overwrite (one writer per file) |
-| **Loop latest folder** | `docs/automation/loop_latest/` | — | Contains improvement.json, token.json, cyber.json, synthetic_data.json |
+**Gates:** [LOOP_GATES.md](./LOOP_GATES.md) — at start read these files; at end append event and update latest.
 
 ---
 
-## 2. At loop start (read shared state)
+## loop_shared_events.jsonl
 
-**Every loop must**, at the beginning of its run (e.g. Phase 0 or Step 0):
+**Path:** `docs/automation/loop_shared_events.jsonl`  
+**Format:** One JSON object per line (JSONL). No blank lines between objects.
 
-1. **Read the tail of `loop_shared_events.jsonl`**  
-   - Read the last **50 lines** (or all events from the last 24 hours if timestamps are available).  
-   - From this, note: which other loops have run recently, their last `summary_path`, `next_steps`, `checkpoint`, and any `key_decisions`.  
-   - In your research or first step output, note: **Shared state (other loops):** [e.g. "Improvement last finished 2026-03-12; summary at …; next_steps: …; Token last run …"].
+**At loop start:** Read the **tail** (last 50 lines, or full file if smaller) to see recent finished events from other loops.
 
-2. **Read all other loops' latest files** in `loop_latest/`  
-   - If you are Improvement Loop, read `token.json`, `cyber.json`, `synthetic_data.json` (skip `improvement.json`).  
-   - If you are Token Loop, read `improvement.json`, `cyber.json`, `synthetic_data.json`.  
-   - Same for Cyber and Synthetic Data.  
-   - Use this to **react**: e.g. if Improvement's `suggested_next_steps` include "Security PII grep" and you are Cyber Loop, you can prioritize that; if Token's `key_decisions` mention rule count, Improvement can avoid changing rules in the same run.  
-   - In your research output, note: **Other loops' latest:** [one line per other loop: summary path and/or next_steps you will use].
+**At loop end:** Append **one** finished event. Suggested fields:
 
-**If a file is missing** (e.g. first run): treat as "no previous run"; continue.
+| Field | Type | Description |
+|-------|------|-------------|
+| `ts` | string | ISO8601 timestamp (e.g. 2026-03-13T18:00:00Z). |
+| `loop` | string | Loop name (e.g. `token`, `improvement`, `cyber`, `synthetic_data`, `file_organizer`). |
+| `event` | string | `finished`. |
+| `run_id` | string | Run identifier (e.g. token-20260313-1843). |
+| `summary_path` | string | Path to this run’s summary or main artifact (relative to repo root or full path). |
+| `next_steps` | array | Optional array of strings: suggested next steps for this or other loops. |
+| `checkpoint` | string | Optional: short checkpoint or status. |
 
----
+**Example line:**
 
-## 3. At loop end (write shared state)
+```json
+{"ts":"2026-03-13T18:45:00Z","loop":"token","event":"finished","run_id":"token-20260313-1843","summary_path":"docs/automation/TOKEN_LOOP_RUN_LEDGER.md","next_steps":["Convert data-separation to glob","Trim always-apply to <50 lines"]}
+```
 
-**Every loop must**, at the end of its run (e.g. after summary, before or with ledger append):
+**Recommended writer (dedupe-safe):**
 
-1. **Append to `loop_shared_events.jsonl`**  
-   - One line (single JSON object) per event. At minimum append a **finished** event. Optionally append **started** at run start.  
-   - **Required fields:** `ts` (ISO8601), `loop` (e.g. `"improvement"` | `"token"` | `"cyber"` | `"synthetic_data"`), `event` (e.g. `"started"` | `"finished"`), `run_id`.  
-   - **When event is "finished":** include `summary_path`, `next_steps` (array of strings), and optionally `checkpoint`, `key_decisions`.  
-   - Example line (single line, no newlines inside):  
-     `{"ts":"2026-03-12T14:00:00Z","loop":"improvement","event":"finished","run_id":"2026-03-12","summary_path":"docs/automation/IMPROVEMENT_LOOP_SUMMARY_2026-03-12.md","next_steps":["Security PII grep","Next focus UI/UX"],"checkpoint":"c1a65e6"}`
+```powershell
+.\scripts\automation\write_loop_shared_state.ps1 `
+  -Loop token `
+  -RunId token-20260313-1843 `
+  -SummaryPath docs/automation/TOKEN_LOOP_RUN_LEDGER.md `
+  -NextSteps @("Convert data-separation to glob","Trim always-apply to <50 lines>")
+```
 
-2. **Update your loop's latest file** in `loop_latest/<loop>.json`  
-   - **Improvement Loop** → `loop_latest/improvement.json`  
-   - **Token Loop** → `loop_latest/token.json`  
-   - **Cyber Security Loop** → `loop_latest/cyber.json`  
-   - **Synthetic Data Loop** → `loop_latest/synthetic_data.json`  
-   - Content: JSON object with at least `loop`, `last_run_ts`, `last_run_id`, `summary_path`, `suggested_next_steps`, and optionally `checkpoint`, `key_decisions`.  
-   - Overwrite the file (you are the only writer for this file).
+The writer blocks duplicate `finished` events for the same `loop|run_id` key while still refreshing `loop_latest/<loop>.json`.
 
 ---
 
-## 4. Event and latest-file shapes
+## loop_latest/&lt;your_loop&gt;.json
 
-**loop_shared_events.jsonl (one JSON object per line):**
+**Path:** `docs/automation/loop_latest/<your_loop>.json`  
+**Naming:** Use the loop name: `token.json`, `improvement.json`, `cyber.json`, `synthetic_data.json`, `file_organizer.json`.
 
-- `ts` (string, ISO8601)  
-- `loop` (string: improvement | token | cyber | synthetic_data)  
-- `event` (string: started | finished | phase_done)  
-- `run_id` (string)  
-- If `event === "finished"`: `summary_path`, `next_steps` (array), optional `checkpoint`, `key_decisions`
+**At loop start:** Read **all** `loop_latest/*.json` files (for **other** loops) to see their latest summary path and suggested next steps.
 
-**loop_latest/<loop>.json (single JSON object):**
+**At loop end:** **Overwrite** `loop_latest/<your_loop>.json` with your loop’s latest output. Suggested fields:
 
-- `loop` (string)  
-- `last_run_ts` (string, ISO8601)  
-- `last_run_id` (string)  
-- `summary_path` (string)  
-- `suggested_next_steps` (array of strings)  
-- Optional: `checkpoint`, `key_decisions` (array of strings)
+| Field | Type | Description |
+|-------|------|-------------|
+| `last_run_ts` | string | ISO8601 timestamp of this run. |
+| `run_id` | string | Run identifier. |
+| `summary_path` | string | Path to this run’s summary or main artifact. |
+| `suggested_next_steps` | array | Optional array of strings. |
+| `checkpoint` | string | Optional. |
 
----
+**Example (token.json):**
 
-## 5. Wiring into routines
-
-- **UNIVERSAL_LOOP_PROMPT:** Added obligation: when running any loop, at start read shared state (events tail + other loops' latest); at end write shared state (append event + update own latest). See [UNIVERSAL_LOOP_PROMPT.md](../agents/data-sets/hub/UNIVERSAL_LOOP_PROMPT.md).
-- **IMPROVEMENT_LOOP_ROUTINE:** Phase 0 research includes "Read loop_shared_events.jsonl (tail) and loop_latest/*.json for other loops; note in research output." Phase 4.3 (before or with ledger) includes "Append finished event to loop_shared_events.jsonl; update loop_latest/improvement.json."
-- **Token / Cyber / Synthetic Data:** Same pattern in their Step 0 and final step: read shared state at start; write shared state at end. Each loop owns its own `loop_latest/<loop>.json`.
-
----
-
-## 6. Guarantee when running all loops at the same time
-
-- **Append-only events:** Multiple loops can append to `loop_shared_events.jsonl` concurrently without overwriting each other.  
-- **Per-loop latest:** Each loop writes only its own file in `loop_latest/`, so no write conflicts.  
-- **Read at start:** Every loop reads the latest from others (events tail + other latest files), so agents always see the most recent data available at the moment they start and can react/act accordingly.  
-- **Write at end:** Every loop publishes its own output (event + latest file), so the next run (of any loop) will see it.  
-
-This gives **dynamic sharing** and ensures data is shared so other agents can react/act appropriately.
+```json
+{
+  "last_run_ts": "2026-03-13T18:45:00Z",
+  "run_id": "token-20260313-1843",
+  "summary_path": "docs/automation/TOKEN_LOOP_RUN_LEDGER.md",
+  "suggested_next_steps": ["Convert data-separation.mdc to glob", "Trim always-apply to <50 lines"]
+}
+```
 
 ---
 
-*Integrates with LOOP_DYNAMIC_SHARING_RESEARCH.md, UNIVERSAL_LOOP_PROMPT, IMPROVEMENT_LOOP_ROUTINE, and per-loop routines.*
+## Who writes what
+
+| Loop | loop_latest file |
+|------|-------------------|
+| Token | `loop_latest/token.json` |
+| Improvement (2-hour) | `loop_latest/improvement.json` |
+| Cyber Security | `loop_latest/cyber.json` |
+| Synthetic Data | `loop_latest/synthetic_data.json` |
+| File-organizer | `loop_latest/file_organizer.json` |
+
+Add a new file when a new loop is introduced; list it in [LOOPS_AND_IMPROVEMENT_FULL_AXIS.md](./LOOPS_AND_IMPROVEMENT_FULL_AXIS.md).
+
+---
+
+*Read at loop start (tail + latest); write at loop end (append event + overwrite your loop’s latest). See LOOP_GATES.md.*

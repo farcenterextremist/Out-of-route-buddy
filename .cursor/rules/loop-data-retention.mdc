@@ -1,0 +1,24 @@
+---
+description: "Loop data retention and pruning — hot/warm/cold and cleanup gates."
+globs:
+  - "docs/automation/**"
+  - "scripts/automation/**"
+alwaysApply: false
+---
+
+# Loop Data Retention Rule
+
+**Hot (keep):** loop_shared_events.jsonl, loop_latest/*.json, run ledgers, summaries, hub artifacts.
+
+**Warm (age-prune):** snapshots/log scratch older than 30 days — keep latest 3 per category.
+
+**Cold (delete):** explicit test temp artifacts and *_test.jsonl files after verification.
+
+**All deletion requires:**
+1. Dry-run list first (exact paths + reason).
+2. Approval phrase: "approve cleanup batch" (or use run_data_prune.ps1 -Approve).
+3. Cleanup report (deleted_count, deleted_paths, skipped_protected).
+
+**Preferred:** Use quarantine-first flow per docs/automation/CLEANUP_RETENTION_POLICY.md (stage to _trash_staging, purge after 7 days).
+
+**Safety:** Run scripts/automation/test_cleanup_safety.ps1 to ensure protected paths never appear in deletion candidates.

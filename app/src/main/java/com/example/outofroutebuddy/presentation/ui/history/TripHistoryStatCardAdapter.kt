@@ -6,11 +6,15 @@ import android.view.ViewGroup
 import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.TextView
+import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.example.outofroutebuddy.R
+import com.example.outofroutebuddy.domain.calendar.CalendarDayOorTierCalculator
+import com.example.outofroutebuddy.domain.models.CalendarDayOorTier
 import com.example.outofroutebuddy.domain.models.Trip
+import com.google.android.material.card.MaterialCardView
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -71,6 +75,48 @@ class TripHistoryStatCardAdapter(
         private val tripTruckStops: TextView = itemView.findViewById(R.id.trip_truck_stops)
 
         fun bind(trip: Trip, viewingDate: Date?, tripIndex: Int?, isExpanded: Boolean, onTripClick: ((Trip) -> Unit)?, onExpandToggle: (String) -> Unit) {
+            val card = itemView as MaterialCardView
+            val ctx = itemView.context
+            val strokePx = (2 * itemView.resources.displayMetrics.density).toInt().coerceAtLeast(1)
+            val primaryText = ContextCompat.getColor(ctx, R.color.text_primary_adaptive)
+            if (viewingDate != null) {
+                // Calendar "trip by date" dialog: OOR tier always takes priority.
+                // Green (≤10%), Orange (10-14%), Deep Red (>14%).
+                val tier = CalendarDayOorTierCalculator.oorTierForTrip(trip)
+                card.strokeWidth = strokePx
+                when (tier) {
+                    CalendarDayOorTier.GREEN -> {
+                        card.strokeColor = ContextCompat.getColor(ctx, R.color.history_trip_oor_good_card_stroke)
+                        card.setCardBackgroundColor(ContextCompat.getColor(ctx, R.color.history_trip_oor_good_card_fill))
+                        tripOor.setTextColor(ContextCompat.getColor(ctx, R.color.history_trip_oor_good_oor_text))
+                    }
+                    CalendarDayOorTier.YELLOW_OUTLINE -> {
+                        card.strokeColor = ContextCompat.getColor(ctx, R.color.history_trip_oor_warn_card_stroke)
+                        card.setCardBackgroundColor(ContextCompat.getColor(ctx, R.color.history_trip_oor_warn_card_fill))
+                        tripOor.setTextColor(ContextCompat.getColor(ctx, R.color.history_trip_oor_warn_oor_text))
+                    }
+                    CalendarDayOorTier.RED -> {
+                        card.strokeColor = ContextCompat.getColor(ctx, R.color.history_trip_oor_bad_card_stroke)
+                        card.setCardBackgroundColor(ContextCompat.getColor(ctx, R.color.history_trip_oor_bad_card_fill))
+                        tripOor.setTextColor(ContextCompat.getColor(ctx, R.color.history_trip_oor_bad_oor_text))
+                    }
+                }
+                card.contentDescription = null
+            } else if (TripStatCardReviewFlags.shouldFlagForReview(trip)) {
+                card.strokeWidth = strokePx
+                card.strokeColor = ContextCompat.getColor(ctx, R.color.trip_review_flag_stroke)
+                card.setCardBackgroundColor(ContextCompat.getColor(ctx, R.color.trip_review_flag_card_fill))
+                card.contentDescription =
+                    ctx.getString(R.string.trip_stat_card_flagged_content_description)
+                tripOor.setTextColor(primaryText)
+            } else {
+                card.strokeWidth = 0
+                card.strokeColor = ContextCompat.getColor(ctx, android.R.color.transparent)
+                card.setCardBackgroundColor(ContextCompat.getColor(ctx, R.color.card_background_adaptive))
+                card.contentDescription = null
+                tripOor.setTextColor(primaryText)
+            }
+
             val dateFormat = SimpleDateFormat("MMMM dd, yyyy", Locale.US)
             val timeFormat = SimpleDateFormat("h:mm a", Locale.US)
             val shortDateFormat = SimpleDateFormat("MMM d", Locale.US)

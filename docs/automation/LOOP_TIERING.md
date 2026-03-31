@@ -4,6 +4,8 @@
 
 **Primary goal:** Get ready to ship to Google Play Store for Android. Stay on track; do not drift from the original UI layout.
 
+**Frontend authority policy:** Only **Master Loop** may implement frontend/UI changes. Other loops may research/propose frontend changes only. Any automated frontend change in Master Loop must pass [FRONTEND_CHANGE_AUTOMATION_GATE.md](./FRONTEND_CHANGE_AUTOMATION_GATE.md).
+
 **Kaizen rule:** One improvement per category per loop (Phase 1–3). Small incremental changes compound. See [LOOP_FOCUS_ROTATION.md](./LOOP_FOCUS_ROTATION.md).
 
 **Established:** 2025-03-11  
@@ -21,6 +23,7 @@
    - **Per-feature gate:** Before implementing each Heavy feature, ask: "Are you ready to implement this new feature? [Feature name]"
    - **Wait for user response** before implementing that feature. Then move to the next (if any); ask again.
 4. **Full autonomous mode:** Light and Medium run **without stopping**. No prompts. Execute all Light and Medium tasks. **During execution:** Check TODOs (CRUCIAL, suggested next steps, TASKS_INDEX or COMPREHENSIVE_AGENT_TODOS); tick off completed items; add new TODOs when you discover work to track. Heavy tasks → document in summary for next run; do not implement without user approval.
+4a. **Approved-from-Heavy execution queue (now Medium):** Features approved for implementation are **reclassified to Medium execution queue** and must be executed on the next loop run before adding new Medium optional work. Current queue: **#7, #8, #9, #17, #20** (see [HEAVY_IDEAS_FAVORITES.md](./HEAVY_IDEAS_FAVORITES.md) § Production stage). These require time and patience and may not complete in one run; make concrete incremental progress each run.
 5. **User response options (when Heavy exists):**
    - "Implement all" (light + medium + heavy)
    - "Light and medium only" (skip heavy; run autonomously)
@@ -75,8 +78,9 @@
 | **Pre-loop checkpoint** | Save a copy (git commit/tag) before the Improvement Loop so you can **revert** if something breaks. Say **"revert"** to restore. |
 | **Research improvements & populate tasks** | Research more ways to improve (from user feedback, summaries, industry patterns). Add ideas to [BRAINSTORM_AND_TASKS.md](./BRAINSTORM_AND_TASKS.md); classify and populate CRUCIAL, LOOP_TIERING, or FUTURE_IDEAS. Update task lists as we learn. |
 | **Idea classification & placement** | Take brainstormed ideas; divide into Light (docs, verification), Medium (small code changes, sandboxing), Heavy (new features → FUTURE_IDEAS). Add 1–2 new items per loop to keep backlog fresh. |
+| **Approved-from-Heavy execution queue** | **When Light/Medium run:** Execute queue items first: [Production stage (100% approved)](./HEAVY_IDEAS_FAVORITES.md#production-stage-100-approved) features (#7, #8, #9, #17, #20). They are treated as Medium execution work now; advance one concrete sub-step each run. |
 
-**Rule:** Small, localized change. Low risk. Supports shipping. **Do not drift from original UI layout.**
+**Rule:** Small, localized change. Low risk. Supports shipping. **Do not drift from original UI layout.** Frontend implementation from this tier is **Master Loop only** and must pass the frontend automation gate (hard-stop checks + OBS >= 7 and SSS >= 8).
 
 ---
 
@@ -89,11 +93,13 @@
 | **Navigation / app chrome** | Scrolling top toolbar/taskbar; hamburger menu to the left of the "Out of route" title. See FUTURE_IDEAS § 6.1, § 6.2. |
 | **Branding** | Possible app name change — ideas to be thought through later. See FUTURE_IDEAS § 7.1. |
 | **ROADMAP features** | Auto drive, Reports screen, address input — **only after sandbox validation** |
+| **Sandbox tooling** | Lightweight feature preview container for fully sandboxed features before implementation (`FUTURE_IDEAS.md` § 13.1). |
 | **Architecture** | Schema changes, new persistence paths, major toolchain upgrades (e.g. AGP 9) |
 | **Large refactors** | Statistics monthly-only; repository interface changes; multi-file refactors; cross-module changes |
 | **Drastic loop improvements** | Changes to how the loop runs: routine changes, adding/removing phases, changing tier definitions, new loops, major process or automation changes. **Do not auto-implement** — document; add to backlog or FUTURE_IDEAS; require human approval. See [UNIVERSAL_LOOP_PROMPT](../agents/data-sets/hub/UNIVERSAL_LOOP_PROMPT.md). |
 
 **Rule:** New features only. **Must be sandboxed and confirmed working before promotion to Heavy.** **Drastic loop improvements** (process/routine changes) are always Heavy — no auto implementation. See [Sandboxing for new features](#sandboxing-for-new-features) below.
+**Reclassification rule:** Once a Heavy item receives explicit implementation approval, move it out of active Heavy backlog into Medium execution queue.
 
 **Heavy list cap (~50):** When the number of Heavy ideas in [FUTURE_IDEAS.md](../product/FUTURE_IDEAS.md) reaches **around 50**, the loop switches from **producing** new Heavy ideas to **judging and critiquing** existing ones (e.g. score vs quality bar, suggest merge/remove/defer). When the list drops **below 50** again (e.g. after implementation or pruning), the loop returns to producing new ideas. See [HEAVY_IDEAS_FAVORITES.md](./HEAVY_IDEAS_FAVORITES.md) § Heavy list cap.
 
@@ -171,7 +177,7 @@ Before implementing **each** Heavy feature:
 
 ## Prompt Template (when Heavy tasks exist)
 
-```
+```text
 Hold up. Would you like me to implement any of these heavy tasks?
 
 **Heavy tasks (one by one):** List **favorites first** per [HEAVY_IDEAS_FAVORITES.md](./HEAVY_IDEAS_FAVORITES.md); keep list lightly populated.

@@ -2,7 +2,7 @@
 
 **Purpose:** Single source of truth for token policy. **All agents** get the essentials via the **always-apply rule** (`.cursor/rules/self-improvement.mdc` — Token awareness). This doc is the **full policy reference**; there is no round table convening — other agents do not receive this doc in context unless they load it. The always-apply rule already makes Golden Storage Rules and Token Boss authority available to every agent.
 
-**When:** Any agent can reference this doc when clarifying token policy or Token Boss authority. At token loop start we do **not** convene a round table; we record state and start the listener.
+**When:** Any agent can reference this doc when clarifying token policy or Token Boss authority. At token loop start we do **not** convene a round table; we record state and start the listener. Inside the permanent broader `llm loop`, this remains the policy for the token-audit lane.
 
 ## Token saving recommendations (all agents — easy to see)
 
@@ -16,6 +16,8 @@
 | 4 | **New chat when gauge >60%** | Start a new chat when the context gauge is high or when switching task/codebase. |
 | 5 | **Front-load context** | Put relevant docs and paths in the first message instead of building over many messages. |
 | 6 | **Use faster model for simple work** | Simple renames, formatting, single-line fixes use a faster/cheaper model (Cmd/Ctrl+/). |
+| 7 | **Scope safety rules** | Safety/policy rules should use globs or description-only unless they truly matter in every chat. |
+| 8 | **Keep prompts cache-friendly** | Put stable instructions first and volatile task details later so repeated long prompts can reuse cached prefixes. |
 
 **Latest recommended tasks from the token loop:** [TOKEN_LOOP_NEXT_TASKS.md](../automation/TOKEN_LOOP_NEXT_TASKS.md) — read the most recent run section. **Standard practices (updated each loop start/end):** [TOKEN_SAVING_PRACTICES.md](../automation/TOKEN_SAVING_PRACTICES.md). **Master plan (completion %):** [TOKEN_LOOP_MASTER_PLAN.md](../automation/TOKEN_LOOP_MASTER_PLAN.md).
 
@@ -61,8 +63,8 @@ Violations waste tokens and hurt the whole team. When in doubt, ask or check [TO
 
 **In practice:**
 
-- Token Boss is represented by the token loop process and docs: [TOKEN_REDUCTION_LOOP.md](../automation/TOKEN_REDUCTION_LOOP.md), [TOKEN_LOOP_LISTENER.md](../automation/TOKEN_LOOP_LISTENER.md), and this briefing.
-- When the user says “start token loop,” the agent running the loop acts as Token Boss for that run: records state, runs the audit steps, and uses listener data to improve the loop.
+- Token Boss is represented by the token-audit lane process and docs: [LLM_LOOP.md](../automation/LLM_LOOP.md), [TOKEN_REDUCTION_LOOP.md](../automation/TOKEN_REDUCTION_LOOP.md), [TOKEN_LOOP_LISTENER.md](../automation/TOKEN_LOOP_LISTENER.md), and this briefing.
+- When the user says “start llm loop” or “start token loop,” the agent running the token-audit lane acts as Token Boss for that run: records state, runs the audit steps, and uses listener data to improve the loop.
 - **Model delegation:** Token Boss (via docs or run instructions) can specify that certain task types use a faster model (e.g. simple renames, formatting) and reserve stronger models for complex multi-file or architecture work. Underperforming agents may be directed to use the delegated model until metrics improve.
 
 All agents must abide by Token Boss directives. No agent is exempt from the Golden Storage Rules or from model delegation when Token Boss applies it.

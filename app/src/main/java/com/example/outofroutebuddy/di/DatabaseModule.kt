@@ -4,6 +4,7 @@ import android.content.Context
 import com.example.outofroutebuddy.data.AppDatabase
 import com.example.outofroutebuddy.data.PreferencesManager
 import com.example.outofroutebuddy.data.StateCache
+import com.example.outofroutebuddy.data.backup.TripBackupManager
 import com.example.outofroutebuddy.data.dao.TripDao
 import dagger.Module
 import dagger.Provides
@@ -68,5 +69,14 @@ object DatabaseModule {
     @Singleton
     fun provideStateCache(): StateCache {
         return StateCache()
+    }
+
+    @Provides
+    @Singleton
+    fun provideTripBackupManager(
+        @ApplicationContext context: Context,
+        tripDao: TripDao,
+    ): TripBackupManager {
+        return TripBackupManager(context, tripDao)
     }
 } 

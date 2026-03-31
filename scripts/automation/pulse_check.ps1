@@ -1,19 +1,23 @@
 # Run from repo root: .\scripts\automation\pulse_check.ps1
 # Optional: -Quick (skip full test run, only log timestamp and status)
+# Optional: -UseSimpleDebugCleanup (run the consolidated debug/cleanup sweep instead of separate test + lint steps)
 # Optional: -Note "your one-line progress note"
+# Optional: -RunId run-YYYYMMdd-HHmmss (keeps pulse tied to one logical run)
 
 param(
     [switch]$Quick,
-    [string]$Note = ""
+    [switch]$UseSimpleDebugCleanup,
+    [string]$Note = "",
+    [string]$RunId = ""
 )
 
 $ErrorActionPreference = "Continue"
-$RepoRoot = $PSScriptRoot
-for ($i = 0; $i -lt 2; $i++) { $RepoRoot = Split-Path -Parent $RepoRoot }
+. (Join-Path $PSScriptRoot "loop_run_contract.ps1")
+
+$RepoRoot = Get-LoopAutomationRepoRoot -ScriptRoot $PSScriptRoot
 Set-Location $RepoRoot
 
 $PulseLog = Join-Path $RepoRoot "docs\automation\pulse_log.txt"
-$PlanPath = Join-Path $RepoRoot "docs\automation\8_HOUR_IMPROVEMENT_PLAN.md"
 $ts = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
 
 # Ensure log directory exists
@@ -24,9 +28,37 @@ $line = "---"
 Add-Content -Path $PulseLog -Value $line
 Add-Content -Path $PulseLog -Value "[$ts] PULSE"
 
-# 1. Unit tests (unless -Quick)
+# 1. Readiness checks (unless -Quick)
 $testResult = "skipped"
-if (-not $Quick) {
+$lintResult = "skipped"
+$detektResult = "not run"
+$runMode = if ($Quick) {
+    "quick"
+} elseif ($UseSimpleDebugCleanup) {
+    "simple_debug_cleanup"
+} else {
+    "standard"
+}
+
+if (-not $Quick -and $UseSimpleDebugCleanup) {
+    $debugScript = Join-Path $PSScriptRoot "run_simple_debug_cleanup.ps1"
+    try {
+        & $debugScript
+        if ($LASTEXITCODE -eq 0) {
+            $testResult = "included in simple debug cleanup"
+            $lintResult = "included in simple debug cleanup"
+            $detektResult = "included in simple debug cleanup"
+        } else {
+            $testResult = "FAILED via simple debug cleanup"
+            $lintResult = "check script output"
+            $detektResult = "check script output"
+        }
+    } catch {
+        $testResult = "error: $($_.Exception.Message)"
+        $lintResult = "not completed"
+        $detektResult = "not completed"
+    }
+} elseif (-not $Quick) {
     try {
         $out = & .\gradlew.bat :app:testDebugUnitTest --no-daemon 2>&1 | Out-String
         if ($LASTEXITCODE -eq 0) {
@@ -39,25 +71,25 @@ if (-not $Quick) {
     } catch {
         $testResult = "error: $($_.Exception.Message)"
     }
-} else {
-    $testResult = "quick run (skipped)"
-}
-Add-Content -Path $PulseLog -Value "  tests: $testResult"
 
-# 2. Lint (every 2nd pulse or when not -Quick) — use file timestamp to alternate
-$doLint = -not $Quick
-if ($doLint) {
     try {
         $lintOut = & .\gradlew.bat :app:lintDebug --no-daemon 2>&1 | Out-String
-        if ($lintOut -match "(\d+)\s+errors") { Add-Content -Path $PulseLog -Value "  lint: $($Matches[1]) errors" }
-        elseif ($lintOut -match "BUILD SUCCESSFUL") { Add-Content -Path $PulseLog -Value "  lint: 0 errors" }
-        else { Add-Content -Path $PulseLog -Value "  lint: run completed" }
+        if ($lintOut -match "(\d+)\s+errors") { $lintResult = "$($Matches[1]) errors" }
+        elseif ($lintOut -match "BUILD SUCCESSFUL") { $lintResult = "0 errors" }
+        else { $lintResult = "run completed" }
     } catch {
-        Add-Content -Path $PulseLog -Value "  lint: error"
+        $lintResult = "error"
     }
 } else {
-    Add-Content -Path $PulseLog -Value "  lint: skipped"
+    $testResult = "quick run (skipped)"
+    $lintResult = "quick run (skipped)"
 }
+
+# 2. Log results
+Add-Content -Path $PulseLog -Value "  mode: $runMode"
+Add-Content -Path $PulseLog -Value "  tests: $testResult"
+Add-Content -Path $PulseLog -Value "  lint: $lintResult"
+Add-Content -Path $PulseLog -Value "  detekt: $detektResult"
 
 # 3. Note
 if ($Note) { Add-Content -Path $PulseLog -Value "  note: $Note" }
@@ -68,12 +100,28 @@ Add-Content -Path $PulseLog -Value ""
 $ListenerScript = Join-Path $PSScriptRoot "loop_listener.ps1"
 if (Test-Path $ListenerScript) {
     try {
-        $metricsJson = @{ tests = $testResult } | ConvertTo-Json -Compress
-        & $ListenerScript -Event "pulse" -Note $Note -Metrics $metricsJson 2>$null
+        $metricsJson = @{
+            mode = $runMode
+            tests = $testResult
+            lint = $lintResult
+            detekt = $detektResult
+        } | ConvertTo-Json -Compress
+        $listenerParams = @{
+            Event = "pulse"
+            Note = $Note
+            Metrics = $metricsJson
+        }
+        if ($RunId) {
+            $listenerParams["RunId"] = $RunId
+        }
+        & $ListenerScript @listenerParams 2>$null
     } catch { }
 }
 
 # Console summary
 Write-Host "[$ts] Pulse recorded -> $PulseLog"
+Write-Host "  mode: $runMode"
 Write-Host "  tests: $testResult"
+Write-Host "  lint: $lintResult"
+Write-Host "  detekt: $detektResult"
 Write-Host "  log: $PulseLog"

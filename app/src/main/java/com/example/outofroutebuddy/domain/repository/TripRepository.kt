@@ -158,6 +158,16 @@ interface TripRepository {
         startDate: Date,
         endDate: Date,
     ): String
+
+    /**
+     * Export additive shared-pool trip data for the given date range and tier.
+     * This is outward-facing export data only; Room remains the source of truth.
+     */
+    suspend fun exportSharedPoolTripData(
+        startDate: Date,
+        endDate: Date,
+        tier: DataTier = DataTier.GOLD,
+    ): String
 }
 
 /**

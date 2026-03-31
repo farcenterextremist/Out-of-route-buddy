@@ -4,7 +4,7 @@
 
 **Path:** `docs/agents/data-sets/`  
 **Hub (completed outputs):** `docs/agents/data-sets/hub/`  
-**Last updated:** 2026-03-11
+**Last updated:** 2026-03-16
 
 ---
 
@@ -20,6 +20,14 @@ All agents deposit **finished** reports, exports, and artifacts here. When the u
 | [2026-03-11_cyber-security_loop3-proof-of-work-and-benefits.md](2026-03-11_cyber-security_loop3-proof-of-work-and-benefits.md) | cyber-security | Loop #3: proof of work, 4/4 validation, benefits |
 | [2026-03-11_cyber-security_purple-training.json](2026-03-11_cyber-security_purple-training.json) | cyber-security | Structured training: validation_simulations, synthetic_scenarios |
 | [2026-03-11_cyber-security_data-summary-and-utilization.md](2026-03-11_cyber-security_data-summary-and-utilization.md) | cyber-security | Data collected, how to use (regression, few-shot, metrics) |
+| [2026-03-13_data-loop_loop3-quality-summary.md](2026-03-13_data-loop_loop3-quality-summary.md) | data-loop | Loop #3: quality summary, proof of work, benefits, provenance-oriented validation. |
+| [2026-03-13_master-loop_loop-gates-summary.md](2026-03-13_master-loop_loop-gates-summary.md) | master-loop | LOOP GATES run: policy wiring, production-stage progress, test/lint verification, shared-state sync. |
+| [2026-03-13_master-loop_mini-architecture-guard-summary.md](2026-03-13_master-loop_mini-architecture-guard-summary.md) | master-loop | Mini loop: architecture guard, regression checks, focused readiness proof, shared-state sync. |
+| [2026-03-13_master-loop_ready-metrics-summary.md](2026-03-13_master-loop_ready-metrics-summary.md) | master-loop | Ready-metrics run: architecture checklist increment, neat metrics, shared-state/hub updates. |
+| [2026-03-13_cyber-security_loop5-proof-of-work-and-benefits.md](2026-03-13_cyber-security_loop5-proof-of-work-and-benefits.md) | cyber-security | Loop #5: proof of work, benefits, validation baseline, shared-state/hub completion. |
+| [2026-03-13_cyber-security_purple-training.json](2026-03-13_cyber-security_purple-training.json) | cyber-security | Loop #5 structured training: validation simulations and synthetic scenarios for regression. |
+| [2026-03-14_data-loop_loop4-quality-summary.md](2026-03-14_data-loop_loop4-quality-summary.md) | data-loop | Loop #4: quality summary with provenance standard and quality-feedback research. |
+| [2026-03-15_master-loop_role-cube-and-mini-loop-summary.md](2026-03-15_master-loop_role-cube-and-mini-loop-summary.md) | master-loop | Role cube and mini-loop summary: listener, liveness, continuity, and shared-state findings. |
 
 **Agent prompt:** [SEND_TO_HUB_PROMPT.md](SEND_TO_HUB_PROMPT.md)
 

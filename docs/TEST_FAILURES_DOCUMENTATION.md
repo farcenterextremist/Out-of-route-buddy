@@ -14,3 +14,9 @@
 ---
 
 *See [FAILING_OR_IGNORED_TESTS.md](./qa/FAILING_OR_IGNORED_TESTS.md) for full tracking.*
+
+---
+
+## Active remediation plan (debugging pass)
+
+To **fix the current 10 unit-test failures + Detekt/Kotlin mismatch + Windows test lock**, follow **[DEBUGGING_REMEDIATION_PLAN.md](./DEBUGGING_REMEDIATION_PLAN.md)** (phased checklist and commands).

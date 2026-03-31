@@ -1,0 +1,83 @@
+﻿{
+    "git_head":  "0349d7806c2e454020f99fb79ca7a961df1131d9",
+    "always_apply_count":  2,
+    "run_id":  "token-20260316-0147",
+    "purpose":  "rollback and progress tracking; what works / what doesn\u0027t",
+    "always_apply_lines":  54,
+    "rules":  [
+                  {
+                      "line_count":  23,
+                      "always_apply":  false,
+                      "name":  "2-hour-loop.mdc"
+                  },
+                  {
+                      "line_count":  32,
+                      "always_apply":  false,
+                      "name":  "agent-spawn-universal.mdc"
+                  },
+                  {
+                      "line_count":  14,
+                      "always_apply":  false,
+                      "name":  "blue-team.mdc"
+                  },
+                  {
+                      "line_count":  13,
+                      "always_apply":  false,
+                      "name":  "codey.mdc"
+                  },
+                  {
+                      "line_count":  9,
+                      "always_apply":  true,
+                      "name":  "data-separation.mdc"
+                  },
+                  {
+                      "line_count":  18,
+                      "always_apply":  false,
+                      "name":  "kotlin-best-practices.mdc"
+                  },
+                  {
+                      "line_count":  36,
+                      "always_apply":  false,
+                      "name":  "loop-automation-boosters.mdc"
+                  },
+                  {
+                      "line_count":  20,
+                      "always_apply":  false,
+                      "name":  "loop-continuity-enforcement.mdc"
+                  },
+                  {
+                      "line_count":  17,
+                      "always_apply":  false,
+                      "name":  "loop-data-retention.mdc"
+                  },
+                  {
+                      "line_count":  14,
+                      "always_apply":  false,
+                      "name":  "red-team.mdc"
+                  },
+                  {
+                      "line_count":  45,
+                      "always_apply":  true,
+                      "name":  "self-improvement.mdc"
+                  },
+                  {
+                      "line_count":  42,
+                      "always_apply":  false,
+                      "name":  "universal-loop.mdc"
+                  }
+              ],
+    "ts":  "2026-03-16T01:47:42Z",
+    "settings_snippet":  {
+                             "search_exclude":  {
+                                                    "**/.gradle/**":  true,
+                                                    "**/build/**":  true
+                                                },
+                             "files_watcher_exclude":  {
+                                                           "**/.git/objects/**":  true,
+                                                           "**/.git/subtree-cache/**":  true,
+                                                           "**/.gradle/**":  true,
+                                                           "**/build/**":  true,
+                                                           "**/.cursor/**":  true
+                                                       }
+                         }
+}

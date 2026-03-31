@@ -34,8 +34,8 @@ $events = @(
     @{ e = "token_loop_start"; s = ""; n = "simulation"; m = "{}" },
     @{ e = "step_start";       s = "1"; n = "audit rules"; m = "{}" },
     @{ e = "step_end";         s = "1"; n = ""; m = '{"always_apply_count":1,"always_apply_lines":57}' },
-    @{ e = "step_start";       s = "2"; n = "check new always-apply"; m = "{}" },
-    @{ e = "step_end";         s = "2"; n = ""; m = "{}" },
+    @{ e = "step_start";       s = "5"; n = "update docs"; m = "{}" },
+    @{ e = "step_end";         s = "5"; n = ""; m = '{"changed_rules":true,"changed_skills":false,"changed_settings":true,"changed_cache_index_hygiene":true,"api_usage_snapshot_written":true,"api_usage_num_model_requests":5,"api_usage_input_tokens":1500,"api_usage_output_tokens":350}' },
     @{ e = "token_loop_end";   s = ""; n = "steps=2"; m = '{"steps_completed":2}' }
 )
 foreach ($ev in $events) {
@@ -111,6 +111,42 @@ if (-not $stepEndWithMetrics -or -not $stepEndWithMetrics.metrics) {
         $failCount++
     } else {
         Write-Host "PASS: step_end metrics parsed (always_apply_count, always_apply_lines)"
+    }
+}
+
+# 7. Verify change-surface and API usage metrics parse cleanly
+$stepFiveMetrics = $lines | ForEach-Object {
+    $o = $_ | ConvertFrom-Json
+    if ($o.event -eq "step_end" -and $o.step -eq "5" -and (Get-Member -InputObject $o -Name "metrics" -MemberType Properties -ErrorAction SilentlyContinue)) {
+        $o
+    }
+} | Select-Object -First 1
+if (-not $stepFiveMetrics -or -not $stepFiveMetrics.metrics) {
+    Write-Host "FAIL: Step 5 change-surface metrics missing"
+    $failCount++
+} else {
+    $m = $stepFiveMetrics.metrics
+    $requiredMetricKeys = @(
+        "changed_rules",
+        "changed_skills",
+        "changed_settings",
+        "changed_cache_index_hygiene",
+        "api_usage_snapshot_written",
+        "api_usage_num_model_requests",
+        "api_usage_input_tokens",
+        "api_usage_output_tokens"
+    )
+    $missingMetricKeys = @()
+    foreach ($key in $requiredMetricKeys) {
+        if (-not (Get-Member -InputObject $m -Name $key -MemberType Properties -ErrorAction SilentlyContinue)) {
+            $missingMetricKeys += $key
+        }
+    }
+    if ($missingMetricKeys.Count -gt 0) {
+        Write-Host "FAIL: Step 5 metrics missing keys: $($missingMetricKeys -join ', ')"
+        $failCount++
+    } else {
+        Write-Host "PASS: Step 5 change-surface/API usage metrics parsed"
     }
 }
 

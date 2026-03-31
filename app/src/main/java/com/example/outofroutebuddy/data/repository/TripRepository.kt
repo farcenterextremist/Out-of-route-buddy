@@ -88,6 +88,8 @@ class TripRepository(private val tripDao: TripDao) {
                         backRoadsPercent = gpsMetadata?.get("backRoadsPercent") as? Double ?: 0.0,
                         backRoadsMinutes = gpsMetadata?.get("backRoadsMinutes") as? Int ?: 0,
                         truckStopsVisited = gpsMetadata?.get("truckStopsVisited") as? Int ?: 0,
+                        pickupAddress = gpsMetadata?.get("pickupAddress") as? String ?: "",
+                        dropoffAddress = gpsMetadata?.get("dropoffAddress") as? String ?: "",
                         dataTier = gpsMetadata?.get("dataTier") as? DataTier ?: DataTier.GOLD,
                     )
 

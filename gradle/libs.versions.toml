@@ -36,7 +36,7 @@ mockito-kotlin = "5.2.1"
 orchestrator = "1.4.2"
 gson = "2.10.1"
 work = "2.9.0"
-detekt = "1.23.5"
+detekt = "1.23.8"
 # Plugins not in [plugins] below (used for version.ref only)
 firebase-crashlytics = "2.9.9"
 ksp = "2.0.21-1.0.27"

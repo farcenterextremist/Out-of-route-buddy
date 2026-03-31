@@ -1,14 +1,18 @@
 package com.example.outofroutebuddy.data.repository
 
 import android.util.Log
+import com.example.outofroutebuddy.data.archive.SharedPoolTripExportBundleFactory
 import com.example.outofroutebuddy.data.entities.TripEntity
 import com.example.outofroutebuddy.data.StateCache
 import com.example.outofroutebuddy.domain.models.GpsMetadata
 import com.example.outofroutebuddy.domain.models.Trip
 import com.example.outofroutebuddy.domain.models.TripStatus
 import com.example.outofroutebuddy.domain.models.DataTier
+import com.example.outofroutebuddy.domain.data.SharedPoolExportReason
+import com.example.outofroutebuddy.domain.data.TripSharedPoolExportService
 import com.example.outofroutebuddy.domain.repository.TripRepository as DomainTripRepository
 import com.example.outofroutebuddy.domain.repository.TripStatistics
+import com.google.gson.Gson
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -36,6 +40,7 @@ import com.example.outofroutebuddy.utils.extensions.startOfMonth
 class DomainTripRepositoryAdapter(
     private val dataRepository: DataTripRepository,
     private val stateCache: StateCache?,
+    private val sharedPoolExportService: TripSharedPoolExportService? = null,
 ) : DomainTripRepository {
 
     companion object {
@@ -156,6 +161,8 @@ class DomainTripRepositoryAdapter(
             endTime = entity.tripEndTime,
             timeZoneId = entity.tripTimeZoneId,
             status = TripStatus.COMPLETED,
+            pickupAddress = entity.pickupAddress,
+            dropoffAddress = entity.dropoffAddress,
             dataTier = entity.dataTier,
             gpsMetadata = GpsMetadata(
                 totalPoints = entity.totalGpsPoints,
@@ -309,8 +316,14 @@ class DomainTripRepositoryAdapter(
         trip.endTime?.let { gpsMetadata["tripEndTime"] = it }
         trip.timeZoneId?.let { gpsMetadata["tripTimeZoneId"] = it }
         gpsMetadata["dataTier"] = trip.dataTier
+        if (trip.pickupAddress.isNotBlank()) gpsMetadata["pickupAddress"] = trip.pickupAddress
+        if (trip.dropoffAddress.isNotBlank()) gpsMetadata["dropoffAddress"] = trip.dropoffAddress
         val id = dataRepository.insertTrip(dataTrip, if (gpsMetadata.isEmpty()) null else gpsMetadata)
         stateCache?.invalidateAll()
+        exportHumanTripsIfNeeded(
+            trips = listOf(trip.copy(id = id.toString())),
+            reason = SharedPoolExportReason.NEW_HUMAN_TRIP,
+        )
         return id.toString()
     }
 
@@ -324,7 +337,15 @@ class DomainTripRepositoryAdapter(
             actualMiles = trip.actualMiles
         )
         return dataRepository.updateTrip(dataTrip)
-            .also { if (it) stateCache?.invalidateAll() }
+            .also { updated ->
+                if (updated) {
+                    stateCache?.invalidateAll()
+                    exportHumanTripsIfNeeded(
+                        trips = listOf(trip),
+                        reason = SharedPoolExportReason.UPDATED_HUMAN_TRIP,
+                    )
+                }
+            }
     }
 
     /** Deletes trip; returns false if id invalid or not found. */
@@ -389,5 +410,32 @@ class DomainTripRepositoryAdapter(
     override suspend fun exportTripData(startDate: Date, endDate: Date): String {
         val trips = dataRepository.getTripsForDateRange(startDate, endDate)
         return com.google.gson.Gson().toJson(trips)
+    }
+
+    override suspend fun exportSharedPoolTripData(
+        startDate: Date,
+        endDate: Date,
+        tier: DataTier,
+    ): String {
+        val rangeEndExclusive = toExclusiveEnd(endDate)
+        val trips = dataRepository.getTripEntitiesOverlappingRange(startDate, rangeEndExclusive)
+            .map(::mapTripEntityToDomain)
+            .filter { it.dataTier == tier }
+        return Gson().toJson(
+            SharedPoolTripExportBundleFactory.createHumanTripBundle(
+                trips = trips,
+                reason = SharedPoolExportReason.MANUAL_RANGE_EXPORT,
+            ),
+        )
+    }
+
+    private suspend fun exportHumanTripsIfNeeded(
+        trips: List<Trip>,
+        reason: SharedPoolExportReason,
+    ) {
+        val exportableTrips = trips.filter { it.dataTier == DataTier.GOLD }
+        if (exportableTrips.isEmpty()) return
+        sharedPoolExportService?.exportGoldTrips(exportableTrips, reason)
+            ?.onFailure { Log.w(TAG, "Shared-pool export failed after trip write", it) }
     }
 } 

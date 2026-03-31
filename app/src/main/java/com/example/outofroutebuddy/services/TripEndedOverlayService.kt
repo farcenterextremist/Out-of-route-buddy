@@ -165,15 +165,16 @@ class TripEndedOverlayService : Service() {
             y = dp(120)
         }
         val container = FrameLayout(this).apply {
-            setBackgroundResource(R.drawable.button_primary_material)
+            setBackgroundResource(R.drawable.overlay_bubble_background)
             alpha = 0.95f
         }
         val imageView = ImageView(this).apply {
-            setImageResource(R.mipmap.ic_launcher)
+            setImageResource(R.drawable.ic_notification_truck)
             scaleType = ImageView.ScaleType.CENTER_INSIDE
             contentDescription = getString(R.string.trip_ended_bubble_content_description)
-            val paddingPx = dp(12)
+            val paddingPx = dp(24)
             setPadding(paddingPx, paddingPx, paddingPx, paddingPx)
+            setColorFilter(android.graphics.Color.WHITE, android.graphics.PorterDuff.Mode.SRC_IN)
         }
         container.addView(imageView, FrameLayout.LayoutParams(
             FrameLayout.LayoutParams.MATCH_PARENT,

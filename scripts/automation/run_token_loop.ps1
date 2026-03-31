@@ -1,18 +1,25 @@
 # Token Reduction Loop — Start a run and record it via the listener.
-# When user says "start token loop," the listener starts alongside the loop: run this script (or invoke token_loop_start), then run the 6 steps with step_start/step_end, then token_loop_end. Listener data is used to improve the loop (save token spend, manage context squish).
+# When user says "start token loop," the listener starts alongside the loop: run this script (or invoke token_loop_start), then run steps 0-7 with step_start/step_end, then token_loop_end. Listener data is used to improve the loop (save token spend, manage context squish).
 # Run from repo root: .\scripts\automation\run_token_loop.ps1
 # Optional: .\scripts\automation\run_token_loop.ps1 -Test  (run all token loop tests first)
 
-param([switch]$Test)
+param(
+    [switch]$Test,
+    [string]$RunId = ""
+)
 
 $ErrorActionPreference = "Continue"
-$RepoRoot = $PSScriptRoot
-for ($i = 0; $i -lt 2; $i++) { $RepoRoot = Split-Path -Parent $RepoRoot }
+. (Join-Path $PSScriptRoot "loop_run_contract.ps1")
+
+$RepoRoot = Get-LoopAutomationRepoRoot -ScriptRoot $PSScriptRoot
 Set-Location $RepoRoot
 
 $ListenerScript = Join-Path $RepoRoot "scripts\automation\token_loop_listener.ps1"
 $SnapshotScript = Join-Path $RepoRoot "scripts\automation\token_loop_state_snapshot.ps1"
-$RunId = "token-$((Get-Date).ToString('yyyyMMdd-HHmm'))"
+$StartScript = Join-Path $RepoRoot "scripts\automation\start_loop_run.ps1"
+if (-not $RunId) {
+    $RunId = New-LoopRunId -Prefix "token"
+}
 
 if ($Test) {
     Write-Host "Running all token loop tests..."
@@ -36,8 +43,12 @@ if (Test-Path $SnapshotScript) {
     Write-Host "WARN: token_loop_state_snapshot.ps1 not found; skipping state snapshot."
 }
 
-# 2. Start listener (use same RunId for all events this run)
-& $ListenerScript -Event "token_loop_start" -Note "run_token_loop.ps1" -RunId $RunId
+# 2. Start wrapper + listener (use same RunId for all events this run)
+if (Test-Path $StartScript) {
+    & $StartScript -Loop "token" -RunId $RunId -EmitStartEvent -Note "run_token_loop.ps1" | Out-Null
+} else {
+    & $ListenerScript -Event "token_loop_start" -Note "run_token_loop.ps1" -RunId $RunId
+}
 
 Write-Host ""
 Write-Host "Token Reduction Loop started. RunId: $RunId"
@@ -45,5 +56,6 @@ Write-Host "State snapshot: docs\automation\token_loop_snapshots\$RunId.json (ro
 Write-Host "Goals: save token spend, manage context squish. Listener data improves the loop."
 Write-Host "Follow docs/automation/TOKEN_REDUCTION_LOOP.md steps 0-7 (0=deep research, 7=organize results and recommend next tasks in TOKEN_LOOP_NEXT_TASKS.md)."
 Write-Host "Invoke token_loop_listener.ps1 at each step (step_start, step_end) and at end (token_loop_end). No human in the loop."
-Write-Host "Example end: .\scripts\automation\token_loop_listener.ps1 -Event token_loop_end -Note steps=8 -RunId $RunId -Metrics '{`"steps_completed`":8}'"
+Write-Host "When the ledger/summary is ready, prefer .\scripts\automation\complete_token_loop_run.ps1 so shared-state closeout happens before token_loop_end is recorded."
+Write-Host "Example end: .\scripts\automation\complete_token_loop_run.ps1 -RunId $RunId -SummaryPath docs/automation/TOKEN_LOOP_SUMMARY_YYYY-MM-DD.md -Metrics '{`"steps_completed`":8}'"
 Write-Host ""

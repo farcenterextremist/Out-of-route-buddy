@@ -15,6 +15,7 @@
 | **Files changed** | Git | `git diff --stat` or `git status --short` count |
 | **Focus area** | This run | Security, UI/UX, Shipability, Code Quality, File Structure, Data/Metrics |
 | **Variant** | Trigger | Quick (30 min), Standard (90 min), Full (2 hr) |
+| **Sandboxing status** | Phase 2.4 | Pass/fail + action + artifact path (required for main loop runs) |
 
 ---
 
@@ -55,8 +56,93 @@ Copy into every summary:
 | Files changed | N |
 | Focus | [Security \| UI/UX \| Shipability \| Code Quality \| File Structure \| Data/Metrics] |
 | Variant | [Quick \| Standard \| Full] |
+| Sandboxing | [Pass/Fail], action, artifact path |
 | Checkpoint | `commit` or `tag` |
 ```
+
+---
+
+## Neat Details Block (for next-loop report)
+
+Use this block at the end of each loop summary so users get the richer view they asked for.
+
+```markdown
+## Loop Effectiveness
+
+- Planned tasks completed: X/Y
+- Most effective action: ...
+- Biggest blocker: ...
+
+## Loop Efficiency Score
+
+- Efficiency score: X/100
+- Progress bar: [################----] XX%
+- Grade: [A | B | C]
+- Why it moved: [1 short sentence tied to loop design or automation hardening]
+
+## Useful Data Generated
+
+- [artifact/path] — why it is useful/reusable
+- [artifact/path] — why it is useful/reusable
+
+## Loop Performance & Health
+
+- Liveness checks: pass/fail (count)
+- Readiness checks: pass/fail (tests/lint)
+- Test duration: ...
+- Lint duration: ...
+- Gate status (LOOP GATES): start pass / end pass
+
+## Interesting Metrics
+
+- Warnings delta: ...
+- Hub artifacts added this run: ...
+- Shared-state freshness (`loop_latest/<loop>.json`): ...
+- Production-stage incremental progress count: ...
+```
+
+### Loop efficiency scoring guide
+
+Use the automation score when the loop design itself changes:
+
+- **Run contract wiring** — stable `run_id` propagation across listeners/runners
+- **Gate wrappers** — reusable start/finish wrappers in use
+- **Shared-state audit** — drift check is clean
+- **Continuity protection** — continuity suite is green
+- **Health signals** — liveness + pulse/readiness evidence present
+- **Documentation alignment** — docs reflect the current automation helpers
+
+Script:
+
+```powershell
+.\scripts\automation\measure_loop_efficiency.ps1
+```
+
+State output:
+- `docs/automation/loop_efficiency_state.json`
+
+Persistence:
+- `scripts/automation/finish_loop_run.ps1` now writes the `## Loop Efficiency Score` block into the summary automatically.
+- `scripts/automation/write_loop_efficiency_block.ps1` keeps the block idempotent for the same `run_id`, so reruns replace the block instead of appending duplicates.
+
+---
+
+## Proof of Quality Block (required)
+
+Use this in every loop summary. No A-grade without this evidence.
+
+```markdown
+## Proof of Quality
+
+- Standards used: ISO/IEC 25010 + DORA + SRE golden signals (project-adapted)
+- Liveness evidence: [command + result]
+- Readiness evidence: [tests command/result], [lint command/result]
+- Change evidence: [key files/tests proving behavior]
+- Residual risks: [known risks and why acceptable this run]
+- Traceability: [summary path], [ledger path], [shared-state files updated]
+```
+
+Reference: `docs/automation/QUALITY_STANDARDS_AND_PROOF.md`
 
 ---
 

@@ -18,7 +18,7 @@ import java.util.TimeZone
  * - Date normalization (start-of-day consistency)
  * - Period boundary calculations (STANDARD vs CUSTOM)
  * - Close button uses displayed month (not original reference)
- * - DaysWithTripsDecorator timezone/epoch alignment
+ * - DaysWithTripsDecorator timezone/epoch alignment (start-of-day millis in set)
  * - Year boundary, leap year, month boundary edge cases
  */
 class CalendarPeriodReliabilityTest {
@@ -126,8 +126,8 @@ class CalendarPeriodReliabilityTest {
         cal.set(Calendar.MILLISECOND, 0)
         val millisStartOfDay = cal.timeInMillis
 
-        // DaysWithTripsDecorator converts CalendarDay to start-of-day millis
-        // So we must store start-of-day millis in datesWithTripsMillis
+        // DaysWithTripsDecorator compares CalendarDay to start-of-day millis
+        // So we must store start-of-day millis in the day set
         val decorator = DaysWithTripsDecorator(setOf(millisStartOfDay), null, null)
         assertTrue(decorator.shouldDecorate(com.prolificinteractive.materialcalendarview.CalendarDay.from(2024, 3, 15)))
 

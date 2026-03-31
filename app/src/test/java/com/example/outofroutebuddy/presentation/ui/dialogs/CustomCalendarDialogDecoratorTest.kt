@@ -13,8 +13,8 @@ import java.util.*
  * - Today equals period end (grey should NOT override red)
  * - Today as regular day in period (grey applies)
  * - Single-day period (start == end)
- * - DaysWithTrips time normalization
- * - Empty datesWithTrips set
+ * - DaysWithTripsDecorator time normalization (start-of-day millis in set)
+ * - Empty day set
  */
 class CustomCalendarDialogDecoratorTest {
 
@@ -120,6 +120,12 @@ class CustomCalendarDialogDecoratorTest {
 
     // ==================== DaysWithTripsDecorator ====================
 
+    private fun daysWithTripsDecorator(
+        dayMillis: Set<Long>,
+        periodStart: CalendarDay? = null,
+        periodEnd: CalendarDay? = null,
+    ) = DaysWithTripsDecorator(dayMillis, periodStart, periodEnd)
+
     @Test
     fun `DaysWithTripsDecorator decorates dates with trips`() {
         val cal = Calendar.getInstance()
@@ -127,7 +133,7 @@ class CustomCalendarDialogDecoratorTest {
         cal.set(Calendar.MILLISECOND, 0)
         val millis = cal.timeInMillis
 
-        val decorator = DaysWithTripsDecorator(setOf(millis), null, null)
+        val decorator = daysWithTripsDecorator(setOf(millis))
 
         assertTrue(decorator.shouldDecorate(CalendarDay.from(2024, 3, 15)))
     }
@@ -139,34 +145,32 @@ class CustomCalendarDialogDecoratorTest {
         cal.set(Calendar.MILLISECOND, 0)
         val millis = cal.timeInMillis
 
-        val decorator = DaysWithTripsDecorator(setOf(millis), null, null)
+        val decorator = daysWithTripsDecorator(setOf(millis))
 
         assertFalse(decorator.shouldDecorate(CalendarDay.from(2024, 3, 14)))
         assertFalse(decorator.shouldDecorate(CalendarDay.from(2024, 3, 16)))
     }
 
     @Test
-    fun `DaysWithTripsDecorator normalizes to start of day`() {
-        // Trip at 14:30 - should match CalendarDay for that date (normalized to 00:00)
+    fun `DaysWithTripsDecorator matches when set stores start-of-day millis`() {
+        // Trip at 14:30 — normalize to 00:00 for storage (as the app does)
         val cal = Calendar.getInstance()
         cal.set(2024, Calendar.MARCH, 15, 14, 30, 0)
         cal.set(Calendar.MILLISECOND, 500)
-        // Normalize to start of day for storage (as the app does)
         cal.set(Calendar.HOUR_OF_DAY, 0)
         cal.set(Calendar.MINUTE, 0)
         cal.set(Calendar.SECOND, 0)
         cal.set(Calendar.MILLISECOND, 0)
         val millis = cal.timeInMillis
 
-        val decorator = DaysWithTripsDecorator(setOf(millis), null, null)
+        val decorator = daysWithTripsDecorator(setOf(millis))
 
-        // Decorator converts CalendarDay to start-of-day millis for lookup
         assertTrue(decorator.shouldDecorate(CalendarDay.from(2024, 3, 15)))
     }
 
     @Test
     fun `DaysWithTripsDecorator handles empty set`() {
-        val decorator = DaysWithTripsDecorator(emptySet(), null, null)
+        val decorator = daysWithTripsDecorator(emptySet())
 
         assertFalse(decorator.shouldDecorate(CalendarDay.from(2024, 3, 15)))
         assertFalse(decorator.shouldDecorate(CalendarDay.today()))
@@ -182,7 +186,7 @@ class CustomCalendarDialogDecoratorTest {
             set(2024, Calendar.MARCH, 20, 0, 0, 0)
             set(Calendar.MILLISECOND, 0)
         }
-        val decorator = DaysWithTripsDecorator(setOf(cal1.timeInMillis, cal2.timeInMillis), null, null)
+        val decorator = daysWithTripsDecorator(setOf(cal1.timeInMillis, cal2.timeInMillis))
 
         assertTrue(decorator.shouldDecorate(CalendarDay.from(2024, 3, 10)))
         assertTrue(decorator.shouldDecorate(CalendarDay.from(2024, 3, 20)))
@@ -196,9 +200,31 @@ class CustomCalendarDialogDecoratorTest {
         cal.set(Calendar.MILLISECOND, 0)
         val millis = cal.timeInMillis
 
-        val decorator = DaysWithTripsDecorator(setOf(millis), null, null)
+        val decorator = daysWithTripsDecorator(setOf(millis))
 
         assertTrue(decorator.shouldDecorate(CalendarDay.from(2024, 2, 29)))
         assertFalse(decorator.shouldDecorate(CalendarDay.from(2023, 2, 28))) // No Feb 29 in 2023
+    }
+
+    @Test
+    fun `DaysWithTripsDecorator skips period start and end`() {
+        val cal15 = Calendar.getInstance().apply {
+            set(2024, Calendar.MARCH, 15, 0, 0, 0)
+            set(Calendar.MILLISECOND, 0)
+        }
+        val cal16 = Calendar.getInstance().apply {
+            set(2024, Calendar.MARCH, 16, 0, 0, 0)
+            set(Calendar.MILLISECOND, 0)
+        }
+        val start = CalendarDay.from(2024, 3, 15)
+        val end = CalendarDay.from(2024, 3, 20)
+        val decorator = daysWithTripsDecorator(
+            setOf(cal15.timeInMillis, cal16.timeInMillis),
+            start,
+            end,
+        )
+        assertFalse(decorator.shouldDecorate(start))
+        assertTrue(decorator.shouldDecorate(CalendarDay.from(2024, 3, 16)))
+        assertFalse(decorator.shouldDecorate(end))
     }
 }

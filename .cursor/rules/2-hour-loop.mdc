@@ -13,13 +13,18 @@ alwaysApply: false
 When the user says **GO** (or "start improvement loop", "run improvement loop"):
 
 **Skill:** Invoke **improvement-loop-wizard** (`.cursor/skills/improvement-loop-wizard/SKILL.md`) for step-by-step flow.
+**Consistency skill:** Invoke **loop-consistency-auditor** (`.cursor/skills/loop-consistency-auditor/SKILL.md`) when comparing loop behavior or writing consistency score blocks.
+**Diagnostic skill:** Invoke **loop-diagnostic-sweeper** (`.cursor/skills/loop-diagnostic-sweeper/SKILL.md`) when auditing loop health, reliability, or problem-hunting.
+**Frontend review skill:** Invoke **frontend-pleasantness-reviewer** (`.cursor/skills/frontend-pleasantness-reviewer/SKILL.md`) when assessing whether a UI or flow feels pleasant, polished, or professional.
 
 1. **Common sense:** Read `docs/automation/IMPROVEMENT_LOOP_COMMON_SENSE.md` at loop start. Checkpoint first, respect design intent, tests green.
 2. **Phase 0 — Autonomy:** If user wants no human intervention, ensure one-time setup per `docs/automation/AUTONOMOUS_LOOP_SETUP.md` (Run Everything or add `cd c:\Users\brand\OutofRoutebuddy` to Command Allowlist).
 3. **Phase 0 — Research:** Read: latest `docs/automation/*_LOOP_SUMMARY_*.md` or `docs/automation/120_MINUTE_LOOP_SUMMARY_*.md`, `docs/CRUCIAL_IMPROVEMENTS_TODO.md`, `docs/REDUNDANT_DEAD_CODE_REPORT.md`, `docs/qa/FAILING_OR_IGNORED_TESTS.md`, `docs/security/SECURITY_NOTES.md`, `docs/automation/LOOP_TIERING.md`, `docs/automation/HEAVY_IDEAS_FAVORITES.md` (surface Heavy favorites first; keep list light).
 4. **Phase 0.1b — Tiering & full autonomy:** Per `docs/automation/LOOP_TIERING.md`, classify tasks as Light/Medium/Heavy. **Light + Medium run without stopping.** Only Heavy prompts: if any Heavy tasks exist, ask user; otherwise execute Light + Medium autonomously.
 5. **Phase 0.3 — Self-improvement:** Follow `docs/automation/CURSOR_SELF_IMPROVEMENT.md` (safe web, context refresh, research 1 item). Drastic changes → suggest, don't implement.
-6. **Execute:** Follow `docs/automation/IMPROVEMENT_LOOP_ROUTINE.md` phases 1–4. Full autonomous: Light + Medium run; Heavy deferred unless user approves.
-7. **Summary:** Write `docs/automation/IMPROVEMENT_LOOP_SUMMARY_<date>.md` (or `120_MINUTE_LOOP_SUMMARY_<date>.md`) with A-grade format: Phase 0 note, Metrics block, Quality Grade, suggested next steps.
+6. **Diagnostics:** Pair health checks with `docs/automation/LOOP_DIAGNOSTIC_SWEEP.md` so each substantial loop also searches for likely problems, lints, ignored tests, and residual risk.
+7. **Execute:** Follow `docs/automation/IMPROVEMENT_LOOP_ROUTINE.md` phases 1–4. Full autonomous: Light + Medium run; Heavy deferred unless user approves. **Sandboxing is required every main loop run** (execute one sandbox action and record status/action/artifact path).
+8. **Summary:** Write `docs/automation/IMPROVEMENT_LOOP_SUMMARY_<date>.md` (or `120_MINUTE_LOOP_SUMMARY_<date>.md`) with A-grade format: Phase 0 note, Metrics block, Quality Grade, suggested next steps, `Diagnostic Sweep`, and `Loop Consistency Check` (`Consistency score: X/10`).
+9. **Automation helpers:** Use skills when applicable — `hub-handoff-curator` for polished Hub deposits, `shared-state-reconciler` for loop_shared_events/loop_latest drift, `loop-ledger-normalizer` for ledger-template drift, `loop-readiness-benchmarker` for health/perf trend notes, `heavy-approval-governor` for Heavy gating.
 
 **Routine:** Repeat every 1–2 weeks or pre-release.

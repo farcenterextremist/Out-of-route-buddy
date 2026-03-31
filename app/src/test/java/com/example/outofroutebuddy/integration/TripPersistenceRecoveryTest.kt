@@ -117,6 +117,60 @@ class TripPersistenceRecoveryTest {
     }
 
     @Test
+    fun loadSavedTripState_restoresPausedFlag() {
+        val originalTrip = Trip(
+            id = "paused-trip",
+            startTime = Date(),
+            status = TripStatus.ACTIVE,
+            actualMiles = 9.4,
+            oorMiles = 0.0
+        )
+        persistenceManager.saveActiveTripState(
+            trip = originalTrip,
+            loadedMiles = 10.0,
+            bounceMiles = 2.0,
+            actualMiles = 9.4,
+            isPaused = true
+        )
+
+        val loadedState = persistenceManager.loadSavedTripState()
+
+        assertThat(loadedState).isNotNull()
+        assertThat(loadedState!!.isPaused).isTrue()
+        assertThat(loadedState.actualMiles).isWithin(0.01).of(9.4)
+    }
+
+    @Test
+    fun saveAndLoadTripState_restoresBackgroundTrackingWarnings() {
+        val originalTrip = Trip(
+            id = "warning-trip",
+            startTime = Date(),
+            status = TripStatus.ACTIVE,
+            actualMiles = 4.2,
+            oorMiles = 0.0
+        )
+
+        persistenceManager.saveActiveTripState(
+            trip = originalTrip,
+            loadedMiles = 10.0,
+            bounceMiles = 2.0,
+            actualMiles = 4.2,
+            backgroundTrackingDegraded = true,
+            backgroundTrackingReasons = listOf(
+                "Background location is off, so tracking after closing the app may stop on some devices.",
+                "Battery optimization is still active for OutOfRouteBuddy, which can let the system pause tracking in the background."
+            )
+        )
+
+        val loadedState = persistenceManager.loadSavedTripState()
+
+        assertThat(loadedState).isNotNull()
+        assertThat(loadedState!!.backgroundTrackingDegraded).isTrue()
+        assertThat(loadedState.backgroundTrackingReasons).hasSize(2)
+        assertThat(loadedState.backgroundTrackingReasons.first()).contains("Background location is off")
+    }
+
+    @Test
     fun updateTripProgress_updatesActualMiles() {
         // Given: An active saved trip
         val trip = Trip(

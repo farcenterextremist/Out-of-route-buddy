@@ -18,7 +18,7 @@ import com.example.outofroutebuddy.data.util.DataTierConverter
  */
 @Database(
     entities = [TripEntity::class],
-    version = 5,
+    version = 6,
     exportSchema = true,
 )
 @TypeConverters(DateConverter::class, DataTierConverter::class)
@@ -44,11 +44,11 @@ abstract class AppDatabase : RoomDatabase() {
                         AppDatabase::class.java,
                         "outofroutebuddy_database",
                     )
-                        .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
-                        .addCallback(DatabaseHealthCheck.IntegrityCheckCallback()) // ✅ NEW (#4)
-                        // DB1 (PROJECT_AUDIT): fallbackToDestructiveMigration kept until migration test coverage exists.
-                        // Prevents app crash on migration failure; may cause data loss. Add migration test when schema v2 exists (T4 in COVERAGE_SCORE_AND_CRITICAL_AREAS).
-                        .fallbackToDestructiveMigration()
+                        .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
+                        .addCallback(DatabaseHealthCheck.IntegrityCheckCallback())
+                        // REMOVED: fallbackToDestructiveMigration() — this silently wipes all
+                        // trip data when a migration fails. Better to crash and fix the migration
+                        // than to silently delete GOLD-tier user data.
                         .build()
                 INSTANCE = instance
                 instance
@@ -106,7 +106,86 @@ abstract class AppDatabase : RoomDatabase() {
         internal val MIGRATION_4_5 =
             object : Migration(4, 5) {
                 override fun migrate(db: SupportSQLiteDatabase) {
-                    db.execSQL("ALTER TABLE trips ADD COLUMN dataTier TEXT NOT NULL DEFAULT 'GOLD'")
+                    // Rebuild the table so legacy columns added with SQLite defaults/nullability
+                    // match the exact schema Room expects going forward.
+                    db.execSQL(
+                        """
+                        CREATE TABLE IF NOT EXISTS `trips_new` (
+                            `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                            `date` INTEGER NOT NULL,
+                            `loadedMiles` REAL NOT NULL,
+                            `bounceMiles` REAL NOT NULL,
+                            `actualMiles` REAL NOT NULL,
+                            `oorMiles` REAL NOT NULL,
+                            `oorPercentage` REAL NOT NULL,
+                            `createdAt` INTEGER NOT NULL,
+                            `avgGpsAccuracy` REAL NOT NULL,
+                            `minGpsAccuracy` REAL NOT NULL,
+                            `maxGpsAccuracy` REAL NOT NULL,
+                            `totalGpsPoints` INTEGER NOT NULL,
+                            `validGpsPoints` INTEGER NOT NULL,
+                            `rejectedGpsPoints` INTEGER NOT NULL,
+                            `tripDurationMinutes` INTEGER NOT NULL,
+                            `avgSpeedMph` REAL NOT NULL,
+                            `maxSpeedMph` REAL NOT NULL,
+                            `locationJumpsDetected` INTEGER NOT NULL,
+                            `accuracyWarnings` INTEGER NOT NULL,
+                            `speedAnomalies` INTEGER NOT NULL,
+                            `tripStartTime` INTEGER,
+                            `tripEndTime` INTEGER,
+                            `tripTimeZoneId` TEXT,
+                            `wasInterrupted` INTEGER NOT NULL,
+                            `interruptionCount` INTEGER NOT NULL,
+                            `lastLocationLat` REAL NOT NULL,
+                            `lastLocationLng` REAL NOT NULL,
+                            `lastLocationTime` INTEGER,
+                            `interstatePercent` REAL NOT NULL,
+                            `interstateMinutes` INTEGER NOT NULL,
+                            `backRoadsPercent` REAL NOT NULL,
+                            `backRoadsMinutes` INTEGER NOT NULL,
+                            `truckStopsVisited` INTEGER NOT NULL,
+                            `dataTier` TEXT NOT NULL
+                        )
+                        """.trimIndent()
+                    )
+
+                    db.execSQL(
+                        """
+                        INSERT INTO `trips_new` (
+                            `id`, `date`, `loadedMiles`, `bounceMiles`, `actualMiles`, `oorMiles`, `oorPercentage`, `createdAt`,
+                            `avgGpsAccuracy`, `minGpsAccuracy`, `maxGpsAccuracy`, `totalGpsPoints`, `validGpsPoints`, `rejectedGpsPoints`,
+                            `tripDurationMinutes`, `avgSpeedMph`, `maxSpeedMph`, `locationJumpsDetected`, `accuracyWarnings`, `speedAnomalies`,
+                            `tripStartTime`, `tripEndTime`, `tripTimeZoneId`, `wasInterrupted`, `interruptionCount`,
+                            `lastLocationLat`, `lastLocationLng`, `lastLocationTime`,
+                            `interstatePercent`, `interstateMinutes`, `backRoadsPercent`, `backRoadsMinutes`, `truckStopsVisited`, `dataTier`
+                        )
+                        SELECT
+                            `id`, `date`, `loadedMiles`, `bounceMiles`, `actualMiles`, `oorMiles`, `oorPercentage`, `createdAt`,
+                            `avgGpsAccuracy`, `minGpsAccuracy`, `maxGpsAccuracy`, `totalGpsPoints`, `validGpsPoints`, `rejectedGpsPoints`,
+                            `tripDurationMinutes`, `avgSpeedMph`, `maxSpeedMph`, `locationJumpsDetected`, `accuracyWarnings`, `speedAnomalies`,
+                            `tripStartTime`, `tripEndTime`, `tripTimeZoneId`, `wasInterrupted`, `interruptionCount`,
+                            `lastLocationLat`, `lastLocationLng`, `lastLocationTime`,
+                            COALESCE(`interstatePercent`, 0.0),
+                            COALESCE(`interstateMinutes`, 0),
+                            COALESCE(`backRoadsPercent`, 0.0),
+                            COALESCE(`backRoadsMinutes`, 0),
+                            COALESCE(`truckStopsVisited`, 0),
+                            'GOLD'
+                        FROM `trips`
+                        """.trimIndent()
+                    )
+
+                    db.execSQL("DROP TABLE `trips`")
+                    db.execSQL("ALTER TABLE `trips_new` RENAME TO `trips`")
+                }
+            }
+
+        /** Migration 5→6: add pickup/dropoff address columns. */
+        internal val MIGRATION_5_6 =
+            object : Migration(5, 6) {
+                override fun migrate(db: SupportSQLiteDatabase) {
+                    db.execSQL("ALTER TABLE trips ADD COLUMN pickupAddress TEXT NOT NULL DEFAULT ''")
+                    db.execSQL("ALTER TABLE trips ADD COLUMN dropoffAddress TEXT NOT NULL DEFAULT ''")
                 }
             }
     }

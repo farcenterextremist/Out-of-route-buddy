@@ -4,6 +4,8 @@
 **Visual philosophy:** Calm industrial clarity  
 **Created:** 2025-03-11
 
+**Research digest (Material 3, spacing, type, touch targets, driver context):** [BEAUTIFICATION_RESEARCH_SYNTHESIS.md](BEAUTIFICATION_RESEARCH_SYNTHESIS.md)
+
 ---
 
 ## Part 1 — Implementation Map
@@ -88,12 +90,18 @@
 
 ---
 
-## What remains for later pass
+## Phases 4–6 — Completed (2026-03)
 
-- Toolbar softening (Phase 4)
-- Additional dialogs (dialog_trip_recovery, dialog_period_onboarding) — button styling
-- Danger button tint for delete actions
-- Focus/error state drawables for inputs (if not already wired in code)
+| Area | Changes |
+|------|---------|
+| **Phase 4 toolbar** | `toolbar_background_cracked_road_soft.xml` — ~35% black overlay on banner; `custom_toolbar` uses it. |
+| **Phase 5 screens** | `fragment_trip_history` — primary/secondary MaterialButtons, 8dp grid, surface container stats bar. |
+| **Dialogs** | `dialog_trip_recovery`, `dialog_period_onboarding` — OORB button styles, 24dp padding, 48dp min buttons, radio minHeight 48. |
+| **Tokens (A–E)** | `dimens.xml` — oorb_space_*, card radius/elevation, touch_target_min 48dp. `colors.xml` — surface_container, outline_variant. `styles.xml` — TextAppearance.OORB.*, OORB*DialogButton. |
+| **Trip screen pass** | `fragment_trip_input` — 8dp grid, unified input backgrounds, 16sp body on card + Ludacris rows, 48dp delete/info/pause, statistics card elevation. |
+| **Drawer / Settings** | `nav_drawer_header`, `fragment_settings_root` use dimens. |
+
+**Still optional later:** Danger tint for delete icon buttons; input error-state drawables; full dynamic color (M3 wallpaper).
 
 ---
 

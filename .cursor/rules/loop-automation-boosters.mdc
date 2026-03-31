@@ -1,0 +1,49 @@
+---
+description: "Loop automation boosters — invoke consistency, hub handoff, shared-state, readiness, and heavy-gate helper skills when running loops."
+globs:
+  - "docs/automation/**"
+  - "docs/agents/data-sets/hub/**"
+alwaysApply: false
+---
+
+# Loop Automation Boosters
+
+Use these helpers to speed and harden loop execution:
+
+1. **Consistency scoring**
+   - Skill: `.cursor/skills/loop-consistency-auditor/SKILL.md`
+   - Use when comparing loops or writing `Loop Consistency Check` (X/10).
+
+2. **Loop architecture design**
+   - Skill: `.cursor/skills/loop-architecture-blueprinter/SKILL.md`
+   - Use when redesigning loop phases, gate semantics, or orchestration reliability.
+
+3. **Continuity testing**
+   - Skill: `.cursor/skills/loop-continuity-test-engineer/SKILL.md`
+   - Use when loop docs/scripts/shared-state behavior changed and regressions are possible.
+
+4. **Ledger normalization**
+   - Skill: `.cursor/skills/loop-ledger-normalizer/SKILL.md`
+   - Use when run-block templates drift across Token/Cyber/Synthetic.
+
+5. **Hub handoff quality**
+   - Skill: `.cursor/skills/hub-handoff-curator/SKILL.md`
+   - Use before "send to hub" and when updating hub/README index entries.
+
+6. **Shared-state reconciliation**
+   - Skill: `.cursor/skills/shared-state-reconciler/SKILL.md`
+   - Use when loops run concurrently or shared-state freshness is uncertain.
+
+7. **Readiness benchmarking**
+   - Skill: `.cursor/skills/loop-readiness-benchmarker/SKILL.md`
+   - Use when summarizing loop health/performance and trend regressions.
+
+8. **Heavy gate enforcement**
+   - Skill: `.cursor/skills/heavy-approval-governor/SKILL.md`
+   - Use when scope may be Heavy or approval wording is ambiguous.
+
+Rule of thumb: prefer these helper skills for loop-governance work before inventing a new ad-hoc format.
+
+Before selecting a helper, consult:
+
+- `docs/automation/SKILL_AUTOSELECT_MATRIX.md`

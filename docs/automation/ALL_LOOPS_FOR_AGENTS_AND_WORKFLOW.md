@@ -3,6 +3,9 @@
 **Purpose:** One place that explains **every loop** in the project, **which agent runs it**, and the **workflow** (trigger → phases/steps → outputs). Use this when onboarding an agent or when you need the full picture.
 
 **References:** [LOOPS_AND_IMPROVEMENT_FULL_AXIS.md](./LOOPS_AND_IMPROVEMENT_FULL_AXIS.md), [LOOP_MASTER_ROLE.md](./LOOP_MASTER_ROLE.md), [UNIVERSAL_LOOP_PROMPT.md](../agents/data-sets/hub/UNIVERSAL_LOOP_PROMPT.md).
+**Role organization:** [LOOP_ROLE_CUBE.md](./LOOP_ROLE_CUBE.md) maps methodical ownership across loop roles.
+**Unified direction:** The long-term design is a single `Loopmaster` super-loop with internal lanes and future replica tabs. Use this workflow guide as the lane catalog and execution reference under that shared contract. See `LOOPMASTER_SUPER_LOOP_BLUEPRINT.md`.
+**Default worker layout:** When splitting work across neighboring tabs, use the role-based pattern from `LOOPMASTER_TAB_AND_SPAWN_MODEL.md` so proof and security stay independent from implementation work.
 
 ---
 
@@ -16,6 +19,7 @@
 4. **Tiers** — Auto-implement **Light** and **Medium**. **Drastic loop improvements** (routine changes, new phases, new loops) = **Heavy**: document only; do not implement without human approval.
 5. **Shared state** — At start read [loop_shared_events.jsonl](./loop_shared_events.jsonl) (tail) and [loop_latest/](./loop_latest/) (other loops’ latest). At end append a **finished** event to `loop_shared_events.jsonl` and update **loop_latest/&lt;your_loop&gt;.json**. See [LOOP_DYNAMIC_SHARING.md](./LOOP_DYNAMIC_SHARING.md).
 6. **Minimize slop** — Output specific, traceable, actionable. Critique before depositing. When you have polished output, consider **send to hub** (deposit to `docs/agents/data-sets/hub/` and add a line to hub/README.md).
+7. **Health + diagnostics** — Run liveness/readiness checks per [LOOP_HEALTH_CHECKS.md](./LOOP_HEALTH_CHECKS.md), then perform a problem-hunt pass per [LOOP_DIAGNOSTIC_SWEEP.md](./LOOP_DIAGNOSTIC_SWEEP.md). Loops should search for likely trouble, not only prove they can run.
 
 ---
 
@@ -27,7 +31,7 @@
 | **Trigger** | User says **"start master loop"**. |
 | **Goal** | Research all loops, align universal files, read the Hub, then run the **full Improvement Loop**. |
 
-### Workflow
+### Synthetic Data Workflow
 
 1. **Step 0.M (Loop Master only)**  
    - Research all loops from [LOOPS_AND_IMPROVEMENT_FULL_AXIS.md](./LOOPS_AND_IMPROVEMENT_FULL_AXIS.md).  
@@ -64,19 +68,19 @@
 
 ---
 
-## Loop 3: Token Loop
+## Loop 3: LLM Loop / Token-Audit Lane
 
 | What | Detail |
 |------|--------|
-| **Who runs it** | Any agent when the user says **"start token loop"** or **"run token reduction loop"** or **"token audit"**. No human in the loop — runs autonomously. |
-| **Trigger** | **start token loop** / **run token reduction loop** / **token audit**. |
-| **Goal** | Reduce Cursor token usage; manage context; audit rules, doc references, conversation hygiene; recommend next TODOs. |
+| **Who runs it** | Any agent when the user says **"start llm loop"** or **"start token loop"** or **"run token reduction loop"** or **"token audit"**. No human in the loop — runs autonomously. |
+| **Trigger** | **start llm loop** / **start token loop** / **run token reduction loop** / **token audit**. |
+| **Goal** | Permanent local-first LLM loop with `Ollama` as default provider; current stable lane = token audit for token usage, context, rules, and loop overhead. |
 
 ### Workflow (steps)
 
 | Step | Action |
 |------|--------|
-| **Start** | Snapshot state: `token_loop_state_snapshot.ps1 -RunId <run_id>`. Listener: `token_loop_start`. |
+| **Start** | Prefer `run_llm_loop.ps1` as the permanent top-level entrypoint; snapshot state: `token_loop_state_snapshot.ps1 -RunId <run_id>`. Listener: `token_loop_start`. |
 | **0** | Deep research: token-saving practices, TOKEN_LOOP_IMPROVEMENT_PLAN, TOKEN_SAVING_PRACTICES; analyze snapshots and token_loop_events.jsonl; list .cursor/rules (alwaysApply, line counts). |
 | **1** | Audit rules — count lines, alwaysApply, estimate token cost. |
 | **2** | Check for new always-apply; consider converting to glob or description-only. |
@@ -127,7 +131,7 @@
 | **Trigger** | User asks for synthetic data generation or curation; or when aligning with UNIVERSAL_LOOP_PROMPT and Hub. |
 | **Goal** | Create or curate training datasets and summaries; keep quality high; deposit to Hub when polished. |
 
-### Workflow
+### File Organizer Workflow
 
 - Research what data is needed (e.g. security scenarios, trip patterns).  
 - Create or gather datasets; prune and mesh; quality report.  

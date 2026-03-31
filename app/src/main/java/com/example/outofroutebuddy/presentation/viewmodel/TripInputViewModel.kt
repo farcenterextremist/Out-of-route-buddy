@@ -7,6 +7,7 @@ import com.example.outofroutebuddy.data.PreferencesManager
 import com.example.outofroutebuddy.data.TripPersistenceManager
 import com.example.outofroutebuddy.data.TripStateManager
 import com.example.outofroutebuddy.data.TripStatePersistence
+import com.example.outofroutebuddy.domain.calendar.CalendarDayOorTierCalculator
 import com.example.outofroutebuddy.domain.models.PeriodMode
 import com.example.outofroutebuddy.domain.models.Trip
 import com.example.outofroutebuddy.domain.models.TripStatus
@@ -86,6 +87,7 @@ class TripInputViewModel
         private val unifiedOfflineService: UnifiedOfflineService,
         // ✅ CRASH RECOVERY: Added in #12
         private val crashRecoveryManager: TripCrashRecoveryManager,
+        private val tripBackupManager: com.example.outofroutebuddy.data.backup.TripBackupManager,
         private val application: android.app.Application,
         @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
     ) : ViewModel() {
@@ -106,6 +108,8 @@ class TripInputViewModel
 
         // Current trip data
         private var currentTrip: Trip? = null
+        private var backgroundTrackingDegraded = false
+        private var backgroundTrackingDegradedReasons: List<String> = emptyList()
         
         // ✅ FIX: Track if we've loaded persisted state to prevent TripStateManager from overriding it
         private var hasLoadedPersistedState = false
@@ -197,9 +201,16 @@ class TripInputViewModel
                                     loadedMiles = persistedState.loadedMiles,
                                     bounceMiles = persistedState.bounceMiles,
                                     actualMiles = persistedState.actualMiles,
+                                    isPaused = persistedState.isPaused,
                                     oorMiles = 0.0, // OOR is recalculated when trip ends
                                     oorPercentage = 0.0,
-                                    tripStatusMessage = if (isActive) "Active trip resumed" else "",
+                                    tripStatusMessage = if (isActive && persistedState.isPaused) {
+                                        "Active trip resumed (paused)"
+                                    } else if (isActive) {
+                                        "Active trip resumed"
+                                    } else {
+                                        ""
+                                    },
                                     showStatistics = true,
                                 )
                             }
@@ -349,35 +360,7 @@ class TripInputViewModel
          * For midnight-spanning trips (startTime and endTime on different days), includes all days in range.
          */
         private fun computeDatesWithTrips(trips: List<Trip>): List<Date> {
-            val allDates = mutableSetOf<Long>()
-            for (trip in trips) {
-                val start = trip.startTime ?: trip.endTime
-                val end = trip.endTime ?: trip.startTime
-                if (start == null) continue
-                val cal = Calendar.getInstance()
-                cal.time = start
-                cal.set(Calendar.HOUR_OF_DAY, 0)
-                cal.set(Calendar.MINUTE, 0)
-                cal.set(Calendar.SECOND, 0)
-                cal.set(Calendar.MILLISECOND, 0)
-                val startDayMillis = cal.timeInMillis
-                if (end != null && end.time > start.time) {
-                    val endCal = Calendar.getInstance()
-                    endCal.time = end
-                    endCal.set(Calendar.HOUR_OF_DAY, 0)
-                    endCal.set(Calendar.MINUTE, 0)
-                    endCal.set(Calendar.SECOND, 0)
-                    endCal.set(Calendar.MILLISECOND, 0)
-                    val iter = Calendar.getInstance().apply { timeInMillis = startDayMillis }
-                    while (iter.timeInMillis <= endCal.timeInMillis) {
-                        allDates.add(iter.timeInMillis)
-                        iter.add(Calendar.DAY_OF_MONTH, 1)
-                    }
-                } else {
-                    allDates.add(startDayMillis)
-                }
-            }
-            return allDates.map { Date(it) }.sortedBy { it.time }
+            return CalendarDayOorTierCalculator.datesWithTripsMillis(trips).map { Date(it) }
         }
 
         /**
@@ -571,23 +554,26 @@ class TripInputViewModel
         /**
          * Returns distinct start-of-day dates that have at least one saved trip in [minDate]..[maxDate].
          * Uses the same midnight-spanning logic as [computeDatesWithTrips]: each trip contributes every
-         * calendar day from start to end, so both days show the yellow circle for midnight-spanning trips.
+         * calendar day from start to end, so both days show trip markers for midnight-spanning trips.
          * Used so the calendar dialog can show trip dots across the full ±1 year range.
          */
         suspend fun getDatesWithTripsForCalendarRange(minDate: Date, maxDate: Date): List<Date> = withContext(ioDispatcher) {
             val minStart = minDate.startOfDay().time
             val maxStart = maxDate.startOfDay().time
-            // Fetch trips in a slightly expanded range so we include trips that span across the boundary
-            val expandedMin = java.util.Calendar.getInstance().apply { time = minDate; add(java.util.Calendar.DAY_OF_MONTH, -1) }.time
-            val expandedMax = java.util.Calendar.getInstance().apply { time = maxDate; add(java.util.Calendar.DAY_OF_MONTH, 1) }.time
-            val trips = try {
-                tripRepository.getTripsByDateRange(expandedMin, expandedMax).first()
-            } catch (e: Exception) {
-                Log.w(TAG, "getDatesWithTripsForCalendarRange failed", e)
-                emptyList()
-            }
+            val trips = loadCalendarRangeTrips(minDate, maxDate)
             val allDatesWithTrips = computeDatesWithTrips(trips)
             allDatesWithTrips.filter { it.time in minStart..maxStart }.distinctBy { it.time }.sortedBy { it.time }
+        }
+
+        private suspend fun loadCalendarRangeTrips(minDate: Date, maxDate: Date): List<Trip> {
+            val expandedMin = java.util.Calendar.getInstance().apply { time = minDate; add(java.util.Calendar.DAY_OF_MONTH, -1) }.time
+            val expandedMax = java.util.Calendar.getInstance().apply { time = maxDate; add(java.util.Calendar.DAY_OF_MONTH, 1) }.time
+            return try {
+                tripRepository.getTripsByDateRange(expandedMin, expandedMax).first()
+            } catch (e: Exception) {
+                Log.w(TAG, "loadCalendarRangeTrips failed", e)
+                emptyList()
+            }
         }
 
         /**
@@ -621,11 +607,22 @@ class TripInputViewModel
                 } else {
                     tripState.isActive
                 }
+                val tripStatusMessage = if (shouldPreserveActiveState) {
+                    uiState.tripStatusMessage.ifBlank {
+                        if (uiState.isPaused) {
+                            "Trip tracking paused - distance accumulation stopped"
+                        } else {
+                            "Trip status: Active"
+                        }
+                    }
+                } else {
+                    "Trip status: ${if (isTripActive) "Active" else "Inactive"}"
+                }
                 
                 uiState.copy(
                     isTripActive = isTripActive,
-                    tripStatusMessage = "Trip status: ${if (isTripActive) "Active" else "Inactive"}",
-                    showStatistics = !isTripActive,
+                    tripStatusMessage = tripStatusMessage,
+                    showStatistics = if (shouldPreserveActiveState) uiState.showStatistics else !isTripActive,
                 )
             }
         }
@@ -652,6 +649,14 @@ class TripInputViewModel
                         // OOR calculation should ONLY happen when trip ends
                         val state = _uiState.value
                         if (state.isTripActive) {
+                            val shouldIgnoreUnseededRecoveredGps =
+                                hasLoadedPersistedState &&
+                                    state.actualMiles > 0.0 &&
+                                    gpsData.totalDistance <= 0.0
+                            if (shouldIgnoreUnseededRecoveredGps) {
+                                Log.d(TAG, "Ignoring unseeded UnifiedLocationService distance for recovered trip")
+                                return@collect
+                            }
                             // Update ONLY actualMiles (Total Miles) with GPS data
                             // DO NOT calculate OOR during active trip
                             _uiState.update { currentState ->
@@ -709,6 +714,17 @@ class TripInputViewModel
                         // Only update if trip is active
                         val state = _uiState.value
                         if (state.isTripActive) {
+                            // When reopening a persisted trip, TripTrackingService.tripMetrics starts at 0.0
+                            // until the service reseeds itself. Do not let that default emission erase the
+                            // restored mileage we just loaded from persistence.
+                            val shouldIgnoreUnseededRecoveredMetrics =
+                                hasLoadedPersistedState &&
+                                    state.actualMiles > 0.0 &&
+                                    metrics.totalMiles <= 0.0
+                            if (shouldIgnoreUnseededRecoveredMetrics) {
+                                Log.d(TAG, "Ignoring unseeded TripTrackingService metrics for recovered trip")
+                                return@collect
+                            }
                             val statusMessage = when {
                                 state.isPaused -> "Trip tracking paused - distance accumulation stopped"
                                 driveState == DriveState.WALKING_OR_STATIONARY ->
@@ -719,7 +735,11 @@ class TripInputViewModel
                             _uiState.update { currentState ->
                                 currentState.copy(
                                     actualMiles = metrics.totalMiles,
-                                    tripStatusMessage = statusMessage
+                                    tripStatusMessage = statusMessage,
+                                    ludacrisTimeZoneCount = metrics.distinctTimeZoneOffsets,
+                                    ludacrisElevMinMeters = metrics.elevationMinMeters,
+                                    ludacrisElevMaxMeters = metrics.elevationMaxMeters,
+                                    ludacrisMaxSpeedMph = metrics.maxSpeedMph,
                                 )
                             }
                             
@@ -745,6 +765,10 @@ class TripInputViewModel
             loadedMiles: Double,
             bounceMiles: Double,
             actualMiles: Double,
+            backgroundTrackingDegraded: Boolean = false,
+            backgroundTrackingDegradedReasons: List<String> = emptyList(),
+            pickupAddress: String = "",
+            dropoffAddress: String = "",
         ) {
             viewModelScope.launch {
                 try {
@@ -781,7 +805,11 @@ class TripInputViewModel
                             oorPercentage = 0.0,
                             // Preserve provided actualMiles when non-zero; otherwise start at 0.0 and let GPS update
                             actualMiles = if (actualMiles > 0.0) actualMiles else 0.0,
-                            tripStatusMessage = "Trip started successfully",
+                            tripStatusMessage = if (backgroundTrackingDegraded) {
+                                "Trip started with background tracking warnings"
+                            } else {
+                                "Trip started successfully"
+                            },
                             showStatistics = true,
                         )
                     }
@@ -796,9 +824,13 @@ class TripInputViewModel
                         oorPercentage = 0.0,
                         startTime = Date(),
                         endTime = null,
+                        pickupAddress = pickupAddress,
+                        dropoffAddress = dropoffAddress,
                         status = TripStatus.ACTIVE
                     )
                     AppLogger.d(TAG, "Active trip object created")
+                    this@TripInputViewModel.backgroundTrackingDegraded = backgroundTrackingDegraded
+                    this@TripInputViewModel.backgroundTrackingDegradedReasons = backgroundTrackingDegradedReasons
 
                     // Keep TripStateManager in sync with ViewModel start flow so persistence and metadata
                     // are sourced from the same active trip state.
@@ -960,6 +992,8 @@ class TripInputViewModel
                         bounceMiles = state.bounceMiles,
                         tripStartTime = tripStartDate,
                         tripEndTime = tripEndDate,
+                        pickupAddress = currentTrip?.pickupAddress.orEmpty(),
+                        dropoffAddress = currentTrip?.dropoffAddress.orEmpty(),
                     )
                     AppLogger.d(TAG, "Trip saved via saveCompletedTrip")
                     currentTrip = Trip(
@@ -1010,6 +1044,10 @@ class TripInputViewModel
 
                 if (saveResult == "success") {
                     _events.emit(TripEvent.TripSaved)
+                    // Trigger auto-backup to Downloads after every successful save
+                    viewModelScope.launch(ioDispatcher) {
+                        try { tripBackupManager.autoBackupIfNeeded() } catch (_: Exception) {}
+                    }
                 } else {
                     _events.emit(TripEvent.TripEnded)
                 }
@@ -1044,7 +1082,10 @@ class TripInputViewModel
                         tripStatusMessage = "Trip tracking paused - distance accumulation stopped"
                     )
                 }
-                
+
+                // Persist pause state immediately so it survives app close/reopen
+                saveTripStateForPersistence()
+
                 Log.d(TAG, "Trip paused successfully - service notified")
                 
             } catch (e: Exception) {
@@ -1073,7 +1114,10 @@ class TripInputViewModel
                         tripStatusMessage = "Trip tracking active - distance accumulating"
                     )
                 }
-                
+
+                // Persist resumed state so reopen doesn't show paused
+                saveTripStateForPersistence()
+
                 Log.d(TAG, "Trip resumed successfully - service notified")
                 
             } catch (e: Exception) {
@@ -1319,6 +1363,11 @@ class TripInputViewModel
             val isYearSectionCleared: Boolean = false,
             /** Dates (start-of-day) in the selected period that have at least one saved (ended) trip. Used for calendar/period clickable days. */
             val datesWithTripsInPeriod: List<Date> = emptyList(),
+            /** Live trip card (Ludacris settings): fed from [TripTrackingService.tripMetrics]. */
+            val ludacrisTimeZoneCount: Int = 0,
+            val ludacrisElevMinMeters: Double? = null,
+            val ludacrisElevMaxMeters: Double? = null,
+            val ludacrisMaxSpeedMph: Double = 0.0,
             val locationStatistics: LocationStatistics? = null,
             val tripStatistics: TripStatistics? = null,
             val offlineStatistics: OfflineStatistics? = null,
@@ -1450,6 +1499,21 @@ class TripInputViewModel
             }
         }
 
+        fun attachToOngoingTrackedTrip(savedState: TripPersistenceManager.SavedTripState) {
+            try {
+                Log.d(TAG, "Attaching UI to ongoing tracked trip")
+                hasLoadedPersistedState = true
+                syncTripStateManager(savedState)
+                applyRecoveredTripUiState(savedState)
+                currentTrip = savedState.trip
+                backgroundTrackingDegraded = savedState.backgroundTrackingDegraded
+                backgroundTrackingDegradedReasons = savedState.backgroundTrackingReasons
+                startAutoSave()
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to attach UI to ongoing tracked trip", e)
+            }
+        }
+
         /**
          * ✅ NEW: Continue a recovered trip
          * Reinstates notification and status-bar icon via TripTrackingService.startTrip();
@@ -1458,34 +1522,20 @@ class TripInputViewModel
         fun continueRecoveredTrip(savedState: TripPersistenceManager.SavedTripState) {
             try {
                 Log.d(TAG, "Continuing recovered trip: ${savedState.trip.id}")
-                
-                // Restore trip state
-                _uiState.update { currentState ->
-                    currentState.copy(
-                        loadedMiles = savedState.loadedMiles,
-                        bounceMiles = savedState.bounceMiles,
-                        actualMiles = savedState.actualMiles,
-                        isTripActive = true,
-                        tripStatusMessage = "Trip recovered - Distance: ${String.format(Locale.US, "%.1f", savedState.actualMiles)}mi"
-                    )
-                }
-                
-                // Restore current trip
-                currentTrip = savedState.trip
-                
-                // Start GPS tracking service (reinstates notification + tiny icon via startTrip())
+                attachToOngoingTrackedTrip(savedState)
+
+                // Start GPS tracking service with restored miles and pause state
                 TripTrackingService.startService(
                     context = application,
                     loadedMiles = savedState.loadedMiles,
                     bounceMiles = savedState.bounceMiles,
-                    initialTotalMiles = savedState.actualMiles
+                    initialTotalMiles = savedState.actualMiles,
+                    startPaused = savedState.isPaused
                 )
                 // Reinstate overlay monitoring so trip-ended bubble/notification work again
                 TripEndedOverlayService.startWhenTripActive(application)
                 
                 // Start auto-save for crash recovery
-                startAutoSave()
-                
                 Log.d(TAG, "Recovered trip started successfully; notification and icon reinstated")
                 
             } catch (e: Exception) {
@@ -1493,6 +1543,44 @@ class TripInputViewModel
                 viewModelScope.launch {
                     _events.emit(TripEvent.Error("Failed to recover trip: ${e.message}"))
                 }
+            }
+        }
+
+        private fun syncTripStateManager(savedState: TripPersistenceManager.SavedTripState) {
+            try {
+                val synced = tripStateManager.startTrip(
+                    savedState.loadedMiles.toString(),
+                    savedState.bounceMiles.toString(),
+                )
+                if (!synced) {
+                    Log.w(TAG, "TripStateManager rejected recovered trip sync")
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to sync TripStateManager with recovered trip", e)
+            }
+        }
+
+        private fun applyRecoveredTripUiState(savedState: TripPersistenceManager.SavedTripState) {
+            _uiState.update { currentState ->
+                currentState.copy(
+                    loadedMiles = savedState.loadedMiles,
+                    bounceMiles = savedState.bounceMiles,
+                    actualMiles = savedState.actualMiles,
+                    isTripActive = true,
+                    isPaused = savedState.isPaused,
+                    tripStatusMessage = buildString {
+                        append(
+                            if (savedState.isPaused) {
+                                "Trip recovered (paused) - Distance: ${String.format(Locale.US, "%.1f", savedState.actualMiles)} mi"
+                            } else {
+                                "Trip recovered - Distance: ${String.format(Locale.US, "%.1f", savedState.actualMiles)} mi"
+                            }
+                        )
+                        if (savedState.backgroundTrackingDegraded) {
+                            append(" - Background warnings still apply")
+                        }
+                    },
+                )
             }
         }
 
@@ -1505,6 +1593,8 @@ class TripInputViewModel
                 
                 // Clear any saved trip state
                 tripPersistenceManager.clearSavedTripState()
+                backgroundTrackingDegraded = false
+                backgroundTrackingDegradedReasons = emptyList()
                 
                 // Reset UI state
                 _uiState.update { currentState ->
@@ -1550,6 +1640,8 @@ class TripInputViewModel
                     
                     // Stop auto-save
                     stopAutoSave()
+                    backgroundTrackingDegraded = false
+                    backgroundTrackingDegradedReasons = emptyList()
                     
                     // Clear trip persistence
                     clearTripPersistence()
@@ -1615,14 +1707,17 @@ class TripInputViewModel
                         avgAccuracy = state.gpsQuality?.accuracy?.toDouble() ?: 0.0
                     )
                     
-                    // Save trip state
+                    // Save trip state (include isPaused so pause survives app close/reopen)
                     tripPersistenceManager.saveActiveTripState(
                         trip = trip,
                         loadedMiles = loadedMiles,
                         bounceMiles = bounceMiles,
                         actualMiles = actualMiles,
                         lastLocation = lastLocation,
-                        gpsMetadata = gpsMetadata
+                        gpsMetadata = gpsMetadata,
+                        isPaused = state.isPaused,
+                        backgroundTrackingDegraded = backgroundTrackingDegraded,
+                        backgroundTrackingReasons = backgroundTrackingDegradedReasons,
                     )
                     
                     AppLogger.d(TAG, "Trip state successfully saved to persistence")

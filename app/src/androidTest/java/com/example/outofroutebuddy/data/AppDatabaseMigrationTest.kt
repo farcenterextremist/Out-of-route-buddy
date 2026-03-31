@@ -84,6 +84,24 @@ class AppDatabaseMigrationTest {
         assertEquals(1L, c.getLong(0))
         assertEquals("GOLD", c.getString(1))
         c.close()
+
+        // Assert legacy GPS/stat columns were preserved through the table rebuild.
+        val preserved = db.query(
+            """
+            SELECT actualMiles, interstatePercent, interstateMinutes, backRoadsPercent, backRoadsMinutes, truckStopsVisited
+            FROM trips
+            WHERE id = 1
+            """.trimIndent()
+        )
+        assertEquals(1, preserved.count)
+        preserved.moveToFirst()
+        assertEquals(12.0, preserved.getDouble(0), 0.01)
+        assertEquals(0.0, preserved.getDouble(1), 0.01)
+        assertEquals(0, preserved.getInt(2))
+        assertEquals(0.0, preserved.getDouble(3), 0.01)
+        assertEquals(0, preserved.getInt(4))
+        assertEquals(0, preserved.getInt(5))
+        preserved.close()
         db.close()
     }
 }

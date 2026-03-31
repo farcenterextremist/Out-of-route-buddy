@@ -5,24 +5,37 @@ import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.widget.RadioButton
+import android.os.PowerManager
 import android.provider.Settings
 import android.net.Uri
 import com.example.outofroutebuddy.util.AppLogger
+import com.example.outofroutebuddy.BuildConfig
+import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.app.NotificationManagerCompat
+import androidx.core.view.GravityCompat
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
+import androidx.drawerlayout.widget.DrawerLayout
 import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
+import com.google.android.material.navigation.NavigationView
 import com.example.outofroutebuddy.data.PreferencesManager
 import com.example.outofroutebuddy.data.TripPersistenceManager
 import com.example.outofroutebuddy.domain.models.PeriodMode
+import android.view.View
+import com.example.outofroutebuddy.databinding.DialogHelpInfoBinding
 import com.example.outofroutebuddy.presentation.ui.dialogs.TripRecoveryDialog
+import com.example.outofroutebuddy.presentation.ui.settings.SettingsFragment
 import com.example.outofroutebuddy.presentation.ui.trip.TripInputFragment
 import com.example.outofroutebuddy.services.TripEndedOverlayService
+import com.example.outofroutebuddy.data.backup.TripBackupManager
+import com.example.outofroutebuddy.services.TripTrackingService
 import com.example.outofroutebuddy.presentation.viewmodel.TripInputViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
@@ -92,6 +105,8 @@ class MainActivity : AppCompatActivity(), TripRecoveryDialog.TripRecoveryListene
     companion object {
         private const val TAG = "MainActivity"
         private const val KEY_NAVIGATION_STATE = "navigation_state"
+        const val EXTRA_OPEN_DESTINATION = "open_destination"
+        const val DESTINATION_SETTINGS = "settings"
         @Volatile
         internal var isVisibleInForeground: Boolean = false
 
@@ -112,7 +127,11 @@ class MainActivity : AppCompatActivity(), TripRecoveryDialog.TripRecoveryListene
     @Inject
     lateinit var preferencesManager: PreferencesManager
 
+    @Inject
+    lateinit var tripBackupManager: TripBackupManager
+
     private lateinit var navController: NavController
+    private var drawerLayout: DrawerLayout? = null
     private var isNavigationInitialized = false
     private var hasCheckedForRecovery = false
     private var shouldRunRecoveryCheckOnThisCreate = false
@@ -176,7 +195,10 @@ class MainActivity : AppCompatActivity(), TripRecoveryDialog.TripRecoveryListene
             // ✅ IMPLEMENTED: Add fallback navigation if NavHostFragment is null
             // ✅ IMPLEMENTED: Add navigation state restoration
             initializeNavigation(savedInstanceState)
-            
+            setupDrawer()
+            setupBackPressBehavior()
+            handleLaunchDestinationIntent(intent)
+
             // ✅ NEW: Request location permissions on app launch
             checkAndRequestLocationPermissions()
             notificationPermissionGranted = hasNotificationPermission()
@@ -250,6 +272,68 @@ class MainActivity : AppCompatActivity(), TripRecoveryDialog.TripRecoveryListene
     }
 
     /**
+     * Production #9: Setup navigation drawer and item selection.
+     */
+    private fun setupDrawer() {
+        drawerLayout = findViewById(R.id.drawer_layout)
+        val navView = findViewById<NavigationView>(R.id.nav_view)
+        navView?.getHeaderView(0)?.findViewById<TextView>(R.id.nav_drawer_subtitle)?.text =
+            getString(R.string.nav_drawer_version, BuildConfig.VERSION_NAME)
+        navView?.setNavigationItemSelectedListener { item ->
+            when (item.itemId) {
+                R.id.nav_trip -> navigateToTripInput()
+                R.id.nav_rankings -> navigateToRankings()
+                R.id.nav_statistics_period -> showStatisticsPeriodChooserFromDrawer()
+                R.id.nav_data_privacy -> showDataPrivacyFromDrawer()
+                R.id.nav_about_help -> showAboutAndHelpFromDrawer()
+            }
+            drawerLayout?.closeDrawer(navView)
+            true
+        }
+    }
+
+    private fun setupBackPressBehavior() {
+        onBackPressedDispatcher.addCallback(
+            this,
+            object : OnBackPressedCallback(true) {
+                override fun handleOnBackPressed() {
+                    val drawer = drawerLayout
+                    if (drawer?.isDrawerOpen(GravityCompat.START) == true) {
+                        drawer.closeDrawer(GravityCompat.START)
+                        return
+                    }
+
+                    if (shouldBackgroundInsteadOfFinish()) {
+                        AppLogger.d(TAG, "Active trip on root screen - moving task to background")
+                        moveTaskToBack(true)
+                        return
+                    }
+
+                    isEnabled = false
+                    onBackPressedDispatcher.onBackPressed()
+                    isEnabled = true
+                }
+            },
+        )
+    }
+
+    private fun shouldBackgroundInsteadOfFinish(): Boolean {
+        if (!isNavigationInitialized) return false
+        val activityScopedViewModel = ViewModelProvider(this)[TripInputViewModel::class.java]
+        val isTripActive = activityScopedViewModel.uiState.value.isTripActive
+        val isOnRootTripScreen = navController.currentDestination?.id == R.id.tripInputFragment
+        return isTripActive && isOnRootTripScreen
+    }
+
+    /** Production #9: Open the navigation drawer (called from TripInputFragment hamburger). */
+    fun openDrawer() {
+        drawerLayout?.openDrawer(GravityCompat.START)
+    }
+
+    fun showStatisticsPeriodChooserPublic() = showStatisticsPeriodChooserFromDrawer()
+    fun showAboutAndHelpPublic() = showAboutAndHelpFromDrawer()
+
+    /**
      * Setup navigation listeners for error handling and state tracking
      */
     private fun setupNavigationListeners() {
@@ -269,12 +353,255 @@ class MainActivity : AppCompatActivity(), TripRecoveryDialog.TripRecoveryListene
     private fun navigateToTripInput() {
         try {
             if (isNavigationInitialized) {
-                navController.navigate(R.id.tripInputFragment)
+                if (navController.currentDestination?.id != R.id.tripInputFragment) {
+                    navController.navigate(R.id.tripInputFragment)
+                }
                 AppLogger.d(TAG, "Navigated to trip input")
             }
         } catch (e: Exception) {
             AppLogger.e(TAG, "Error navigating to trip input", e)
         }
+    }
+
+    /**
+     * @param focusSection empty = full advanced settings; "trip_tracking" expands Location &amp; tracking only.
+     */
+    fun navigateToSettings(focusSection: String = "") {
+        try {
+            if (!isNavigationInitialized) return
+            if (navController.currentDestination?.id == R.id.settingsFragment) {
+                val navHost = supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as? NavHostFragment
+                val settings = navHost?.childFragmentManager?.fragments
+                    ?.firstOrNull { it is SettingsFragment } as? SettingsFragment
+                settings?.applyFocusSection(focusSection)
+                return
+            }
+            val bundle = Bundle().apply { putString("focusSection", focusSection) }
+            navController.navigate(R.id.settingsFragment, bundle)
+            AppLogger.d(TAG, "Navigated to settings focus=$focusSection")
+        } catch (e: Exception) {
+            AppLogger.e(TAG, "Error navigating to settings", e)
+        }
+    }
+
+    private fun navigateToRankings() {
+        try {
+            if (isNavigationInitialized) {
+                if (navController.currentDestination?.id != R.id.rankingsFragment) {
+                    navController.navigate(R.id.rankingsFragment)
+                }
+                AppLogger.d(TAG, "Navigated to rankings")
+            }
+        } catch (e: Exception) {
+            AppLogger.e(TAG, "Error navigating to rankings", e)
+        }
+    }
+
+    private fun showStatisticsPeriodChooserFromDrawer() {
+        val dialogView = layoutInflater.inflate(R.layout.dialog_period_onboarding, null)
+        val radioStandard = dialogView.findViewById<RadioButton>(R.id.radio_period_standard)
+        val radioCustom = dialogView.findViewById<RadioButton>(R.id.radio_period_custom)
+        dialogView.findViewById<View>(R.id.period_onboarding_confirm).visibility = View.GONE
+        when (preferencesManager.getPeriodMode()) {
+            PeriodMode.CUSTOM -> radioCustom.isChecked = true
+            else -> radioStandard.isChecked = true
+        }
+        AlertDialog.Builder(this)
+            .setTitle(R.string.nav_statistics_period)
+            .setView(dialogView)
+            .setPositiveButton(android.R.string.ok) { d, _ ->
+                val mode = if (radioCustom.isChecked) PeriodMode.CUSTOM else PeriodMode.STANDARD
+                ViewModelProvider(this)[TripInputViewModel::class.java].savePeriodMode(mode)
+                d.dismiss()
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
+    }
+
+    private fun showAboutAndHelpFromDrawer() {
+        val choices = arrayOf(
+            getString(R.string.about_dialog_title),
+            getString(R.string.help_and_support_title),
+        )
+        AlertDialog.Builder(this)
+            .setTitle(R.string.nav_about_help)
+            .setItems(choices) { _, which ->
+                when (which) {
+                    0 -> showDrawerAboutDialog()
+                    1 -> showDrawerHelpDialog()
+                }
+            }
+            .show()
+    }
+
+    private fun showDataPrivacyFromDrawer() {
+        val info = tripBackupManager.getLastBackupInfo()
+        val lastBackupLabel = if (info.lastBackupTimestamp != null) {
+            val fmt = java.text.SimpleDateFormat("MMM d, h:mm a", java.util.Locale.getDefault())
+            "Last backup: ${fmt.format(info.lastBackupTimestamp)} (${info.tripCount} trips)"
+        } else {
+            "No backup yet"
+        }
+
+        val choices = arrayOf(
+            "Backup trips now",
+            "Restore from backup",
+            lastBackupLabel,
+            "Delete old device data",
+            "Clear all device trip data",
+            "Clear temporary files",
+        )
+        AlertDialog.Builder(this)
+            .setTitle("Data & Privacy")
+            .setItems(choices) { _, which ->
+                when (which) {
+                    0 -> performManualBackup()
+                    1 -> confirmRestore()
+                    2 -> { /* info-only row, no action */ }
+                    3 -> confirmDeleteOldData()
+                    4 -> confirmClearAllData()
+                    5 -> clearAppCache()
+                }
+            }
+            .show()
+    }
+
+    private fun performManualBackup() {
+        lifecycleScope.launch {
+            val toast = android.widget.Toast.makeText(this@MainActivity, "Backing up...", android.widget.Toast.LENGTH_SHORT)
+            toast.show()
+            val ok = tripBackupManager.performFullBackup()
+            if (ok) {
+                val info = tripBackupManager.getLastBackupInfo()
+                android.widget.Toast.makeText(
+                    this@MainActivity,
+                    "Backup saved: ${info.tripCount} trips to Downloads/OutOfRouteBuddy_Backups/",
+                    android.widget.Toast.LENGTH_LONG,
+                ).show()
+            } else {
+                android.widget.Toast.makeText(this@MainActivity, "Backup failed — check storage permissions", android.widget.Toast.LENGTH_LONG).show()
+            }
+        }
+    }
+
+    private fun confirmRestore() {
+        AlertDialog.Builder(this)
+            .setTitle("Restore from backup")
+            .setMessage(
+                "This will restore trips from your last backup in Downloads/OutOfRouteBuddy_Backups/.\n\n" +
+                "Existing trips will NOT be deleted — only missing trips are added back."
+            )
+            .setPositiveButton("Restore") { _, _ ->
+                lifecycleScope.launch {
+                    android.widget.Toast.makeText(this@MainActivity, "Restoring...", android.widget.Toast.LENGTH_SHORT).show()
+                    val result = tripBackupManager.restoreFromBackup()
+                    android.widget.Toast.makeText(this@MainActivity, result.message, android.widget.Toast.LENGTH_LONG).show()
+                }
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
+    }
+
+    private fun confirmDeleteOldData() {
+        AlertDialog.Builder(this)
+            .setTitle("Delete old data from device")
+            .setMessage("Remove trips older than 12 months from this device?")
+            .setPositiveButton(android.R.string.ok) { _, _ ->
+                ViewModelProvider(this)[com.example.outofroutebuddy.presentation.viewmodel.DataManagementViewModel::class.java]
+                    .deleteOldDataFromDevice(12)
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
+    }
+
+    private fun confirmClearAllData() {
+        AlertDialog.Builder(this)
+            .setTitle("Clear all trip data")
+            .setMessage("Remove all trips from this device? This cannot be undone.")
+            .setPositiveButton(android.R.string.ok) { _, _ ->
+                ViewModelProvider(this)[com.example.outofroutebuddy.presentation.viewmodel.DataManagementViewModel::class.java]
+                    .clearAllDataFromDevice()
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
+    }
+
+    private fun clearAppCache() {
+        try {
+            val cacheDir = cacheDir ?: return
+            cacheDir.listFiles()?.forEach { file ->
+                if (file.isDirectory) file.listFiles()?.forEach { it.delete() }
+                file.delete()
+            }
+            android.widget.Toast.makeText(this, getString(R.string.cache_cleared_message), android.widget.Toast.LENGTH_SHORT).show()
+        } catch (e: Exception) {
+            AppLogger.e(TAG, "Error clearing cache", e)
+            android.widget.Toast.makeText(this, getString(R.string.cache_clear_error), android.widget.Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun showDrawerAboutDialog() {
+        val message = """
+            ${getString(R.string.app_name)}
+            Version ${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})
+
+            A GPS tracking app for calculating out-of-route miles.
+
+            Features:
+            • Real-time GPS tracking
+            • Trip persistence across app restarts
+            • Dark/Light theme support
+            • Comprehensive trip history
+        """.trimIndent()
+        AlertDialog.Builder(this)
+            .setTitle(R.string.about_dialog_title)
+            .setMessage(message)
+            .setPositiveButton(android.R.string.ok, null)
+            .show()
+    }
+
+    private fun showDrawerHelpDialog() {
+        val helpBinding = DialogHelpInfoBinding.inflate(layoutInflater)
+        helpBinding.versionText.text =
+            getString(R.string.version_line, BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE)
+        val dialog = android.app.Dialog(this)
+        dialog.setContentView(helpBinding.root)
+        dialog.setCancelable(true)
+        helpBinding.helpCloseButton.setOnClickListener { dialog.dismiss() }
+        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+        val dm = resources.displayMetrics
+        dialog.window?.setLayout(
+            (dm.widthPixels * 0.95).toInt().coerceAtLeast(320),
+            (dm.heightPixels * 0.85).toInt(),
+        )
+        dialog.show()
+    }
+
+    private fun handleLaunchDestinationIntent(intent: Intent?) {
+        val destination = intent?.getStringExtra(EXTRA_OPEN_DESTINATION) ?: return
+        if (!isNavigationInitialized) return
+
+        when (destination) {
+            DESTINATION_SETTINGS -> window.decorView.post { navigateToSettings("") }
+        }
+    }
+
+    private fun openHistoryFromDrawer() {
+        val currentTripInput = currentTripInputFragment()
+        if (currentTripInput != null) {
+            currentTripInput.openHistoryFromDrawer()
+            return
+        }
+
+        navigateToTripInput()
+        window.decorView.post {
+            currentTripInputFragment()?.openHistoryFromDrawer()
+        }
+    }
+
+    private fun currentTripInputFragment(): TripInputFragment? {
+        val navHostFragment = supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as? NavHostFragment
+        return navHostFragment?.childFragmentManager?.primaryNavigationFragment as? TripInputFragment
     }
 
     /**
@@ -306,6 +633,7 @@ class MainActivity : AppCompatActivity(), TripRecoveryDialog.TripRecoveryListene
         super.onNewIntent(intent)
         intent?.let {
             setIntent(it)
+            handleLaunchDestinationIntent(it)
             window.decorView.post { handleTripEndedPromptIntent() }
         }
     }
@@ -780,6 +1108,31 @@ class MainActivity : AppCompatActivity(), TripRecoveryDialog.TripRecoveryListene
         }
     }
 
+    private fun openAppDetailsSettings() {
+        val intent = Intent(
+            Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+            Uri.fromParts("package", packageName, null)
+        )
+        startActivity(intent)
+    }
+
+    private fun openBatteryOptimizationSettings() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+            openAppDetailsSettings()
+            return
+        }
+        try {
+            val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
+                data = Uri.parse("package:$packageName")
+            }
+            startActivity(intent)
+        } catch (e: Exception) {
+            AppLogger.w(TAG, "Falling back to battery optimization settings", e)
+            val fallback = Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
+            startActivity(fallback)
+        }
+    }
+
     fun hasNotificationPermission(): Boolean {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return true
         return ContextCompat.checkSelfPermission(
@@ -853,7 +1206,30 @@ class MainActivity : AppCompatActivity(), TripRecoveryDialog.TripRecoveryListene
      * Check if background permission is granted
      */
     fun hasBackgroundPermission(): Boolean {
-        return backgroundPermissionGranted
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return true
+        return ContextCompat.checkSelfPermission(
+            this,
+            Manifest.permission.ACCESS_BACKGROUND_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
+    }
+
+    fun isIgnoringBatteryOptimizations(): Boolean {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) return true
+        val powerManager = getSystemService(PowerManager::class.java) ?: return true
+        return powerManager.isIgnoringBatteryOptimizations(packageName)
+    }
+
+    fun openBackgroundTrackingReliabilitySettings(
+        backgroundPermissionMissing: Boolean,
+        notificationsBlocked: Boolean,
+        batteryOptimizationRestricted: Boolean,
+    ) {
+        when {
+            backgroundPermissionMissing -> openAppDetailsSettings()
+            notificationsBlocked -> openAppNotificationSettings()
+            batteryOptimizationRestricted -> openBatteryOptimizationSettings()
+            else -> openAppDetailsSettings()
+        }
     }
 
     /**
@@ -867,8 +1243,17 @@ class MainActivity : AppCompatActivity(), TripRecoveryDialog.TripRecoveryListene
                 val activityScopedViewModel = ViewModelProvider(this@MainActivity)[TripInputViewModel::class.java]
                 val savedState = activityScopedViewModel.checkForTripRecovery()
                 if (savedState != null) {
-                    AppLogger.d(TAG, "Trip recovery data found, showing dialog")
-                    showTripRecoveryDialog(savedState, activityScopedViewModel)
+                    val tripAlreadyActive = activityScopedViewModel.uiState.value.isTripActive
+                    if (tripAlreadyActive || TripTrackingService.serviceState.value.isRunning) {
+                        AppLogger.d(TAG, "Trip already active on reopen; skipping recovery dialog")
+                        if (!tripAlreadyActive) {
+                            AppLogger.d(TAG, "Trip already tracking in background; reattaching UI without dialog")
+                            activityScopedViewModel.attachToOngoingTrackedTrip(savedState)
+                        }
+                    } else {
+                        AppLogger.d(TAG, "Trip recovery data found, showing dialog")
+                        showTripRecoveryDialog(savedState, activityScopedViewModel)
+                    }
                 } else {
                     AppLogger.d(TAG, "No trip recovery data found")
                 }

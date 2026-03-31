@@ -144,4 +144,7 @@ class MockTripRepository : TripRepository {
 
     override suspend fun exportTripData(startDate: Date, endDate: Date): String =
         "" // Stub for tests that don't need export
+
+    override suspend fun exportSharedPoolTripData(startDate: Date, endDate: Date, tier: DataTier): String =
+        "" // Stub for tests that don't need shared-pool export
 }

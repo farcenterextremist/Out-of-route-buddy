@@ -7,21 +7,29 @@
 
 param(
     [int]$DurationMinutes = 120,
-    [int]$PulseIntervalMinutes = 30
+    [int]$PulseIntervalMinutes = 30,
+    [switch]$UseSimpleDebugCleanupFirstPulse,
+    [string]$RunId = ""
 )
 
 $ErrorActionPreference = "Continue"
-$RepoRoot = $PSScriptRoot
-for ($i = 0; $i -lt 2; $i++) { $RepoRoot = Split-Path -Parent $RepoRoot }
+. (Join-Path $PSScriptRoot "loop_run_contract.ps1")
+
+$RepoRoot = Get-LoopAutomationRepoRoot -ScriptRoot $PSScriptRoot
 Set-Location $RepoRoot
 
 $PulseScript = Join-Path $RepoRoot "scripts\automation\pulse_check.ps1"
 $ListenerScript = Join-Path $RepoRoot "scripts\automation\loop_listener.ps1"
+$StartScript = Join-Path $RepoRoot "scripts\automation\start_loop_run.ps1"
 $PlanPath   = Join-Path $RepoRoot "docs\automation\IMPROVEMENT_LOOP_ROUTINE.md"
 $PulseLog   = Join-Path $RepoRoot "docs\automation\pulse_log.txt"
 
-$RunId = "run-$((Get-Date).ToString('yyyyMMdd-HHmm'))"
-if (Test-Path $ListenerScript) {
+if (-not $RunId) {
+    $RunId = New-LoopRunId -Prefix "run"
+}
+if (Test-Path $StartScript) {
+    & $StartScript -Loop "improvement" -RunId $RunId -EmitStartEvent -Note "Duration=$DurationMinutes min, pulse every $PulseIntervalMinutes min" | Out-Null
+} elseif (Test-Path $ListenerScript) {
     & $ListenerScript -Event "loop_start" -Note "Duration=$DurationMinutes min, pulse every $PulseIntervalMinutes min" -RunId $RunId
 }
 
@@ -30,6 +38,9 @@ $summaryReminder = (Get-Date).AddMinutes([Math]::Max(0, $DurationMinutes - 30))
 
 Write-Host "120-minute improvement loop started. Pulse every $PulseIntervalMinutes min. End at $($endTime.ToString('HH:mm'))."
 Write-Host "Plan: $PlanPath"
+if ($UseSimpleDebugCleanupFirstPulse) {
+    Write-Host "First pulse will use the consolidated simple debug + cleanup sweep."
+}
 Write-Host ""
 
 $pulseCount = 0
@@ -37,7 +48,11 @@ while ((Get-Date) -lt $endTime) {
     $now = Get-Date
     $pulseCount++
     Write-Host "[$($now.ToString('HH:mm:ss'))] Pulse #$pulseCount"
-    & $PulseScript
+    if ($UseSimpleDebugCleanupFirstPulse -and $pulseCount -eq 1) {
+        & $PulseScript -UseSimpleDebugCleanup -RunId $RunId
+    } else {
+        & $PulseScript -RunId $RunId
+    }
     if ($LASTEXITCODE -ne 0) { Write-Host "Pulse script reported non-zero exit." }
 
     # In the last 30 min: remind to write summary
@@ -59,3 +74,4 @@ if (Test-Path $ListenerScript) {
 }
 Write-Host ""
 Write-Host "Improvement Loop complete. Review pulse_log.txt and write summary per Phase 4 in IMPROVEMENT_LOOP_ROUTINE.md."
+Write-Host "Then use .\scripts\automation\finish_loop_run.ps1 once the summary path and next steps are ready."

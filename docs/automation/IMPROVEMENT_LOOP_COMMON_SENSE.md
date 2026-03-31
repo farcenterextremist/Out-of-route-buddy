@@ -23,7 +23,7 @@
 | **Reason before each change** | Before editing any file: state goal, consider options, predict consequences. "What could go wrong? Is there a simpler option?" See [IMPROVEMENT_LOOP_REASONING.md](./IMPROVEMENT_LOOP_REASONING.md). |
 | **Tests must pass** | If a change breaks tests → revert the change, report in summary, move on. Do not proceed with failing tests. |
 | **Timebox per task** | Do not spend >10 min on any single test fix or dead-code item. If stuck → document and defer. |
-| **Unit tests only** | Loop runs in full-autonomous environment. **No instrumented tests** (no device/emulator). Do not run `connectedAndroidTest` or suggest "move to instrumented suite." For ignored tests: fix in unit suite, document with reason, or defer. |
+| **Unit tests only** | Loop runs in full-autonomous environment. **No instrumented tests** (no device/emulator). Do not run `connectedAndroidTest` or suggest "move to instrumented suite." For ignored tests: fix in unit suite, document with reason, or defer. If a separate device/emulator loop variant explicitly includes instrumented tests, run them via `scripts/run-instrumented-tests-with-shared-pool-sync.ps1` so shared-pool exports stay current automatically and the frontend analyzer phase runs afterward. |
 | **One improvement per category** | Kaizen rule: One improvement per category per loop (Phase 1–3). Avoid overload. |
 | **No secrets or PII** | Never add API keys, passwords, or PII to logs or code. Grep for coordinates/tripId before committing. |
 | **Additive only (Light)** | Light tier: additive only (strings, docs, comments). No code removal, no refactor, no new logic. |

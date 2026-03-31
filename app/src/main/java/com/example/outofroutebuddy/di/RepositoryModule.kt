@@ -5,9 +5,14 @@ import com.example.outofroutebuddy.data.StateCache
 import com.example.outofroutebuddy.data.TripStateManager
 import com.example.outofroutebuddy.data.TripStatePersistence
 import com.example.outofroutebuddy.data.archive.DefaultTripArchiveService
+import com.example.outofroutebuddy.data.archive.LocalSharedPoolExportService
 import com.example.outofroutebuddy.data.dao.TripDao
 import com.example.outofroutebuddy.domain.data.TripArchiveService
+import com.example.outofroutebuddy.domain.data.TripSharedPoolExportService
+import com.example.outofroutebuddy.domain.ranking.FleetRankingsRepository
+import com.example.outofroutebuddy.domain.ranking.RankingsEngine
 import com.example.outofroutebuddy.data.repository.DomainTripRepositoryAdapter
+import com.example.outofroutebuddy.services.VirtualFleetDataGenerator
 import com.example.outofroutebuddy.data.repository.TripRepository as DataTripRepository
 import com.example.outofroutebuddy.domain.repository.TripRepository as DomainTripRepository
 import com.example.outofroutebuddy.domain.repository.TripStatistics
@@ -57,8 +62,9 @@ object RepositoryModule {
     fun provideDomainTripRepositoryAdapter(
         dataRepository: DataTripRepository,
         stateCache: StateCache,
+        sharedPoolExportService: TripSharedPoolExportService,
     ): DomainTripRepositoryAdapter {
-        return DomainTripRepositoryAdapter(dataRepository, stateCache)
+        return DomainTripRepositoryAdapter(dataRepository, stateCache, sharedPoolExportService)
     }
 
     /** Exposes repository load errors for UI (D1). ViewModels can collect and show snackbar. */
@@ -68,11 +74,20 @@ object RepositoryModule {
     fun provideRepositoryLoadErrors(adapter: DomainTripRepositoryAdapter): Flow<String> = adapter.loadErrors
 
     /**
-     * Provides TripArchiveService for "delete from device (keep on server)" flow. No-op by default.
+     * Provides TripArchiveService for "delete from device (keep on server)" flow.
+     * This now writes additive local shared-pool bundles for later desktop import.
      */
     @Provides
     @Singleton
-    fun provideTripArchiveService(): TripArchiveService = DefaultTripArchiveService()
+    fun provideTripArchiveService(
+        service: DefaultTripArchiveService,
+    ): TripArchiveService = service
+
+    @Provides
+    @Singleton
+    fun provideTripSharedPoolExportService(
+        service: LocalSharedPoolExportService,
+    ): TripSharedPoolExportService = service
 
     /**
      * ✅ FIXED: Provides TripStateManager with correct constructor
@@ -103,4 +118,20 @@ object RepositoryModule {
     fun provideCoroutineScope(): CoroutineScope {
         return CoroutineScope(SupervisorJob() + Dispatchers.IO)
     }
+
+    @Provides
+    @Singleton
+    fun provideRankingsEngine(): RankingsEngine = RankingsEngine()
+
+    @Provides
+    @Singleton
+    fun provideVirtualFleetDataGenerator(): VirtualFleetDataGenerator = VirtualFleetDataGenerator()
+
+    @Provides
+    @Singleton
+    fun provideFleetRankingsRepository(
+        tripRepository: DomainTripRepository,
+        fleetGenerator: VirtualFleetDataGenerator,
+        rankingsEngine: RankingsEngine,
+    ): FleetRankingsRepository = FleetRankingsRepository(tripRepository, fleetGenerator, rankingsEngine)
 } 

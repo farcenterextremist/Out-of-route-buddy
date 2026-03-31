@@ -140,6 +140,10 @@ interface TripDao {
     @Query("SELECT COUNT(*) FROM trips")
     fun getTripCount(): Int
 
+    /** Main-safe count for debug exports and diagnostics (no full table load). */
+    @Query("SELECT COUNT(*) FROM trips")
+    suspend fun countTripsSuspend(): Int
+
     /**
      * Get the total count of trips for a specific date
      */

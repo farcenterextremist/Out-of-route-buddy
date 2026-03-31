@@ -2,7 +2,7 @@
 
 **Purpose:** Define **health checks that run constantly during the loops** using a popular architecture: **liveness** (lightweight, fast) and **readiness** (full gates at phase boundaries). Keeps loops safe and catch environment/regression issues early.
 
-**References:** [IMPROVEMENT_LOOP_ROUTINE.md](./IMPROVEMENT_LOOP_ROUTINE.md), [pulse_check.ps1](../scripts/automation/pulse_check.ps1), [LOOP_MASTER_ROLE.md](./LOOP_MASTER_ROLE.md).
+**References:** [IMPROVEMENT_LOOP_ROUTINE.md](./IMPROVEMENT_LOOP_ROUTINE.md), [pulse_check.ps1](../scripts/automation/pulse_check.ps1), [LOOP_MASTER_ROLE.md](./LOOP_MASTER_ROLE.md), [LOOP_DIAGNOSTIC_SWEEP.md](./LOOP_DIAGNOSTIC_SWEEP.md).
 
 ---
 
@@ -46,6 +46,42 @@ So **liveness runs at a constant** (every phase boundary at phase start), and **
 
 A **heartbeat** can record "loop still progressing": e.g. write a timestamp to `docs/automation/loop_health_state.json` at each phase start/end. A separate watchdog could then check "last heartbeat &lt; 30 min" to detect a stuck run. The current design uses **liveness at phase boundaries** as the built-in heartbeat; the state file is updated by `loop_health_check.ps1 -Quick`.
 
+### 5. Timed multi-instance sandbox health
+
+For the future sandboxed `Loop Council` model in [LOOP_COUNCIL_SANDBOX.md](./LOOP_COUNCIL_SANDBOX.md), health should also define:
+
+- lane heartbeat freshness
+- timeout threshold per lane
+- stalled-lane status transition
+- council-entry eligibility
+
+Recommended lane states:
+
+- `running`
+- `complete`
+- `timed_out`
+- `blocked`
+- `proof_gap`
+
+Recommended rule:
+
+- a lane with stale heartbeat beyond the timeout window becomes `timed_out`
+- a lane with missing evidence but finished work becomes `proof_gap`
+- `Loop Council` fan-in may begin only when all lanes have reached a terminal state
+
+---
+
+## Health vs diagnostics
+
+Health checks do **not** replace debugging or active problem hunting.
+
+Use this pairing:
+
+- **Health checks** = "Can the loop proceed safely?"
+- **Diagnostic sweep** = "What likely problems, regressions, or weak spots should we investigate?"
+
+Every substantial loop should pair liveness/readiness with a diagnostic pass from [LOOP_DIAGNOSTIC_SWEEP.md](./LOOP_DIAGNOSTIC_SWEEP.md).
+
 ---
 
 ## What liveness checks (loop_health_check.ps1 -Quick)
@@ -71,6 +107,12 @@ Already implemented:
 - **Lint:** `.\gradlew.bat :app:lintDebug` (when not `-Quick`).
 - **Log:** Append to `docs/automation/pulse_log.txt` with timestamp, test result, lint, note.
 
+Optional deeper readiness mode:
+
+- **Consolidated debug sweep:** `.\scripts\automation\pulse_check.ps1 -UseSimpleDebugCleanup`
+- This routes readiness through `.\scripts\automation\run_simple_debug_cleanup.ps1`, which adds **detekt** and keeps the result as one repeatable proof step.
+- Recommended use: first substantial pulse of a run, or after build / automation / lint wiring changes.
+
 So **readiness = existing pulse_check** at phase end. No new script; just run it at each phase end as today.
 
 ---
@@ -80,7 +122,8 @@ So **readiness = existing pulse_check** at phase end. No new script; just run it
 | Script | Purpose |
 |--------|---------|
 | **loop_health_check.ps1** | Liveness: run with `-Quick` at loop start and at start of each phase. Optional `-Gate` to exit 1 and block. Writes `docs/automation/loop_health_state.json` (timestamp, status, optional last pulse age). |
-| **pulse_check.ps1** | Readiness: run at end of each phase (Phase 1–4). Tests + lint + pulse_log. |
+| **pulse_check.ps1** | Readiness: run at end of each phase (Phase 1–4). Default = tests + lint + pulse_log; optional `-UseSimpleDebugCleanup` adds the consolidated debug/cleanup sweep path. |
+| **run_simple_debug_cleanup.ps1** | Repeatable "deeper debug" command: unit tests, lint, detekt, optional clean/assemble, one summary block. |
 
 **Paths (from repo root):**
 
@@ -88,6 +131,7 @@ So **readiness = existing pulse_check** at phase end. No new script; just run it
 .\scripts\automation\loop_health_check.ps1 -Quick
 .\scripts\automation\loop_health_check.ps1 -Quick -Gate
 .\scripts\automation\pulse_check.ps1 -Note "Phase N: ..."
+.\scripts\automation\pulse_check.ps1 -UseSimpleDebugCleanup -Note "Phase N: consolidated debug cleanup"
 ```
 
 ---
@@ -98,7 +142,9 @@ So **readiness = existing pulse_check** at phase end. No new script; just run it
 - **Start of Phase 1, 2, 3, 4:** Run `loop_health_check.ps1 -Quick`. Log result; if `-Gate` and fail, do not start phase tasks until fixed.
 - **End of Phase 1, 2, 3, 4:** Run `pulse_check.ps1 -Note "Phase N: ..."` as today. Treat test failure as readiness failure; agent can revert or fix before continuing.
 
-Same pattern can be used for **Token Loop** and **Cyber Security Loop**: run liveness at step/phase boundaries; run a readiness-style check (e.g. listener + snapshot) at step end.
+Same pattern can be used for **Token Loop** and **Cyber Security Loop**: run liveness at step/phase boundaries; run a readiness-style check (e.g. listener + snapshot) at step end. Pair with a diagnostic sweep so loops search for hotspots instead of only proving the environment is alive.
+
+For future timed council sandbox cycles, reuse the same health ideas but add per-lane heartbeat and timeout tracking rather than inventing a separate health species.
 
 ---
 
@@ -119,4 +165,4 @@ If a check fails, `status` is `"degraded"` or `"fail"` and `checks` indicates wh
 
 ---
 
-*This design follows common CI/CD and container health patterns (liveness/readiness) and keeps health checks running at a constant (every phase boundary) during the loops.*
+*This design follows common CI/CD and container health patterns (liveness/readiness) and keeps health checks running at a constant (every phase boundary) during the loops. Pair it with `LOOP_DIAGNOSTIC_SWEEP.md` for active problem hunting.*

@@ -1,0 +1,237 @@
+LOOPMASTER BEST PRACTICES AND DESIGN FLOW
+OutOfRouteBuddy
+
+PURPOSE
+This guide is the human-readable operator sheet for the Loopmaster system.
+It is designed to be easy to read on the desktop, but also structured enough to reuse in another app or program later as a flywheel starter kit.
+
+BIG IDEA
+There should only be 1 real loop operating system:
+
+    Loopmaster
+
+Everything else should be either:
+
+1. a lane inside Loopmaster
+2. a neighboring worker tab following the same contract
+3. a narrow helper agent spawned for a specific job
+
+Do NOT create several loop personalities with different rules.
+Create 1 contract and let all workers follow it.
+
+========================================
+1. DEFAULT TAB MODEL
+========================================
+
+Preferred neighboring-tab layout:
+
+- ArchitectTab = parent conductor
+- Builder = implementation worker
+- Optimizer = self-improvement and app-improvement worker
+- Guard = cyber, regression, and risky-drift worker
+- Watcher = proof-of-work validator
+
+Important:
+- ArchitectTab decides scope, file ownership, and keep/revert direction.
+- Watcher should normally stay readonly.
+- Guard should review risk, not micromanage tiny edits.
+- Multiple workers should not edit the same file family at once.
+
+========================================
+2. CORE FLOW
+========================================
+
+Loopmaster should always move in this order:
+
+1. Intake Gate
+   - What kind of run is this?
+   - Micro = tiny cleanup / debugging / docs
+   - Standard = normal guided improvement run
+   - Fortify = health / proof / simulation focused run
+
+2. Context Gate
+   - Read master docs
+   - Read loop gates
+   - Read health status
+   - Read shared state
+   - Read latest useful hub artifacts
+
+3. Health Gate
+   - Liveness check
+   - Readiness check
+   - Diagnostic sweep
+   - Continuity check if loop files changed
+
+4. Planning Gate
+   - Decide which lanes are active
+   - Decide what is in scope
+   - Decide rollback intent
+   - Decide proof requirements
+
+5. Execution
+   - Build / code lane
+   - Diagnostic / security lane
+   - Proof / consistency lane
+   - Data / artifact lane
+   - Design sharpening lane if a device is connected
+
+6. Validation Gate
+   - What changed?
+   - What passed?
+   - What is still risky?
+   - Is there enough proof to keep the work?
+
+7. Publish or Rollback Gate
+   - Keep
+   - Keep partially
+   - Revert selected changes
+   - Document only
+
+========================================
+3. SPAWN BEHAVIOR
+========================================
+
+Use this rhythm:
+
+    fan-out -> work -> fan-in
+
+Fan-out:
+- ArchitectTab can spawn Builder, Optimizer, Guard, and Watcher
+- only parallelize when scopes are clearly partitioned
+
+Work:
+- child workers can spawn narrow helpers for tests, lint triage, hotspot search, screenshot review, or proof tightening
+- child workers should not invent new loop structure
+
+Fan-in:
+- all workers report back to ArchitectTab
+- ArchitectTab compares claims, changes, proof, and residual risk
+- ArchitectTab makes the final keep / partial keep / revert recommendation
+
+========================================
+4. HEALTH MODEL
+========================================
+
+Use 3 health layers:
+
+1. Liveness
+   - cheap
+   - fast
+   - checks whether the environment is alive
+
+2. Readiness
+   - tests
+   - lint
+   - pulse / proceed decision
+
+3. Diagnostic Monitoring
+   - active problem hunt
+   - hotspots
+   - ignored tests
+   - suspicious drift
+
+Important:
+Health green does NOT mean problem-free.
+That is why the diagnostic sweep stays mandatory.
+
+========================================
+5. DESIGN SHARPENING
+========================================
+
+If a device or instrument is connected during the run, enable a design sharpening lane.
+
+Design sharpening flow:
+
+1. Confirm a device is actually connected
+2. Capture screenshots
+3. Review visual evidence
+4. Score pleasantness and flow
+5. Make only informed, small changes
+6. Store evidence in the data bucket
+
+Never make random beautification changes without visual proof.
+Never make major UI changes without explicit user approval.
+
+========================================
+6. DATA BUCKET
+========================================
+
+Every serious Loopmaster run should leave behind a useful artifact bucket.
+
+The bucket should store:
+- touched files
+- summary
+- screenshots if any
+- shared-state snapshot
+- decision notes
+- rollback notes
+
+This gives you power later to:
+- compare runs
+- understand why a change happened
+- revert selected parts
+- transplant the flywheel into another project with less guesswork
+
+========================================
+7. BLIND SPOTS TO WATCH
+========================================
+
+Common loop blind spots:
+
+- health scripts pass but proof is weak
+- multiple workers touch the same file family
+- Watcher becomes an editor instead of a validator
+- diagnostics are skipped because tests are green
+- desktop guide drifts away from repo truth
+- new loop roles are added without contract tests
+- simulations exist but do not reflect real operator behavior
+
+Best response:
+- add contract tests
+- add export/update tests
+- keep one source of truth
+- log residual risk even on good runs
+
+========================================
+8. CROSS-PROJECT FLYWHEEL KIT
+========================================
+
+To use this same system in another app or program, carry over:
+
+1. one parent conductor role
+2. one implementation role
+3. one optimization role
+4. one defense / risk role
+5. one proof validator role
+6. one health model
+7. one artifact bucket
+8. one desktop guide export system
+
+Then customize:
+- domain-specific checks
+- repo paths
+- test commands
+- screenshot / device rules
+- data sensitivity rules
+
+========================================
+9. UPDATE SYSTEM
+========================================
+
+This desktop guide should not be edited blindly by hand forever.
+
+Preferred update path:
+
+1. update the repo source guide
+2. run the desktop export script
+3. run the export test
+4. if the guide became more useful, keep it
+
+This keeps the desktop copy readable while preserving one source of truth in the repo.
+
+========================================
+10. SIMPLE ONE-LINE SUMMARY
+========================================
+
+Loopmaster is the one real loop.
+Everything else is either a lane, a neighboring worker tab, or a narrow helper that serves the same contract.

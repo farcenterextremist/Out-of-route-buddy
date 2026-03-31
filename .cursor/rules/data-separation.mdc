@@ -1,7 +1,13 @@
 ---
-description: "Synthetic vs human data: keep verifiably separate; use synthetic to suggest improvements to human data gathering"
-globs: []
-alwaysApply: true
+description: "Synthetic vs human data: keep verifiably separate when editing trip-tier, persistence, or synthetic-data flow files"
+globs:
+  - app/src/main/java/com/example/outofroutebuddy/data/**/*.kt
+  - app/src/main/java/com/example/outofroutebuddy/domain/**/*.kt
+  - app/src/test/java/com/example/outofroutebuddy/**/*.kt
+  - docs/DATA_TIERS.md
+  - docs/automation/SYNTHETIC_DATA_LOOP*.md
+  - docs/product/FEATURE_BRIEF_virtual_fleet_shared_pool.md
+alwaysApply: false
 ---
 
 # Data separation rule

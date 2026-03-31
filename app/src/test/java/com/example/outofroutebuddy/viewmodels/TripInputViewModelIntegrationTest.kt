@@ -65,6 +65,8 @@ class TripInputViewModelIntegrationTest {
     private lateinit var mockUnifiedLocationService: UnifiedLocationService
     private lateinit var mockUnifiedTripService: UnifiedTripService
     private lateinit var mockUnifiedOfflineService: UnifiedOfflineService
+    private lateinit var mockTripPersistenceManager: com.example.outofroutebuddy.data.TripPersistenceManager
+    private lateinit var mockCrashRecoveryManager: TripCrashRecoveryManager
 
     // Test dispatcher for coroutines
     private val testDispatcher = StandardTestDispatcher()
@@ -86,6 +88,7 @@ class TripInputViewModelIntegrationTest {
         every { TripTrackingService.tripMetrics } returns mockTripMetricsFlow
         every { TripTrackingService.driveState } returns MutableStateFlow(DriveState.DRIVING)
         every { TripTrackingService.startService(any(), any(), any()) } just Runs
+        every { TripTrackingService.startService(any(), any(), any(), any(), any()) } just Runs
         every { TripTrackingService.stopService(any()) } just Runs
         every { TripTrackingService.canShowTripNotifications(any()) } returns true
         every { TripTrackingService.pauseService(any()) } just Runs
@@ -106,6 +109,8 @@ class TripInputViewModelIntegrationTest {
         mockUnifiedLocationService = mockk(relaxed = true)
         mockUnifiedTripService = mockk(relaxed = true)
         mockUnifiedOfflineService = mockk(relaxed = true)
+        mockTripPersistenceManager = mockk(relaxed = true)
+        mockCrashRecoveryManager = mockk(relaxed = true)
 
         // Create mock GPS service
         mockGpsService = MockGpsSynchronizationService()
@@ -149,8 +154,8 @@ class TripInputViewModelIntegrationTest {
                 unifiedLocationService = mockUnifiedLocationService,
                 unifiedTripService = mockUnifiedTripService,
                 unifiedOfflineService = mockUnifiedOfflineService,
-                crashRecoveryManager = mockk(relaxed = true),
-                tripPersistenceManager = mockk(relaxed = true),
+                crashRecoveryManager = mockCrashRecoveryManager,
+                tripPersistenceManager = mockTripPersistenceManager,
                 application = mockApplication,
                 ioDispatcher = testDispatcher,
             )
@@ -566,7 +571,7 @@ class TripInputViewModelIntegrationTest {
     fun `real-time GPS updates during active trip`() =
         runTest {
             // Given: Active trip
-            viewModel.calculateTrip(100.0, 25.0, 100.0)
+            viewModel.calculateTrip(100.0, 25.0, 0.0)
             testDispatcher.scheduler.advanceUntilIdle()
 
             // When: GPS emits multiple updates
@@ -643,8 +648,8 @@ class TripInputViewModelIntegrationTest {
                 unifiedLocationService = mockUnifiedLocationService,
                 unifiedTripService = mockUnifiedTripService,
                 unifiedOfflineService = mockUnifiedOfflineService,
-                crashRecoveryManager = mockk(relaxed = true),
-                tripPersistenceManager = mockk(relaxed = true),
+                crashRecoveryManager = mockCrashRecoveryManager,
+                tripPersistenceManager = mockTripPersistenceManager,
                 application = mockApplication,
                 ioDispatcher = testDispatcher,
             )
@@ -668,6 +673,125 @@ class TripInputViewModelIntegrationTest {
             assertFalse("ViewModel should be inactive", freshViewModel.uiState.value.isTripActive)
             assertEquals("Actual miles should be reset", 0.0, freshViewModel.uiState.value.actualMiles, 0.01)
         }
+
+    @Test
+    fun loadInitialData_restoresPausedFlagFromPersistedState() = runTest(testDispatcher) {
+        val persistedTrip = Trip(
+            id = "persisted-trip",
+            loadedMiles = 10.0,
+            bounceMiles = 2.0,
+            actualMiles = 12.3,
+            status = TripStatus.ACTIVE,
+            startTime = Date(),
+        )
+        every { mockTripPersistenceManager.loadSavedTripState() } returns
+            com.example.outofroutebuddy.data.TripPersistenceManager.SavedTripState(
+                trip = persistedTrip,
+                loadedMiles = 10.0,
+                bounceMiles = 2.0,
+                actualMiles = 12.3,
+                startTime = Date(),
+                recoveryTime = Date(),
+                isPaused = true,
+            )
+
+        val pausedRestoreViewModel = TripInputViewModel(
+            tripRepository = mockRepository,
+            preferencesManager = mockPreferencesManager,
+            tripStateManager = mockTripStateManager,
+            tripStatePersistence = mockTripStatePersistence,
+            backgroundSyncService = mockBackgroundSyncService,
+            optimizedGpsDataFlow = mockOptimizedGpsDataFlow,
+            validationFramework = mockValidationFramework,
+            unifiedLocationService = mockUnifiedLocationService,
+            unifiedTripService = mockUnifiedTripService,
+            unifiedOfflineService = mockUnifiedOfflineService,
+            crashRecoveryManager = mockCrashRecoveryManager,
+            tripPersistenceManager = mockTripPersistenceManager,
+            application = mockApplication,
+            ioDispatcher = testDispatcher,
+        )
+        advanceUntilIdle()
+
+        val state = pausedRestoreViewModel.uiState.value
+        assertTrue("Persisted trip should restore as active", state.isTripActive)
+        assertTrue("Persisted pause flag should be restored", state.isPaused)
+        assertEquals(12.3, state.actualMiles, 0.01)
+        assertTrue("Status should mention paused restore", state.tripStatusMessage.contains("paused", ignoreCase = true))
+    }
+
+    @Test
+    fun continueRecoveredTrip_restoresPausedState_andStartsServiceSeeded() = runTest(testDispatcher) {
+        val recoveredTrip = Trip(
+            id = "recovered-trip",
+            loadedMiles = 10.0,
+            bounceMiles = 2.0,
+            actualMiles = 12.3,
+            status = TripStatus.ACTIVE,
+            startTime = Date(),
+        )
+        val savedState = com.example.outofroutebuddy.data.TripPersistenceManager.SavedTripState(
+            trip = recoveredTrip,
+            loadedMiles = 10.0,
+            bounceMiles = 2.0,
+            actualMiles = 12.3,
+            startTime = Date(),
+            recoveryTime = Date(),
+            isPaused = true,
+        )
+
+        viewModel.continueRecoveredTrip(savedState)
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertTrue("Recovered trip should be active", state.isTripActive)
+        assertTrue("Recovered trip should remain paused", state.isPaused)
+        assertEquals(12.3, state.actualMiles, 0.01)
+        assertTrue("Status should mention paused recovery", state.tripStatusMessage.contains("paused", ignoreCase = true))
+
+        verify {
+            mockTripStateManager.startTrip("10.0", "2.0")
+            TripTrackingService.startService(any(), 10.0, 2.0, 12.3, true)
+        }
+    }
+
+    @Test
+    fun pauseAndResumeTrip_persistPausedFlagImmediately() = runTest(testDispatcher) {
+        viewModel.calculateTrip(10.0, 2.0, 5.0)
+        advanceUntilIdle()
+        clearMocks(mockTripPersistenceManager, answers = false, recordedCalls = true)
+
+        viewModel.pauseTrip()
+        advanceUntilIdle()
+        assertTrue("Pause should update UI state", viewModel.uiState.value.isPaused)
+        verify(atLeast = 1) {
+            mockTripPersistenceManager.saveActiveTripState(
+                any(),
+                any(),
+                any(),
+                any(),
+                any(),
+                any(),
+                true
+            )
+        }
+
+        clearMocks(mockTripPersistenceManager, answers = false, recordedCalls = true)
+        viewModel.resumeTrip()
+        advanceUntilIdle()
+        assertFalse("Resume should clear paused UI state", viewModel.uiState.value.isPaused)
+        verify(atLeast = 1) {
+            mockTripPersistenceManager.saveActiveTripState(
+                any(),
+                any(),
+                any(),
+                any(),
+                any(),
+                any(),
+                false
+            )
+        }
+    }
 
     @Test
     fun `period statistics loading`() = runTest(testDispatcher) {

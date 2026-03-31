@@ -3,6 +3,7 @@
 **Purpose:** Single place to track improvements to the token loop. Completion % and a visual make it easy for all agents to see progress. Update this doc when items are done or new items are added (e.g. from TOKEN_LOOP_NEXT_TASKS.md).
 
 **Improvement plan (blindspots, rule output baseline, context research):** [TOKEN_LOOP_IMPROVEMENT_PLAN.md](./TOKEN_LOOP_IMPROVEMENT_PLAN.md) — read at Step 0; optionally update at Step 7 with "Rule output this run" vs baseline.
+**Quality baseline:** [QUALITY_STANDARDS_AND_PROOF.md](./QUALITY_STANDARDS_AND_PROOF.md) — each run must include proof-of-quality evidence (liveness, readiness, residual risk, traceability).
 
 **Completion %:** `(completed items / total plan items) × 100`. Recompute when you update checkboxes. **Update at end of each token loop run (Step 7)** when checkboxes or phase items change.
 
@@ -166,6 +167,7 @@ flowchart LR
 |------|------|--------|
 | [x] | At Step 0: read TOKEN_SAVING_PRACTICES and TOKEN_LOOP_IMPROVEMENT_PLAN | TOKEN_REDUCTION_LOOP Step 0 |
 | [x] | At Step 7: append TOKEN_LOOP_RUN_LEDGER; update TOKEN_SAVING_PRACTICES §3 (what worked / didn't) | TOKEN_REDUCTION_LOOP Step 7 |
+| [x] | At Step 0/7: apply quality standard and proof-of-quality evidence | Read QUALITY_STANDARDS_AND_PROOF at Step 0; report proof in run output/ledger |
 | [ ] | At Step 7 (or Step 0 next run): recompute and update Master Plan completion % | Update this doc's visual bar and Overall completion table when checkboxes change |
 
 **Phase 7 completion:** 2/3 = **67%**
@@ -175,7 +177,7 @@ flowchart LR
 ## How to use
 
 - **All agents:** Token saving recommendations are in [TOKEN_INITIATIVE_BRIEFING.md](../agents/TOKEN_INITIATIVE_BRIEFING.md) §Token saving recommendations. Latest next-run tasks: [TOKEN_LOOP_NEXT_TASKS.md](./TOKEN_LOOP_NEXT_TASKS.md). This master plan shows what’s done and what’s left.
-- **Token loop runner:** At Step 0, read TOKEN_LOOP_NEXT_TASKS, [TOKEN_SAVING_PRACTICES.md](./TOKEN_SAVING_PRACTICES.md), [TOKEN_LOOP_IMPROVEMENT_PLAN.md](./TOKEN_LOOP_IMPROVEMENT_PLAN.md) (blindspots, rule output, research), and this plan. At Step 7: append [TOKEN_LOOP_RUN_LEDGER.md](./TOKEN_LOOP_RUN_LEDGER.md), update TOKEN_SAVING_PRACTICES §3 (what worked / didn't), optionally update TOKEN_LOOP_IMPROVEMENT_PLAN §4 (rule output this run), and **recompute and update this doc's completion %** (visual bar and Overall completion table).
+- **Token loop runner:** At Step 0, read TOKEN_LOOP_NEXT_TASKS, [TOKEN_SAVING_PRACTICES.md](./TOKEN_SAVING_PRACTICES.md), [TOKEN_LOOP_IMPROVEMENT_PLAN.md](./TOKEN_LOOP_IMPROVEMENT_PLAN.md) (blindspots, rule output, research), [QUALITY_STANDARDS_AND_PROOF.md](./QUALITY_STANDARDS_AND_PROOF.md), and this plan. At Step 7: append [TOKEN_LOOP_RUN_LEDGER.md](./TOKEN_LOOP_RUN_LEDGER.md), update TOKEN_SAVING_PRACTICES §3 (what worked / didn't), include proof-of-quality evidence, optionally update TOKEN_LOOP_IMPROVEMENT_PLAN §4 (rule output this run), and **recompute and update this doc's completion %** (visual bar and Overall completion table).
 - **Adding items:** Pull from TOKEN_LOOP_NEXT_TASKS or new ideas; add a row to the right phase; increment total and recompute %.
 
 ---

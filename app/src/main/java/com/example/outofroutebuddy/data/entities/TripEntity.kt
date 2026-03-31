@@ -52,6 +52,8 @@ data class TripEntity(
     val backRoadsPercent: Double = 0.0,
     val backRoadsMinutes: Int = 0,
     val truckStopsVisited: Int = 0,
+    val pickupAddress: String = "",
+    val dropoffAddress: String = "",
     /** Data tier: SILVER (may delete), PLATINUM (demote/promote, synthetic ok), GOLD (human, digital gold). */
     val dataTier: DataTier = DataTier.GOLD,
 ) {

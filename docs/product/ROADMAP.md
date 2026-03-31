@@ -15,13 +15,29 @@
 
 ---
 
+## Production stage — 100% approved (2026-03-13)
+
+User approved for implementation. Implement one-by-one.
+
+| # | Item | Reference |
+|---|------|-----------|
+| **7** | Trash can icon beautification | FUTURE_IDEAS § 5.1 |
+| **8** | Scrolling top toolbar / taskbar | FUTURE_IDEAS § 6.1 |
+| **9** | Hamburger menu left of "Out of route" title | FUTURE_IDEAS § 6.2 |
+| **17** | Drastic loop improvements (routine, phases, tiers, new loops) | LOOP_TIERING |
+| **20** | Architecture / major toolchain (schema, persistence, toolchain) | LOOP_TIERING |
+
+See `docs/automation/HEAVY_IDEAS_FAVORITES.md` § Production stage.
+
+---
+
 ## What's next (from worker todos and ideas)
 
 - **Auto drive detected** — Detect when the driver is likely on the road (movement/speed or similar); show a clear state and one-tap start. See `docs/product/FEATURE_BRIEF_auto_drive.md`.
 - **Reports screen** — Dedicated view for trip/out-of-route reports (period, export, or share). See `docs/product/FEATURE_BRIEF_reports.md`.
 - **History improvements** — Navigate from history to trip details; clearer list and filters. (CRUCIAL #4 implemented.)
+- **Virtual fleet and shared pool** — Export GOLD human-driving data into a local shared pool while generating sandboxed synthetic fleet batches for comparison and future fleet analytics. See `docs/product/FEATURE_BRIEF_virtual_fleet_shared_pool.md`.
 - **Backlog ideas** — Driver check-in, Trip summary card, Haptic on start/end, Smart bounce default, Nightly digest, Screenshot on trip end, App PIN to end trip, Changelog for you, etc. (see WORKER_TODOS_AND_IDEAS).
-- **Future ideas (sandboxed)** — Multi-user data sharing, driver ranking, ranking chart, route deviation map (instant replay with red lines for off-route). See [FUTURE_IDEAS.md](./FUTURE_IDEAS.md). Not in scope without user approval.
 
 ---
 

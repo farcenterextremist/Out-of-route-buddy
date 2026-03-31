@@ -2,6 +2,8 @@
 
 **Purpose:** Repeatable security exercise that researches attacks, runs simulations in a safe environment, and integrates with Red/Blue/Purple proof of work.
 
+**Consistency contract (required):** Follow [LOOP_CONSISTENCY_STANDARD.md](./LOOP_CONSISTENCY_STANDARD.md). Include `Loop Consistency Check` and `Consistency score: X/10` in summary/ledger output.
+
 **Trigger:** User says **"Run Cyber Security Loop"** or **"GO security"** — or runs automatically when Improvement Loop has Security focus (Phase 1.2).
 
 **Upon initiation:** Start with **Phase 0 Research** — do not skip. Check todos — [CRUCIAL_IMPROVEMENTS_TODO.md](../CRUCIAL_IMPROVEMENTS_TODO.md), [TOKEN_LOOP_NEXT_TASKS.md](./TOKEN_LOOP_NEXT_TASKS.md) (latest run), [CYBER_SECURITY_LOOP_AUDIT.md](./CYBER_SECURITY_LOOP_AUDIT.md) (blind spots), and any in-progress todos. Prioritize from these lists.
@@ -16,7 +18,7 @@
 
 | Phase | Goal | Actions |
 |-------|------|---------|
-| **0 Research** | Discover new attacks, defenses, techniques **and** improve our own loop | **(A) Cyber security research:** Read [CYBER_SECURITY_LOOP_MASTER_PLAN](./CYBER_SECURITY_LOOP_MASTER_PLAN.md) at loop start; read [CYBER_SECURITY_RESEARCH](./CYBER_SECURITY_RESEARCH.md); web search for latest attacks/defenses; update ATTACK_LIBRARY; check [CYBER_SECURITY_LOOP_AUDIT](./CYBER_SECURITY_LOOP_AUDIT.md) for blind spots. **(B) Loop improvement research:** Read [LOOP_LESSONS_LEARNED](./LOOP_LESSONS_LEARNED.md), [SELF_IMPROVING_LOOP_RESEARCH](./SELF_IMPROVING_LOOP_RESEARCH.md), [CURSOR_SELF_IMPROVEMENT](./CURSOR_SELF_IMPROVEMENT.md). Note what you applied. See [UNIVERSAL_LOOP_PROMPT](../agents/data-sets/hub/UNIVERSAL_LOOP_PROMPT.md). |
+| **0 Research** | Discover new attacks, defenses, techniques **and** improve our own loop | **(A) Cyber security research:** Read [CYBER_SECURITY_LOOP_MASTER_PLAN](./CYBER_SECURITY_LOOP_MASTER_PLAN.md) at loop start; read [CYBER_SECURITY_RESEARCH](./CYBER_SECURITY_RESEARCH.md); web search for latest attacks/defenses; update ATTACK_LIBRARY; check [CYBER_SECURITY_LOOP_AUDIT](./CYBER_SECURITY_LOOP_AUDIT.md) for blind spots. **(B) Loop improvement research:** Read [LOOP_LESSONS_LEARNED](./LOOP_LESSONS_LEARNED.md), [SELF_IMPROVING_LOOP_RESEARCH](./SELF_IMPROVING_LOOP_RESEARCH.md), [CURSOR_SELF_IMPROVEMENT](./CURSOR_SELF_IMPROVEMENT.md), and [QUALITY_STANDARDS_AND_PROOF](./QUALITY_STANDARDS_AND_PROOF.md). Note what you applied. See [UNIVERSAL_LOOP_PROMPT](../agents/data-sets/hub/UNIVERSAL_LOOP_PROMPT.md). |
 | **1 Simulate** | Run attacks in safe environment | `./gradlew securitySimulations`; SecuritySimulationTest; run_purple_simulations.py |
 | **2 Purple** | Red attacks, Blue checks, fix if missed | Agent-driven or review simulation results; log to proof of work |
 | **3 Improve** | Update defenses, summary | Implement Blue fixes; write CYBER_SECURITY_LOOP_SUMMARY_YYYY-MM-DD.md |
@@ -56,6 +58,9 @@ Before Phase 1 (Simulate): Create git tag or commit. Enables revert if simulatio
 - **Training JSON:** `docs/agents/data-sets/security-exercises/artifacts/YYYY-MM-DD-purple-training.json` (includes `synthetic_scenarios` for data sets)
 - **Summary:** `docs/automation/CYBER_SECURITY_LOOP_SUMMARY_YYYY-MM-DD.md`
 - **Run ledger:** `docs/automation/CYBER_SECURITY_LOOP_RUN_LEDGER.md` — record pre/during/post for rollback and improvement
+- **Proof of quality:** In summary and ledger, include liveness/readiness evidence + residual risk per `QUALITY_STANDARDS_AND_PROOF.md`
+- **Loop consistency check:** In summary and ledger, include pass/fail for contract items + `Consistency score: X/10` per `LOOP_CONSISTENCY_STANDARD.md`
+- **Reusable ledger snippet:** Use `docs/automation/LOOP_CONSISTENCY_LEDGER_SNIPPET.md` inside each ledger run block
 
 ---
 

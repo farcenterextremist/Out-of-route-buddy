@@ -2,6 +2,7 @@ package com.example.outofroutebuddy.services
 
 import android.annotation.SuppressLint
 import android.Manifest
+import android.app.AlarmManager
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -55,20 +56,38 @@ const val ACTION_PAUSE_TRIP = "ACTION_PAUSE_TRIP"
 const val ACTION_RESUME_TRIP = "ACTION_RESUME_TRIP"
 const val ACTION_TRIP_ENDING_DETECTED = "ACTION_TRIP_ENDING_DETECTED"
 const val ACTION_TRIP_CONTINUE_CONFIRMED = "ACTION_TRIP_CONTINUE_CONFIRMED"
+const val ACTION_RECOVER_ACTIVE_TRIP = "com.example.outofroutebuddy.services.ACTION_RECOVER_ACTIVE_TRIP"
 private const val ACTION_ACTIVITY_TRANSITION_UPDATE = "ACTION_ACTIVITY_TRANSITION_UPDATE"
 const val EXTRA_EXPECTED_MILES = "EXTRA_EXPECTED_MILES"
 private const val EXTRA_INITIAL_TOTAL_MILES = "EXTRA_INITIAL_TOTAL_MILES"
+        private const val EXTRA_START_PAUSED = "EXTRA_START_PAUSED"
     private const val NOTIFICATION_ID = BuildConfig.NOTIFICATION_ID
     private const val COMPLETION_NOTIFICATION_ID = BuildConfig.NOTIFICATION_ID + 1
     private const val ERROR_NOTIFICATION_ID = BuildConfig.NOTIFICATION_ID + 2
     private const val NOTIFICATION_CHANNEL_ID = BuildConfig.NOTIFICATION_CHANNEL_ID
+    /** Shown when user swipes app away while "continue tracking after dismiss" is off. */
+    private const val PAUSED_ON_TASK_REMOVED_NOTIFICATION_ID = NOTIFICATION_ID + 40
+    private const val PREFS_APP_SETTINGS = "app_settings"
+    private const val KEY_CONTINUE_TRACKING_AFTER_DISMISS = "continue_tracking_after_app_dismissed"
     private const val TAG = "TripTrackingService"
     private const val PREFS_NOTIFICATION_GUIDANCE = "notification_guidance"
     private const val KEY_NEEDS_NOTIFICATION_GUIDANCE = "trip_notif_guidance_needed"
+private const val PREFS_SERVICE_STATE = "trip_service_state"
+private const val KEY_WAS_TRACKING = "was_tracking"
+private const val KEY_LOADED_MILES = "loaded_miles"
+private const val KEY_BOUNCE_MILES = "bounce_miles"
+private const val KEY_TOTAL_DISTANCE = "total_distance"
+private const val KEY_START_TIME = "start_time"
+private const val KEY_IS_PAUSED = "is_paused"
 
 data class TripMetrics(
     val totalMiles: Double = 0.0,
-    val oorMiles: Double = 0.0
+    val oorMiles: Double = 0.0,
+    /** Distinct device time-zone offsets seen this trip (phone auto-adjusts when crossing zones). */
+    val distinctTimeZoneOffsets: Int = 0,
+    val elevationMinMeters: Double? = null,
+    val elevationMaxMeters: Double? = null,
+    val maxSpeedMph: Double = 0.0,
 )
 
 data class ActivityTransitionSignal(
@@ -197,6 +216,37 @@ class TripTrackingService : Service() {
     private var originDwellStartAtMillis: Long? = null
     private var sustainedStopStartAtMillis: Long? = null
 
+    /** Ludacris card metrics: distinct device TZ offsets + elevation samples (all GPS points). */
+    private val ludacrisSeenOffsets = mutableSetOf<Int>()
+    private var ludacrisElevMin: Double? = null
+    private var ludacrisElevMax: Double? = null
+
+    private fun resetLudacrisTripAggregates() {
+        ludacrisSeenOffsets.clear()
+        ludacrisElevMin = null
+        ludacrisElevMax = null
+    }
+
+    private fun recordLudacrisFromLocation(location: Location) {
+        ludacrisSeenOffsets.add(TimeZone.getDefault().getOffset(location.time))
+        if (location.hasAltitude()) {
+            val a = location.altitude
+            ludacrisElevMin = ludacrisElevMin?.let { minOf(it, a) } ?: a
+            ludacrisElevMax = ludacrisElevMax?.let { maxOf(it, a) } ?: a
+        }
+    }
+
+    private fun snapshotTripMetrics(oorMiles: Double) {
+        _tripMetrics.value = TripMetrics(
+            totalMiles = totalDistance,
+            oorMiles = oorMiles,
+            distinctTimeZoneOffsets = ludacrisSeenOffsets.size,
+            elevationMinMeters = ludacrisElevMin,
+            elevationMaxMeters = ludacrisElevMax,
+            maxSpeedMph = maxSpeedMph,
+        )
+    }
+
     private data class SignalSample(
         val timestampMillis: Long,
         val latitude: Double,
@@ -218,6 +268,7 @@ class TripTrackingService : Service() {
         internal const val PROMPT_STATE_USER_CONTINUED_COOLDOWN = "USER_CONTINUED_COOLDOWN"
         internal const val PROMPT_STATE_TRIP_ENDED = "TRIP_ENDED"
         private const val ACTIVITY_TRANSITION_REQUEST_CODE = 7401
+        private const val RECOVERY_ALARM_REQUEST_CODE = 7402
         private const val ORIGIN_GEOFENCE_RADIUS_METERS = 250.0
         private const val ORIGIN_DWELL_MIN_SPEED_MPH = 3.0
         private const val SIGNAL_WINDOW_MS = 120_000L
@@ -248,13 +299,20 @@ class TripTrackingService : Service() {
         private val _tripEndingSignalSnapshot = MutableStateFlow(TripEndingSignalSnapshot())
         val tripEndingSignalSnapshot: StateFlow<TripEndingSignalSnapshot> = _tripEndingSignalSnapshot.asStateFlow()
 
-        fun startService(context: Context, loadedMiles: Double, bounceMiles: Double, initialTotalMiles: Double? = null) {
+        fun startService(
+            context: Context,
+            loadedMiles: Double,
+            bounceMiles: Double,
+            initialTotalMiles: Double? = null,
+            startPaused: Boolean = false
+        ) {
             try {
                 val intent = Intent(context, TripTrackingService::class.java).apply {
                     action = ACTION_START_TRIP
                     putExtra("EXTRA_LOADED_MILES", loadedMiles)
                     putExtra("EXTRA_BOUNCE_MILES", bounceMiles)
                     initialTotalMiles?.let { putExtra(EXTRA_INITIAL_TOTAL_MILES, it) }
+                    putExtra(EXTRA_START_PAUSED, startPaused)
                 }
                 ContextCompat.startForegroundService(context, intent)
                 Log.d(TAG, "Trip tracking service start requested")
@@ -277,6 +335,20 @@ class TripTrackingService : Service() {
                     "Failed to start trip tracking service",
                     e
                 )
+            }
+        }
+
+        fun requestRecovery(context: Context, source: String) {
+            try {
+                val intent = Intent(context, TripTrackingService::class.java).apply {
+                    action = ACTION_RECOVER_ACTIVE_TRIP
+                    putExtra("EXTRA_RECOVERY_SOURCE", source)
+                }
+                ContextCompat.startForegroundService(context, intent)
+                Log.d(TAG, "Trip recovery requested from $source")
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to request trip recovery from $source", e)
+                notifyUserOfServiceFailure(context, "Trip recovery could not restart automatically: ${e.message}")
             }
         }
 
@@ -604,6 +676,7 @@ class TripTrackingService : Service() {
     // ✅ REFACTORED: This is the new, cleaner location update logic with vehicle-specific validation.
     private fun updateLocation(location: Location) {
         try {
+            recordLudacrisFromLocation(location)
             // ✅ Drive-state: maintain recent location history for highway-context lookback.
             lastLocation?.let { prev ->
                 locationHistory.addLast(prev)
@@ -677,6 +750,7 @@ class TripTrackingService : Service() {
                             "Speed: ${if (location.hasSpeed()) String.format(Locale.US, "%.1f", location.speed * 2.237) else "N/A"} mph, " +
                             "Total: ${String.format(Locale.US, "%.2f", totalDistance)} miles."
                 )
+                persistActiveTrackingSnapshot()
             } else {
                 // Location was rejected by validation
                 rejectedGpsPoints++
@@ -710,8 +784,9 @@ class TripTrackingService : Service() {
             val dispatchedMiles = loadedMiles + bounceMiles
             val oorMiles = totalDistance - dispatchedMiles
 
-            _tripMetrics.value = TripMetrics(totalDistance, oorMiles)
+            snapshotTripMetrics(oorMiles)
             updateNotification(currentTripNotificationText())
+            persistActiveTrackingSnapshot()
             
             // ✅ NEW: Broadcast real-time GPS data to UI
             broadcastRealTimeGpsData(location)
@@ -860,14 +935,31 @@ class TripTrackingService : Service() {
                         stopSelf()
                         return START_NOT_STICKY
                     }
+                    ensureForegroundStarted()
                     loadedMiles = intent.getDoubleExtra("EXTRA_LOADED_MILES", 0.0)
                     bounceMiles = intent.getDoubleExtra("EXTRA_BOUNCE_MILES", 0.0)
-                    // If resuming a recovered trip, seed totalDistance
+                    // If resuming a recovered trip, seed totalDistance so miles continue correctly
                     totalDistance = intent.getDoubleExtra(EXTRA_INITIAL_TOTAL_MILES, totalDistance)
+                    val startPaused = intent.getBooleanExtra(EXTRA_START_PAUSED, false)
                     driveStateClassifier.reset()
                     locationHistory.clear()
                     _driveState.value = DriveState.DRIVING
                     startTrip()
+                    // Restore pause state after startTrip() (startTrip() resets isPaused so reapply here)
+                    if (startPaused) {
+                        isPaused = true
+                        updateNotification(currentTripNotificationText())
+                    }
+                    // Emit recovered totalDistance so UI shows miles immediately without waiting for first location
+                    try {
+                        snapshotTripMetrics(_tripMetrics.value.oorMiles)
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Failed to emit recovered trip metrics", e)
+                    }
+                }
+                ACTION_RECOVER_ACTIVE_TRIP -> {
+                    ensureForegroundStarted()
+                    handleServiceRestart()
                 }
                 ACTION_END_TRIP -> {
                     stopTrip()
@@ -924,8 +1016,8 @@ class TripTrackingService : Service() {
             Log.d(TAG, "Attempting to restore service state after restart")
             
             // Try to restore state from SharedPreferences
-            val prefs = getSharedPreferences("trip_service_state", Context.MODE_PRIVATE)
-            val wasTracking = prefs.getBoolean("was_tracking", false)
+            val prefs = getSharedPreferences(PREFS_SERVICE_STATE, Context.MODE_PRIVATE)
+            val wasTracking = prefs.getBoolean(KEY_WAS_TRACKING, false)
             
             if (wasTracking) {
                 // S3: Do not resume location tracking without permission
@@ -936,9 +1028,11 @@ class TripTrackingService : Service() {
                     return
                 }
                 // Restore trip parameters
-                loadedMiles = prefs.getFloat("loaded_miles", 0f).toDouble()
-                bounceMiles = prefs.getFloat("bounce_miles", 0f).toDouble()
-                totalDistance = prefs.getFloat("total_distance", 0f).toDouble()
+                loadedMiles = prefs.getFloat(KEY_LOADED_MILES, 0f).toDouble()
+                bounceMiles = prefs.getFloat(KEY_BOUNCE_MILES, 0f).toDouble()
+                totalDistance = prefs.getFloat(KEY_TOTAL_DISTANCE, 0f).toDouble()
+                isPaused = prefs.getBoolean(KEY_IS_PAUSED, false)
+                tripStartTime = prefs.getLong(KEY_START_TIME, 0L)
                 
                 Log.i(TAG, "Restored trip service state after restart")
                 
@@ -959,7 +1053,7 @@ class TripTrackingService : Service() {
                 startForeground(NOTIFICATION_ID, notification)
                 
                 // Restore service state so UI and metrics are consistent
-                _tripMetrics.value = TripMetrics(totalDistance, 0.0)
+                snapshotTripMetrics(totalDistance - loadedMiles - bounceMiles)
                 serviceState = serviceState.copy(isRunning = true, isHealthy = true, lastError = null)
                 _serviceState.value = serviceState
                 
@@ -990,12 +1084,13 @@ class TripTrackingService : Service() {
     private fun saveServiceState() {
         try {
             val success =
-                getSharedPreferences("trip_service_state", Context.MODE_PRIVATE).edit().run {
-                    putBoolean("was_tracking", true)
-                    putFloat("loaded_miles", loadedMiles.toFloat())
-                    putFloat("bounce_miles", bounceMiles.toFloat())
-                    putFloat("total_distance", totalDistance.toFloat())
-                    putLong("start_time", System.currentTimeMillis())
+                getSharedPreferences(PREFS_SERVICE_STATE, Context.MODE_PRIVATE).edit().run {
+                    putBoolean(KEY_WAS_TRACKING, true)
+                    putFloat(KEY_LOADED_MILES, loadedMiles.toFloat())
+                    putFloat(KEY_BOUNCE_MILES, bounceMiles.toFloat())
+                    putFloat(KEY_TOTAL_DISTANCE, totalDistance.toFloat())
+                    putLong(KEY_START_TIME, if (tripStartTime > 0L) tripStartTime else System.currentTimeMillis())
+                    putBoolean(KEY_IS_PAUSED, isPaused)
                     commit()
                 }
             if (success) {
@@ -1014,7 +1109,7 @@ class TripTrackingService : Service() {
     private fun clearServiceState() {
         try {
             val success =
-                getSharedPreferences("trip_service_state", Context.MODE_PRIVATE).edit().run {
+                getSharedPreferences(PREFS_SERVICE_STATE, Context.MODE_PRIVATE).edit().run {
                     clear()
                     commit()
                 }
@@ -1195,9 +1290,10 @@ class TripTrackingService : Service() {
             tripStartTime = System.currentTimeMillis()
             interruptionCount = 0
             tripEndPromptState = TripEndPromptState.IN_PROGRESS
-            
+            resetLudacrisTripAggregates()
+
             // ✅ FIX: Initialize metrics with seeded distance for trip recovery
-            _tripMetrics.value = TripMetrics(totalDistance, 0.0)
+            snapshotTripMetrics((totalDistance - loadedMiles - bounceMiles).coerceAtLeast(0.0))
             serviceState = serviceState.copy(
                 isRunning = true,
                 isHealthy = true,
@@ -1271,7 +1367,8 @@ class TripTrackingService : Service() {
             // Don't automatically save the trip - let the ViewModel handle saving decisions
             // The ViewModel will call saveCurrentTrip() if the user chooses to save
             
-            _tripMetrics.value = TripMetrics(0.0, 0.0) // Reset metrics
+            resetLudacrisTripAggregates()
+            _tripMetrics.value = TripMetrics() // Reset metrics
             tripEndPromptState = TripEndPromptState.TRIP_ENDED
             stopActivityTransitionUpdates()
             signalSamples.clear()
@@ -1318,6 +1415,7 @@ class TripTrackingService : Service() {
             
             // Keep pull-down text fixed per product requirement.
             updateNotification(currentTripNotificationText())
+            persistActiveTrackingSnapshot()
             
             Log.d(TAG, "Trip paused successfully - distance accumulation stopped")
         } catch (e: Exception) {
@@ -1438,7 +1536,41 @@ class TripTrackingService : Service() {
         }
     }
 
+    private fun ensureForegroundStarted() {
+        if (!canPostNotifications()) {
+            markNotificationGuidanceNeeded()
+            Log.w(TAG, "Foreground notification visibility is degraded because notifications are blocked")
+        }
+        startForeground(NOTIFICATION_ID, createNotification(currentTripNotificationText()))
+    }
+
+    private fun persistActiveTrackingSnapshot() {
+        if (!serviceState.isRunning) return
+        saveServiceState()
+    }
+
+    private fun scheduleTaskRemovalRecovery() {
+        val alarmManager = getSystemService(Context.ALARM_SERVICE) as? AlarmManager ?: return
+        val recoveryIntent = Intent(this, TripTrackingRecoveryReceiver::class.java).apply {
+            action = ACTION_RECOVER_ACTIVE_TRIP
+        }
+        val pendingIntent = PendingIntent.getBroadcast(
+            this,
+            RECOVERY_ALARM_REQUEST_CODE,
+            recoveryIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+        )
+        alarmManager.setExactAndAllowWhileIdle(
+            AlarmManager.RTC_WAKEUP,
+            System.currentTimeMillis() + 2_000L,
+            pendingIntent,
+        )
+    }
+
     private fun currentTripNotificationText(): String {
+        if (isPaused && tripEndPromptState == TripEndPromptState.IN_PROGRESS) {
+            return getString(R.string.trip_notification_paused)
+        }
         return resolveNotificationText(
             promptState = tripEndPromptState.name,
             inProgressText = getString(R.string.trip_notification_in_progress),
@@ -1516,10 +1648,71 @@ class TripTrackingService : Service() {
         val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         notificationManager.notify(COMPLETION_NOTIFICATION_ID, notification)
     }
+
+    override fun onTaskRemoved(rootIntent: Intent?) {
+        try {
+            Log.w(TAG, "Task removed while trip tracking service is active")
+            if (!serviceState.isRunning) {
+                super.onTaskRemoved(rootIntent)
+                return
+            }
+            val continueTracking = getSharedPreferences(PREFS_APP_SETTINGS, Context.MODE_PRIVATE)
+                .getBoolean(KEY_CONTINUE_TRACKING_AFTER_DISMISS, true)
+            if (!continueTracking) {
+                Log.i(
+                    TAG,
+                    "continue_tracking_after_app_dismissed=false: stopping GPS; trip state kept for resume",
+                )
+                interruptionCount++
+                persistActiveTrackingSnapshot()
+                stopActivityTransitionUpdates()
+                stopLocationUpdates()
+                try {
+                    stopForeground(Service.STOP_FOREGROUND_REMOVE)
+                } catch (e: Exception) {
+                    Log.w(TAG, "stopForeground on task remove", e)
+                }
+                if (canPostNotifications()) {
+                    val openApp = Intent(this, MainActivity::class.java).apply {
+                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                    }
+                    val pi = PendingIntent.getActivity(
+                        this,
+                        PAUSED_ON_TASK_REMOVED_NOTIFICATION_ID,
+                        openApp,
+                        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+                    )
+                    val paused = NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
+                        .setSmallIcon(R.drawable.ic_notification_truck)
+                        .setContentTitle(getString(R.string.notification_tracking_paused_app_closed_title))
+                        .setContentText(getString(R.string.notification_tracking_paused_app_closed_text))
+                        .setContentIntent(pi)
+                        .setAutoCancel(true)
+                        .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                        .build()
+                    (getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager)
+                        .notify(PAUSED_ON_TASK_REMOVED_NOTIFICATION_ID, paused)
+                }
+                serviceState = serviceState.copy(isRunning = false, lastError = null)
+                _serviceState.value = serviceState
+                stopSelf()
+                return
+            }
+            interruptionCount++
+            persistActiveTrackingSnapshot()
+            scheduleTaskRemovalRecovery()
+            updateNotification(currentTripNotificationText())
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to handle task removal", e)
+        } finally {
+            super.onTaskRemoved(rootIntent)
+        }
+    }
     
     override fun onDestroy() {
         try {
             Log.d(TAG, "TripTrackingService onDestroy")
+            persistActiveTrackingSnapshot()
             stopActivityTransitionUpdates()
             stopLocationUpdates()
             super.onDestroy()

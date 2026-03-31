@@ -30,11 +30,12 @@
    - **Advice/rules applied:** [1–3 bullets: what from the Hub you are using this run — e.g. "§4.4 requires Loop # and proof of work"; "sandbox: only polished output"; "validation_simulations for regression"].  
    This ensures you are not reinventing the wheel and you are aligning with what other agents have already established as the standard.
 
-3. **Include self-improvement and loop-improvement in research.**  
-   Every loop run must include in its **research** (e.g. Phase 0 or Step 0) the **self-improvement and loop-improvement related articles and docs**. At minimum read or skim: **`docs/automation/LOOP_LESSONS_LEARNED.md`**, **`docs/automation/SELF_IMPROVING_LOOP_RESEARCH.md`**, and **`docs/automation/CURSOR_SELF_IMPROVEMENT.md`**. Note in your research output what you applied or will apply from these (e.g. "Avoid X per LOOP_LESSONS_LEARNED"; "Single highest-impact change per SELF_IMPROVING_LOOP_RESEARCH"). This keeps the loop improving over time and avoids repeating past mistakes.
+3. **Include self-improvement, quality standards, pruning, automation-to-prompt, and consistency-contract research.**  
+   Every loop run must include in its **research** (e.g. Phase 0 or Step 0) the **self-improvement and loop-improvement related docs**. At minimum read or skim: **`docs/automation/LOOP_LESSONS_LEARNED.md`**, **`docs/automation/SELF_IMPROVING_LOOP_RESEARCH.md`**, **`docs/automation/CURSOR_SELF_IMPROVEMENT.md`**, **`docs/automation/QUALITY_STANDARDS_AND_PROOF.md`**, **`docs/automation/DATA_USEFULNESS_AND_PRUNING_RESEARCH.md`**, and **`docs/automation/AUTOMATION_TO_PROMPT_RESEARCH.md`**. Note in your research output what you applied (e.g. proof-of-quality gate evidence selected, pruning criteria used, or one automation-to-prompt gate improvement). This keeps loops improving while reducing data slop and process drift.
+   Also read **`docs/automation/LOOP_CONSISTENCY_STANDARD.md`** and report a `Loop Consistency Check` with `Consistency score: X/10` in your run summary or progress report.
 
 4. **Auto-implement Light and Medium; put drastic loop improvements in Heavy.**  
-   **Light and Medium tier** improvements (per LOOP_TIERING) run **without stopping** — auto-implement them. **Drastic loop improvements** (e.g. changing the routine, adding/removing phases, changing tier definitions, new loops, or major process changes) are **Heavy tier**: do not implement them automatically; document them, add to backlog or FUTURE_IDEAS, and require human approval before applying. This keeps incremental improvements automatic while guarding against unapproved process changes.
+   **Light and Medium tier** improvements (per LOOP_TIERING) run **without stopping** — auto-implement them. **Include building out the critical features that have been 100% approved** (see **`docs/automation/HEAVY_IDEAS_FAVORITES.md`** § Production stage): whenever Light and Medium run, make incremental progress on these; they require **time and patience** and **may not be complete in one go**. **Drastic loop improvements** (e.g. changing the routine, adding/removing phases, changing tier definitions, new loops, or major process changes) are **Heavy tier**: do not implement them automatically; document them, add to backlog or FUTURE_IDEAS, and require human approval before applying. **Frontend/UI implementation is reserved for Master Loop only** and must pass `docs/automation/FRONTEND_CHANGE_AUTOMATION_GATE.md`. Non-master loops may research/propose UI changes only.
 
 5. **Minimize AI slop and critique your data.**  
    The Hub exists for **completed, polished** data — not drafts or generic filler. When you run a loop:  
@@ -55,19 +56,20 @@
 
 **Every loop run:**  
 (1) Read **LOOP_MASTER_ROLE.md**; if "start master loop", do Step 0.M first.  
-(2) **Research:** Include **self-improvement and loop-improvement** docs (LOOP_LESSONS_LEARNED, SELF_IMPROVING_LOOP_RESEARCH, CURSOR_SELF_IMPROVEMENT).  
-(3) **Tiers:** Auto-implement **Light and Medium**; **drastic loop changes = Heavy (document only)** — do not implement without approval.  
+(2) **Research:** Include **self-improvement + quality standards + pruning + automation-to-prompt + consistency standard** docs (LOOP_LESSONS_LEARNED, SELF_IMPROVING_LOOP_RESEARCH, CURSOR_SELF_IMPROVEMENT, QUALITY_STANDARDS_AND_PROOF, DATA_USEFULNESS_AND_PRUNING_RESEARCH, AUTOMATION_TO_PROMPT_RESEARCH, LOOP_CONSISTENCY_STANDARD).  
+(3) **Tiers:** Auto-implement **Light and Medium**; include **incremental work on 100% approved production-stage features** (HEAVY_IDEAS_FAVORITES § Production stage — time and patience; may not complete in one go). **Drastic loop changes = Heavy (document only)** — do not implement without approval. **Frontend/UI changes: Master Loop only, with FRONTEND_CHANGE_AUTOMATION_GATE.**  
 (4) Read **hub/README.md** and relevant Hub files from the index; note "Hub consulted" and "Advice/rules applied" at run start.  
 (5) Minimize slop: output specific, traceable, actionable; critique before depositing; use critiquing/slop-minimization skills if available.  
 (6) When you have polished output, consider depositing to **docs/agents/data-sets/hub/** and indexing in hub/README.md.  
-(7) **Shared state:** At start read **loop_shared_events.jsonl** (tail) and **loop_latest/*.json** (other loops); at end append finished event to loop_shared_events.jsonl and update **loop_latest/&lt;your_loop&gt;.json**. See docs/automation/LOOP_DYNAMIC_SHARING.md.
+(7) **Shared state:** At start read **loop_shared_events.jsonl** (tail) and **loop_latest/*.json** (other loops); at end append finished event to loop_shared_events.jsonl and update **loop_latest/&lt;your_loop&gt;.json**. See docs/automation/LOOP_DYNAMIC_SHARING.md.  
+(8) **Consistency score:** Add `Loop Consistency Check` and `Consistency score: X/10` using docs/automation/LOOP_CONSISTENCY_STANDARD.md.
 
 ## Prompt to relay to other agents (apply to their loops)
 
 Copy this to other agents so they apply the same rules to **their** loops (Token, Cyber, Synthetic Data, or any other):
 
 ```
-When you run your loop, apply these rules: (1) **Research** — Include self-improvement and loop-improvement docs in your run: LOOP_LESSONS_LEARNED.md, SELF_IMPROVING_LOOP_RESEARCH.md, CURSOR_SELF_IMPROVEMENT.md. Note what you applied. (2) **Tiers** — Auto-implement Light and Medium improvements. Drastic loop improvements (routine changes, new phases, new loops) = Heavy: document only, do not implement without human approval. (3) **Hub** — At run start read hub/README.md and relevant Hub files; note "Hub consulted" and "Advice/rules applied." When you have polished output, consider depositing to docs/agents/data-sets/hub/. (4) **Shared state** — At start read docs/automation/loop_shared_events.jsonl (tail) and docs/automation/loop_latest/*.json (other loops); at end append finished event to loop_shared_events.jsonl and update loop_latest/<your_loop>.json. See docs/automation/LOOP_DYNAMIC_SHARING.md. Full prompt: docs/agents/data-sets/hub/UNIVERSAL_LOOP_PROMPT.md.
+When you run your loop, apply these rules: (1) **Research** — Include self-improvement, quality standards, pruning, and automation-to-prompt docs in your run: LOOP_LESSONS_LEARNED.md, SELF_IMPROVING_LOOP_RESEARCH.md, CURSOR_SELF_IMPROVEMENT.md, QUALITY_STANDARDS_AND_PROOF.md, DATA_USEFULNESS_AND_PRUNING_RESEARCH.md, AUTOMATION_TO_PROMPT_RESEARCH.md. Note what you applied. (2) **Tiers** — Auto-implement Light and Medium improvements, including incremental progress on 100% approved production-stage items; drastic loop improvements (routine changes, new phases, new loops) = Heavy: document only unless approved. **Frontend/UI implementation is Master Loop only and must pass FRONTEND_CHANGE_AUTOMATION_GATE.md; non-master loops propose only.** (3) **Hub** — At run start read hub/README.md and relevant Hub files; note "Hub consulted" and "Advice/rules applied." When you have polished output, deposit to docs/agents/data-sets/hub/. (4) **Shared state** — At start read docs/automation/loop_shared_events.jsonl (tail) and docs/automation/loop_latest/*.json (other loops); at end append finished event to loop_shared_events.jsonl and update loop_latest/<your_loop>.json. See docs/automation/LOOP_DYNAMIC_SHARING.md. Full prompt: docs/agents/data-sets/hub/UNIVERSAL_LOOP_PROMPT.md.
 ```
 
 | What | Path |
@@ -78,10 +80,13 @@ When you run your loop, apply these rules: (1) **Research** — Include self-imp
 | Hub index | `docs/agents/data-sets/hub/README.md` |
 | Full axis (all loops, triggers, outputs) | `docs/automation/LOOPS_AND_IMPROVEMENT_FULL_AXIS.md` |
 | Send-to-hub prompt | `docs/agents/data-sets/hub/SEND_TO_HUB_PROMPT.md` |
-| Self-improvement & loop-improvement (required in research) | `docs/automation/LOOP_LESSONS_LEARNED.md`, `docs/automation/SELF_IMPROVING_LOOP_RESEARCH.md`, `docs/automation/CURSOR_SELF_IMPROVEMENT.md` |
-| Data usefulness & pruning (evaluate what to keep/deposit) | `docs/automation/DATA_USEFULNESS_AND_PRUNING_RESEARCH.md` |
+| Self-improvement, quality standards, pruning, automation-to-prompt, and consistency standard (required in research) | `docs/automation/LOOP_LESSONS_LEARNED.md`, `docs/automation/SELF_IMPROVING_LOOP_RESEARCH.md`, `docs/automation/CURSOR_SELF_IMPROVEMENT.md`, `docs/automation/QUALITY_STANDARDS_AND_PROOF.md`, `docs/automation/DATA_USEFULNESS_AND_PRUNING_RESEARCH.md`, `docs/automation/AUTOMATION_TO_PROMPT_RESEARCH.md`, `docs/automation/LOOP_CONSISTENCY_STANDARD.md` |
 | Tiering (Light/Medium auto; Heavy = document only; drastic loop changes = Heavy) | `docs/automation/LOOP_TIERING.md` |
-| Dynamic sharing (read/write shared state when running with other loops) | `docs/automation/LOOP_DYNAMIC_SHARING.md` |
+| Frontend automation gate (Master Loop only) | `docs/automation/FRONTEND_CHANGE_AUTOMATION_GATE.md` |
+| **LOOP GATES (required at start/end)** | `docs/automation/LOOP_GATES.md` |
+| Shared events (tail at start; append finished at end) | `docs/automation/loop_shared_events.jsonl` |
+| Latest per loop (read loop_latest/*.json at start; update loop_latest/&lt;your_loop&gt;.json at end) | `docs/automation/loop_latest/` |
+| Dynamic sharing (schema and who writes what) | `docs/automation/LOOP_DYNAMIC_SHARING.md` |
 
 ---
 

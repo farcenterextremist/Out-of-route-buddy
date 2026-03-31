@@ -9,9 +9,19 @@ Set-Location $RepoRoot
 
 $scriptsDir = Join-Path $RepoRoot "scripts\automation"
 $scripts = @(
+    "complete_token_loop_run.ps1",
+    "compare_token_rule_overhead.ps1",
+    "monitor_openai_api_usage.ps1",
+    "loop_run_contract.ps1",
+    "start_loop_run.ps1",
+    "measure_loop_efficiency.ps1",
+    "run_llm_loop.ps1",
     "token_loop_state_snapshot.ps1",
     "token_loop_listener.ps1",
     "run_token_loop.ps1",
+    "test_complete_token_loop_run.ps1",
+    "test_compare_token_rule_overhead.ps1",
+    "test_monitor_openai_api_usage.ps1",
     "test_token_loop_listener.ps1",
     "test_token_loop_snapshot.ps1",
     "test_token_loop_events_analysis.ps1",

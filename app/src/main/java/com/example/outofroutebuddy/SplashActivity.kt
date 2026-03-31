@@ -20,7 +20,11 @@ class SplashActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         // Theme provides windowBackground with truck image; no setContentView needed
         Handler(Looper.getMainLooper()).postDelayed({
-            startActivity(Intent(this, MainActivity::class.java))
+            startActivity(
+                Intent(this, MainActivity::class.java).apply {
+                    putExtras(intent)
+                },
+            )
             finish()
         }, SPLASH_DURATION_MS)
     }

@@ -5,6 +5,7 @@ import android.app.Dialog
 import android.content.Context
 import android.content.res.Configuration
 import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -12,11 +13,13 @@ import android.view.ViewGroup
 import android.view.MotionEvent
 import android.view.HapticFeedbackConstants
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.content.ContextCompat
 import androidx.core.content.edit
 import androidx.core.util.Pair
+import androidx.appcompat.widget.TooltipCompat
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
@@ -162,6 +165,8 @@ class TripInputFragment : Fragment() {
         if (_binding != null) {
             outState.putString("loaded_miles_input", binding.loadedMilesInput.text.toString())
             outState.putString("bounce_miles_input", binding.bounceMilesInput.text.toString())
+            outState.putString("pickup_address_input", binding.pickupAddressInput.text.toString())
+            outState.putString("dropoff_address_input", binding.dropoffAddressInput.text.toString())
             // Also save to SharedPreferences for theme changes
             saveTextInputsToPrefs()
         }
@@ -190,6 +195,8 @@ class TripInputFragment : Fragment() {
             prefs.edit {
                     putString("loaded_miles_input", binding.loadedMilesInput.text.toString())
                     .putString("bounce_miles_input", binding.bounceMilesInput.text.toString())
+                    .putString("pickup_address_input", binding.pickupAddressInput.text.toString())
+                    .putString("dropoff_address_input", binding.dropoffAddressInput.text.toString())
                 }
         } catch (e: Exception) {
             android.util.Log.e(TAG, "Error saving text inputs", e)
@@ -227,6 +234,19 @@ class TripInputFragment : Fragment() {
             if (!savedBounceMiles.isNullOrEmpty()) {
                 binding.bounceMilesInput.setText(savedBounceMiles)
             }
+            val savedPickup = prefs.getString("pickup_address_input", null)
+            val legacyDest = prefs.getString("destination_address_input", "").orEmpty()
+            when {
+                !savedPickup.isNullOrEmpty() -> binding.pickupAddressInput.setText(savedPickup)
+                legacyDest.isNotEmpty() -> {
+                    // One-time migration from single "destination" field to Pickup
+                    binding.pickupAddressInput.setText(legacyDest)
+                }
+            }
+            val savedDropoff = prefs.getString("dropoff_address_input", "").orEmpty()
+            if (savedDropoff.isNotEmpty()) {
+                binding.dropoffAddressInput.setText(savedDropoff)
+            }
         } catch (e: Exception) {
             android.util.Log.e(TAG, "Error restoring text inputs", e)
         }
@@ -240,6 +260,8 @@ class TripInputFragment : Fragment() {
             if (_binding != null) {
                 binding.loadedMilesInput.setText("")
                 binding.bounceMilesInput.setText("")
+                binding.pickupAddressInput.setText("")
+                binding.dropoffAddressInput.setText("")
                 clearSavedTextInputs()
             }
         } catch (e: Exception) {
@@ -256,11 +278,16 @@ class TripInputFragment : Fragment() {
             prefs.edit {
                     putString("loaded_miles_input", "")
                     .putString("bounce_miles_input", "")
+                    .putString("pickup_address_input", "")
+                    .putString("dropoff_address_input", "")
+                    .remove("destination_address_input")
                 }
         } catch (e: Exception) {
             android.util.Log.e(TAG, "Error clearing saved text inputs", e)
         }
     }
+
+    private lateinit var addressHistoryStore: AddressHistoryStore
 
     private fun setupUI() {
         // Initialize UI components
@@ -273,6 +300,29 @@ class TripInputFragment : Fragment() {
         binding.statisticsContent.visibility = View.GONE
         binding.statisticsButton.setIconResource(R.drawable.ic_arrow_down)
         binding.statisticsButton.contentDescription = getString(R.string.statistics_button_description)
+
+        setupAddressAutocomplete()
+    }
+
+    private fun setupAddressAutocomplete() {
+        addressHistoryStore = AddressHistoryStore(requireContext())
+        val pickupAdapter = AddressSuggestionAdapter(requireContext(), addressHistoryStore, viewLifecycleOwner.lifecycleScope)
+        val dropoffAdapter = AddressSuggestionAdapter(requireContext(), addressHistoryStore, viewLifecycleOwner.lifecycleScope)
+        binding.pickupAddressInput.setAdapter(pickupAdapter)
+        binding.dropoffAddressInput.setAdapter(dropoffAdapter)
+
+        binding.pickupAddressInput.setOnItemClickListener { _, _, position, _ ->
+            val address = pickupAdapter.getAddress(position)
+            binding.pickupAddressInput.setText(address)
+            binding.pickupAddressInput.setSelection(address.length)
+            addressHistoryStore.add(address)
+        }
+        binding.dropoffAddressInput.setOnItemClickListener { _, _, position, _ ->
+            val address = dropoffAdapter.getAddress(position)
+            binding.dropoffAddressInput.setText(address)
+            binding.dropoffAddressInput.setSelection(address.length)
+            addressHistoryStore.add(address)
+        }
     }
 
     private fun setupClickListeners() {
@@ -307,10 +357,12 @@ class TripInputFragment : Fragment() {
                 val loadedMiles = loadedMilesText.toDoubleOrNull() ?: 0.0
                 val bounceMiles = bounceMilesText.toDoubleOrNull() ?: 0.0
                 val actualMiles = 0.0 // Always start at 0, GPS will update
-                
-                viewModel.calculateTrip(loadedMiles, bounceMiles, actualMiles)
-                // Clear saved input values after trip starts
-                clearSavedTextInputs()
+
+                maybeWarnAboutBackgroundTrackingReliability(
+                    loadedMiles = loadedMiles,
+                    bounceMiles = bounceMiles,
+                    actualMiles = actualMiles,
+                )
             }
         }
 
@@ -346,10 +398,17 @@ class TripInputFragment : Fragment() {
             )
         }
 
-        // Settings button click listener
-        binding.customToolbarLayout.settingsButton.setOnClickListener {
-            showSettingsDialog()
+        // Hamburger menu opens navigation drawer
+        binding.customToolbarLayout.menuButton.setOnClickListener {
+            (activity as? MainActivity)?.openDrawer()
         }
+
+        // Settings gear opens settings screen
+        binding.customToolbarLayout.settingsButton.setOnClickListener {
+            (activity as? MainActivity)?.navigateToSettings()
+        }
+
+        // Info button removed for cleaner field alignment; tooltip info is in hint text.
         
         // Pause button click listener
         binding.pauseButton.setOnClickListener {
@@ -388,6 +447,79 @@ class TripInputFragment : Fragment() {
         textView.gravity = Gravity.CENTER_HORIZONTAL
         
         snackbar.show()
+    }
+
+    private data class BackgroundTrackingReliability(
+        val warnings: List<String>,
+        val backgroundPermissionMissing: Boolean,
+        val notificationsBlocked: Boolean,
+        val batteryOptimizationRestricted: Boolean,
+    )
+
+    private fun maybeWarnAboutBackgroundTrackingReliability(
+        loadedMiles: Double,
+        bounceMiles: Double,
+        actualMiles: Double,
+    ) {
+        val reliability = buildBackgroundTrackingReliability()
+        val startTrip = {
+            viewModel.calculateTrip(
+                loadedMiles = loadedMiles,
+                bounceMiles = bounceMiles,
+                actualMiles = actualMiles,
+                backgroundTrackingDegraded = reliability.warnings.isNotEmpty(),
+                backgroundTrackingDegradedReasons = reliability.warnings,
+                pickupAddress = binding.pickupAddressInput.text.toString().trim(),
+                dropoffAddress = binding.dropoffAddressInput.text.toString().trim(),
+            )
+            if (::addressHistoryStore.isInitialized) {
+                val pickup = binding.pickupAddressInput.text.toString().trim()
+                val dropoff = binding.dropoffAddressInput.text.toString().trim()
+                if (pickup.isNotBlank()) addressHistoryStore.add(pickup)
+                if (dropoff.isNotBlank()) addressHistoryStore.add(dropoff)
+            }
+            clearSavedTextInputs()
+        }
+
+        AlertDialog.Builder(requireContext())
+            .setTitle("Start trip?")
+            .setMessage("Are you sure you want to start?")
+            .setPositiveButton("Start") { dialog, _ ->
+                dialog.dismiss()
+                startTrip()
+            }
+            .setNegativeButton("Cancel") { dialog, _ ->
+                dialog.dismiss()
+            }
+            .show()
+    }
+
+    private fun buildBackgroundTrackingReliability(): BackgroundTrackingReliability {
+        val mainActivity = activity as? MainActivity
+        val backgroundPermissionMissing =
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && mainActivity?.hasBackgroundPermission() == false
+        val notificationsBlocked =
+            mainActivity?.hasNotificationPermission() == false || mainActivity?.areSystemNotificationsEnabled() == false
+        val batteryOptimizationRestricted = mainActivity?.isIgnoringBatteryOptimizations() == false
+
+        val warnings = buildList {
+            if (backgroundPermissionMissing) {
+                add(getString(R.string.background_tracking_warning_background_location))
+            }
+            if (notificationsBlocked) {
+                add(getString(R.string.background_tracking_warning_notifications))
+            }
+            if (batteryOptimizationRestricted) {
+                add(getString(R.string.background_tracking_warning_battery))
+            }
+        }
+
+        return BackgroundTrackingReliability(
+            warnings = warnings,
+            backgroundPermissionMissing = backgroundPermissionMissing,
+            notificationsBlocked = notificationsBlocked,
+            batteryOptimizationRestricted = batteryOptimizationRestricted,
+        )
     }
 
     private fun performButtonHapticFeedback(target: View) {
@@ -855,13 +987,14 @@ class TripInputFragment : Fragment() {
                 getString(R.string.start_trip_button_description)
             }
         
-        // Update pause button visibility and icon
-        binding.pauseButton.visibility = if (state.isTripActive) View.VISIBLE else View.GONE
-        if (state.isTripActive) {
+        // Update pause button visibility and icon (hidden unless enabled in settings)
+        val showPause = state.isTripActive && settingsManager.isShowPauseButtonEnabled()
+        binding.pauseButton.visibility = if (showPause) View.VISIBLE else View.GONE
+        if (showPause) {
             binding.pauseButton.setIconResource(
                 if (state.isPaused) R.drawable.ic_play_adaptive else R.drawable.ic_pause_adaptive
             )
-            binding.pauseButton.setIconTintResource(android.R.color.white) // Dark mode: force white for visibility
+            binding.pauseButton.setIconTintResource(android.R.color.white)
             binding.pauseButton.contentDescription =
                 if (state.isPaused) getString(R.string.resume_trip_button_description) else getString(R.string.pause_trip_button_description)
         }
@@ -900,6 +1033,41 @@ class TripInputFragment : Fragment() {
         val inputsEnabled = !state.isTripActive
         binding.loadedMilesInput.isEnabled = inputsEnabled
         binding.bounceMilesInput.isEnabled = inputsEnabled
+        binding.pickupAddressInput.isEnabled = inputsEnabled
+        binding.dropoffAddressInput.isEnabled = inputsEnabled
+
+        val ludacrisTrip = state.isTripActive
+        val showTz = ludacrisTrip && settingsManager.isLudacrisShowTimeZones()
+        val showEl = ludacrisTrip && settingsManager.isLudacrisShowElevation()
+        val showSp = ludacrisTrip && settingsManager.isLudacrisShowMaxSpeed()
+        val anyLudacris = showTz || showEl || showSp
+        binding.ludacrisDivider.isVisible = anyLudacris
+        binding.ludacrisTzRow.isVisible = showTz
+        binding.ludacrisElevRow.isVisible = showEl
+        binding.ludacrisSpeedRow.isVisible = showSp
+        if (showTz) {
+            binding.ludacrisTzValue.text = state.ludacrisTimeZoneCount.toString()
+        }
+        if (showEl) {
+            val minM = state.ludacrisElevMinMeters
+            val maxM = state.ludacrisElevMaxMeters
+            binding.ludacrisElevValue.text =
+                if (minM != null && maxM != null) {
+                    val ft1 = minM * 3.28084
+                    val ft2 = maxM * 3.28084
+                    String.format(Locale.US, "%d–%d ft", ft1.toInt(), ft2.toInt())
+                } else {
+                    "—"
+                }
+        }
+        if (showSp) {
+            binding.ludacrisSpeedValue.text =
+                if (state.ludacrisMaxSpeedMph > 0.5) {
+                    String.format(Locale.US, "%.0f mph", state.ludacrisMaxSpeedMph)
+                } else {
+                    "—"
+                }
+        }
 
         // ✅ POLISH: Add subtle animation to show real-time updates
         if (state.isTripActive && state.actualMiles > 0) {
@@ -999,7 +1167,7 @@ class TripInputFragment : Fragment() {
                     onHistoryDateClicked = { date ->
                         showTripHistoryForDate(date)
                     },
-                    datesWithTrips = datesWithTrips
+                    datesWithTrips = datesWithTrips,
                 )
                 dialog.show(parentFragmentManager, "custom_calendar_dialog")
             }
@@ -1106,6 +1274,21 @@ class TripInputFragment : Fragment() {
             // ✅ EDGE CASE: Show user-friendly error message
             // Could show a Snackbar here if needed
         }
+    }
+
+    /** Production #9: Called from MainActivity when drawer item "Settings" is selected. */
+    fun openSettingsFromDrawer() {
+        showSettingsDialog()
+    }
+
+    /** Production #9: Called from MainActivity when drawer item "History" is selected. */
+    fun openHistoryFromDrawer() {
+        showTripHistoryForDate(Date())
+    }
+
+    /** Production #9: Called from MainActivity when drawer item "Help" is selected. */
+    fun openHelpFromDrawer() {
+        showHelpInfoDialog()
     }
 
     /**

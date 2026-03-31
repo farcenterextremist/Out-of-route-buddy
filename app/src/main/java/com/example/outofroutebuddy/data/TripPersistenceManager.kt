@@ -40,7 +40,10 @@ class TripPersistenceManager @Inject constructor(
         private const val KEY_TRIP_LAST_LOCATION = "trip_last_location"
         private const val KEY_TRIP_GPS_METADATA = "trip_gps_metadata"
         private const val KEY_TRIP_RECOVERY_AVAILABLE = "trip_recovery_available"
-        
+        private const val KEY_TRIP_IS_PAUSED = "trip_is_paused"
+        private const val KEY_BG_TRACKING_DEGRADED = "bg_tracking_degraded"
+        private const val KEY_BG_TRACKING_REASONS = "bg_tracking_reasons"
+
         // Recovery timeout (24 hours)
         private const val RECOVERY_TIMEOUT_MS = 24 * 60 * 60 * 1000L
     }
@@ -56,7 +59,10 @@ class TripPersistenceManager @Inject constructor(
         bounceMiles: Double,
         actualMiles: Double,
         lastLocation: LocationData? = null,
-        gpsMetadata: GpsMetadata? = null
+        gpsMetadata: GpsMetadata? = null,
+        isPaused: Boolean? = null,
+        backgroundTrackingDegraded: Boolean = false,
+        backgroundTrackingReasons: List<String> = emptyList(),
     ) {
         try {
             AppLogger.d(TAG,"Saving active trip state for recovery")
@@ -85,7 +91,12 @@ class TripPersistenceManager @Inject constructor(
             
             // Mark recovery as available
             editor.putBoolean(KEY_TRIP_RECOVERY_AVAILABLE, true)
-            
+
+            // Persist pause state so it survives app close/reopen (only when provided)
+            isPaused?.let { editor.putBoolean(KEY_TRIP_IS_PAUSED, it) }
+            editor.putBoolean(KEY_BG_TRACKING_DEGRADED, backgroundTrackingDegraded)
+            editor.putString(KEY_BG_TRACKING_REASONS, gson.toJson(backgroundTrackingReasons))
+
             // ✅ FIX: Use commit() instead of apply() to ensure data is written to disk immediately
             // This prevents data loss when app is closed immediately after starting a trip
             val success = editor.commit()
@@ -144,7 +155,15 @@ class TripPersistenceManager @Inject constructor(
             
             val gpsMetadataJson = prefs.getString(KEY_TRIP_GPS_METADATA, null)
             val gpsMetadata = gpsMetadataJson?.let { gson.fromJson(it, GpsMetadata::class.java) }
-            
+
+            val isPaused = prefs.getBoolean(KEY_TRIP_IS_PAUSED, false)
+            val backgroundTrackingDegraded = prefs.getBoolean(KEY_BG_TRACKING_DEGRADED, false)
+            val backgroundTrackingReasonsJson = prefs.getString(KEY_BG_TRACKING_REASONS, null)
+            val backgroundTrackingReasons =
+                backgroundTrackingReasonsJson?.let {
+                    gson.fromJson<List<String>>(it, object : TypeToken<List<String>>() {}.type)
+                }.orEmpty()
+
             val savedState = SavedTripState(
                 trip = trip,
                 loadedMiles = loadedMiles,
@@ -153,7 +172,10 @@ class TripPersistenceManager @Inject constructor(
                 lastLocation = lastLocation,
                 gpsMetadata = gpsMetadata,
                 startTime = Date(startTime),
-                recoveryTime = Date(currentTime)
+                recoveryTime = Date(currentTime),
+                isPaused = isPaused,
+                backgroundTrackingDegraded = backgroundTrackingDegraded,
+                backgroundTrackingReasons = backgroundTrackingReasons,
             )
             
             AppLogger.d(TAG,"Trip state loaded successfully")
@@ -183,7 +205,10 @@ class TripPersistenceManager @Inject constructor(
             editor.remove(KEY_TRIP_LAST_LOCATION)
             editor.remove(KEY_TRIP_GPS_METADATA)
             editor.remove(KEY_TRIP_RECOVERY_AVAILABLE)
-            
+            editor.remove(KEY_TRIP_IS_PAUSED)
+            editor.remove(KEY_BG_TRACKING_DEGRADED)
+            editor.remove(KEY_BG_TRACKING_REASONS)
+
             // ✅ FIX: Use commit() to ensure data is deleted from disk immediately
             val success = editor.commit()
             
@@ -257,7 +282,8 @@ class TripPersistenceManager @Inject constructor(
     }
 
     /**
-     * ✅ Data class for saved trip state
+     * ✅ Data class for saved trip state.
+     * Explicit serialVersionUID so adding isPaused does not break deserialization from older app versions.
      */
     data class SavedTripState(
         val trip: Trip,
@@ -267,8 +293,15 @@ class TripPersistenceManager @Inject constructor(
         val lastLocation: LocationData? = null,
         val gpsMetadata: GpsMetadata? = null,
         val startTime: Date,
-        val recoveryTime: Date
-    ) : Serializable
+        val recoveryTime: Date,
+        val isPaused: Boolean = false,
+        val backgroundTrackingDegraded: Boolean = false,
+        val backgroundTrackingReasons: List<String> = emptyList(),
+    ) : Serializable {
+        companion object {
+            private const val serialVersionUID = 1L
+        }
+    }
 
     /**
      * ✅ Location data for GPS tracking

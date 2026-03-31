@@ -1,0 +1,45 @@
+﻿{
+    "measured_at":  "2026-03-17T05:12:14Z",
+    "score":  85,
+    "max_score":  100,
+    "grade":  "B",
+    "progress_bar":  "[#################---] 85%",
+    "metrics":  [
+                    {
+                        "name":  "Run contract wiring",
+                        "weight":  20,
+                        "passed":  true,
+                        "earned":  20
+                    },
+                    {
+                        "name":  "Gate wrappers",
+                        "weight":  15,
+                        "passed":  false,
+                        "earned":  0
+                    },
+                    {
+                        "name":  "Shared-state audit",
+                        "weight":  20,
+                        "passed":  true,
+                        "earned":  20
+                    },
+                    {
+                        "name":  "Continuity protection",
+                        "weight":  20,
+                        "passed":  true,
+                        "earned":  20
+                    },
+                    {
+                        "name":  "Health signals",
+                        "weight":  15,
+                        "passed":  true,
+                        "earned":  15
+                    },
+                    {
+                        "name":  "Documentation alignment",
+                        "weight":  10,
+                        "passed":  true,
+                        "earned":  10
+                    }
+                ]
+}

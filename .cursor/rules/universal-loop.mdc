@@ -10,7 +10,7 @@ alwaysApply: false
 
 **When you run any loop** (Improvement, Token, Cyber Security, Synthetic Data, "GO", "start token loop", "start master loop", or other), follow **[UNIVERSAL_LOOP_PROMPT.md](docs/agents/data-sets/hub/UNIVERSAL_LOOP_PROMPT.md)** in the Hub.
 
-**Apply to your loop:** Research = LOOP_LESSONS_LEARNED, SELF_IMPROVING_LOOP_RESEARCH, CURSOR_SELF_IMPROVEMENT; auto-implement Light & Medium; drastic loop changes = Heavy (document only); read Hub at start; read/write shared state (loop_shared_events.jsonl, loop_latest/*.json); consider send to hub when done. **Full:** `docs/agents/data-sets/hub/UNIVERSAL_LOOP_PROMPT.md`
+**Apply to your loop:** Research = LOOP_LESSONS_LEARNED, SELF_IMPROVING_LOOP_RESEARCH, CURSOR_SELF_IMPROVEMENT, LOOP_CONSISTENCY_STANDARD; auto-implement Light & Medium; drastic loop changes = Heavy (document only); read Hub at start; read/write shared state (loop_shared_events.jsonl, loop_latest/*.json); include consistency score (X/10); consider send to hub when done. **Full:** `docs/agents/data-sets/hub/UNIVERSAL_LOOP_PROMPT.md`
 
 ## Seven obligations
 
@@ -34,17 +34,22 @@ alwaysApply: false
 6. **When you finish a loop or major artifact, consider "send to hub."**
    If the run produced **completed, polished** output (proof of work, report, index, data summary), deposit it in **`docs/agents/data-sets/hub/`** with naming **`YYYY-MM-DD_<role-or-topic>_<short-description>.<ext>`** and optionally add a one-line entry to **`hub/README.md`**. Hub = this folder; not GitHub.
 
+7. **Use automation helper skills where relevant.**
+   For consistency auditing, invoke **`loop-consistency-auditor`**. For loop/gate architecture redesign, invoke **`loop-architecture-blueprinter`**. For continuity regression prevention, invoke **`loop-continuity-test-engineer`**. For Hub handoff quality, invoke **`hub-handoff-curator`**. For shared-state freshness or drift, invoke **`shared-state-reconciler`**. For ledger template drift, invoke **`loop-ledger-normalizer`**. For readiness trend analysis, invoke **`loop-readiness-benchmarker`**. For Heavy gate enforcement, invoke **`heavy-approval-governor`**. For fast skill selection, consult **`docs/automation/SKILL_AUTOSELECT_MATRIX.md`**.
+
 ## Paths
 
 | What | Path |
-|------|------|
+| ------ | ------ |
 | Loop Master | `docs/automation/LOOP_MASTER_ROLE.md` |
 | Full axis (all loops) | `docs/automation/LOOPS_AND_IMPROVEMENT_FULL_AXIS.md` |
 | Hub index | `docs/agents/data-sets/hub/README.md` |
 | Send-to-hub prompt | `docs/agents/data-sets/hub/SEND_TO_HUB_PROMPT.md` |
 | Research (required in loop) | `docs/automation/LOOP_LESSONS_LEARNED.md`, `SELF_IMPROVING_LOOP_RESEARCH.md`, `CURSOR_SELF_IMPROVEMENT.md` |
+| Consistency standard + snippet | `docs/automation/LOOP_CONSISTENCY_STANDARD.md`, `docs/automation/LOOP_CONSISTENCY_LEDGER_SNIPPET.md` |
 | Tiering (Light/Medium auto; Heavy = document only) | `docs/automation/LOOP_TIERING.md` |
 | Dynamic sharing (read/write shared state) | `docs/automation/LOOP_DYNAMIC_SHARING.md` |
+| Skill auto-selection matrix | `docs/automation/SKILL_AUTOSELECT_MATRIX.md` |
 | Full prompt | `docs/agents/data-sets/hub/UNIVERSAL_LOOP_PROMPT.md` |
 
 ---

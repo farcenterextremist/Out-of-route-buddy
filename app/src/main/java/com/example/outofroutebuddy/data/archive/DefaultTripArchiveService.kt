@@ -2,18 +2,29 @@ package com.example.outofroutebuddy.data.archive
 
 import android.util.Log
 import com.example.outofroutebuddy.domain.data.TripArchiveService
+import com.example.outofroutebuddy.domain.data.SharedPoolExportReason
+import com.example.outofroutebuddy.domain.data.TripSharedPoolExportService
 import com.example.outofroutebuddy.domain.models.Trip
 import javax.inject.Inject
 
 /**
- * No-op implementation of [TripArchiveService]. Logs the export request and returns success.
- * Replace with a real implementation (e.g. API upload) when server-side retention is available.
- * Server is responsible for retaining and using data for training; this app only sends data before local delete.
+ * Default implementation of [TripArchiveService] for the local shared-pool phase.
+ * Exports additive GOLD bundles before local delete/clear operations proceed.
  */
-class DefaultTripArchiveService @Inject constructor() : TripArchiveService {
+class DefaultTripArchiveService @Inject constructor(
+    private val sharedPoolExportService: TripSharedPoolExportService,
+) : TripArchiveService {
     override suspend fun exportBeforeLocalDelete(trips: List<Trip>): Result<Unit> {
-        Log.i(TAG, "exportBeforeLocalDelete: trip_count=${trips.size} (no-op; data may be sent to server in future)")
-        return Result.success(Unit)
+        return sharedPoolExportService.exportGoldTrips(
+            trips = trips,
+            reason = SharedPoolExportReason.BEFORE_LOCAL_DELETE,
+        ).map { receipt ->
+            Log.i(
+                TAG,
+                "exportBeforeLocalDelete: exported_trip_count=${receipt.exportedTripCount} file_written=${receipt.filePath.isNotBlank()}",
+            )
+            Unit
+        }
     }
 
     companion object {

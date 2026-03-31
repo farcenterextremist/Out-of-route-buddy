@@ -23,6 +23,8 @@
 | **SimulatedTripTest** | Trip lifecycle: start → track → end → save. Uses MockGpsSynchronizationService. |
 | **StatCardCalendarWiringSimulationTest** | Period → stats → datesWithTrips. Verifies calendar/stat card wiring. |
 | **StatCardCalendarWithMockRepositorySimulationTest** | Same wiring as above, but uses MockTripRepository (lightweight mock) instead of MockK. |
+| **test_loop_listener.ps1** | Simulates loop events and validates JSONL listener output for automation telemetry. |
+| **test_loop_desktop_guide_export.ps1** | Simulates export of the human-readable Loopmaster desktop guide from repo source of truth. |
 
 ---
 
@@ -66,6 +68,7 @@
 Simulations:  app/src/test/.../simulation/*.kt
 Mocks:        app/src/test/.../utils/Mock*.kt, Test*Utils.kt
 MockK:        mockk<T>(relaxed = true) for one-off stubs
+Loop ops:     scripts/automation/test_loop_*.ps1
 ```
 
 ---

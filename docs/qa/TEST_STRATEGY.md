@@ -58,3 +58,28 @@ For major features (Auto drive, Export, Offline persistence), create `TEST_PLAN_
 ## CI
 
 `.github/workflows/android-tests.yml` runs unit tests, coverage report (`jacocoSuiteTestsOnly`), lint, and instrumented tests. The accepted passing gate for coverage is **jacocoSuiteTestsOnly** (tests + report); full **jacocoSuite** (with jacocoCoverageVerification) is planned when per-class coverage is improved. DevOps owns YAML; QA defines what "right" means.
+
+---
+
+## Shared-pool sync after instrumented tests
+
+When a loop variant or manual run includes device/emulator instrumented tests, run shared-pool sync immediately after the `connectedDebugAndroidTest` step:
+
+- **Helper:** `scripts/automation/sync_shared_pool_after_instrumented_tests.ps1`
+- **Reusable wrapper:** `scripts/run-instrumented-tests-with-shared-pool-sync.ps1`
+- **Current instrumented entrypoint:** `scripts/run-stats-stat-card-instrumented-tests.ps1` now delegates to that wrapper automatically
+- **Frontend analyzer:** `scripts/automation/run_frontend_analyzer_after_instrumented_tests.ps1`
+- **What it does:** pulls OutOfRouteBuddy export bundles from the device/emulator, registers reference datasets, publishes MyTruckingBot/OpenRoad data, imports GOLD + virtual-fleet bundles into the shared SQLite pool, captures frontend evidence, and writes a pleasantness/screenshot review stub for the current screen state
+
+This keeps your local shared pool current whenever an instrumented-test loop is involved, while preserving the rule that the normal autonomous Improvement Loop stays unit-test-only in headless environments.
+
+---
+
+## Background tracking reliability
+
+For active trips, QA must explicitly cover the "app closed during tracking" scenario that caused the March 11 cutoff:
+
+- **Unit / Robolectric:** verify persisted recovery state includes current mileage, pause state, and degraded-background-warning reasons; verify recovery receiver only requests service restart when active-trip state and required permissions still exist.
+- **Integration:** verify `TripPersistenceRecoveryTest` covers active-trip save/load, seeded-mileage recovery, and degraded background-tracking warnings surviving app close/reopen.
+- **Instrumented / device:** start a trip, background or swipe away the app, wait with location moving or mocked, then confirm tracking either continues or reopens into a recoverable active-trip state with clear warning guidance if background prerequisites are weak.
+- **Manual regression:** repeat the scenario with notifications blocked, background location denied, and battery optimization still active so the app proves "allow with warning" rather than silently pretending reliability is full-strength.
