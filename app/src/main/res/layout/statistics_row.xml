@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
+
+    <!--
+    ==================== STATISTICS ROW UI SETUP (DO NOT CHANGE WITHOUT USER PERMISSION) ====================
+    - Row layout for statistics: Total Miles, OOR Miles, OOR %
+    - Used in expandable statistics section for weekly, monthly, yearly stats
+    - Extra metrics: add via SummaryStatistics.extraFields and stats_extra_rows_container below.
+    =========================================================================================================
+    WARNING: Do not change the statistics row layout, structure, or visual elements in this file unless the user explicitly requests it.
+    =========================================================================================================
+    -->
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingVertical="4dp">
+        <TextView
+            android:id="@+id/stats_total_miles_label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/total_miles"
+            android:layout_alignParentStart="true"
+            android:textColor="@color/text_secondary_adaptive"/>
+        <TextView
+            android:id="@+id/total_miles"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            tools:text="1,234.5"
+            android:textColor="@color/text_primary_adaptive"
+            android:layout_alignParentEnd="true"
+            android:layout_toEndOf="@id/stats_total_miles_label"
+            android:layout_marginStart="8dp"/>
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingVertical="4dp">
+        <TextView
+            android:id="@+id/stats_oor_miles_label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/oor_miles"
+            android:layout_alignParentStart="true"
+            android:textColor="@color/text_secondary_adaptive"/>
+        <TextView
+            android:id="@+id/oor_miles"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            tools:text="123.4"
+            android:textColor="@color/text_primary_adaptive"
+            android:layout_alignParentEnd="true"
+            android:layout_toEndOf="@id/stats_oor_miles_label"
+            android:layout_marginStart="8dp"/>
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingVertical="4dp">
+        <TextView
+            android:id="@+id/stats_oor_percentage_label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/oor_percent"
+            android:layout_alignParentStart="true"
+            android:textColor="@color/text_secondary_adaptive"/>
+        <TextView
+            android:id="@+id/oor_percentage"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            tools:text="10.0%"
+            android:textColor="@color/text_primary_adaptive"
+            android:layout_alignParentEnd="true"
+            android:layout_toEndOf="@id/stats_oor_percentage_label"
+            android:layout_marginStart="8dp"/>
+    </RelativeLayout>
+
+    <!-- Container for extra stat rows (label + value). Populate at runtime from SummaryStatistics.extraFields. -->
+    <LinearLayout
+        android:id="@+id/stats_extra_rows_container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical" />
+
+</LinearLayout> 

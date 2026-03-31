@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <group android:checkableBehavior="single">
+        <item
+            android:id="@+id/nav_trip"
+            android:icon="@drawable/ic_nav_trip"
+            android:title="@string/nav_trip" />
+        <item
+            android:id="@+id/nav_rankings"
+            android:icon="@drawable/ic_nav_rankings"
+            android:title="@string/nav_rankings" />
+        <item
+            android:id="@+id/nav_statistics_period"
+            android:icon="@drawable/ic_pref_calendar_month"
+            android:title="@string/nav_statistics_period" />
+        <item
+            android:id="@+id/nav_data_privacy"
+            android:icon="@drawable/ic_sec_privacy"
+            android:title="Data &amp; Privacy" />
+        <item
+            android:id="@+id/nav_about_help"
+            android:icon="@drawable/ic_pref_menu_book"
+            android:title="@string/nav_about_help" />
+    </group>
+</menu>

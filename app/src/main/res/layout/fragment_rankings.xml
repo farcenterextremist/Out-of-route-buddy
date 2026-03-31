@@ -1,0 +1,393 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Rankings screen: cracked-road toolbar (matches Settings), scrolling content below. -->
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/background_page"
+    android:orientation="vertical"
+    tools:context="com.example.outofroutebuddy.presentation.ui.rankings.RankingsFragment">
+
+    <!-- ═══ Cracked-road toolbar (matches main toolbar) ═══ -->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="160dp"
+        android:elevation="0dp">
+
+        <ImageView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:importantForAccessibility="no"
+            android:scaleType="centerCrop"
+            android:src="@drawable/toolbar_bg_cracked_road_banner" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="#18000000" />
+
+        <ImageView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_gravity="center"
+            android:layout_marginStart="80dp"
+            android:layout_marginEnd="80dp"
+            android:layout_marginTop="4dp"
+            android:layout_marginBottom="4dp"
+            android:adjustViewBounds="true"
+            android:contentDescription="@string/nav_rankings"
+            android:scaleType="fitCenter"
+            android:src="@drawable/title_rankings" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:baselineAligned="false"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <ImageButton
+                android:id="@+id/rankings_back_button"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_marginStart="2dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/back"
+                android:importantForAccessibility="yes"
+                android:padding="12dp"
+                android:src="@drawable/ic_nav_back_toolbar"
+                app:tint="@android:color/white" />
+
+            <View
+                android:layout_width="0dp"
+                android:layout_height="1dp"
+                android:layout_weight="1"
+                android:importantForAccessibility="no" />
+        </LinearLayout>
+    </FrameLayout>
+
+    <!-- ═══ Scrollable content ═══ -->
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:fillViewport="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp"
+            android:clipToPadding="false">
+
+            <!-- Loading indicator -->
+            <ProgressBar
+                android:id="@+id/rankings_loading"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_marginTop="48dp"
+                android:visibility="gone"
+                tools:visibility="gone" />
+
+            <!-- Error / empty state -->
+            <TextView
+                android:id="@+id/rankings_error"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_marginTop="48dp"
+                android:gravity="center"
+                android:textColor="@color/text_secondary_adaptive"
+                android:textSize="14sp"
+                android:visibility="gone"
+                tools:text="Complete your first trip to see your ranking!"
+                tools:visibility="gone" />
+
+            <!-- ═══ Score Hero Card ═══ -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/card_score_hero"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:visibility="gone"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="6dp"
+                tools:visibility="visible">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_horizontal"
+                    android:orientation="vertical"
+                    android:padding="24dp">
+
+                    <TextView
+                        android:id="@+id/cohort_badge"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/bg_cohort_badge"
+                        android:paddingHorizontal="14dp"
+                        android:paddingVertical="4dp"
+                        android:textColor="@color/text_secondary_adaptive"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+                        tools:text="REGULAR COHORT · 11-30 trips" />
+
+                    <TextView
+                        android:id="@+id/score_number"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:textColor="@color/text_primary_adaptive"
+                        android:textSize="64sp"
+                        android:textStyle="bold"
+                        tools:text="74" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="@string/ranking_overall_score"
+                        android:textColor="@color/text_secondary_adaptive"
+                        android:textSize="13sp" />
+
+                    <TextView
+                        android:id="@+id/tier_badge"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="14dp"
+                        android:paddingHorizontal="18dp"
+                        android:paddingVertical="6dp"
+                        android:textSize="15sp"
+                        android:textStyle="bold"
+                        tools:background="@color/calendar_day_has_trip_fill"
+                        tools:text="♦ Gold" />
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/ranking_rank_prefix"
+                            android:textColor="@color/text_secondary_adaptive"
+                            android:textSize="14sp" />
+
+                        <TextView
+                            android:id="@+id/rank_number"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="4dp"
+                            android:textColor="@color/text_primary_adaptive"
+                            android:textSize="16sp"
+                            android:textStyle="bold"
+                            tools:text="#3" />
+
+                        <TextView
+                            android:id="@+id/rank_total"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="4dp"
+                            android:textColor="@color/text_secondary_adaptive"
+                            android:textSize="14sp"
+                            tools:text="of 5 drivers" />
+                    </LinearLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- ═══ Score Breakdown Card (tire tread marks) ═══ -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/card_breakdown"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="14dp"
+                android:visibility="gone"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="6dp"
+                tools:visibility="visible">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/ranking_score_breakdown"
+                        android:textColor="@color/text_primary_adaptive"
+                        android:textSize="15sp"
+                        android:textStyle="bold" />
+
+                    <include
+                        android:id="@+id/breakdown_oor"
+                        layout="@layout/item_ranking_breakdown_row"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="14dp" />
+
+                    <include
+                        android:id="@+id/breakdown_consistency"
+                        layout="@layout/item_ranking_breakdown_row"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp" />
+
+                    <include
+                        android:id="@+id/breakdown_volume"
+                        layout="@layout/item_ranking_breakdown_row"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp" />
+
+                    <include
+                        android:id="@+id/breakdown_gps"
+                        layout="@layout/item_ranking_breakdown_row"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp" />
+
+                    <include
+                        android:id="@+id/breakdown_discipline"
+                        layout="@layout/item_ranking_breakdown_row"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- ═══ Cohort Progression Card ═══ -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/card_progression"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="14dp"
+                android:visibility="gone"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="6dp"
+                tools:visibility="visible">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:padding="16dp">
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/ranking_next_cohort"
+                            android:textColor="@color/text_secondary_adaptive"
+                            android:textSize="12sp" />
+
+                        <TextView
+                            android:id="@+id/progression_target"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:textColor="@color/text_primary_adaptive"
+                            android:textSize="14sp"
+                            android:textStyle="bold"
+                            tools:text="Experienced · Road Tested" />
+
+                        <ProgressBar
+                            android:id="@+id/progression_bar"
+                            style="@android:style/Widget.ProgressBar.Horizontal"
+                            android:layout_width="match_parent"
+                            android:layout_height="6dp"
+                            android:layout_marginTop="8dp"
+                            android:max="100"
+                            android:progressDrawable="@drawable/progress_cohort"
+                            tools:progress="53" />
+
+                        <TextView
+                            android:id="@+id/progression_trips"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:textColor="@color/text_secondary_adaptive"
+                            android:textSize="11sp"
+                            tools:text="16 of 30 trips · 14 more to go" />
+                    </LinearLayout>
+
+                    <TextView
+                        android:id="@+id/progression_icon"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="14dp"
+                        android:text="🏆"
+                        android:textSize="28sp" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- ═══ Fleet Info Card ═══ -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/card_fleet_info"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="14dp"
+                android:visibility="gone"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="4dp"
+                tools:visibility="visible">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:padding="14dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="🚚"
+                        android:textSize="24sp" />
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="12dp"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:id="@+id/fleet_count_label"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textColor="@color/text_primary_adaptive"
+                            android:textSize="13sp"
+                            tools:text="Ranked against 5 drivers in your cohort" />
+
+                        <TextView
+                            android:id="@+id/fleet_sub_label"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:text="@string/ranking_virtual_fleet_note"
+                            android:textColor="@color/text_secondary_adaptive"
+                            android:textSize="11sp" />
+                    </LinearLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <Space
+                android:layout_width="match_parent"
+                android:layout_height="24dp" />
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+</LinearLayout>

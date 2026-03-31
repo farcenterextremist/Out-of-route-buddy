@@ -1,0 +1,250 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/dialog_settings_background">
+
+    <!-- Close X - upper right -->
+    <ImageButton
+        android:id="@+id/help_close_button"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:padding="12dp"
+        android:src="@drawable/ic_close"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="@string/close"
+        android:scaleType="centerInside"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <ScrollView
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:padding="24dp"
+        android:paddingTop="4dp"
+        android:paddingBottom="24dp"
+        android:fillViewport="true"
+        app:layout_constraintTop_toBottomOf="@id/help_close_button"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/help_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Help &amp; Info"
+            android:textStyle="bold"
+            android:textSize="22sp"
+            android:textColor="@color/text_primary_adaptive"
+            android:gravity="center_horizontal"
+            android:layout_marginBottom="16dp" />
+
+        <TextView
+            android:id="@+id/version_text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Version"
+            android:textSize="14sp"
+            android:textColor="@color/text_secondary_adaptive"
+            android:gravity="center_horizontal"
+            android:layout_marginBottom="12dp" />
+
+        <TextView
+            android:id="@+id/contact_text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Contact: support@OOR.com"
+            android:textSize="14sp"
+            android:textColor="@color/text_secondary_adaptive"
+            android:gravity="center_horizontal"
+            android:layout_marginBottom="20dp" />
+
+        <TextView
+            android:id="@+id/overview_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Overview:"
+            android:textStyle="bold"
+            android:textSize="16sp"
+            android:textColor="@color/text_primary_adaptive"
+            android:layout_marginTop="12dp"
+            android:layout_marginBottom="8dp" />
+
+        <TextView
+            android:id="@+id/overview_text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Out of Route Buddy is a GPS tracking application for delivery drivers and fleet operators to track out-of-route (OOR) miles accurately. It provides real-time distance tracking, trip history, and performance analytics."
+            android:textSize="14sp"
+            android:lineSpacingExtra="2dp"
+            android:textColor="@color/text_secondary_adaptive"
+            android:layout_marginBottom="16dp" />
+
+        <TextView
+            android:id="@+id/getting_started_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Getting Started:"
+            android:textStyle="bold"
+            android:textSize="16sp"
+            android:textColor="@color/text_primary_adaptive"
+            android:layout_marginTop="12dp"
+            android:layout_marginBottom="8dp" />
+
+        <TextView
+            android:id="@+id/getting_started_text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="• Enter Loaded Miles (total trip distance) and Bounce Miles (additional miles beyond the planned route) before starting.\n• Tap &quot;Start Trip&quot; to begin GPS tracking.\n• The app tracks distance in real time as you drive.\n• When you have completed your route, tap &quot;End Trip&quot; to calculate and display your OOR percentage."
+            android:textSize="14sp"
+            android:lineSpacingExtra="2dp"
+            android:textColor="@color/text_secondary_adaptive"
+            android:layout_marginBottom="16dp" />
+
+        <TextView
+            android:id="@+id/pause_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Pause Feature:"
+            android:textStyle="bold"
+            android:textSize="16sp"
+            android:textColor="@color/text_primary_adaptive"
+            android:layout_marginTop="12dp"
+            android:layout_marginBottom="8dp" />
+
+        <TextView
+            android:id="@+id/pause_text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="• Use Pause when you leave the vehicle temporarily (e.g. deliveries, breaks) so that time is not counted as active driving.\n• Tap Pause to stop distance accumulation; tap again to resume tracking.\n• This keeps personal or non-business stops from inflating your mileage."
+            android:textSize="14sp"
+            android:lineSpacingExtra="2dp"
+            android:textColor="@color/text_secondary_adaptive"
+            android:layout_marginBottom="16dp" />
+
+        <TextView
+            android:id="@+id/tips_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Usage Tips:"
+            android:textStyle="bold"
+            android:textSize="16sp"
+            android:textColor="@color/text_primary_adaptive"
+            android:layout_marginTop="12dp"
+            android:layout_marginBottom="8dp" />
+
+        <TextView
+            android:id="@+id/tips_text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="• Enter loaded and bounce miles before starting a trip for accurate calculations.\n• Use the statistics section to view OOR performance over time.\n• Switch between Standard and Custom periods in Settings to match your reporting needs.\n• Trip recovery saves your progress if the app closes unexpectedly.\n• Check GPS quality in Settings for information about location accuracy."
+            android:textSize="14sp"
+            android:lineSpacingExtra="2dp"
+            android:textColor="@color/text_secondary_adaptive"
+            android:layout_marginBottom="16dp" />
+
+        <TextView
+            android:id="@+id/period_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Period Explanation:"
+            android:textStyle="bold"
+            android:textSize="16sp"
+            android:textColor="@color/text_primary_adaptive"
+            android:layout_marginTop="12dp"
+            android:layout_marginBottom="8dp" />
+
+        <TextView
+            android:id="@+id/period_text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="• Standard: Uses calendar months (first to last day of each month).\n• Custom: Each period starts on the Thursday before the first Friday of the month (used in logistics for consistent reporting cycles)."
+            android:textSize="14sp"
+            android:lineSpacingExtra="2dp"
+            android:textColor="@color/text_secondary_adaptive"
+            android:layout_marginBottom="16dp" />
+
+        <TextView
+            android:id="@+id/recovery_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Trip Recovery:"
+            android:textStyle="bold"
+            android:textSize="16sp"
+            android:textColor="@color/text_primary_adaptive"
+            android:layout_marginTop="12dp"
+            android:layout_marginBottom="8dp" />
+
+        <TextView
+            android:id="@+id/recovery_text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="• If the app closes or the device restarts during a trip, you will be prompted to continue the previous trip when you reopen the app.\n• This helps avoid losing progress on an active route."
+            android:textSize="14sp"
+            android:lineSpacingExtra="2dp"
+            android:textColor="@color/text_secondary_adaptive"
+            android:layout_marginBottom="16dp" />
+
+        <TextView
+            android:id="@+id/statistics_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Statistics &amp; History:"
+            android:textStyle="bold"
+            android:textSize="16sp"
+            android:textColor="@color/text_primary_adaptive"
+            android:layout_marginTop="12dp"
+            android:layout_marginBottom="8dp" />
+
+        <TextView
+            android:id="@+id/statistics_text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="• View trip history with sorting and filtering options.\n• Statistics provide total trips, total distance, and average OOR percentage by period.\n• Monthly statistics reflect only trips you ended (saved); cleared trips are not included."
+            android:textSize="14sp"
+            android:lineSpacingExtra="2dp"
+            android:textColor="@color/text_secondary_adaptive"
+            android:layout_marginBottom="8dp" />
+
+        <TextView
+            android:id="@+id/statistics_section_hint"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/statistics_section_hint"
+            android:textSize="14sp"
+            android:textColor="@color/text_secondary_adaptive"
+            android:layout_marginBottom="16dp"
+            android:contentDescription="@string/statistics_section_hint" />
+
+        <TextView
+            android:id="@+id/features_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Additional Features:"
+            android:textStyle="bold"
+            android:textSize="16sp"
+            android:textColor="@color/text_primary_adaptive"
+            android:layout_marginTop="12dp"
+            android:layout_marginBottom="8dp" />
+
+        <TextView
+            android:id="@+id/features_text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="• Dark and light theme support.\n• Trip persistence across app restarts and device reboots.\n• GPS quality monitoring for accurate tracking.\n• Export trip data for reporting and analysis."
+            android:textSize="14sp"
+            android:lineSpacingExtra="2dp"
+            android:textColor="@color/text_secondary_adaptive"
+            android:layout_marginBottom="8dp" />
+
+    </LinearLayout>
+</ScrollView>
+</androidx.constraintlayout.widget.ConstraintLayout> 

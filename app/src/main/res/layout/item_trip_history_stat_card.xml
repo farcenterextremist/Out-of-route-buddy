@@ -1,0 +1,265 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Expandable Stat Card for calendar history - summary + full metadata on expand -->
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="8dp"
+    android:animateLayoutChanges="true"
+    app:cardElevation="6dp"
+    app:cardCornerRadius="12dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <!-- Summary row: date/time, miles, OOR, expand chevron -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/trip_date"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Jan 15, 2025"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/text_primary_adaptive" />
+
+                <TextView
+                    android:id="@+id/trip_time_range"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="14sp"
+                    android:textColor="@color/text_secondary_adaptive"
+                    android:visibility="gone"
+                    tools:text="11:00 PM - 1:00 AM"
+                    tools:visibility="visible" />
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginTop="8dp">
+
+                    <TextView
+                        android:id="@+id/trip_miles"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="125.5 mi"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/text_primary_adaptive"
+                        tools:text="125.5 mi" />
+
+                    <TextView
+                        android:id="@+id/trip_oor"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="16dp"
+                        android:textSize="16sp"
+                        android:textColor="@color/text_primary_adaptive"
+                        tools:text="5.2 over (4.2%)" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <ImageButton
+                android:id="@+id/expand_button"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/expand"
+                android:src="@drawable/ic_expand_more"
+                app:tint="@color/text_secondary_adaptive" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:gravity="end"
+            android:orientation="horizontal">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/view_details_button"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"
+                android:contentDescription="@string/view_trip_details_description"
+                android:minWidth="0dp"
+                android:minHeight="40dp"
+                android:text="@string/view_details" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/delete_button"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="40dp"
+                android:layout_height="wrap_content"
+                android:contentDescription="@string/delete_trip_description"
+                android:minWidth="40dp"
+                android:minHeight="40dp"
+                android:text=""
+                android:backgroundTint="@color/card_background_adaptive"
+                app:icon="@drawable/ic_delete_trash"
+                app:iconGravity="textStart"
+                app:iconTint="@null"
+                app:strokeWidth="0dp" />
+        </LinearLayout>
+
+        <!-- Expanded metadata section -->
+        <LinearLayout
+            android:id="@+id/metadata_section"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone"
+            android:layout_marginTop="16dp"
+            android:paddingTop="16dp"
+            android:background="?attr/selectableItemBackground"
+            tools:visibility="visible">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/loaded_miles"
+                android:textSize="12sp"
+                android:textColor="@color/text_secondary_adaptive" />
+            <TextView
+                android:id="@+id/trip_loaded_miles"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="14sp"
+                android:textColor="@color/text_primary_adaptive"
+                tools:text="100.0 mi" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="@string/bounce_miles"
+                android:textSize="12sp"
+                android:textColor="@color/text_secondary_adaptive" />
+            <TextView
+                android:id="@+id/trip_bounce_miles"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="14sp"
+                android:textColor="@color/text_primary_adaptive"
+                tools:text="20.0 mi" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="@string/dispatched_miles"
+                android:textSize="12sp"
+                android:textColor="@color/text_secondary_adaptive" />
+            <TextView
+                android:id="@+id/trip_dispatched_miles"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="14sp"
+                android:textColor="@color/text_primary_adaptive"
+                tools:text="120.0 mi" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="@string/duration"
+                android:textSize="12sp"
+                android:textColor="@color/text_secondary_adaptive" />
+            <TextView
+                android:id="@+id/trip_duration"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="14sp"
+                android:textColor="@color/text_primary_adaptive"
+                tools:text="60 min" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="@string/gps_metadata"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:textColor="@color/text_secondary_adaptive"
+                android:textAlignment="viewStart" />
+            <TextView
+                android:id="@+id/trip_gps_metadata"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="12sp"
+                android:textColor="@color/text_primary_adaptive"
+                android:textAlignment="viewStart"
+                tools:text="Accuracy: 5.2m | Points: 120/125 | Quality: 96%" />
+
+            <!-- Extended metadata (interstate, back roads, truck stops) -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:text="@string/interstate_percent"
+                android:textSize="12sp"
+                android:textColor="@color/text_secondary_adaptive"
+                android:textAlignment="viewStart" />
+            <TextView
+                android:id="@+id/trip_interstate"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="14sp"
+                android:textColor="@color/text_primary_adaptive"
+                android:textAlignment="viewStart"
+                tools:text="45.2% (32 min)" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="@string/back_roads_percent"
+                android:textSize="12sp"
+                android:textColor="@color/text_secondary_adaptive"
+                android:textAlignment="viewStart" />
+            <TextView
+                android:id="@+id/trip_back_roads"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="14sp"
+                android:textColor="@color/text_primary_adaptive"
+                android:textAlignment="viewStart"
+                tools:text="54.8% (39 min)" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="@string/truck_stops_visited"
+                android:textSize="12sp"
+                android:textColor="@color/text_secondary_adaptive"
+                android:textAlignment="viewStart" />
+            <TextView
+                android:id="@+id/trip_truck_stops"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="14sp"
+                android:textColor="@color/text_primary_adaptive"
+                android:textAlignment="viewStart"
+                tools:text="2 visited" />
+        </LinearLayout>
+    </LinearLayout>
+</com.google.android.material.card.MaterialCardView>

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Light mode: darker grey so buttons read clearly on pale backgrounds -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_pressed="true" android:color="#2E2E2E" />
+    <item android:state_focused="true" android:color="#3A3A3A" />
+    <item android:color="#424242" />
+</selector>

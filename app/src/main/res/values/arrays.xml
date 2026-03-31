@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- GPS update frequency (seconds) for ListPreference gps_update_frequency -->
+    <string-array name="gps_frequency_entries">
+        <item>5 seconds</item>
+        <item>10 seconds</item>
+        <item>15 seconds</item>
+        <item>30 seconds</item>
+        <item>60 seconds</item>
+    </string-array>
+    <string-array name="gps_frequency_values">
+        <item>5</item>
+        <item>10</item>
+        <item>15</item>
+        <item>30</item>
+        <item>60</item>
+    </string-array>
+
+    <!-- GPS preset mode for ListPreference gps_preset -->
+    <string-array name="gps_preset_entries">
+        <item>Battery saver</item>
+        <item>Balanced</item>
+        <item>High accuracy</item>
+    </string-array>
+    <string-array name="gps_preset_values">
+        <item>battery_saver</item>
+        <item>balanced</item>
+        <item>high_accuracy</item>
+    </string-array>
+
+    <!-- Distance units for ListPreference distance_units -->
+    <string-array name="distance_unit_entries">
+        <item>Freedom Units</item>
+        <item>Kilometers</item>
+    </string-array>
+    <string-array name="distance_unit_values">
+        <item>miles</item>
+        <item>kilometers</item>
+    </string-array>
+
+    <!-- Theme for ListPreference theme_preference -->
+    <string-array name="theme_entries">
+        <item>Light</item>
+        <item>Dark</item>
+        <item>System default</item>
+    </string-array>
+    <string-array name="theme_values">
+        <item>light</item>
+        <item>dark</item>
+        <item>system</item>
+    </string-array>
+
+    <!-- Statistics period mode for ListPreference period_mode -->
+    <string-array name="period_mode_entries">
+        <item>Standard (1st-last of month)</item>
+        <item>Custom (Thu before first Fri)</item>
+    </string-array>
+    <string-array name="period_mode_values">
+        <item>STANDARD</item>
+        <item>CUSTOM</item>
+    </string-array>
+
+    <!-- Drive detection: walking speed (mph) for ListPreference drive_detect_walking_speed_mph -->
+    <string-array name="drive_detect_walking_speed_entries">
+        <item>Default (5 mph)</item>
+        <item>3 mph</item>
+        <item>5 mph</item>
+        <item>7 mph</item>
+    </string-array>
+    <string-array name="drive_detect_walking_speed_values">
+        <item>default</item>
+        <item>3</item>
+        <item>5</item>
+        <item>7</item>
+    </string-array>
+
+    <!-- Drive detection: min walking duration (sec) for ListPreference drive_detect_walking_min_duration_sec -->
+    <string-array name="drive_detect_walking_duration_entries">
+        <item>20 seconds</item>
+        <item>30 seconds</item>
+        <item>1 minute</item>
+    </string-array>
+    <string-array name="drive_detect_walking_duration_values">
+        <item>20</item>
+        <item>30</item>
+        <item>60</item>
+    </string-array>
+
+    <!-- Drive detection: highway lookback (sec) for ListPreference drive_detect_highway_lookback_sec -->
+    <string-array name="drive_detect_highway_lookback_entries">
+        <item>3 minutes</item>
+        <item>5 minutes</item>
+    </string-array>
+    <string-array name="drive_detect_highway_lookback_values">
+        <item>180</item>
+        <item>300</item>
+    </string-array>
+</resources>

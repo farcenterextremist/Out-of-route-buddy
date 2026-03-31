@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="@dimen/oorb_space_24"
+    android:background="@drawable/dialog_background">
+
+    <TextView
+        android:id="@+id/text_recovery_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Trip Recovery Available"
+        android:textAppearance="@style/TextAppearance.OORB.SectionTitle"
+        android:textSize="20sp"
+        android:gravity="center"
+        android:layout_marginBottom="@dimen/oorb_space_16" />
+
+    <TextView
+        android:id="@+id/text_trip_info"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Trip information"
+        android:textAppearance="@style/TextAppearance.OORB.BodySecondary"
+        android:lineSpacingExtra="@dimen/oorb_space_4"
+        android:layout_marginBottom="@dimen/oorb_space_16"
+        android:gravity="center" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Continue your previous trip or start new trip?"
+        android:textAppearance="@style/TextAppearance.OORB.BodySecondary"
+        android:lineSpacingExtra="@dimen/oorb_space_4"
+        android:layout_marginBottom="@dimen/oorb_space_24"
+        android:gravity="center" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/button_continue_trip"
+            style="@style/OORBPrimaryDialogButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Continue Trip"
+            app:backgroundTint="@null"
+            android:layout_marginBottom="@dimen/oorb_space_8" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/button_start_new"
+            style="@style/OORBSecondaryDialogButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Start New Trip"
+            android:textStyle="bold"
+            app:backgroundTint="@null"
+            android:layout_marginBottom="@dimen/oorb_space_8" />
+
+    </LinearLayout>
+
+</LinearLayout>

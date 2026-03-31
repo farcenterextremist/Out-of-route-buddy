@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Dark mode: override only adaptive colors so text and surfaces are visible.
+         Theme already uses background_adaptive and colorSurface; layouts use
+         text_primary_adaptive, text_secondary_adaptive, card_background_adaptive, divider_adaptive. -->
+    <color name="text_primary_adaptive">#FFFFFFFF</color>
+    <color name="text_secondary_adaptive">#B3B3B3</color>
+    <color name="hint_adaptive">#B3B3B3</color>
+    <color name="settings_text_primary">#FFFFFFFF</color>
+    <color name="settings_text_secondary">#E0E0E0</color>
+    <color name="background_adaptive">#121212</color>
+    <color name="card_background_adaptive">#1E1E1E</color>
+    <color name="divider_adaptive">#424242</color>
+    <!-- Flat page background (dark mode) -->
+    <color name="page_background">#121212</color>
+    <color name="color_surface_container">#252525</color>
+    <color name="color_outline_variant">#424242</color>
+
+    <!-- Required by merged resources (e.g. Compose) -->
+    <color name="surface">#121212</color>
+    <color name="text_primary">#FFFFFFFF</color>
+    <color name="background">#121212</color>
+
+    <color name="settings_pref_icon">#FFFFFFFF</color>
+    <color name="settings_appbar">@color/brand_header_night</color>
+    <color name="nav_drawer_surface">#121212</color>
+
+    <color name="trip_review_flag_stroke">#FF8F00</color>
+    <color name="trip_review_flag_card_fill">#33E65100</color>
+    <color name="button_gloss_stroke">#707070</color>
+    <color name="calendar_selection_adaptive">#616161</color>
+    <color name="calendar_day_has_trip_fill">#B3FF9800</color>
+    <!-- Calendar OOR tiers: higher contrast on dark cells -->
+    <color name="calendar_trip_oor_good_fill">#1B5E20</color>
+    <color name="calendar_trip_oor_good_stroke">#69F0AE</color>
+    <color name="calendar_trip_oor_warn_fill">#4DFFF59D</color>
+    <color name="calendar_trip_oor_warn_stroke">#FFD600</color>
+    <color name="calendar_trip_oor_bad_fill">#59EF9A9A</color>
+    <color name="calendar_trip_oor_bad_stroke">#FF1744</color>
+    <color name="history_trip_oor_good_card_fill">#1B3D1F</color>
+    <color name="history_trip_oor_good_card_stroke">#69F0AE</color>
+    <color name="history_trip_oor_good_oor_text">#B9F6CA</color>
+    <color name="history_trip_oor_warn_card_fill">#3E2723</color>
+    <color name="history_trip_oor_warn_card_stroke">#FFD600</color>
+    <color name="history_trip_oor_warn_oor_text">#FFE082</color>
+    <color name="history_trip_oor_bad_card_fill">#3E1A1A</color>
+    <color name="history_trip_oor_bad_card_stroke">#FF5252</color>
+    <color name="history_trip_oor_bad_oor_text">#FFCDD2</color>
+</resources>

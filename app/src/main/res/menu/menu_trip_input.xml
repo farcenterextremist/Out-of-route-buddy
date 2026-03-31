@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item
+        android:id="@+id/action_period_settings"
+        android:icon="@android:drawable/ic_menu_manage"
+        android:title="@string/period_settings"
+        app:showAsAction="always" />
+    <item
+        android:id="@+id/action_app_settings"
+        android:icon="@android:drawable/ic_menu_preferences"
+        android:title="@string/app_settings"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/action_help"
+        android:icon="@android:drawable/ic_menu_help"
+        android:title="@string/help_info"
+        app:showAsAction="never" />
+</menu> 

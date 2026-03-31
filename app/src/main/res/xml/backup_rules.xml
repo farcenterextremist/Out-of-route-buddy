@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+   Android Auto Backup rules (API < 31).
+   INCLUDE the Room database so trip data is backed up to Google Drive.
+   See https://developer.android.com/guide/topics/data/autobackup
+-->
+<full-backup-content>
+    <include domain="database" path="outofroutebuddy_database" />
+    <include domain="sharedpref" path="trip_backup_prefs.xml" />
+    <include domain="sharedpref" path="app_settings.xml" />
+    <include domain="sharedpref" path="address_history.xml" />
+    <!-- Exclude caches and temporary files -->
+    <exclude domain="database" path="outofroutebuddy_database-journal" />
+    <exclude domain="database" path="outofroutebuddy_database-wal" />
+    <exclude domain="database" path="outofroutebuddy_database-shm" />
+    <exclude domain="root" path="cache/" />
+    <exclude domain="external" path="cache/" />
+</full-backup-content>

@@ -1,0 +1,205 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Settings categories: Appearance, Battery Saving, Notifications, General, Ludacris -->
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <!-- ─── Light / Dark Mode ─── -->
+    <com.example.outofroutebuddy.presentation.ui.settings.AccordionHeaderPreference
+        android:key="header_appearance"
+        android:title="Appearance"
+        android:icon="@drawable/ic_sec_display"
+        app:iconSpaceReserved="true" />
+
+    <ListPreference
+        android:key="theme_preference"
+        android:title="Theme"
+        android:summary="Choose app appearance"
+        android:entries="@array/theme_entries"
+        android:entryValues="@array/theme_values"
+        android:defaultValue="light"
+        android:icon="@drawable/ic_pref_contrast"
+        app:iconSpaceReserved="true" />
+
+    <ListPreference
+        android:key="distance_units"
+        android:title="Distance units"
+        android:summary="Choose miles or kilometers"
+        android:entries="@array/distance_unit_entries"
+        android:entryValues="@array/distance_unit_values"
+        android:defaultValue="miles"
+        android:icon="@drawable/ic_pref_straighten"
+        app:iconSpaceReserved="true" />
+
+    <!-- ─── Battery Saving ─── -->
+    <com.example.outofroutebuddy.presentation.ui.settings.AccordionHeaderPreference
+        android:key="header_battery"
+        android:title="Battery Saving"
+        android:icon="@drawable/ic_sec_battery_saver"
+        app:iconSpaceReserved="true" />
+
+    <ListPreference
+        android:key="gps_preset"
+        android:title="Tracking preset"
+        android:summary="Balanced accuracy and battery use"
+        android:entries="@array/gps_preset_entries"
+        android:entryValues="@array/gps_preset_values"
+        android:defaultValue="balanced"
+        android:icon="@drawable/ic_pref_tune"
+        app:iconSpaceReserved="true" />
+
+    <SwitchPreferenceCompat
+        android:key="battery_optimization"
+        android:title="Battery optimization"
+        android:summary="Reduce tracking activity while idle"
+        android:defaultValue="true"
+        android:icon="@drawable/ic_pref_battery"
+        app:iconSpaceReserved="true" />
+
+    <SwitchPreferenceCompat
+        android:key="show_pause_button"
+        android:title="Show pause button"
+        android:summary="Show a pause/resume button during active trips"
+        android:defaultValue="false"
+        android:icon="@drawable/ic_pause_adaptive"
+        app:iconSpaceReserved="true" />
+
+    <SwitchPreferenceCompat
+        android:key="continue_tracking_after_app_dismissed"
+        android:title="@string/pref_continue_tracking_after_dismiss_title"
+        android:summary="@string/pref_continue_tracking_after_dismiss_summary"
+        android:defaultValue="true"
+        android:icon="@drawable/ic_pref_track_background"
+        app:iconSpaceReserved="true" />
+
+    <!-- ─── Notifications ─── -->
+    <com.example.outofroutebuddy.presentation.ui.settings.AccordionHeaderPreference
+        android:key="header_notifications"
+        android:title="Notifications"
+        android:icon="@drawable/ic_sec_notify"
+        app:iconSpaceReserved="true" />
+
+    <SwitchPreferenceCompat
+        android:key="notifications_enabled"
+        android:title="Trip notifications"
+        android:summary="Show trip progress notifications"
+        android:defaultValue="true"
+        android:icon="@drawable/ic_pref_play_circle"
+        app:iconSpaceReserved="true" />
+
+    <SwitchPreferenceCompat
+        android:key="notification_sound"
+        android:title="Notification sound"
+        android:summary="Play sound for trip events"
+        android:defaultValue="false"
+        android:dependency="notifications_enabled"
+        android:icon="@drawable/ic_pref_volume"
+        app:iconSpaceReserved="true" />
+
+    <Preference
+        android:key="overlay_permission"
+        android:title="Trip end reminder"
+        android:summary="Show a floating reminder near trip end"
+        android:icon="@drawable/ic_pref_picture_in_picture"
+        app:iconSpaceReserved="true" />
+
+    <!-- ─── Navigation (General / Tracking) ─── -->
+    <com.example.outofroutebuddy.presentation.ui.settings.AccordionHeaderPreference
+        android:key="header_general"
+        android:title="Navigation"
+        android:icon="@drawable/ic_sec_tracking"
+        app:iconSpaceReserved="true" />
+
+    <ListPreference
+        android:key="gps_update_frequency"
+        android:title="GPS update frequency"
+        android:summary="How often the app requests location updates"
+        android:entries="@array/gps_frequency_entries"
+        android:entryValues="@array/gps_frequency_values"
+        android:defaultValue="10"
+        android:icon="@drawable/ic_pref_timer"
+        app:iconSpaceReserved="true" />
+
+    <SwitchPreferenceCompat
+        android:key="high_accuracy_mode"
+        android:title="High accuracy mode"
+        android:summary="Use more precise location updates"
+        android:defaultValue="true"
+        android:icon="@drawable/ic_pref_explore"
+        app:iconSpaceReserved="true" />
+
+    <SwitchPreferenceCompat
+        android:key="auto_start_trip"
+        android:title="Auto-start trip"
+        android:summary="Start tracking when the app opens"
+        android:defaultValue="false"
+        android:icon="@drawable/ic_pref_flight_takeoff"
+        app:iconSpaceReserved="true" />
+
+    <SwitchPreferenceCompat
+        android:key="auto_save_trip"
+        android:title="Auto-save trips"
+        android:summary="Save finished trips automatically"
+        android:defaultValue="true"
+        android:icon="@drawable/ic_pref_save_disk"
+        app:iconSpaceReserved="true" />
+
+    <!-- ─── Ludacris Settings (Developer + niche) ─── -->
+    <com.example.outofroutebuddy.presentation.ui.settings.AccordionHeaderPreference
+        android:key="header_ludacris"
+        android:title="Ludacris Settings"
+        android:icon="@drawable/ic_pref_fork_right"
+        app:iconSpaceReserved="true" />
+
+    <ListPreference
+        android:key="drive_detect_walking_speed_mph"
+        android:title="Walking speed threshold"
+        android:summary="Top speed still treated as walking or stopped"
+        android:entries="@array/drive_detect_walking_speed_entries"
+        android:entryValues="@array/drive_detect_walking_speed_values"
+        android:defaultValue="default"
+        android:icon="@drawable/ic_pref_directions_walk"
+        app:iconSpaceReserved="true" />
+
+    <ListPreference
+        android:key="drive_detect_walking_min_duration_sec"
+        android:title="Minimum walking duration"
+        android:summary="How long walking must continue before miles are excluded"
+        android:entries="@array/drive_detect_walking_duration_entries"
+        android:entryValues="@array/drive_detect_walking_duration_values"
+        android:defaultValue="30"
+        android:icon="@drawable/ic_pref_directions_walk"
+        app:iconSpaceReserved="true" />
+
+    <ListPreference
+        android:key="drive_detect_highway_lookback_sec"
+        android:title="Highway lookback"
+        android:summary="How far back to check for recent highway travel"
+        android:entries="@array/drive_detect_highway_lookback_entries"
+        android:entryValues="@array/drive_detect_highway_lookback_values"
+        android:defaultValue="300"
+        android:icon="@drawable/ic_pref_merge"
+        app:iconSpaceReserved="true" />
+
+    <SwitchPreferenceCompat
+        android:key="verbose_logging"
+        android:title="Verbose logging"
+        android:summary="Elevate log level for debugging (no PII)"
+        android:defaultValue="false"
+        android:icon="@drawable/ic_pref_subject"
+        app:iconSpaceReserved="true" />
+
+    <Preference
+        android:key="export_app_logs"
+        android:title="Export app logs"
+        android:summary="Share recent log file if available"
+        android:icon="@drawable/ic_pref_upload"
+        app:iconSpaceReserved="true" />
+
+    <Preference
+        android:key="export_debug_snapshot"
+        android:title="@string/export_debug_snapshot_title"
+        android:summary="@string/export_debug_snapshot_summary"
+        android:icon="@drawable/ic_pref_bug"
+        app:iconSpaceReserved="true" />
+
+</PreferenceScreen>

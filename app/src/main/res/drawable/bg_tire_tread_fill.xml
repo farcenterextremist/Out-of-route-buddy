@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Continuous tire track streak: two dark bands with a lighter center channel. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <gradient
+        android:type="linear"
+        android:angle="90"
+        android:startColor="#37474F"
+        android:centerColor="#607D8B"
+        android:endColor="#37474F" />
+    <corners android:radius="2dp" />
+</shape>

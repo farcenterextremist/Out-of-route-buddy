@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Aligns drawer header with main toolbar: deep road-teal band -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <gradient
+        android:angle="270"
+        android:endColor="@color/brand_header_deep"
+        android:startColor="@color/brand_header_top" />
+</shape>

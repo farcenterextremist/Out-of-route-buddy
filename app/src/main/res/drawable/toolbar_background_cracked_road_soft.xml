@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Lighter overlay so the cracked-road texture shows through more clearly. -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <bitmap
+            android:antialias="true"
+            android:gravity="fill_horizontal|center"
+            android:src="@drawable/toolbar_bg_cracked_road_banner" />
+    </item>
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="#18000000" />
+        </shape>
+    </item>
+</layer-list>

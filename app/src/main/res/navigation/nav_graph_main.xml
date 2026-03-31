@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_graph2"
+    app:startDestination="@id/tripInputFragment">
+
+    <fragment
+        android:id="@+id/tripInputFragment"
+        android:name="com.example.outofroutebuddy.presentation.ui.trip.TripInputFragment"
+        android:label="Trip Input"
+        tools:layout="@layout/fragment_trip_input" />
+
+    <fragment
+        android:id="@+id/tripDetailsFragment"
+        android:name="com.example.outofroutebuddy.presentation.ui.details.TripDetailsFragment"
+        android:label="@string/trip_details_title"
+        tools:layout="@layout/fragment_trip_details">
+        <argument
+            android:name="tripId"
+            app:argType="string" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/settingsFragment"
+        android:name="com.example.outofroutebuddy.presentation.ui.settings.SettingsFragment"
+        android:label="Settings">
+        <argument
+            android:name="focusSection"
+            app:argType="string"
+            android:defaultValue="" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/rankingsFragment"
+        android:name="com.example.outofroutebuddy.presentation.ui.rankings.RankingsFragment"
+        android:label="@string/nav_rankings"
+        tools:layout="@layout/fragment_rankings" />
+
+</navigation>

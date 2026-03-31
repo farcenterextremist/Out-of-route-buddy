@@ -1,0 +1,277 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Out of Route</string>
+    
+    <!-- Trip Input Fragment -->
+    <string name="loaded_miles_hint">Enter loaded miles</string>
+    <string name="bounce_miles_hint">Enter bounce miles</string>
+    <string name="start_trip">Start Trip</string>
+    <string name="view_monthly_oor">View Monthly OOR</string>
+    <string name="oor_miles">OOR Miles</string>
+    
+    <!-- Monthly OOR Fragment -->
+    <string name="back">Back</string>
+    <string name="close">Close</string>
+    <string name="delete_trip">Delete</string>
+    <string name="delete_trip_description">Delete this trip</string>
+    <string name="delete_month_trips_description">Delete month trips</string>
+    <string name="delete_year_trips_description">Delete year trips</string>
+    <string name="view_details">View details</string>
+    <string name="view_trip_details_description">Open full trip details</string>
+    <string name="trip_details_title">Trip Details</string>
+    <string name="trip_details_format">Trip ID: %1$s\nTotal Miles: %2$.1f\nOOR: %3$s\nDate: %4$s</string>
+    <string name="monthly_summary">Stat Card</string>
+    <string name="monthly_overview">Monthly Overview</string>
+    <string name="total_trips">Total Trips</string>
+    <string name="total_oor_miles">Total OOR Miles</string>
+    <string name="avg_oor_percentage">Average OOR</string>
+    <string name="total_trips_format">%d</string>
+    <string name="total_oor_miles_format">%.1f</string>
+    <string name="avg_oor_percentage_format">%.1f%%</string>
+    <string name="trip_history">Trip History</string>
+    <string name="quick_actions">Quick Actions</string>
+    <string name="export_data">Export Data</string>
+    <string name="data_management">Data Management</string>
+    
+    <!-- Statistics History -->
+    <string name="statistics_history">Statistics History</string>
+    <string name="this_month_miles">This Month\'s Miles</string>
+    <string name="this_year_miles">This Year\'s Miles</string>
+    <string name="monthly_average_miles">Monthly Average</string>
+    <string name="miles_format">%.1f</string>
+    
+    <!-- Error Messages -->
+    <string name="error_invalid_input">Please enter valid numbers for both fields</string>
+    <string name="error_negative_numbers">Please enter positive numbers</string>
+    <string name="error_zero_values">Please enter numbers greater than zero</string>
+    <string name="error_no_trips">No trips recorded yet</string>
+    <string name="error_navigation">Navigation error occurred</string>
+    <string name="error_ui_update">Error updating UI</string>
+    <string name="database_unavailable">Database unavailable. Please retry or restart the app.</string>
+    
+    <!-- Clear All Button -->
+    <string name="clear_all">Clear All</string>
+    <string name="clear_all_confirmation">Are you sure you want to clear all trip data?</string>
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
+    <string name="trips_cleared">All trips have been cleared</string>
+    <string name="history">History</string>
+
+    <!-- Monthly Stats Button -->
+    <string name="go_to_monthly_stats">Stat Card</string>
+    <string name="out_of_route">Out of Route</string>
+    <string name="loaded_miles">Loaded Miles</string>
+    <string name="bounce_miles">Bounce Miles</string>
+    <string name="todays_info">Today\'s Info</string>
+    <string name="current_oor">Current OOR</string>
+    <string name="current_miles_driven">Current miles driven</string>
+    <string name="end_trip">End Trip</string>
+    <string name="cancel_trip">Cancel Trip</string>
+    <string name="view_monthly">View Monthly Stats</string>
+    <string name="settings">Settings</string>
+    <string name="nav_drawer_subtitle">Trip tracking &amp; history</string>
+    <string name="nav_drawer_version">Version %1$s</string>
+    <string name="nav_trip">Trip</string>
+    <string name="nav_rankings">Rankings</string>
+
+    <!-- Rankings screen -->
+    <string name="ranking_overall_score">Overall Score</string>
+    <string name="ranking_cohort_badge_format">%1$s COHORT · %2$s</string>
+    <string name="ranking_score_breakdown">Score Breakdown</string>
+    <string name="ranking_rank_prefix">Rank</string>
+    <string name="ranking_of_drivers">of %1$d drivers</string>
+    <string name="ranking_next_cohort">Next Cohort</string>
+    <string name="ranking_trips_progress">%1$d of %2$d trips · %3$d more to go</string>
+    <string name="ranking_fleet_count">Ranked against %1$d drivers in your cohort</string>
+    <string name="ranking_virtual_fleet_note">Virtual fleet · Real drivers coming soon</string>
+    <string name="ranking_no_trips">Complete your first trip to see your ranking!</string>
+    <string name="ranking_oor_efficiency">OOR Efficiency</string>
+    <string name="ranking_consistency">Consistency</string>
+    <string name="ranking_trip_volume">Trip Volume</string>
+    <string name="ranking_gps_quality">GPS Quality</string>
+    <string name="ranking_route_discipline">Route Discipline</string>
+    <string name="nav_trip_tracking">Trip tracking</string>
+    <string name="nav_statistics_period">Statistics period</string>
+    <string name="nav_about_help">About &amp; Help</string>
+    <string name="about_dialog_title">About</string>
+    <string name="help_and_support_title">Help and support</string>
+    <string name="version_line">Version %1$s (%2$d)</string>
+    <string name="destination_address_hint">Destination address (optional)</string>
+    <!-- Pickup / dropoff replace single destination on trip form -->
+    <string name="pickup_address_hint">Pickup (optional)</string>
+    <string name="dropoff_address_hint">Dropoff (optional)</string>
+    <string name="pickup_address_input_description">Pickup location or address</string>
+    <string name="dropoff_address_input_description">Dropoff location or address</string>
+    <string name="destination_address_accuracy_tooltip">Increases trip accuracy when addresses match your route</string>
+    <string name="destination_info_content_description">Info: optional addresses can improve trip accuracy</string>
+    <string name="ludacris_settings_title">Ludacris settings</string>
+    <string name="ludacris_settings_summary">Extra detail on the live trip card (time zones, elevation, speed)</string>
+    <string name="ludacris_show_time_zones">Show time zone changes</string>
+    <string name="ludacris_show_time_zones_summary">Distinct device time offsets seen this trip (updates when the phone adjusts for a new zone)</string>
+    <string name="ludacris_show_elevation">Show elevation range</string>
+    <string name="ludacris_show_elevation_summary">Min/max altitude from GPS when available</string>
+    <string name="ludacris_show_max_speed">Show trip max speed</string>
+    <string name="ludacris_show_max_speed_summary">Highest speed sample recorded this trip</string>
+    <string name="trip_card_time_zones">Time zone offsets seen</string>
+    <string name="trip_card_elevation">Elevation (min–max)</string>
+    <string name="trip_card_max_speed">Max speed</string>
+    <string name="export_debug_snapshot_title">Export debug snapshot</string>
+    <string name="export_debug_snapshot_summary">Share app version, settings summary, and local trip count (no coordinates)</string>
+    <string name="debug_snapshot_shared">Debug snapshot ready to share</string>
+    <string name="debug_snapshot_error">Could not create debug snapshot</string>
+    <string name="pref_continue_tracking_after_dismiss_title">Continue tracking after app is closed</string>
+    <string name="pref_continue_tracking_after_dismiss_summary">Recommended for accuracy: GPS keeps running if you close or swipe the app away during a trip. Turn off to stop tracking when the app is removed from recents (reopen the app to resume).</string>
+    <string name="notification_tracking_paused_app_closed_title">Trip tracking paused</string>
+    <string name="notification_tracking_paused_app_closed_text">You turned off background tracking when the app closes. Open the app to continue your trip.</string>
+    
+    <!-- ✅ NEW: Advanced Info Settings -->
+    <string name="advanced_info">Advanced Info</string>
+    <string name="period_settings">Period Settings</string>
+    <string name="gps_quality_report">GPS Quality Report</string>
+    <string name="accuracy_metrics">Accuracy Metrics</string>
+    <string name="gps_point_quality">GPS Point Quality</string>
+    <string name="issues_detected">Issues Detected</string>
+    <string name="trip_statistics">Trip Statistics</string>
+    <string name="quality_assessment">Quality Assessment</string>
+    <string name="no_trip_data_available">No trip data available yet</string>
+    <string name="complete_trips_to_see_metrics">Complete a few trips to see GPS quality metrics</string>
+    <string name="excellent_gps_quality">Excellent GPS quality</string>
+    <string name="good_gps_quality">Good GPS quality</string>
+    <string name="fair_gps_quality">Fair GPS quality</string>
+    <string name="poor_gps_quality">Poor GPS quality - consider checking device location settings</string>
+    <string name="error_loading_gps_data">Error loading GPS quality data</string>
+    
+    <!-- ✅ NEW: GPS Status Card -->
+    <string name="gps_status">GPS Status</string>
+    <string name="signal_status">Signal Status</string>
+    <string name="gps_accuracy">GPS Accuracy</string>
+    <string name="current_speed">Current Speed</string>
+    <string name="gps_quality">GPS Quality</string>
+    <string name="trip_duration">Trip Duration</string>
+    <string name="good_signal">Good Signal</string>
+    <string name="weak_signal">Weak Signal</string>
+    <string name="poor_signal">Poor Signal</string>
+    <string name="no_signal">No Signal</string>
+    <string name="oor">OOR</string>
+    <string name="total_miles">Total Miles</string>
+    <string name="oor_percent">OOR %</string>
+    <string name="statistics">STATISTICS</string>
+    <string name="monthly_statistics">Monthly Statistics</string>
+    <string name="period_statistics">Period Statistics</string>
+    <string name="month_statistics">Month</string>
+    <string name="year_statistics">Year</string>
+    <string name="app_settings">App Settings</string>
+    <string name="help_info">Help &amp; Info</string>
+    <string name="help_future_features_title">Coming soon</string>
+    <string name="help_future_features">• Address input for better trip accuracy\n• End-of-trip notification\n• Auto drive detection (one-tap start)\n• Reports screen (export, share)</string>
+    
+    <!-- ✅ NEW: Accessibility Strings -->
+    <string name="loaded_miles_input_description">Input field for loaded miles. Enter the number of miles you are contracted to drive.</string>
+    <string name="bounce_miles_input_description">Input field for bounce miles. Enter the number of miles you drive to return to your starting point.</string>
+    <string name="start_trip_button_description">Button to start or end your trip tracking. Tap to begin GPS tracking or end current trip.</string>
+    <string name="end_trip_button_description">End trip and save to history. Your miles and OOR will be recorded.</string>
+    <string name="cancel_trip_button_description">Cancel trip without saving. Use for test or bad trips only.</string>
+    <string name="continue_trip_button_description">Keep tracking. Dismiss this dialog and continue your trip.</string>
+    <string name="statistics_button_description">Button to expand or collapse trip statistics. Shows monthly trip data.</string>
+    <string name="pause_trip_button_description">Pause trip tracking</string>
+    <string name="resume_trip_button_description">Resume trip tracking</string>
+    <string name="settings_button_description">Open advanced settings: tracking, display, data, and developer options.</string>
+    <string name="menu_button_description">Open menu. Trip, Rankings, Trip tracking settings, statistics period, and About &amp; Help.</string>
+    <string name="total_miles_description">Total miles driven during the current trip</string>
+    <string name="oor_miles_description">Out of route miles calculated for the current trip</string>
+    <string name="oor_percentage_description">Percentage of miles that are out of route for the current trip</string>
+    <string name="progress_bar_description">Progress indicator showing trip tracking status</string>
+    <string name="statistics_selected_period_label">Current Period</string>
+    <string name="statistics_change_period_button">View</string>
+    <string name="statistics_view_history_button">History</string>
+    <string name="statistics_select_day">Select a day</string>
+    <string name="statistics_select_range">Select date range</string>
+    <string name="calendar_click_hint">Tap any date to view trip history</string>
+    <string name="history_date_picker_title">Select date to view trip history</string>
+    <string name="statistics_placeholder">N/A</string>
+
+    <!-- End Trip / Clear Trip — user notes (monthly stats & persistence) -->
+    <string name="end_trip_dialog_message">Selecting \"End Trip\" will save your daily progress and update your statistics.</string>
+    <string name="clear_trip_dialog_message">This trip will not be saved and will not count toward monthly stats. Use only for bad or test trips.</string>
+    <string name="statistics_section_hint">Monthly stats include trips you ended (saved). Cleared trips are not included.</string>
+    <!-- Period template: Standard = 1st to last of month; Custom = Thursday before first Friday -->
+    <!-- Period onboarding (first-run after permissions) -->
+    <string name="period_onboarding_title">Choose Your Tracking Period</string>
+    <string name="period_onboarding_explanation">Standard tracks by calendar month (1st through last day). Custom uses business periods starting the Thursday before the first Friday of each month.</string>
+    <string name="period_onboarding_reminder">You can change this anytime in Settings.</string>
+    <string name="period_onboarding_confirm">Continue</string>
+
+    <string name="template_standard_label">Standard (1st–last of month)</string>
+    <string name="template_custom_label">Custom (Thursday before first Friday)</string>
+    <string name="statistics_calendar_button_description">View calendar and change period</string>
+
+    <!-- Stat Card expandable metadata -->
+    <string name="expand">Expand to view trip metadata</string>
+    <string name="collapse">Collapse metadata</string>
+    <string name="dispatched_miles">Dispatched Miles</string>
+    <string name="duration">Duration</string>
+    <string name="gps_metadata">GPS Metadata</string>
+    <string name="interstate_percent">Interstate</string>
+    <string name="interstate_format">%1$.1f%% (%2$d min)</string>
+    <string name="back_roads_percent">Back roads</string>
+    <string name="back_roads_format">%1$.1f%% (%2$d min)</string>
+    <string name="truck_stops_visited">Truck stops</string>
+    <string name="truck_stops_format">%d visited</string>
+    <string name="metadata_na">—</string>
+    <string name="midnight_spanning_format">Started %1$s, ended %2$s</string>
+    <string name="partial_trip">Partial trip</string>
+    <string name="partial_trip_range">Partial Trip %1$s–%2$s</string>
+    <string name="trip_card_title">Trip %d</string>
+    <string name="trip_stat_card_flagged_content_description">Trip may need review: unusual duration or GPS data</string>
+    <string name="duration_minutes_format">%d min</string>
+    <string name="no_gps_metadata">No GPS metadata</string>
+    <string name="on_route">On route (0.0%%)</string>
+    <!-- Trip history by date: OOR banner (single-trip uses history_day_oor_summary_single) -->
+    <string name="history_day_oor_summary">Blended OOR for this day: %1$.1f%% - %2$s</string>
+    <string name="history_day_oor_summary_single">OOR for this day: %1$.1f%% - %2$s</string>
+    <string name="history_day_oor_band_good">On target (10%% or less)</string>
+    <string name="history_day_oor_band_warn">Elevated (10-14%%)</string>
+    <string name="history_day_oor_band_bad">High (over 14%%)</string>
+    <string name="stat_card_oor_description">Out of route miles for this trip: %1$s</string>
+
+    <!-- Trip-ended overlay bubble and dialog -->
+    <string name="end_trip_overlay_dialog_title">Have you arrived?</string>
+    <string name="end_trip_overlay_dialog_message">We think your trip may be complete. End the trip now or keep tracking.</string>
+    <string name="yes_complete_trip">End trip</string>
+    <string name="no_continue_trip">Keep tracking</string>
+    <string name="trip_ended_bubble_content_description">Trip may be complete. Tap to confirm, long-press to keep tracking.</string>
+    <string name="trip_ended_bubble_dismiss">Dismiss for now</string>
+    <string name="trip_ended_fallback_notification_title">Have you arrived?</string>
+    <string name="trip_ended_fallback_notification_body">Open the app to end the trip or keep tracking.</string>
+    <string name="trip_notification_started">Trip started</string>
+    <string name="trip_notification_in_progress">Trip in progress</string>
+    <string name="trip_notification_paused">Trip paused</string>
+    <string name="trip_notification_ending">Trip ending</string>
+    <string name="trip_notification_ended">Trip ended</string>
+    <string name="notification_trip_title">Out of Route</string>
+    <string name="notification_permission_title">Allow trip notifications</string>
+    <string name="notification_permission_message">To show trip status in your pull-down notifications, allow notifications for OutOfRouteBuddy.</string>
+    <string name="notification_blocked_title">Notifications are off</string>
+    <string name="notification_blocked_message">Trip tracking is running, but notification visibility is blocked. Enable app notifications to see trip status in the pull-down menu.</string>
+    <string name="background_tracking_warning_title">Background tracking may be less reliable</string>
+    <string name="background_tracking_warning_intro">The trip can still start, but Android may stop or hide background tracking until you improve these settings:</string>
+    <string name="background_tracking_warning_continue">Start trip anyway</string>
+    <string name="background_tracking_warning_background_location">Background location is off, so tracking after closing the app may stop on some devices.</string>
+    <string name="background_tracking_warning_notifications">Trip notifications are blocked, so the foreground tracking notification may not stay visible.</string>
+    <string name="background_tracking_warning_battery">Battery optimization is still active for OutOfRouteBuddy, which can let the system pause tracking in the background.</string>
+    <string name="grant_permission">Grant permission</string>
+    <string name="not_now">Not now</string>
+    <string name="open_settings">Open Settings</string>
+    <string name="cancel">Cancel</string>
+    <string name="overlay_permission_title">Trip-ended overlay</string>
+    <string name="overlay_permission_summary">Allow floating bubble when trip may be complete (tap to confirm end trip)</string>
+
+    <!-- Settings: Clear cache (Advanced) -->
+    <string name="cache_cleared_message">Cache cleared</string>
+    <string name="cache_clear_error">Could not clear cache</string>
+
+    <!-- Developer (debug build only): Export app logs -->
+    <string name="export_app_logs_title">Export app logs</string>
+    <string name="export_logs_error">Could not share log file</string>
+    <string name="export_logs_not_configured">No log file available. Enable log writing in debug build if needed.</string>
+</resources>

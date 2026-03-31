@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="@dimen/oorb_space_24"
+    android:background="@drawable/card_white_rounded">
+
+    <TextView
+        android:id="@+id/period_onboarding_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/period_onboarding_title"
+        android:textAppearance="@style/TextAppearance.OORB.SectionTitle"
+        android:layout_marginBottom="@dimen/oorb_space_12" />
+
+    <TextView
+        android:id="@+id/period_onboarding_explanation"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/period_onboarding_explanation"
+        android:textAppearance="@style/TextAppearance.OORB.BodySecondary"
+        android:layout_marginBottom="@dimen/oorb_space_16" />
+
+    <RadioGroup
+        android:id="@+id/period_onboarding_radio_group"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_marginBottom="@dimen/oorb_space_12">
+
+        <RadioButton
+            android:id="@+id/radio_period_standard"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:minHeight="@dimen/oorb_touch_target_min"
+            android:text="@string/template_standard_label"
+            android:layout_marginBottom="@dimen/oorb_space_8" />
+
+        <RadioButton
+            android:id="@+id/radio_period_custom"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:minHeight="@dimen/oorb_touch_target_min"
+            android:text="@string/template_custom_label" />
+    </RadioGroup>
+
+    <TextView
+        android:id="@+id/period_onboarding_reminder"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/period_onboarding_reminder"
+        android:textAppearance="@style/TextAppearance.OORB.Caption"
+        android:layout_marginBottom="@dimen/oorb_space_16" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/period_onboarding_confirm"
+        style="@style/OORBPrimaryDialogButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/period_onboarding_confirm"
+        app:backgroundTint="@null" />
+
+</LinearLayout>

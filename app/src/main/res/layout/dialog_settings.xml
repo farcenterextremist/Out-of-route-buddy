@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@drawable/dialog_settings_background">
+
+    <!-- Header: spacer + close X (upper right) -->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:paddingEnd="8dp"
+        android:paddingTop="8dp">
+        <ImageButton
+            android:id="@+id/settings_close_button"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_gravity="end|top"
+            android:src="@drawable/ic_close"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/close"
+            android:scaleType="centerInside" />
+    </FrameLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingStart="24dp"
+        android:paddingEnd="24dp"
+        android:paddingBottom="24dp">
+
+    <!-- Mode Section -->
+    <LinearLayout
+        android:id="@+id/mode_row"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:clickable="true"
+        android:focusable="true"
+        android:background="?attr/selectableItemBackground"
+        android:paddingVertical="12dp"
+        android:paddingHorizontal="8dp">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Mode"
+            android:textStyle="bold"
+            android:textSize="18sp"
+            android:textColor="@color/settings_text_primary" />
+        <TextView
+            android:id="@+id/mode_summary"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Light"
+            android:textSize="14sp"
+            android:textColor="@color/settings_text_secondary"
+            android:layout_marginTop="2dp" />
+    </LinearLayout>
+
+    <!-- Templates Section -->
+    <LinearLayout
+        android:id="@+id/template_row"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:clickable="true"
+        android:focusable="true"
+        android:background="?attr/selectableItemBackground"
+        android:paddingVertical="12dp"
+        android:paddingHorizontal="8dp"
+        android:layout_marginTop="12dp">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Templates"
+            android:textStyle="bold"
+            android:textSize="18sp"
+            android:textColor="@color/settings_text_primary" />
+        <TextView
+            android:id="@+id/template_summary"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Standard"
+            android:textSize="14sp"
+            android:textColor="@color/settings_text_secondary"
+            android:layout_marginTop="2dp" />
+    </LinearLayout>
+
+    <!-- Help &amp; Info Section - outlined style for clear visibility -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/help_info_button"
+        style="@style/SettingsHelpButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Help &amp; Info"
+        android:layout_marginTop="32dp" />
+
+    </LinearLayout>
+</LinearLayout> 

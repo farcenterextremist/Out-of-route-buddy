@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Dark mode: lighter elevated surface so primary buttons stand out on dark background -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_pressed="true">
+        <layer-list>
+            <item android:top="2dp">
+                <shape android:shape="rectangle">
+                    <solid android:color="#20FFFFFF" />
+                    <corners android:radius="8dp" />
+                </shape>
+            </item>
+            <item android:top="2dp">
+                <shape android:shape="rectangle">
+                    <gradient
+                        android:startColor="#4A4A4A"
+                        android:endColor="#2C2C2C"
+                        android:angle="270" />
+                    <corners android:radius="8dp" />
+                </shape>
+            </item>
+        </layer-list>
+    </item>
+    <item>
+        <layer-list>
+            <item android:top="4dp">
+                <shape android:shape="rectangle">
+                    <solid android:color="#30FFFFFF" />
+                    <corners android:radius="8dp" />
+                </shape>
+            </item>
+            <item android:top="2dp">
+                <shape android:shape="rectangle">
+                    <solid android:color="#25FFFFFF" />
+                    <corners android:radius="8dp" />
+                </shape>
+            </item>
+            <item>
+                <shape android:shape="rectangle">
+                    <gradient
+                        android:startColor="#5C5C5C"
+                        android:centerColor="#424242"
+                        android:endColor="#2C2C2C"
+                        android:angle="270" />
+                    <corners android:radius="8dp" />
+                </shape>
+            </item>
+        </layer-list>
+    </item>
+</selector>

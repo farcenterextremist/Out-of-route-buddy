@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- 
+        🐛 Debug-specific manifest
+        
+        This manifest is only used in debug builds and overrides the main manifest
+        to use DebugApplication instead of OutOfRouteApplication.
+        
+        ✅ NEW (#27): Enables StrictMode for ANR detection in debug builds
+    -->
+    
+    <application
+        android:name=".DebugApplication"
+        tools:replace="android:name" />
+</manifest>

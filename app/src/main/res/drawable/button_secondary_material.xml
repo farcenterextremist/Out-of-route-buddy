@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_pressed="true">
+        <layer-list>
+            <item android:top="2dp">
+                <shape android:shape="rectangle">
+                    <solid android:color="#28000000" />
+                    <corners android:radius="4dp" />
+                </shape>
+            </item>
+            <item android:top="1dp">
+                <shape android:shape="rectangle">
+                    <gradient
+                        android:startColor="#455A5E"
+                        android:endColor="#37474F"
+                        android:angle="270" />
+                    <corners android:radius="4dp" />
+                </shape>
+            </item>
+        </layer-list>
+    </item>
+    <item>
+        <layer-list>
+            <item android:top="2dp">
+                <shape android:shape="rectangle">
+                    <solid android:color="#1C000000" />
+                    <corners android:radius="4dp" />
+                </shape>
+            </item>
+            <item>
+                <shape android:shape="rectangle">
+                    <gradient
+                        android:startColor="#5C6F75"
+                        android:centerColor="#4E5F66"
+                        android:endColor="#3E4F55"
+                        android:angle="270" />
+                    <corners android:radius="4dp" />
+                </shape>
+            </item>
+            <item>
+                <shape android:shape="rectangle">
+                    <gradient
+                        android:startColor="#28FFFFFF"
+                        android:centerColor="#00FFFFFF"
+                        android:endColor="#00000000"
+                        android:angle="270" />
+                    <corners android:radius="4dp" />
+                </shape>
+            </item>
+        </layer-list>
+    </item>
+</selector>

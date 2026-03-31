@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+   Data extraction rules for API 31+ (Android 12+).
+   Ensures the Room database and key SharedPreferences are backed up
+   to Google cloud AND transferred to new devices.
+   See https://developer.android.com/about/versions/12/backup-restore#xml-changes
+-->
+<data-extraction-rules>
+    <cloud-backup>
+        <include domain="database" path="outofroutebuddy_database" />
+        <include domain="sharedpref" path="trip_backup_prefs.xml" />
+        <include domain="sharedpref" path="app_settings.xml" />
+        <include domain="sharedpref" path="address_history.xml" />
+        <exclude domain="database" path="outofroutebuddy_database-journal" />
+        <exclude domain="database" path="outofroutebuddy_database-wal" />
+        <exclude domain="database" path="outofroutebuddy_database-shm" />
+        <exclude domain="root" path="cache/" />
+        <exclude domain="external" path="cache/" />
+    </cloud-backup>
+    <device-transfer>
+        <include domain="database" path="outofroutebuddy_database" />
+        <include domain="sharedpref" path="trip_backup_prefs.xml" />
+        <include domain="sharedpref" path="app_settings.xml" />
+        <include domain="sharedpref" path="address_history.xml" />
+        <exclude domain="database" path="outofroutebuddy_database-journal" />
+        <exclude domain="database" path="outofroutebuddy_database-wal" />
+        <exclude domain="database" path="outofroutebuddy_database-shm" />
+    </device-transfer>
+</data-extraction-rules>

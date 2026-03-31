@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Trip-ended overlay bubble icon. References splash_truck; replace with dedicated bubble asset if available. -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:drawable="@drawable/splash_truck" />
+</layer-list>

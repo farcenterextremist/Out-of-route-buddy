@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Stat Card layout for completed trip - matches statistics_row pattern -->
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="8dp"
+    app:cardElevation="6dp"
+    app:cardCornerRadius="12dp">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="16dp">
+
+        <!-- Header: Trip Date -->
+        <TextView
+            android:id="@+id/trip_date"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="Jan 15, 2025"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="@color/text_primary_adaptive"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/delete_button"
+            android:layout_marginEnd="8dp" />
+
+        <!-- Total Miles row -->
+        <TextView
+            android:id="@+id/trip_miles_label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/total_miles"
+            android:textSize="14sp"
+            android:textColor="@color/text_secondary_adaptive"
+            app:layout_constraintTop_toBottomOf="@id/trip_date"
+            app:layout_constraintStart_toStartOf="parent"
+            android:layout_marginTop="12dp" />
+        <TextView
+            android:id="@+id/trip_miles"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="125.5 mi"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="@color/text_primary_adaptive"
+            app:layout_constraintTop_toBottomOf="@id/trip_date"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginTop="12dp"
+            tools:text="125.5 mi" />
+
+        <!-- OOR Miles row -->
+        <TextView
+            android:id="@+id/trip_oor_label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/oor_miles"
+            android:textSize="14sp"
+            android:textColor="@color/text_secondary_adaptive"
+            app:layout_constraintTop_toBottomOf="@id/trip_miles"
+            app:layout_constraintStart_toStartOf="parent"
+            android:layout_marginTop="8dp" />
+        <TextView
+            android:id="@+id/trip_oor"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="5.2 over (4.2%)"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="@color/text_primary_adaptive"
+            app:layout_constraintTop_toBottomOf="@id/trip_miles"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginTop="8dp"
+            tools:text="5.2 over (4.2%)" />
+
+        <!-- Delete button icon (borderless). -->
+        <ImageButton
+            android:id="@+id/delete_button"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginStart="8dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/delete_trip_description"
+            android:padding="8dp"
+            android:src="@drawable/ic_delete_trash"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:tint="@null" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</com.google.android.material.card.MaterialCardView>

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Toolbar-specific crop so the tire marks stay visible without stretching. -->
+<bitmap xmlns:android="http://schemas.android.com/apk/res/android"
+    android:src="@drawable/toolbar_bg_cracked_road_banner"
+    android:gravity="fill_horizontal|center"
+    android:antialias="true" />

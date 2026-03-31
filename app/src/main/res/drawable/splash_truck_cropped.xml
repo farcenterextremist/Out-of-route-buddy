@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Clips ~6% from bottom and right to remove star from splash_truck.png -->
+<clip xmlns:android="http://schemas.android.com/apk/res/android"
+    android:clipOrientation="vertical"
+    android:gravity="top"
+    android:drawable="@drawable/splash_truck_clip_h" />
