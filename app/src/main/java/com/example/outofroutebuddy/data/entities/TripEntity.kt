@@ -56,6 +56,17 @@ data class TripEntity(
     val dropoffAddress: String = "",
     /** Data tier: SILVER (may delete), PLATINUM (demote/promote, synthetic ok), GOLD (human, digital gold). */
     val dataTier: DataTier = DataTier.GOLD,
+    /** First GPS fix used for trip stats (nullable = unknown / legacy row). */
+    val tripStartLat: Double? = null,
+    val tripStartLng: Double? = null,
+    /** Last GPS fix before end trip (nullable = unknown / legacy row). */
+    val tripEndLat: Double? = null,
+    val tripEndLng: Double? = null,
+    val stopEventsCount: Int = 0,
+    val significantTurnsCount: Int = 0,
+    val elevationMinMeters: Double? = null,
+    val elevationMaxMeters: Double? = null,
+    val distinctTimeZoneCount: Int = 0,
 ) {
     val dispatchedMiles: Double
         get() = loadedMiles + bounceMiles

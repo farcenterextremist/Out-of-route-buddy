@@ -17,6 +17,12 @@
 
 **Rule:** Advancing % is **additive only** (docs, briefs, checklists). No code implementation of the Heavy feature until user says "approve 100% implement."
 
+### Tracked ideas (optional)
+
+| Idea | Sandbox doc | Approx. % |
+|------|-------------|-----------|
+| Route deviation map (§3.1) | [ROUTE_DEVIATION_MAP_SANDBOX.md](../product/sandbox/ROUTE_DEVIATION_MAP_SANDBOX.md) | ~55 |
+
 ---
 
 ## How the loop uses this

@@ -32,6 +32,7 @@ import com.example.outofroutebuddy.utils.extensions.endOfDay
 import com.example.outofroutebuddy.utils.extensions.endOfMonth
 import com.example.outofroutebuddy.utils.extensions.startOfDay
 import com.example.outofroutebuddy.utils.extensions.startOfMonth
+import com.example.outofroutebuddy.domain.calendar.scaledToCalendarDay
 
 /**
  * Adapter: domain TripRepository implementation using the data layer.
@@ -47,6 +48,27 @@ class DomainTripRepositoryAdapter(
         private const val TAG = "DomainTripRepositoryAdapter"
     }
 
+    /**
+     * Final display dedupe: same second-level + rounded-mile key as [TripRepository] entity dedupe,
+     * applied to domain trips so UI never shows doubles even if entity keys drifted.
+     */
+    private fun dedupeDomainTripsForDisplay(trips: List<Trip>): List<Trip> {
+        if (trips.size <= 1) return trips
+        return trips
+            .groupBy { domainDisplayDedupKey(it) }
+            .values
+            .map { group -> group.maxBy { it.id.toLongOrNull() ?: 0L } }
+            .sortedBy { t -> t.startTime?.time ?: t.endTime?.time ?: 0L }
+    }
+
+    private fun domainDisplayDedupKey(t: Trip): String {
+        val endMs = t.endTime?.time ?: t.startTime?.time ?: 0L
+        val startMs = t.startTime?.time ?: endMs
+        fun sec(ms: Long) = ms / 1000L
+        fun r(m: Double) = String.format(Locale.US, "%.4f", m)
+        return "${sec(endMs)}_${sec(startMs)}_${r(t.loadedMiles)}_${r(t.bounceMiles)}_${r(t.actualMiles)}"
+    }
+
     /** Emits when a load (getTripById, getTripsByDateRange, getTripsOverlappingDay) fails. UI can collect and show. */
     private val _loadErrors = MutableSharedFlow<String>(extraBufferCapacity = 1)
     val loadErrors: SharedFlow<String> = _loadErrors.asSharedFlow()
@@ -54,18 +76,20 @@ class DomainTripRepositoryAdapter(
     /** Returns all trips as domain [Trip] list. Maps from data layer; errors emitted to [loadErrors] (D1). */
     override fun getAllTrips(): Flow<List<Trip>> {
         return dataRepository.getAllTrips().map { trips ->
-            trips.map { dataTrip ->
-                Trip(
-                    id = dataTrip.id.toString(),
-                    loadedMiles = dataTrip.loadedMiles,
-                    bounceMiles = dataTrip.bounceMiles,
-                    actualMiles = dataTrip.actualMiles,
-                    oorMiles = dataTrip.oorMiles,
-                    oorPercentage = dataTrip.oorPercentage,
-                    startTime = dataTrip.date,
-                    status = TripStatus.COMPLETED,
-                )
-            }
+            dedupeDomainTripsForDisplay(
+                trips.map { dataTrip ->
+                    Trip(
+                        id = dataTrip.id.toString(),
+                        loadedMiles = dataTrip.loadedMiles,
+                        bounceMiles = dataTrip.bounceMiles,
+                        actualMiles = dataTrip.actualMiles,
+                        oorMiles = dataTrip.oorMiles,
+                        oorPercentage = dataTrip.oorPercentage,
+                        startTime = dataTrip.date,
+                        status = TripStatus.COMPLETED,
+                    )
+                },
+            )
         }.catch { e ->
             Log.w(TAG, "getAllTrips failed", e)
             _loadErrors.tryEmit(e.message ?: "Load failed")
@@ -111,7 +135,7 @@ class DomainTripRepositoryAdapter(
         return flow {
             val rangeEndExclusive = toExclusiveEnd(endDate)
             val entities = dataRepository.getTripEntitiesOverlappingRange(startDate, rangeEndExclusive)
-            val domainTrips = entities.map { mapTripEntityToDomain(it) }
+            val domainTrips = dedupeDomainTripsForDisplay(entities.map { mapTripEntityToDomain(it) })
             emit(domainTrips)
         }.catch { e ->
             Log.w(TAG, "getTripsByDateRange failed", e)
@@ -127,8 +151,10 @@ class DomainTripRepositoryAdapter(
     ): Flow<List<Trip>> {
         return flow {
             val entities = dataRepository.getTripEntitiesOverlappingDay(startOfDay, endOfDay)
-            val domainTrips = entities.map { mapTripEntityToDomain(it) }
-                .sortedBy { it.startTime?.time ?: it.endTime?.time ?: 0L }
+            val domainTrips =
+                dedupeDomainTripsForDisplay(entities.map { mapTripEntityToDomain(it) })
+                    .map { it.scaledToCalendarDay(startOfDay, endOfDay) }
+                    .sortedBy { it.startTime?.time ?: it.endTime?.time ?: 0L }
             emit(domainTrips)
         }.catch { e ->
             Log.w(TAG, "getTripsOverlappingDay failed", e)
@@ -140,7 +166,9 @@ class DomainTripRepositoryAdapter(
     /** Returns trips by data tier. Errors emitted to [loadErrors]. */
     override fun getTripsByTier(tier: DataTier): Flow<List<Trip>> {
         return dataRepository.getTripEntitiesByTier(tier)
-            .map { entities -> entities.map { mapTripEntityToDomain(it) } }
+            .map { entities ->
+                dedupeDomainTripsForDisplay(entities.map { mapTripEntityToDomain(it) })
+            }
             .catch { e ->
                 Log.w(TAG, "getTripsByTier failed", e)
                 _loadErrors.tryEmit(e.message ?: "Load failed")
@@ -169,6 +197,7 @@ class DomainTripRepositoryAdapter(
                 validPoints = entity.validGpsPoints,
                 rejectedPoints = entity.rejectedGpsPoints,
                 avgAccuracy = entity.avgGpsAccuracy,
+                avgSpeedMph = entity.avgSpeedMph,
                 maxSpeed = entity.maxSpeedMph,
                 locationJumps = entity.locationJumpsDetected,
                 accuracyWarnings = entity.accuracyWarnings,
@@ -176,6 +205,15 @@ class DomainTripRepositoryAdapter(
                 tripDurationMinutes = entity.tripDurationMinutes,
                 satelliteCount = 0,
                 gpsQualityPercentage = entity.gpsQualityPercentage,
+                startLatitude = entity.tripStartLat,
+                startLongitude = entity.tripStartLng,
+                endLatitude = entity.tripEndLat,
+                endLongitude = entity.tripEndLng,
+                stopEventsCount = entity.stopEventsCount,
+                significantTurnsCount = entity.significantTurnsCount,
+                elevationMinMeters = entity.elevationMinMeters,
+                elevationMaxMeters = entity.elevationMaxMeters,
+                distinctTimeZoneCount = entity.distinctTimeZoneCount,
                 interstatePercent = entity.interstatePercent,
                 interstateMinutes = entity.interstateMinutes,
                 backRoadsPercent = entity.backRoadsPercent,
@@ -190,18 +228,20 @@ class DomainTripRepositoryAdapter(
         return flow {
             // One-shot snapshot: getAllTrips() is an infinite Flow, so use first() to avoid hanging
             val allTrips = dataRepository.getAllTrips().first()
-            val domainTrips = allTrips.map { dataTrip ->
-                Trip(
-                    id = dataTrip.id.toString(),
-                    loadedMiles = dataTrip.loadedMiles,
-                    bounceMiles = dataTrip.bounceMiles,
-                    actualMiles = dataTrip.actualMiles,
-                    oorMiles = dataTrip.oorMiles,
-                    oorPercentage = dataTrip.oorPercentage,
-                    startTime = dataTrip.date,
-                    status = TripStatus.COMPLETED,
-                )
-            }
+            val domainTrips = dedupeDomainTripsForDisplay(
+                allTrips.map { dataTrip ->
+                    Trip(
+                        id = dataTrip.id.toString(),
+                        loadedMiles = dataTrip.loadedMiles,
+                        bounceMiles = dataTrip.bounceMiles,
+                        actualMiles = dataTrip.actualMiles,
+                        oorMiles = dataTrip.oorMiles,
+                        oorPercentage = dataTrip.oorPercentage,
+                        startTime = dataTrip.date,
+                        status = TripStatus.COMPLETED,
+                    )
+                },
+            )
             emit(domainTrips)
         }.catch { e ->
             Log.w(TAG, "getTripsByStatus failed", e)

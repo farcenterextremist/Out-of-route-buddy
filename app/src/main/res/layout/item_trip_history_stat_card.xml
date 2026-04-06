@@ -74,6 +74,18 @@
                         android:textColor="@color/text_primary_adaptive"
                         tools:text="5.2 over (4.2%)" />
                 </LinearLayout>
+
+                <TextView
+                    android:id="@+id/trip_miles_slice_caption"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:visibility="gone"
+                    android:textSize="12sp"
+                    android:textColor="@color/text_secondary_adaptive"
+                    android:lineSpacingExtra="2dp"
+                    tools:visibility="visible"
+                    tools:text="Miles and OOR are this day’s time-based share of the trip." />
             </LinearLayout>
 
             <ImageButton
@@ -191,6 +203,58 @@
                 android:textColor="@color/text_primary_adaptive"
                 tools:text="60 min" />
 
+            <LinearLayout
+                android:id="@+id/trip_start_location_block"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:orientation="vertical"
+                android:visibility="gone"
+                tools:visibility="visible">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/trip_history_start_coordinates"
+                    android:textSize="12sp"
+                    android:textColor="@color/text_secondary_adaptive" />
+
+                <TextView
+                    android:id="@+id/trip_start_coords"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textSize="13sp"
+                    android:textColor="@color/text_primary_adaptive"
+                    android:fontFamily="monospace"
+                    tools:text="39.09973° N, 94.57857° W" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/trip_end_location_block"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:orientation="vertical"
+                android:visibility="gone"
+                tools:visibility="visible">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/trip_history_end_coordinates"
+                    android:textSize="12sp"
+                    android:textColor="@color/text_secondary_adaptive" />
+
+                <TextView
+                    android:id="@+id/trip_end_coords"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textSize="13sp"
+                    android:textColor="@color/text_primary_adaptive"
+                    android:fontFamily="monospace"
+                    tools:text="41.87811° N, 87.62980° W" />
+            </LinearLayout>
+
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -208,6 +272,19 @@
                 android:textColor="@color/text_primary_adaptive"
                 android:textAlignment="viewStart"
                 tools:text="Accuracy: 5.2m | Points: 120/125 | Quality: 96%" />
+
+            <TextView
+                android:id="@+id/trip_gps_insights"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:lineSpacingExtra="3dp"
+                android:textSize="12sp"
+                android:textColor="@color/text_primary_adaptive"
+                android:textAlignment="viewStart"
+                android:visibility="gone"
+                tools:text="Average speed: 58.2 mph\nStops (2+ min): 2"
+                tools:visibility="visible" />
 
             <!-- Extended metadata (interstate, back roads, truck stops) -->
             <TextView

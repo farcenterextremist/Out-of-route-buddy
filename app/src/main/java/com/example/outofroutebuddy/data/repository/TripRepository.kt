@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import java.util.Calendar
 import java.util.Date
+import java.util.Locale
 
 /**
  * Repository for managing trip data operations.
@@ -25,6 +26,29 @@ import java.util.Date
 class TripRepository(private val tripDao: TripDao) {
     companion object {
         private const val TAG = "TripRepository"
+    }
+
+    /**
+     * Collapses duplicate DB rows in memory for UI and aggregation. Uses a **looser** key than
+     * [TripDao.findDuplicate]: second-level timestamps and rounded miles so retries / legacy rows
+     * that differ only by milliseconds or null vs set start/end still merge. Keeps the row with
+     * the highest [TripEntity.id]. Does not delete or modify persisted data.
+     */
+    private fun dedupeTripEntitiesForDisplay(entities: List<TripEntity>): List<TripEntity> {
+        if (entities.size <= 1) return entities
+        return entities
+            .groupBy { displayDedupKey(it) }
+            .values
+            .map { group -> group.maxBy { it.id } }
+            .sortedWith(compareBy({ it.date.time }, { it.id }))
+    }
+
+    private fun displayDedupKey(e: TripEntity): String {
+        val endMs = e.tripEndTime?.time ?: e.date.time
+        val startMs = e.tripStartTime?.time ?: endMs
+        fun min(ms: Long) = ms / 60_000L
+        fun r(m: Double) = String.format(Locale.US, "%.4f", m)
+        return "${min(endMs)}_${min(startMs)}_${r(e.loadedMiles)}_${r(e.bounceMiles)}_${r(e.actualMiles)}"
     }
 
     /**
@@ -40,8 +64,10 @@ class TripRepository(private val tripDao: TripDao) {
     }
 
     /**
-     * ✅ NEW: Insert trip with retry logic and exponential backoff
-     * ✅ NEW (#8): Added timeout protection for database writes
+     * Insert trip with retry logic and exponential backoff.
+     * Entity is built and validated once before the loop. After each failed attempt
+     * (especially timeouts), the DB is checked for an already-committed row to avoid
+     * duplicate inserts when a timeout fires after the Room commit succeeds.
      */
     private suspend fun insertTripWithRetry(
         trip: Trip,
@@ -50,61 +76,77 @@ class TripRepository(private val tripDao: TripDao) {
     ): Long {
         var lastException: Exception? = null
 
+        // Build entity ONCE so retries cannot create distinct rows
+        val tripEntity = TripEntity(
+            date = trip.date,
+            loadedMiles = trip.loadedMiles,
+            bounceMiles = trip.bounceMiles,
+            actualMiles = trip.actualMiles,
+            oorMiles = trip.oorMiles,
+            oorPercentage = trip.oorPercentage,
+            avgGpsAccuracy = gpsMetadata?.get("avgGpsAccuracy") as? Double ?: 0.0,
+            minGpsAccuracy = gpsMetadata?.get("minGpsAccuracy") as? Double ?: 0.0,
+            maxGpsAccuracy = gpsMetadata?.get("maxGpsAccuracy") as? Double ?: 0.0,
+            totalGpsPoints = gpsMetadata?.get("totalGpsPoints") as? Int ?: 0,
+            validGpsPoints = gpsMetadata?.get("validGpsPoints") as? Int ?: 0,
+            rejectedGpsPoints = gpsMetadata?.get("rejectedGpsPoints") as? Int ?: 0,
+            tripDurationMinutes = gpsMetadata?.get("tripDurationMinutes") as? Int ?: 0,
+            avgSpeedMph = gpsMetadata?.get("avgSpeedMph") as? Double ?: 0.0,
+            maxSpeedMph = gpsMetadata?.get("maxSpeedMph") as? Double ?: 0.0,
+            locationJumpsDetected = gpsMetadata?.get("locationJumpsDetected") as? Int ?: 0,
+            accuracyWarnings = gpsMetadata?.get("accuracyWarnings") as? Int ?: 0,
+            speedAnomalies = gpsMetadata?.get("speedAnomalies") as? Int ?: 0,
+            tripStartTime = gpsMetadata?.get("tripStartTime") as? Date,
+            tripEndTime = gpsMetadata?.get("tripEndTime") as? Date,
+            tripTimeZoneId = gpsMetadata?.get("tripTimeZoneId") as? String,
+            wasInterrupted = gpsMetadata?.get("wasInterrupted") as? Boolean ?: false,
+            interruptionCount = gpsMetadata?.get("interruptionCount") as? Int ?: 0,
+            lastLocationLat = gpsMetadata?.get("lastLocationLat") as? Double ?: 0.0,
+            lastLocationLng = gpsMetadata?.get("lastLocationLng") as? Double ?: 0.0,
+            lastLocationTime = gpsMetadata?.get("lastLocationTime") as? Date,
+            interstatePercent = gpsMetadata?.get("interstatePercent") as? Double ?: 0.0,
+            interstateMinutes = gpsMetadata?.get("interstateMinutes") as? Int ?: 0,
+            backRoadsPercent = gpsMetadata?.get("backRoadsPercent") as? Double ?: 0.0,
+            backRoadsMinutes = gpsMetadata?.get("backRoadsMinutes") as? Int ?: 0,
+            truckStopsVisited = gpsMetadata?.get("truckStopsVisited") as? Int ?: 0,
+            pickupAddress = gpsMetadata?.get("pickupAddress") as? String ?: "",
+            dropoffAddress = gpsMetadata?.get("dropoffAddress") as? String ?: "",
+            dataTier = gpsMetadata?.get("dataTier") as? DataTier ?: DataTier.GOLD,
+            tripStartLat = gpsMetadata?.get("tripStartLat") as? Double,
+            tripStartLng = gpsMetadata?.get("tripStartLng") as? Double,
+            tripEndLat = gpsMetadata?.get("tripEndLat") as? Double,
+            tripEndLng = gpsMetadata?.get("tripEndLng") as? Double,
+            stopEventsCount = gpsMetadata?.get("stopEventsCount") as? Int ?: 0,
+            significantTurnsCount = gpsMetadata?.get("significantTurnsCount") as? Int ?: 0,
+            elevationMinMeters = gpsMetadata?.get("elevationMinMeters") as? Double,
+            elevationMaxMeters = gpsMetadata?.get("elevationMaxMeters") as? Double,
+            distinctTimeZoneCount = gpsMetadata?.get("distinctTimeZoneCount") as? Int ?: 0,
+        )
+
+        // Validate once before any insert attempt
+        val entityValidation = ValidationFramework.UnifiedValidation.validateTripEntity(tripEntity)
+        if (!entityValidation.isValid) {
+            val errorMessage = "Database validation failed: ${entityValidation.firstError?.message}"
+            Log.e(TAG, errorMessage)
+            throw RuntimeException(errorMessage)
+        }
+
+        // Pre-insert duplicate check: catch crash-recovery or double-save re-inserts
+        val preExisting = tripDao.findDuplicate(
+            tripEntity.date, tripEntity.loadedMiles, tripEntity.bounceMiles,
+            tripEntity.actualMiles, tripEntity.tripStartTime, tripEntity.tripEndTime
+        )
+        if (preExisting != null) {
+            Log.i(TAG, "Duplicate trip already in DB (id=${preExisting.id}); skipping insert")
+            return preExisting.id
+        }
+
         repeat(maxRetries) { attempt ->
             try {
-                // ✅ NEW (#8): Wrap database write with timeout (3 seconds)
                 val result = TimeoutManager.withDatabaseWriteTimeout("insertTrip") {
-                    val tripEntity =
-                        TripEntity(
-                            date = trip.date,
-                            loadedMiles = trip.loadedMiles,
-                            bounceMiles = trip.bounceMiles,
-                            actualMiles = trip.actualMiles,
-                            oorMiles = trip.oorMiles,
-                            oorPercentage = trip.oorPercentage,
-                            // ✅ NEW: GPS metadata fields
-                            avgGpsAccuracy = gpsMetadata?.get("avgGpsAccuracy") as? Double ?: 0.0,
-                            minGpsAccuracy = gpsMetadata?.get("minGpsAccuracy") as? Double ?: 0.0,
-                            maxGpsAccuracy = gpsMetadata?.get("maxGpsAccuracy") as? Double ?: 0.0,
-                        totalGpsPoints = gpsMetadata?.get("totalGpsPoints") as? Int ?: 0,
-                        validGpsPoints = gpsMetadata?.get("validGpsPoints") as? Int ?: 0,
-                        rejectedGpsPoints = gpsMetadata?.get("rejectedGpsPoints") as? Int ?: 0,
-                        tripDurationMinutes = gpsMetadata?.get("tripDurationMinutes") as? Int ?: 0,
-                        avgSpeedMph = gpsMetadata?.get("avgSpeedMph") as? Double ?: 0.0,
-                        maxSpeedMph = gpsMetadata?.get("maxSpeedMph") as? Double ?: 0.0,
-                        locationJumpsDetected = gpsMetadata?.get("locationJumpsDetected") as? Int ?: 0,
-                        accuracyWarnings = gpsMetadata?.get("accuracyWarnings") as? Int ?: 0,
-                        speedAnomalies = gpsMetadata?.get("speedAnomalies") as? Int ?: 0,
-                        tripStartTime = gpsMetadata?.get("tripStartTime") as? Date,
-                        tripEndTime = gpsMetadata?.get("tripEndTime") as? Date,
-                        tripTimeZoneId = gpsMetadata?.get("tripTimeZoneId") as? String,
-                        wasInterrupted = gpsMetadata?.get("wasInterrupted") as? Boolean ?: false,
-                        interruptionCount = gpsMetadata?.get("interruptionCount") as? Int ?: 0,
-                        lastLocationLat = gpsMetadata?.get("lastLocationLat") as? Double ?: 0.0,
-                        lastLocationLng = gpsMetadata?.get("lastLocationLng") as? Double ?: 0.0,
-                        lastLocationTime = gpsMetadata?.get("lastLocationTime") as? Date,
-                        interstatePercent = gpsMetadata?.get("interstatePercent") as? Double ?: 0.0,
-                        interstateMinutes = gpsMetadata?.get("interstateMinutes") as? Int ?: 0,
-                        backRoadsPercent = gpsMetadata?.get("backRoadsPercent") as? Double ?: 0.0,
-                        backRoadsMinutes = gpsMetadata?.get("backRoadsMinutes") as? Int ?: 0,
-                        truckStopsVisited = gpsMetadata?.get("truckStopsVisited") as? Int ?: 0,
-                        pickupAddress = gpsMetadata?.get("pickupAddress") as? String ?: "",
-                        dropoffAddress = gpsMetadata?.get("dropoffAddress") as? String ?: "",
-                        dataTier = gpsMetadata?.get("dataTier") as? DataTier ?: DataTier.GOLD,
-                    )
-
-                    // ✅ NEW: Validate entity before database insertion
-                    val entityValidation = ValidationFramework.UnifiedValidation.validateTripEntity(tripEntity)
-                    if (!entityValidation.isValid) {
-                        val errorMessage = "Database validation failed: ${entityValidation.firstError?.message}"
-                        Log.e(TAG, errorMessage)
-                        throw RuntimeException(errorMessage)
-                    }
-
                     tripDao.insertTrip(tripEntity)
                 }
-                
-                // Handle timeout result
+
                 if (result.isSuccess) {
                     val tripId = result.getOrThrow()
                     // Audit: filterable tag for detection of bulk/anomalous inserts (Purple Team 2025-02-20)
@@ -118,8 +160,18 @@ class TripRepository(private val tripDao: TripDao) {
                 lastException = e
                 Log.w(TAG, "Failed to insert trip (attempt ${attempt + 1}/$maxRetries): ${e.message}")
 
+                // After failure, check if the row was actually committed (timeout after DB commit)
+                val committed = tripDao.findDuplicate(
+                    tripEntity.date, tripEntity.loadedMiles, tripEntity.bounceMiles,
+                    tripEntity.actualMiles, tripEntity.tripStartTime, tripEntity.tripEndTime
+                )
+                if (committed != null) {
+                    Log.i(TAG, "Trip committed despite error (id=${committed.id}); returning existing ID")
+                    return committed.id
+                }
+
                 if (attempt < maxRetries - 1) {
-                    val delayMs = 1000L * (attempt + 1) // Exponential backoff: 1s, 2s, 3s
+                    val delayMs = 1000L * (attempt + 1)
                     Log.i(TAG, "Retrying in ${delayMs}ms...")
                     kotlinx.coroutines.delay(delayMs)
                 }
@@ -139,7 +191,7 @@ class TripRepository(private val tripDao: TripDao) {
         return try {
             tripDao.getAllTrips().map { entities ->
                 try {
-                    entities.map { entity ->
+                    dedupeTripEntitiesForDisplay(entities).map { entity ->
                         Trip(
                             id = entity.id,
                             date = entity.date,
@@ -189,41 +241,13 @@ class TripRepository(private val tripDao: TripDao) {
         return try {
             val existing = tripDao.getTripById(trip.id) ?: return false
             val entity =
-                TripEntity(
-                    id = trip.id,
+                existing.copy(
                     date = trip.date,
                     loadedMiles = trip.loadedMiles,
                     bounceMiles = trip.bounceMiles,
                     actualMiles = trip.actualMiles,
                     oorMiles = trip.oorMiles,
                     oorPercentage = trip.oorPercentage,
-                    createdAt = existing.createdAt,
-                    tripTimeZoneId = existing.tripTimeZoneId,
-                    tripStartTime = existing.tripStartTime,
-                    tripEndTime = existing.tripEndTime,
-                    avgGpsAccuracy = existing.avgGpsAccuracy,
-                    minGpsAccuracy = existing.minGpsAccuracy,
-                    maxGpsAccuracy = existing.maxGpsAccuracy,
-                    totalGpsPoints = existing.totalGpsPoints,
-                    validGpsPoints = existing.validGpsPoints,
-                    rejectedGpsPoints = existing.rejectedGpsPoints,
-                    tripDurationMinutes = existing.tripDurationMinutes,
-                    avgSpeedMph = existing.avgSpeedMph,
-                    maxSpeedMph = existing.maxSpeedMph,
-                    locationJumpsDetected = existing.locationJumpsDetected,
-                    accuracyWarnings = existing.accuracyWarnings,
-                    speedAnomalies = existing.speedAnomalies,
-                    wasInterrupted = existing.wasInterrupted,
-                    interruptionCount = existing.interruptionCount,
-                    lastLocationLat = existing.lastLocationLat,
-                    lastLocationLng = existing.lastLocationLng,
-                    lastLocationTime = existing.lastLocationTime,
-                    interstatePercent = existing.interstatePercent,
-                    interstateMinutes = existing.interstateMinutes,
-                    backRoadsPercent = existing.backRoadsPercent,
-                    backRoadsMinutes = existing.backRoadsMinutes,
-                    truckStopsVisited = existing.truckStopsVisited,
-                    dataTier = existing.dataTier,
                 )
             tripDao.updateTrip(entity)
             Log.d(TAG, "Successfully updated trip")
@@ -272,7 +296,7 @@ class TripRepository(private val tripDao: TripDao) {
     suspend fun getTripEntitiesWithGpsMetadata(limit: Int = 10): List<TripEntity> {
         return try {
             // Get the TripEntity objects directly from the DAO
-            val allEntities = tripDao.getAllTrips().first()
+            val allEntities = dedupeTripEntitiesForDisplay(tripDao.getAllTrips().first())
             val limitedEntities = allEntities.take(limit)
             Log.d(TAG, "Successfully retrieved ${limitedEntities.size} trip entities with GPS metadata")
             limitedEntities
@@ -298,7 +322,7 @@ class TripRepository(private val tripDao: TripDao) {
             val endOfDay = calendar.time
 
             val trips =
-                tripDao.getTripsForDate(startOfDay, endOfDay).map { entity ->
+                dedupeTripEntitiesForDisplay(tripDao.getTripsForDate(startOfDay, endOfDay)).map { entity ->
                     Trip(
                         id = entity.id,
                         date = entity.date,
@@ -324,7 +348,7 @@ class TripRepository(private val tripDao: TripDao) {
     ): List<Trip> {
         return try {
             val trips =
-                tripDao.getTripsForDateRange(startDate, endDate).map { entity ->
+                dedupeTripEntitiesForDisplay(tripDao.getTripsForDateRange(startDate, endDate)).map { entity ->
                     Trip(
                         id = entity.id,
                         date = entity.date,
@@ -350,7 +374,7 @@ class TripRepository(private val tripDao: TripDao) {
     ): List<TripEntity> {
         return try {
             val entities = withContext(Dispatchers.IO) {
-                tripDao.getTripsForDateRange(startDate, endDate)
+                dedupeTripEntitiesForDisplay(tripDao.getTripsForDateRange(startDate, endDate))
             }
             Log.d(TAG, "Successfully retrieved ${entities.size} trip entities for date range")
             entities
@@ -370,7 +394,7 @@ class TripRepository(private val tripDao: TripDao) {
     ): List<TripEntity> {
         return try {
             val entities = withContext(Dispatchers.IO) {
-                tripDao.getTripsOverlappingDay(startOfDay, endOfDay)
+                dedupeTripEntitiesForDisplay(tripDao.getTripsOverlappingDay(startOfDay, endOfDay))
             }
             Log.d(TAG, "Successfully retrieved ${entities.size} trip entities overlapping day")
             entities
@@ -390,7 +414,7 @@ class TripRepository(private val tripDao: TripDao) {
     ): List<TripEntity> {
         return try {
             val entities = withContext(Dispatchers.IO) {
-                tripDao.getTripsOverlappingRange(rangeStart, rangeEnd)
+                dedupeTripEntitiesForDisplay(tripDao.getTripsOverlappingRange(rangeStart, rangeEnd))
             }
             Log.d(TAG, "Successfully retrieved ${entities.size} trip entities overlapping range")
             entities
@@ -404,7 +428,7 @@ class TripRepository(private val tripDao: TripDao) {
      * Get trip entities by data tier (SILVER, PLATINUM, GOLD).
      */
     fun getTripEntitiesByTier(tier: DataTier): Flow<List<TripEntity>> {
-        return tripDao.getTripsByTier(tier)
+        return tripDao.getTripsByTier(tier).map { dedupeTripEntitiesForDisplay(it) }
     }
 
     /**

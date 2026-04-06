@@ -30,8 +30,10 @@ import com.example.outofroutebuddy.MainActivity
 import com.example.outofroutebuddy.core.config.BuildConfig
 import com.example.outofroutebuddy.core.config.DriveDetectConfig
 import com.example.outofroutebuddy.core.config.ValidationConfig
+import com.example.outofroutebuddy.di.TripTrackingServiceEntryPoint
 import com.example.outofroutebuddy.util.TimeoutManager
 import com.google.android.gms.location.*
+import dagger.hilt.android.EntryPointAccessors
 import com.google.android.gms.location.ActivityRecognition
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -45,6 +47,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
 import java.util.*
 import kotlin.math.abs
+import kotlin.math.max
 
 // ✅ IMPLEMENTED: Handle service crashes and notify the user if trip tracking fails.
 // Firebase Crashlytics integration added for comprehensive crash reporting.
@@ -79,6 +82,12 @@ private const val KEY_BOUNCE_MILES = "bounce_miles"
 private const val KEY_TOTAL_DISTANCE = "total_distance"
 private const val KEY_START_TIME = "start_time"
 private const val KEY_IS_PAUSED = "is_paused"
+private const val KEY_WAYPOINT_PICKUP = "waypoint_pickup_active"
+private const val KEY_WAYPOINT_PICKUP_LAT = "waypoint_pickup_lat"
+private const val KEY_WAYPOINT_PICKUP_LNG = "waypoint_pickup_lng"
+private const val KEY_WAYPOINT_DROPOFF = "waypoint_dropoff_active"
+private const val KEY_WAYPOINT_DROPOFF_LAT = "waypoint_dropoff_lat"
+private const val KEY_WAYPOINT_DROPOFF_LNG = "waypoint_dropoff_lng"
 
 data class TripMetrics(
     val totalMiles: Double = 0.0,
@@ -105,6 +114,12 @@ data class GeofenceContextSignal(
     val distanceFromOriginMeters: Double? = null,
     val isNearOrigin: Boolean = false,
     val dwellInOriginMillis: Long = 0L,
+    /** Present only when user started the trip with a street-level dropoff that geocoded successfully. */
+    val geocodedDropoffLat: Double? = null,
+    val geocodedDropoffLng: Double? = null,
+    val distanceFromGeocodedDropoffMeters: Double? = null,
+    val isNearGeocodedDropoff: Boolean = false,
+    val dwellNearGeocodedDropoffMillis: Long = 0L,
 )
 
 data class TripEndingSignalSnapshot(
@@ -150,7 +165,16 @@ data class GpsTrackingData(
     val totalDistanceMiles: Float = 0f,
     val currentLocation: String = "Unknown",
     val satelliteCount: Int = 0,
-    val isHighAccuracyMode: Boolean = false
+    val isHighAccuracyMode: Boolean = false,
+    val tripStartLatitude: Double? = null,
+    val tripStartLongitude: Double? = null,
+    val tripEndLatitude: Double? = null,
+    val tripEndLongitude: Double? = null,
+    val stopEventsCount: Int = 0,
+    val significantTurnsCount: Int = 0,
+    val elevationMinMeters: Double? = null,
+    val elevationMaxMeters: Double? = null,
+    val distinctTimeZoneCount: Int = 0,
 )
 
 class TripTrackingService : Service() {
@@ -215,6 +239,13 @@ class TripTrackingService : Service() {
     private var currentLocationString = "Unknown"
     private var originDwellStartAtMillis: Long? = null
     private var sustainedStopStartAtMillis: Long? = null
+    /** While stopped, last sustained dwell ms; used to count completed stops when motion resumes. */
+    private var stopDwellMsAtLastSample: Long = 0L
+    private var stopEventsCount = 0
+    private var significantTurnsCount = 0
+    private var lastSegmentBearing: Float? = null
+    private var tripRecordStartLat: Double? = null
+    private var tripRecordStartLng: Double? = null
 
     /** Ludacris card metrics: distinct device TZ offsets + elevation samples (all GPS points). */
     private val ludacrisSeenOffsets = mutableSetOf<Int>()
@@ -262,6 +293,16 @@ class TripTrackingService : Service() {
     private val activityRecognitionClient by lazy { ActivityRecognition.getClient(this) }
     private var activityTransitionPendingIntent: PendingIntent? = null
 
+    /** From forward-geocode of a street-level pickup line; null disables shipper arrival notification. */
+    private var geocodedPickupLat: Double? = null
+    private var geocodedPickupLng: Double? = null
+    /** From forward-geocode of a street-level dropoff; null disables dropoff geofence hints for end detection. */
+    private var geocodedDropoffLat: Double? = null
+    private var geocodedDropoffLng: Double? = null
+    private var pickupWaypointDwellStartAtMillis: Long? = null
+    private var dropoffWaypointDwellStartAtMillis: Long? = null
+    private var notifiedArrivedAtShipper = false
+
     companion object {
         internal const val PROMPT_STATE_IN_PROGRESS = "IN_PROGRESS"
         internal const val PROMPT_STATE_ENDING_DETECTED = "ENDING_DETECTED"
@@ -271,10 +312,30 @@ class TripTrackingService : Service() {
         private const val RECOVERY_ALARM_REQUEST_CODE = 7402
         private const val ORIGIN_GEOFENCE_RADIUS_METERS = 250.0
         private const val ORIGIN_DWELL_MIN_SPEED_MPH = 3.0
+        /** Geofence radius for optional geocoded pickup/dropoff (street-address path only). */
+        private const val ADDRESS_WAYPOINT_RADIUS_METERS = 150.0
+        private const val ADDRESS_WAYPOINT_MAX_ACCURACY_METERS = 80f
+        private const val ADDRESS_WAYPOINT_DWELL_SPEED_MPH = 3.0
+        private const val SHIPPER_ARRIVAL_DWELL_MS = 45_000L
+        private const val ARRIVAL_NOTIFICATION_CHANNEL_ID = "TripArrivalNotificationsV1"
+        private const val SHIPPER_ARRIVAL_NOTIFICATION_ID = BuildConfig.NOTIFICATION_ID + 51
+
+        const val EXTRA_HAS_GEOCODED_PICKUP = "EXTRA_HAS_GEOCODED_PICKUP"
+        const val EXTRA_HAS_GEOCODED_DROPOFF = "EXTRA_HAS_GEOCODED_DROPOFF"
+        const val EXTRA_GEOCODED_PICKUP_LAT = "EXTRA_GEOCODED_PICKUP_LAT"
+        const val EXTRA_GEOCODED_PICKUP_LNG = "EXTRA_GEOCODED_PICKUP_LNG"
+        const val EXTRA_GEOCODED_DROPOFF_LAT = "EXTRA_GEOCODED_DROPOFF_LAT"
+        const val EXTRA_GEOCODED_DROPOFF_LNG = "EXTRA_GEOCODED_DROPOFF_LNG"
         private const val SIGNAL_WINDOW_MS = 120_000L
         private const val STOP_DWELL_MAX_SPEED_MPH = 2.5
         private const val STOP_DWELL_MAX_ROLLING_DISTANCE_METERS = 70.0
         private const val STOP_DWELL_MAX_ACCURACY_METERS = 50f
+        /** Count a "stop" when low-motion dwell reaches this before moving again. */
+        private const val STOP_EVENT_MIN_DWELL_MS = 120_000L
+        private const val SIGNIFICANT_TURN_MIN_SEGMENT_M = 25f
+        private const val SIGNIFICANT_TURN_MIN_DELTA_DEG = 35f
+        private const val SIGNIFICANT_TURN_MAX_DELTA_DEG = 300f
+        private const val TRIP_START_MAX_ACCURACY_M = 80f
 
         private val _tripMetrics = MutableStateFlow(TripMetrics())
         val tripMetrics: StateFlow<TripMetrics> = _tripMetrics.asStateFlow()
@@ -304,7 +365,10 @@ class TripTrackingService : Service() {
             loadedMiles: Double,
             bounceMiles: Double,
             initialTotalMiles: Double? = null,
-            startPaused: Boolean = false
+            startPaused: Boolean = false,
+            /** Lat/lng from geocoded street-level pickup only; null skips pickup arrival path. */
+            geocodedPickup: Pair<Double, Double>? = null,
+            geocodedDropoff: Pair<Double, Double>? = null,
         ) {
             try {
                 val intent = Intent(context, TripTrackingService::class.java).apply {
@@ -313,6 +377,16 @@ class TripTrackingService : Service() {
                     putExtra("EXTRA_BOUNCE_MILES", bounceMiles)
                     initialTotalMiles?.let { putExtra(EXTRA_INITIAL_TOTAL_MILES, it) }
                     putExtra(EXTRA_START_PAUSED, startPaused)
+                    geocodedPickup?.let { (lat, lng) ->
+                        putExtra(EXTRA_HAS_GEOCODED_PICKUP, true)
+                        putExtra(EXTRA_GEOCODED_PICKUP_LAT, lat)
+                        putExtra(EXTRA_GEOCODED_PICKUP_LNG, lng)
+                    }
+                    geocodedDropoff?.let { (lat, lng) ->
+                        putExtra(EXTRA_HAS_GEOCODED_DROPOFF, true)
+                        putExtra(EXTRA_GEOCODED_DROPOFF_LAT, lat)
+                        putExtra(EXTRA_GEOCODED_DROPOFF_LNG, lng)
+                    }
                 }
                 ContextCompat.startForegroundService(context, intent)
                 Log.d(TAG, "Trip tracking service start requested")
@@ -628,12 +702,66 @@ class TripTrackingService : Service() {
         }
         val sustainedStopMillis = sustainedStopStartAtMillis?.let { (now - it).coerceAtLeast(0L) } ?: 0L
 
+        if (looksStopped) {
+            stopDwellMsAtLastSample = sustainedStopMillis
+        } else {
+            if (stopDwellMsAtLastSample >= STOP_EVENT_MIN_DWELL_MS) {
+                stopEventsCount++
+            }
+            stopDwellMsAtLastSample = 0L
+        }
+
+        val pLat = geocodedPickupLat
+        val pLng = geocodedPickupLng
+        val distancePickupMeters = if (pLat != null && pLng != null) {
+            haversineMeters(pLat, pLng, sample.latitude, sample.longitude)
+        } else {
+            null
+        }
+        val nearPickupWaypoint = distancePickupMeters != null &&
+            distancePickupMeters <= ADDRESS_WAYPOINT_RADIUS_METERS &&
+            location.accuracy <= ADDRESS_WAYPOINT_MAX_ACCURACY_METERS
+        if (nearPickupWaypoint && speedMph <= ADDRESS_WAYPOINT_DWELL_SPEED_MPH) {
+            if (pickupWaypointDwellStartAtMillis == null) pickupWaypointDwellStartAtMillis = now
+        } else {
+            pickupWaypointDwellStartAtMillis = null
+        }
+        val pickupWaypointDwellMillis =
+            pickupWaypointDwellStartAtMillis?.let { (now - it).coerceAtLeast(0L) } ?: 0L
+        if (!notifiedArrivedAtShipper && pLat != null && pickupWaypointDwellMillis >= SHIPPER_ARRIVAL_DWELL_MS) {
+            notifiedArrivedAtShipper = true
+            postArrivedAtShipperNotification()
+        }
+
+        val dLat = geocodedDropoffLat
+        val dLng = geocodedDropoffLng
+        val distanceDropoffMeters = if (dLat != null && dLng != null) {
+            haversineMeters(dLat, dLng, sample.latitude, sample.longitude)
+        } else {
+            null
+        }
+        val nearDropoffWaypoint = distanceDropoffMeters != null &&
+            distanceDropoffMeters <= ADDRESS_WAYPOINT_RADIUS_METERS &&
+            location.accuracy <= ADDRESS_WAYPOINT_MAX_ACCURACY_METERS
+        if (nearDropoffWaypoint && speedMph <= ADDRESS_WAYPOINT_DWELL_SPEED_MPH) {
+            if (dropoffWaypointDwellStartAtMillis == null) dropoffWaypointDwellStartAtMillis = now
+        } else {
+            dropoffWaypointDwellStartAtMillis = null
+        }
+        val dropoffWaypointDwellMillis =
+            dropoffWaypointDwellStartAtMillis?.let { (now - it).coerceAtLeast(0L) } ?: 0L
+
         _geofenceContextSignal.value = GeofenceContextSignal(
             originLat = origin?.latitude,
             originLng = origin?.longitude,
             distanceFromOriginMeters = distanceFromOrigin,
             isNearOrigin = nearOrigin,
             dwellInOriginMillis = dwellMillis,
+            geocodedDropoffLat = dLat,
+            geocodedDropoffLng = dLng,
+            distanceFromGeocodedDropoffMeters = distanceDropoffMeters,
+            isNearGeocodedDropoff = nearDropoffWaypoint,
+            dwellNearGeocodedDropoffMillis = dropoffWaypointDwellMillis,
         )
         _tripEndingSignalSnapshot.value = TripEndingSignalSnapshot(
             speedMph = speedMph,
@@ -671,6 +799,97 @@ class TripTrackingService : Service() {
             kotlin.math.sin(dLon / 2) * kotlin.math.sin(dLon / 2)
         val c = 2 * kotlin.math.atan2(kotlin.math.sqrt(a), kotlin.math.sqrt(1 - a))
         return earthRadius * c
+    }
+
+    /**
+     * Apply optional geocoded waypoints from [Intent] extras only when those extras are present,
+     * so a start command without them (e.g. some recovery paths) does not clear existing targets.
+     */
+    private fun readAddressWaypointsFromIntent(intent: Intent) {
+        if (intent.hasExtra(EXTRA_HAS_GEOCODED_PICKUP)) {
+            if (intent.getBooleanExtra(EXTRA_HAS_GEOCODED_PICKUP, false)) {
+                geocodedPickupLat = intent.getDoubleExtra(EXTRA_GEOCODED_PICKUP_LAT, 0.0)
+                geocodedPickupLng = intent.getDoubleExtra(EXTRA_GEOCODED_PICKUP_LNG, 0.0)
+            } else {
+                geocodedPickupLat = null
+                geocodedPickupLng = null
+            }
+        }
+        if (intent.hasExtra(EXTRA_HAS_GEOCODED_DROPOFF)) {
+            if (intent.getBooleanExtra(EXTRA_HAS_GEOCODED_DROPOFF, false)) {
+                geocodedDropoffLat = intent.getDoubleExtra(EXTRA_GEOCODED_DROPOFF_LAT, 0.0)
+                geocodedDropoffLng = intent.getDoubleExtra(EXTRA_GEOCODED_DROPOFF_LNG, 0.0)
+            } else {
+                geocodedDropoffLat = null
+                geocodedDropoffLng = null
+            }
+        }
+    }
+
+    private fun ensureArrivalNotificationChannel() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
+        try {
+            val manager = getSystemService(NotificationManager::class.java)
+            if (manager.getNotificationChannel(ARRIVAL_NOTIFICATION_CHANNEL_ID) != null) return
+            val ch = NotificationChannel(
+                ARRIVAL_NOTIFICATION_CHANNEL_ID,
+                getString(R.string.trip_arrival_notification_channel_name),
+                NotificationManager.IMPORTANCE_DEFAULT,
+            ).apply {
+                description = getString(R.string.trip_arrival_notification_channel_desc)
+                setShowBadge(true)
+            }
+            manager.createNotificationChannel(ch)
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to create arrival notification channel", e)
+        }
+    }
+
+    /** Optional trip notifications (not the mandatory foreground service notification). */
+    private fun areAuxTripNotificationsEnabled(): Boolean =
+        getSharedPreferences(PREFS_APP_SETTINGS, Context.MODE_PRIVATE)
+            .getBoolean("notifications_enabled", true)
+
+    private fun isTripNotificationSoundEnabled(): Boolean =
+        getSharedPreferences(PREFS_APP_SETTINGS, Context.MODE_PRIVATE)
+            .getBoolean("notification_sound", false)
+
+    private fun applyOptionalNotificationSound(builder: NotificationCompat.Builder) {
+        if (isTripNotificationSoundEnabled()) {
+            builder.setDefaults(NotificationCompat.DEFAULT_SOUND)
+        } else {
+            builder.setSilent(true)
+        }
+    }
+
+    private fun postArrivedAtShipperNotification() {
+        if (!canPostNotifications()) return
+        if (!areAuxTripNotificationsEnabled()) return
+        try {
+            ensureArrivalNotificationChannel()
+            val openApp = Intent(this, MainActivity::class.java).apply {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+            }
+            val pendingIntent = PendingIntent.getActivity(
+                this,
+                2,
+                openApp,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+            )
+            val notification = NotificationCompat.Builder(this, ARRIVAL_NOTIFICATION_CHANNEL_ID)
+                .setSmallIcon(R.drawable.ic_notification_truck)
+                .setContentTitle(getString(R.string.trip_notification_arrived_shipper_title))
+                .setContentText(getString(R.string.trip_notification_arrived_shipper_text))
+                .setContentIntent(pendingIntent)
+                .setAutoCancel(true)
+                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                .also { applyOptionalNotificationSound(it) }
+                .build()
+            val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            nm.notify(SHIPPER_ARRIVAL_NOTIFICATION_ID, notification)
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to post shipper arrival notification", e)
+        }
     }
     
     // ✅ REFACTORED: This is the new, cleaner location update logic with vehicle-specific validation.
@@ -776,6 +995,29 @@ class TripTrackingService : Service() {
                 )
             }
             // If validatedDistanceInMeters is 0, we do nothing, as the point was discarded by the validator.
+
+            if (tripRecordStartLat == null && location.accuracy <= TRIP_START_MAX_ACCURACY_M) {
+                tripRecordStartLat = location.latitude
+                tripRecordStartLng = location.longitude
+            }
+
+            val prevForSegment = lastLocation
+            if (prevForSegment != null && validatedDistanceInMeters > 0) {
+                val segmentM = prevForSegment.distanceTo(location)
+                if (segmentM >= SIGNIFICANT_TURN_MIN_SEGMENT_M) {
+                    val bearing = prevForSegment.bearingTo(location)
+                    if (!bearing.isNaN()) {
+                        lastSegmentBearing?.let { prevB ->
+                            var delta = kotlin.math.abs(bearing - prevB)
+                            if (delta > 180f) delta = 360f - delta
+                            if (delta >= SIGNIFICANT_TURN_MIN_DELTA_DEG && delta <= SIGNIFICANT_TURN_MAX_DELTA_DEG) {
+                                significantTurnsCount++
+                            }
+                        }
+                        lastSegmentBearing = bearing
+                    }
+                }
+            }
 
             // Always update the last location to the newest valid point for the next calculation.
             lastLocation = location
@@ -941,6 +1183,7 @@ class TripTrackingService : Service() {
                     // If resuming a recovered trip, seed totalDistance so miles continue correctly
                     totalDistance = intent.getDoubleExtra(EXTRA_INITIAL_TOTAL_MILES, totalDistance)
                     val startPaused = intent.getBooleanExtra(EXTRA_START_PAUSED, false)
+                    readAddressWaypointsFromIntent(intent)
                     driveStateClassifier.reset()
                     locationHistory.clear()
                     _driveState.value = DriveState.DRIVING
@@ -1033,6 +1276,31 @@ class TripTrackingService : Service() {
                 totalDistance = prefs.getFloat(KEY_TOTAL_DISTANCE, 0f).toDouble()
                 isPaused = prefs.getBoolean(KEY_IS_PAUSED, false)
                 tripStartTime = prefs.getLong(KEY_START_TIME, 0L)
+                if (prefs.getBoolean(KEY_WAYPOINT_PICKUP, false)) {
+                    geocodedPickupLat = prefs.getString(KEY_WAYPOINT_PICKUP_LAT, null)?.toDoubleOrNull()
+                    geocodedPickupLng = prefs.getString(KEY_WAYPOINT_PICKUP_LNG, null)?.toDoubleOrNull()
+                    if (geocodedPickupLat == null || geocodedPickupLng == null) {
+                        geocodedPickupLat = null
+                        geocodedPickupLng = null
+                    }
+                } else {
+                    geocodedPickupLat = null
+                    geocodedPickupLng = null
+                }
+                if (prefs.getBoolean(KEY_WAYPOINT_DROPOFF, false)) {
+                    geocodedDropoffLat = prefs.getString(KEY_WAYPOINT_DROPOFF_LAT, null)?.toDoubleOrNull()
+                    geocodedDropoffLng = prefs.getString(KEY_WAYPOINT_DROPOFF_LNG, null)?.toDoubleOrNull()
+                    if (geocodedDropoffLat == null || geocodedDropoffLng == null) {
+                        geocodedDropoffLat = null
+                        geocodedDropoffLng = null
+                    }
+                } else {
+                    geocodedDropoffLat = null
+                    geocodedDropoffLng = null
+                }
+                pickupWaypointDwellStartAtMillis = null
+                dropoffWaypointDwellStartAtMillis = null
+                notifiedArrivedAtShipper = false
                 
                 Log.i(TAG, "Restored trip service state after restart")
                 
@@ -1083,7 +1351,7 @@ class TripTrackingService : Service() {
      */
     private fun saveServiceState() {
         try {
-            val success =
+                val success =
                 getSharedPreferences(PREFS_SERVICE_STATE, Context.MODE_PRIVATE).edit().run {
                     putBoolean(KEY_WAS_TRACKING, true)
                     putFloat(KEY_LOADED_MILES, loadedMiles.toFloat())
@@ -1091,6 +1359,24 @@ class TripTrackingService : Service() {
                     putFloat(KEY_TOTAL_DISTANCE, totalDistance.toFloat())
                     putLong(KEY_START_TIME, if (tripStartTime > 0L) tripStartTime else System.currentTimeMillis())
                     putBoolean(KEY_IS_PAUSED, isPaused)
+                    if (geocodedPickupLat != null && geocodedPickupLng != null) {
+                        putBoolean(KEY_WAYPOINT_PICKUP, true)
+                        putString(KEY_WAYPOINT_PICKUP_LAT, geocodedPickupLat.toString())
+                        putString(KEY_WAYPOINT_PICKUP_LNG, geocodedPickupLng.toString())
+                    } else {
+                        putBoolean(KEY_WAYPOINT_PICKUP, false)
+                        remove(KEY_WAYPOINT_PICKUP_LAT)
+                        remove(KEY_WAYPOINT_PICKUP_LNG)
+                    }
+                    if (geocodedDropoffLat != null && geocodedDropoffLng != null) {
+                        putBoolean(KEY_WAYPOINT_DROPOFF, true)
+                        putString(KEY_WAYPOINT_DROPOFF_LAT, geocodedDropoffLat.toString())
+                        putString(KEY_WAYPOINT_DROPOFF_LNG, geocodedDropoffLng.toString())
+                    } else {
+                        putBoolean(KEY_WAYPOINT_DROPOFF, false)
+                        remove(KEY_WAYPOINT_DROPOFF_LAT)
+                        remove(KEY_WAYPOINT_DROPOFF_LNG)
+                    }
                     commit()
                 }
             if (success) {
@@ -1291,6 +1577,16 @@ class TripTrackingService : Service() {
             interruptionCount = 0
             tripEndPromptState = TripEndPromptState.IN_PROGRESS
             resetLudacrisTripAggregates()
+            _gpsTrackingData.value = GpsTrackingData()
+            stopDwellMsAtLastSample = 0L
+            stopEventsCount = 0
+            significantTurnsCount = 0
+            lastSegmentBearing = null
+            tripRecordStartLat = null
+            tripRecordStartLng = null
+            pickupWaypointDwellStartAtMillis = null
+            dropoffWaypointDwellStartAtMillis = null
+            notifiedArrivedAtShipper = false
 
             // ✅ FIX: Initialize metrics with seeded distance for trip recovery
             snapshotTripMetrics((totalDistance - loadedMiles - bounceMiles).coerceAtLeast(0.0))
@@ -1310,6 +1606,7 @@ class TripTrackingService : Service() {
             // Clear stale, one-shot notifications from previous runs.
             notificationManager.cancel(COMPLETION_NOTIFICATION_ID)
             notificationManager.cancel(ERROR_NOTIFICATION_ID)
+            notificationManager.cancel(SHIPPER_ARRIVAL_NOTIFICATION_ID)
             // Clear overlay/fallback "trip ended" notifications so they don't linger over the new "trip in progress".
             TripEndedOverlayService.cancelStaleNotifications(this)
 
@@ -1380,8 +1677,16 @@ class TripTrackingService : Service() {
             _activityTransitionSignal.value = ActivityTransitionSignal(source = "fallback")
             serviceState = serviceState.copy(isRunning = false, isHealthy = true, lastError = null)
             _serviceState.value = serviceState
+            geocodedPickupLat = null
+            geocodedPickupLng = null
+            geocodedDropoffLat = null
+            geocodedDropoffLng = null
+            pickupWaypointDwellStartAtMillis = null
+            dropoffWaypointDwellStartAtMillis = null
+            notifiedArrivedAtShipper = false
             val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             notificationManager.cancel(ERROR_NOTIFICATION_ID)
+            notificationManager.cancel(SHIPPER_ARRIVAL_NOTIFICATION_ID)
             
             stopLocationUpdates()
             postTripEndedCompletionNotification()
@@ -1452,17 +1757,42 @@ class TripTrackingService : Service() {
     @SuppressLint("MissingPermission")
     private fun startLocationUpdates() {
         try {
-            // ✅ IMPROVED: More resilient location request configuration
-            val locationRequest = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 15000) // ✅ FIXED: Increased to 15 seconds for better reliability
+            val entry = EntryPointAccessors.fromApplication(
+                applicationContext,
+                TripTrackingServiceEntryPoint::class.java,
+            )
+            val sm = entry.settingsManager()
+            val batteryOpt = entry.batteryOptimizationService()
+            batteryOpt.updateBatteryStatus()
+
+            var intervalMs = sm.getGpsUpdateFrequency() * 1000L
+            if (sm.isBatteryOptimizationEnabled()) {
+                intervalMs = max(intervalMs, batteryOpt.getRecommendedGpsInterval())
+            }
+            intervalMs = intervalMs.coerceIn(5_000L, 120_000L)
+
+            val priority =
+                if (sm.isHighAccuracyMode()) {
+                    Priority.PRIORITY_HIGH_ACCURACY
+                } else {
+                    Priority.PRIORITY_BALANCED_POWER_ACCURACY
+                }
+            val maxDelay = (intervalMs * 2).coerceAtMost(180_000L)
+
+            val locationRequest = LocationRequest.Builder(priority, intervalMs)
                 .setGranularity(Granularity.GRANULARITY_PERMISSION_LEVEL)
-                .setMinUpdateDistanceMeters(20f) // ✅ FIXED: Reduced to 20 meters for more frequent updates
-                .setWaitForAccurateLocation(false) // ✅ FIXED: Don't wait for accurate location to prevent blocking
-                .setMaxUpdates(2000) // ✅ FIXED: Increased limit for longer trips
-                .setMaxUpdateDelayMillis(30000) // ✅ FIXED: Increased max delay to 30 seconds
+                .setMinUpdateDistanceMeters(20f)
+                .setWaitForAccurateLocation(false)
+                .setMaxUpdates(2000)
+                .setMaxUpdateDelayMillis(maxDelay)
                 .build()
-            
+
             fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, Looper.getMainLooper())
-            Log.d(TAG, "Resilient location updates started")
+            Log.d(
+                TAG,
+                "Location updates started: intervalMs=$intervalMs priority=$priority " +
+                    "(preset/frequency + battery optimization=${sm.isBatteryOptimizationEnabled()})",
+            )
         } catch (e: Exception) {
             Log.e(TAG, "Failed to start location updates", e)
             updateServiceState(false, "Failed to start location updates: ${e.message}")
@@ -1595,6 +1925,7 @@ class TripTrackingService : Service() {
                 manager.createNotificationChannel(serviceChannel)
                 Log.d(TAG, "Notification channel created")
             }
+            ensureArrivalNotificationChannel()
         } catch (e: Exception) {
             Log.e(TAG, "Failed to create notification channel", e)
         }
@@ -1626,6 +1957,7 @@ class TripTrackingService : Service() {
 
     private fun postTripEndedCompletionNotification() {
         if (!canPostNotifications()) return
+        if (!areAuxTripNotificationsEnabled()) return
         val contentIntent = Intent(this, MainActivity::class.java).apply {
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
         }
@@ -1644,6 +1976,7 @@ class TripTrackingService : Service() {
             .setContentIntent(pendingIntent)
             .setAutoCancel(true)
             .setOngoing(false)
+            .also { applyOptionalNotificationSound(it) }
             .build()
         val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         notificationManager.notify(COMPLETION_NOTIFICATION_ID, notification)
@@ -1672,7 +2005,7 @@ class TripTrackingService : Service() {
                 } catch (e: Exception) {
                     Log.w(TAG, "stopForeground on task remove", e)
                 }
-                if (canPostNotifications()) {
+                if (canPostNotifications() && areAuxTripNotificationsEnabled()) {
                     val openApp = Intent(this, MainActivity::class.java).apply {
                         addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
                     }
@@ -1689,6 +2022,7 @@ class TripTrackingService : Service() {
                         .setContentIntent(pi)
                         .setAutoCancel(true)
                         .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                        .also { applyOptionalNotificationSound(it) }
                         .build()
                     (getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager)
                         .notify(PAUSED_ON_TASK_REMOVED_NOTIFICATION_ID, paused)
@@ -1815,7 +2149,16 @@ class TripTrackingService : Service() {
                 totalDistanceMiles = totalDistance.toFloat(),
                 currentLocation = currentLocationString,
                 satelliteCount = satelliteCount,
-                isHighAccuracyMode = isHighAccuracyMode
+                isHighAccuracyMode = isHighAccuracyMode,
+                tripStartLatitude = tripRecordStartLat,
+                tripStartLongitude = tripRecordStartLng,
+                tripEndLatitude = location.latitude,
+                tripEndLongitude = location.longitude,
+                stopEventsCount = stopEventsCount,
+                significantTurnsCount = significantTurnsCount,
+                elevationMinMeters = ludacrisElevMin,
+                elevationMaxMeters = ludacrisElevMax,
+                distinctTimeZoneCount = ludacrisSeenOffsets.size,
             )
             
             // Update the GPS tracking data flow

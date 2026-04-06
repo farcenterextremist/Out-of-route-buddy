@@ -24,7 +24,7 @@
 ### Visualization
 | # | Idea | FUTURE_IDEAS | Notes |
 |---|------|--------------|--------|
-| 5 | Route deviation map (instant replay) | § 3.1 | Red-line map on stat card; expected vs actual path. |
+| 5 | Route deviation map (instant replay) | § 3.1 | Red-line map on stat card; expected vs actual path. **Sandbox:** [ROUTE_DEVIATION_MAP_SANDBOX.md](../product/sandbox/ROUTE_DEVIATION_MAP_SANDBOX.md). |
 
 ### Simulation / synthetic data
 | # | Idea | FUTURE_IDEAS | Notes |

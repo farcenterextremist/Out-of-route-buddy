@@ -213,7 +213,8 @@ class TripEndedDetector(
                 "Detector transition ${previousState.name} -> ${_fsmState.value.name} " +
                     "confidence=${"%.2f".format(confidence)} speed=${"%.1f".format(input.signals.speedMph)} " +
                     "still=${input.activity.stillConfidence} inVehicle=${input.activity.inVehicleConfidence} " +
-                    "nearOrigin=${input.geofence.isNearOrigin} dwellMs=${input.geofence.dwellInOriginMillis}",
+                    "nearOrigin=${input.geofence.isNearOrigin} dwellMs=${input.geofence.dwellInOriginMillis} " +
+                    "nearDropoff=${input.geofence.isNearGeocodedDropoff} dropDwellMs=${input.geofence.dwellNearGeocodedDropoffMillis}",
             )
         }
     }
@@ -254,6 +255,9 @@ class TripEndedDetector(
                 lowMotionSampleCount = input.signals.lowMotionSampleCount,
                 isNearOrigin = input.geofence.isNearOrigin,
                 originDwellMillis = input.geofence.dwellInOriginMillis,
+                hasGeocodedDropoff = input.geofence.geocodedDropoffLat != null,
+                isNearGeocodedDropoff = input.geofence.isNearGeocodedDropoff,
+                geocodedDropoffDwellMillis = input.geofence.dwellNearGeocodedDropoffMillis,
                 isWalkingOrStill = input.driveState == DriveState.WALKING_OR_STATIONARY,
                 stillConfidence = input.activity.stillConfidence,
                 inVehicleConfidence = input.activity.inVehicleConfidence,
@@ -320,6 +324,11 @@ class TripEndedDetector(
             val lowMotionSampleCount: Int,
             val isNearOrigin: Boolean,
             val originDwellMillis: Long,
+            /** True when the user entered a street-level dropoff that geocoded successfully. */
+            val hasGeocodedDropoff: Boolean = false,
+            /** GPS is inside the geocoded dropoff geofence. */
+            val isNearGeocodedDropoff: Boolean = false,
+            val geocodedDropoffDwellMillis: Long = 0L,
             val isWalkingOrStill: Boolean,
             val stillConfidence: Int,
             val inVehicleConfidence: Int,
@@ -343,6 +352,9 @@ class TripEndedDetector(
             if (input.lowMotionSampleCount >= 3) score += 0.06
             if (input.isNearOrigin) score += 0.08
             if (input.originDwellMillis >= 120_000L) score += 0.1
+            if (input.hasGeocodedDropoff && !input.isNearGeocodedDropoff) score -= 0.18
+            if (input.isNearGeocodedDropoff && input.geocodedDropoffDwellMillis >= 30_000L) score += 0.08
+            if (input.geocodedDropoffDwellMillis >= 120_000L) score += 0.1
             if (input.isWalkingOrStill) score += 0.08
             if (input.stillConfidence >= 70) score += 0.12
             if (input.inVehicleConfidence >= 80) score -= 0.2 // Only penalize when strongly "in vehicle" (real-world: API lags)

@@ -111,9 +111,11 @@
 
 **Dependencies:** Route/path data (expected vs. actual), map rendering (e.g. Google Maps, Mapbox), deviation detection logic.
 
-**Validation checklist (40%):** (1) Define expected-path source (loaded miles route? bounce waypoints?); (2) Map SDK choice (Google Maps vs Mapbox); (3) Red-line rendering from GPS track vs expected; (4) Stat card placement (expandable block); (5) Performance with long trips.
+**Sandbox artifact (active):** [ROUTE_DEVIATION_MAP_SANDBOX.md](sandbox/ROUTE_DEVIATION_MAP_SANDBOX.md) — gap analysis (no full GPS polyline persisted today), phased plan (trail capture → reference path → deviation logic → map UI), expected-path matrix, SDK shortlist, privacy checklist, open questions.
 
-**Status:** Sandboxed 100%. Not in ROADMAP yet.
+**Validation checklist (~55%):** (1) Trail persistence model + retention (see sandbox §3, §8); (2) Expected-path v1 decision (sandbox §4); (3) Deviation algorithm spec (sandbox §3 phase C); (4) Map SDK choice + build/licensing notes (sandbox §5); (5) Expandable UI placement + a11y (sandbox §8); (6) Performance / decimation for long trips; (7) Privacy toggle + Help copy; (8) Wireframe + visual approval + **"approve 100% implement"** before code.
+
+**Status:** Sandboxed 100%. Sandbox brief started; not in ROADMAP yet.
 
 ---
 

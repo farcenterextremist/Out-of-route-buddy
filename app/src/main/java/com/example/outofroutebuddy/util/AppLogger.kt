@@ -1,5 +1,6 @@
 package com.example.outofroutebuddy.util
 
+import android.content.Context
 import android.util.Log
 import com.example.outofroutebuddy.BuildConfig
 
@@ -12,6 +13,24 @@ import com.example.outofroutebuddy.BuildConfig
  */
 object AppLogger {
 
+    private const val PREFS_APP_SETTINGS = "app_settings"
+    private const val KEY_VERBOSE_LOGGING = "verbose_logging"
+
+    @Volatile
+    private var appContext: Context? = null
+
+    /** Call from [android.app.Application.onCreate] so verbose logging can read Settings. */
+    @JvmStatic
+    fun initApplicationContext(context: Context) {
+        appContext = context.applicationContext
+    }
+
+    private fun isVerboseLoggingEnabled(): Boolean {
+        val ctx = appContext ?: return false
+        return ctx.getSharedPreferences(PREFS_APP_SETTINGS, Context.MODE_PRIVATE)
+            .getBoolean(KEY_VERBOSE_LOGGING, false)
+    }
+
     /**
      * Debug-level log. No-op in release to avoid PII leakage in verbose paths.
      */
@@ -23,11 +42,12 @@ object AppLogger {
     }
 
     /**
-     * Verbose-level log. No-op in release. Same as d() for PII safety.
+     * Verbose-level log. In debug builds, only emitted when **Verbose logging** is on in Settings
+     * (reduces Logcat noise). No-op in release.
      */
     @JvmStatic
     fun v(tag: String, message: String) {
-        if (BuildConfig.DEBUG) {
+        if (BuildConfig.DEBUG && isVerboseLoggingEnabled()) {
             Log.v(tag, message)
         }
     }

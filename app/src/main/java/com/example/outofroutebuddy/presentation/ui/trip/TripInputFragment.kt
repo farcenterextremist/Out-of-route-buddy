@@ -77,6 +77,9 @@ import javax.inject.Inject
  */
 @AndroidEntryPoint
 class TripInputFragment : Fragment() {
+    /** One automatic start per fragment instance when Settings → auto-start is enabled. */
+    private var consumedAutoStartThisInstance = false
+
     private var _binding: FragmentTripInputBinding? = null
     private val binding: FragmentTripInputBinding
         get() = _binding ?: throw IllegalStateException("Binding accessed before onCreateView or after onDestroyView")
@@ -184,6 +187,7 @@ class TripInputFragment : Fragment() {
         super.onResume()
         // Keep stat cards aligned with natural month/year rollover when app returns to foreground.
         viewModel.ensureStatisticsPeriodIsCurrentCycle()
+        binding.root.post { tryAutoStartTripIfEnabled() }
     }
     
     /**
@@ -456,10 +460,15 @@ class TripInputFragment : Fragment() {
         val batteryOptimizationRestricted: Boolean,
     )
 
+    /**
+     * @param autoStartWithoutConfirmIfClean when true and there are no reliability warnings, starts immediately
+     *        (used for Settings → auto-start trip).
+     */
     private fun maybeWarnAboutBackgroundTrackingReliability(
         loadedMiles: Double,
         bounceMiles: Double,
         actualMiles: Double,
+        autoStartWithoutConfirmIfClean: Boolean = false,
     ) {
         val reliability = buildBackgroundTrackingReliability()
         val startTrip = {
@@ -481,6 +490,11 @@ class TripInputFragment : Fragment() {
             clearSavedTextInputs()
         }
 
+        if (autoStartWithoutConfirmIfClean && reliability.warnings.isEmpty()) {
+            startTrip()
+            return
+        }
+
         AlertDialog.Builder(requireContext())
             .setTitle("Start trip?")
             .setMessage("Are you sure you want to start?")
@@ -492,6 +506,30 @@ class TripInputFragment : Fragment() {
                 dialog.dismiss()
             }
             .show()
+    }
+
+    /**
+     * Settings → Auto-start trip: if miles are filled and permissions OK, start once without the
+     * extra confirmation dialog when tracking preflight is clean; otherwise show the same warning dialog as manual start.
+     */
+    private fun tryAutoStartTripIfEnabled() {
+        if (consumedAutoStartThisInstance) return
+        if (_binding == null) return
+        if (!settingsManager.isAutoStartTripEnabled()) return
+        if (viewModel.uiState.value.isTripActive) return
+        val loaded = binding.loadedMilesInput.text?.toString()?.trim().orEmpty()
+        val bounce = binding.bounceMilesInput.text?.toString()?.trim().orEmpty()
+        if (loaded.isEmpty() || bounce.isEmpty()) return
+        if (!checkLocationPermissions()) return
+        val loadedVal = loaded.toDoubleOrNull() ?: return
+        val bounceVal = bounce.toDoubleOrNull() ?: return
+        consumedAutoStartThisInstance = true
+        maybeWarnAboutBackgroundTrackingReliability(
+            loadedMiles = loadedVal,
+            bounceMiles = bounceVal,
+            actualMiles = 0.0,
+            autoStartWithoutConfirmIfClean = true,
+        )
     }
 
     private fun buildBackgroundTrackingReliability(): BackgroundTrackingReliability {

@@ -13,10 +13,12 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.outofroutebuddy.R
 import com.example.outofroutebuddy.domain.calendar.CalendarDayOorTierCalculator
 import com.example.outofroutebuddy.domain.models.CalendarDayOorTier
+import com.example.outofroutebuddy.domain.models.GpsMetadata
 import com.example.outofroutebuddy.domain.models.Trip
 import com.google.android.material.card.MaterialCardView
 import java.text.SimpleDateFormat
 import java.util.*
+import kotlin.math.abs
 
 /**
  * Expandable Stat Card adapter for TripHistoryByDateDialog.
@@ -28,7 +30,7 @@ import java.util.*
 class TripHistoryStatCardAdapter(
     private val onDeleteClick: (Trip) -> Unit,
     private val onTripClick: ((Trip) -> Unit)? = null,
-    private val viewingDate: Date? = null,
+    var viewingDate: Date? = null,
 ) : ListAdapter<Trip, TripHistoryStatCardAdapter.StatCardViewHolder>(TripDiffCallback()) {
 
     private val expandedTripIds = mutableSetOf<String>()
@@ -61,6 +63,7 @@ class TripHistoryStatCardAdapter(
         private val tripTimeRange: TextView = itemView.findViewById(R.id.trip_time_range)
         private val tripMiles: TextView = itemView.findViewById(R.id.trip_miles)
         private val tripOor: TextView = itemView.findViewById(R.id.trip_oor)
+        private val tripMilesSliceCaption: TextView = itemView.findViewById(R.id.trip_miles_slice_caption)
         private val expandButton: ImageButton = itemView.findViewById(R.id.expand_button)
         private val viewDetailsButton: View = itemView.findViewById(R.id.view_details_button)
         private val deleteButton: View = itemView.findViewById(R.id.delete_button)
@@ -69,7 +72,12 @@ class TripHistoryStatCardAdapter(
         private val tripBounceMiles: TextView = itemView.findViewById(R.id.trip_bounce_miles)
         private val tripDispatchedMiles: TextView = itemView.findViewById(R.id.trip_dispatched_miles)
         private val tripDuration: TextView = itemView.findViewById(R.id.trip_duration)
+        private val tripStartLocationBlock: LinearLayout = itemView.findViewById(R.id.trip_start_location_block)
+        private val tripStartCoords: TextView = itemView.findViewById(R.id.trip_start_coords)
+        private val tripEndLocationBlock: LinearLayout = itemView.findViewById(R.id.trip_end_location_block)
+        private val tripEndCoords: TextView = itemView.findViewById(R.id.trip_end_coords)
         private val tripGpsMetadata: TextView = itemView.findViewById(R.id.trip_gps_metadata)
+        private val tripGpsInsights: TextView = itemView.findViewById(R.id.trip_gps_insights)
         private val tripInterstate: TextView = itemView.findViewById(R.id.trip_interstate)
         private val tripBackRoads: TextView = itemView.findViewById(R.id.trip_back_roads)
         private val tripTruckStops: TextView = itemView.findViewById(R.id.trip_truck_stops)
@@ -178,6 +186,19 @@ class TripHistoryStatCardAdapter(
             tripOor.text = oorText
             tripOor.contentDescription = itemView.context.getString(R.string.stat_card_oor_description, oorText)
 
+            val showDaySliceCaption = viewingDate != null && trip.isProportionalDaySlice
+            if (showDaySliceCaption) {
+                tripMilesSliceCaption.visibility = View.VISIBLE
+                tripMilesSliceCaption.text = ctx.getString(R.string.trip_stat_slice_miles_caption)
+                val milesCd = "${tripMiles.text}. ${tripMilesSliceCaption.text}"
+                tripMiles.contentDescription = milesCd
+                tripOor.contentDescription =
+                    ctx.getString(R.string.stat_card_oor_description, "$oorText. ${tripMilesSliceCaption.text}")
+            } else {
+                tripMilesSliceCaption.visibility = View.GONE
+                tripMiles.contentDescription = tripMiles.text
+            }
+
             metadataSection.visibility = if (isExpanded) View.VISIBLE else View.GONE
             expandButton.setImageResource(
                 if (isExpanded) R.drawable.ic_expand_less else R.drawable.ic_expand_more
@@ -199,6 +220,23 @@ class TripHistoryStatCardAdapter(
             tripDuration.text = itemView.context.getString(R.string.duration_minutes_format, durationMin)
 
             val gps = trip.gpsMetadata
+
+            val startPair = formatLatLngLabel(gps.startLatitude, gps.startLongitude)
+            if (startPair != null) {
+                tripStartLocationBlock.visibility = View.VISIBLE
+                tripStartCoords.text = startPair
+            } else {
+                tripStartLocationBlock.visibility = View.GONE
+            }
+
+            val endPair = formatLatLngLabel(gps.endLatitude, gps.endLongitude)
+            if (endPair != null) {
+                tripEndLocationBlock.visibility = View.VISIBLE
+                tripEndCoords.text = endPair
+            } else {
+                tripEndLocationBlock.visibility = View.GONE
+            }
+
             val gpsText = buildString {
                 if (gps.avgAccuracy > 0) append(String.format(Locale.US, "Accuracy: %.1fm | ", gps.avgAccuracy))
                 if (gps.totalPoints > 0) append("Points: ${gps.validPoints}/${gps.totalPoints} | ")
@@ -207,7 +245,39 @@ class TripHistoryStatCardAdapter(
                     append(" | Warnings: ${gps.accuracyWarnings}, Anomalies: ${gps.speedAnomalies}")
                 }
             }
-            tripGpsMetadata.text = gpsText.ifEmpty { itemView.context.getString(R.string.no_gps_metadata) }
+            val gpsDisplay =
+                when {
+                    showDaySliceCaption && gpsText.isNotEmpty() ->
+                        "$gpsText · ${ctx.getString(R.string.trip_gps_metadata_full_trip_hint)}"
+                    else -> gpsText
+                }
+
+            val insightsBody = buildGpsInsightsLines(ctx, gps, showDaySliceCaption)
+            val hasCoordData =
+                (gps.startLatitude != null && gps.startLongitude != null) ||
+                    (gps.endLatitude != null && gps.endLongitude != null)
+            val showInsights = insightsBody.isNotEmpty()
+
+            tripGpsMetadata.text =
+                when {
+                    gpsDisplay.isNotEmpty() -> gpsDisplay
+                    showInsights || hasCoordData -> ctx.getString(R.string.metadata_na)
+                    else -> ctx.getString(R.string.no_gps_metadata)
+                }
+
+            if (showInsights) {
+                tripGpsInsights.visibility = View.VISIBLE
+                val sliceNote =
+                    if (showDaySliceCaption) {
+                        "\n${ctx.getString(R.string.trip_gps_metadata_full_trip_hint)}"
+                    } else {
+                        ""
+                    }
+                tripGpsInsights.text = insightsBody + sliceNote
+            } else {
+                tripGpsInsights.visibility = View.GONE
+                tripGpsInsights.text = ""
+            }
 
             // Extended metadata: interstate, back roads, truck stops (show — when no data)
             tripInterstate.text = when {
@@ -220,11 +290,13 @@ class TripHistoryStatCardAdapter(
                     itemView.context.getString(R.string.back_roads_format, gps.backRoadsPercent, gps.backRoadsMinutes)
                 else -> itemView.context.getString(R.string.metadata_na)
             }
-            tripTruckStops.text = when {
-                gps.truckStopsVisited > 0 ->
-                    itemView.context.getString(R.string.truck_stops_format, gps.truckStopsVisited)
-                else -> itemView.context.getString(R.string.metadata_na)
-            }
+            tripTruckStops.text =
+                when {
+                    showDaySliceCaption -> ctx.getString(R.string.metadata_na)
+                    gps.truckStopsVisited > 0 ->
+                        ctx.getString(R.string.truck_stops_format, gps.truckStopsVisited)
+                    else -> ctx.getString(R.string.metadata_na)
+                }
         }
 
         private fun formatOORDisplay(oorMiles: Double, oorPercentage: Double): String {
@@ -234,6 +306,61 @@ class TripHistoryStatCardAdapter(
                 else -> itemView.context.getString(R.string.on_route)
             }
         }
+
+        /** Degrees with N/S/E/W; both lat and lng required (stored together). */
+        private fun formatLatLngLabel(lat: Double?, lng: Double?): String? {
+            if (lat == null || lng == null) return null
+            val latDir = if (lat >= 0) "N" else "S"
+            val lngDir = if (lng >= 0) "E" else "W"
+            return String.format(
+                Locale.US,
+                "%.5f° %s, %.5f° %s",
+                abs(lat),
+                latDir,
+                abs(lng),
+                lngDir,
+            )
+        }
+
+        /**
+         * Extra trip stats derived from tracking (speed, stops, turns, elevation, etc.).
+         * [forDaySlice] suppresses stop/turn/jump lines when the card is a calendar-day slice.
+         */
+        private fun buildGpsInsightsLines(
+            ctx: android.content.Context,
+            gps: GpsMetadata,
+            forDaySlice: Boolean,
+        ): String {
+            val lines = mutableListOf<String>()
+            if (gps.avgSpeedMph > 0.5) {
+                lines.add(ctx.getString(R.string.trip_gps_insight_avg_speed, gps.avgSpeedMph))
+            }
+            if (gps.maxSpeed > 0.5) {
+                lines.add(ctx.getString(R.string.trip_gps_insight_max_speed, gps.maxSpeed))
+            }
+            if (gps.totalPoints > 0 && !forDaySlice) {
+                lines.add(ctx.getString(R.string.trip_gps_insight_stops, gps.stopEventsCount))
+                lines.add(ctx.getString(R.string.trip_gps_insight_turns, gps.significantTurnsCount))
+            }
+            val minEl = gps.elevationMinMeters
+            val maxEl = gps.elevationMaxMeters
+            if (minEl != null && maxEl != null && maxEl >= minEl) {
+                val minFt = minEl * METERS_TO_FEET
+                val maxFt = maxEl * METERS_TO_FEET
+                lines.add(ctx.getString(R.string.trip_gps_insight_elevation_ft, minFt, maxFt))
+            }
+            if (gps.distinctTimeZoneCount > 1) {
+                lines.add(ctx.getString(R.string.trip_gps_insight_time_zones, gps.distinctTimeZoneCount))
+            }
+            if (!forDaySlice && gps.locationJumps > 0) {
+                lines.add(ctx.getString(R.string.trip_gps_insight_jumps, gps.locationJumps))
+            }
+            return lines.joinToString("\n")
+        }
+    }
+
+    private companion object {
+        private const val METERS_TO_FEET = 3.28084
     }
 
     class TripDiffCallback : DiffUtil.ItemCallback<Trip>() {

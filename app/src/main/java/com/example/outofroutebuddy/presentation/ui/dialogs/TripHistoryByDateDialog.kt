@@ -6,7 +6,6 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.core.content.ContextCompat
 import androidx.fragment.app.DialogFragment
 import androidx.navigation.fragment.NavHostFragment
 import androidx.fragment.app.viewModels
@@ -15,8 +14,6 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.outofroutebuddy.R
 import com.example.outofroutebuddy.databinding.DialogTripHistoryByDateBinding
 import com.google.android.material.snackbar.Snackbar
-import com.example.outofroutebuddy.domain.calendar.CalendarDayOorTierCalculator
-import com.example.outofroutebuddy.domain.models.CalendarDayOorTier
 import com.example.outofroutebuddy.domain.models.Trip
 import com.example.outofroutebuddy.presentation.ui.history.TripHistoryStatCardAdapter
 import com.example.outofroutebuddy.presentation.ui.history.TripHistoryByDateViewModel
@@ -31,8 +28,8 @@ import java.util.*
  * Displays trip history for a specific date selected from the calendar.
  * Data flow: Calendar date click → onHistoryDateClicked → showTripHistoryForDate(date)
  * → TripHistoryByDateDialog.newInstance(selectedDate) → viewModel.loadTripsForDate(selectedDate)
- * → repository.getTripsOverlappingDay(startOfDay, endOfDay) → adapter.submitList(trips).
- * Midnight-spanning trips appear on both days; overlap is handled by the repository.
+ * → repository.getTripsOverlappingDay(startOfDay, endOfDay) → miles scaled to that day’s time overlap → adapter.submitList(trips).
+ * Midnight-spanning trips appear on both days; each day shows the time-proportional share of miles.
  */
 @AndroidEntryPoint
 class TripHistoryByDateDialog : DialogFragment() {
@@ -108,25 +105,35 @@ class TripHistoryByDateDialog : DialogFragment() {
         viewModel.loadTripsForDate(selectedDate)
     }
 
+    private val titleDateFormat = SimpleDateFormat("MMMM dd, yyyy", Locale.US)
+
     private fun setupViews() {
-        // Title: date only (e.g. "March 02, 2026"), centered in layout
+        updateDateTitle()
+
+        binding.prevDayButton.setOnClickListener { navigateToDay(-1) }
+        binding.nextDayButton.setOnClickListener { navigateToDay(+1) }
+
+        binding.closeButton.setOnClickListener {
+            dismiss()
+        }
+    }
+
+    private fun updateDateTitle() {
         try {
-            val dateFormat = SimpleDateFormat("MMMM dd, yyyy", Locale.US)
-            binding.dateTitleText.text = dateFormat.format(selectedDate)
+            binding.dateTitleText.text = titleDateFormat.format(selectedDate)
         } catch (e: Exception) {
             binding.dateTitleText.text = "Selected date"
             android.util.Log.e(TAG, "Error formatting date", e)
         }
+    }
 
-        // Back button: dismiss dialog to return to calendar
-        binding.backButton.setOnClickListener {
-            dismiss()
-        }
-
-        // Close button
-        binding.closeButton.setOnClickListener {
-            dismiss()
-        }
+    private fun navigateToDay(offset: Int) {
+        val cal = Calendar.getInstance().apply { time = selectedDate }
+        cal.add(Calendar.DAY_OF_MONTH, offset)
+        selectedDate = cal.time
+        updateDateTitle()
+        adapter.viewingDate = selectedDate
+        viewModel.loadTripsForDate(selectedDate)
     }
     
     private fun setupRecyclerView() {
@@ -149,44 +156,6 @@ class TripHistoryByDateDialog : DialogFragment() {
         }
     }
 
-    /** Blended OOR for the selected day — banner above the list (green / yellow / red). */
-    private fun updateDayOorSummary(trips: List<Trip>) {
-        val card = binding.dayOorSummaryCard
-        if (trips.isEmpty()) {
-            card.visibility = View.GONE
-            return
-        }
-        val totalDisp = trips.sumOf { it.dispatchedMiles }
-        val totalOor = trips.sumOf { it.oorMiles }
-        val pct = if (totalDisp > 0.0) (totalOor / totalDisp) * 100.0 else 0.0
-        val safePct = if (pct.isFinite()) pct else 0.0
-        val tier = CalendarDayOorTierCalculator.blendedTierForTripList(trips)
-        val label = when (tier) {
-            CalendarDayOorTier.GREEN -> getString(R.string.history_day_oor_band_good)
-            CalendarDayOorTier.YELLOW_OUTLINE -> getString(R.string.history_day_oor_band_warn)
-            CalendarDayOorTier.RED -> getString(R.string.history_day_oor_band_bad)
-        }
-        val summaryRes = if (trips.size > 1) R.string.history_day_oor_summary else R.string.history_day_oor_summary_single
-        binding.dayOorSummaryText.text = getString(summaryRes, safePct, label)
-        val strokePx = (2 * resources.displayMetrics.density).toInt().coerceAtLeast(1)
-        card.strokeWidth = strokePx
-        val ctx = requireContext()
-        when (tier) {
-            CalendarDayOorTier.GREEN -> {
-                card.strokeColor = ContextCompat.getColor(ctx, R.color.history_trip_oor_good_card_stroke)
-                card.setCardBackgroundColor(ContextCompat.getColor(ctx, R.color.history_trip_oor_good_card_fill))
-            }
-            CalendarDayOorTier.YELLOW_OUTLINE -> {
-                card.strokeColor = ContextCompat.getColor(ctx, R.color.history_trip_oor_warn_card_stroke)
-                card.setCardBackgroundColor(ContextCompat.getColor(ctx, R.color.history_trip_oor_warn_card_fill))
-            }
-            CalendarDayOorTier.RED -> {
-                card.strokeColor = ContextCompat.getColor(ctx, R.color.history_trip_oor_bad_card_stroke)
-                card.setCardBackgroundColor(ContextCompat.getColor(ctx, R.color.history_trip_oor_bad_card_fill))
-            }
-        }
-        card.visibility = View.VISIBLE
-    }
     
     private fun observeDeleteError() {
         lifecycleScope.launch {
@@ -240,7 +209,6 @@ class TripHistoryByDateDialog : DialogFragment() {
         lifecycleScope.launch {
             viewModel.trips.collect { trips ->
                 adapter.submitList(trips)
-                updateDayOorSummary(trips)
 
                 // ✅ EDGE CASE: Update empty state with proper message
                 if (trips.isEmpty()) {

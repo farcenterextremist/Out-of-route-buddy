@@ -44,7 +44,7 @@ class TripBackupManager @Inject constructor(
         private const val JSON_FILENAME = "oorb_trip_backup.json"
         private const val DB_FILENAME = "oorb_database_backup.db"
         private const val BACKUP_VERSION = 1
-        private const val DB_SCHEMA_VERSION = 6
+        private const val DB_SCHEMA_VERSION = 7
         private const val MIN_BACKUP_INTERVAL_MS = 10 * 60 * 1000L // 10 minutes
         private const val PREFS_NAME = "trip_backup_prefs"
         private const val KEY_LAST_BACKUP_MS = "last_backup_timestamp_ms"
@@ -228,6 +228,15 @@ class TripBackupManager @Inject constructor(
         put("pickupAddress", e.pickupAddress)
         put("dropoffAddress", e.dropoffAddress)
         put("dataTier", e.dataTier.name)
+        put("tripStartLat", e.tripStartLat ?: JSONObject.NULL)
+        put("tripStartLng", e.tripStartLng ?: JSONObject.NULL)
+        put("tripEndLat", e.tripEndLat ?: JSONObject.NULL)
+        put("tripEndLng", e.tripEndLng ?: JSONObject.NULL)
+        put("stopEventsCount", e.stopEventsCount)
+        put("significantTurnsCount", e.significantTurnsCount)
+        put("elevationMinMeters", e.elevationMinMeters ?: JSONObject.NULL)
+        put("elevationMaxMeters", e.elevationMaxMeters ?: JSONObject.NULL)
+        put("distinctTimeZoneCount", e.distinctTimeZoneCount)
     }
 
     private fun jsonToTripEntity(obj: JSONObject): TripEntity = TripEntity(
@@ -268,7 +277,19 @@ class TripBackupManager @Inject constructor(
         dropoffAddress = obj.optString("dropoffAddress", ""),
         dataTier = runCatching { DataTier.valueOf(obj.optString("dataTier", "GOLD")) }
             .getOrDefault(DataTier.GOLD),
+        tripStartLat = obj.nullableDouble("tripStartLat"),
+        tripStartLng = obj.nullableDouble("tripStartLng"),
+        tripEndLat = obj.nullableDouble("tripEndLat"),
+        tripEndLng = obj.nullableDouble("tripEndLng"),
+        stopEventsCount = obj.optInt("stopEventsCount", 0),
+        significantTurnsCount = obj.optInt("significantTurnsCount", 0),
+        elevationMinMeters = obj.nullableDouble("elevationMinMeters"),
+        elevationMaxMeters = obj.nullableDouble("elevationMaxMeters"),
+        distinctTimeZoneCount = obj.optInt("distinctTimeZoneCount", 0),
     )
+
+    private fun JSONObject.nullableDouble(key: String): Double? =
+        if (has(key) && !isNull(key)) getDouble(key) else null
 
     private fun JSONObject.nullableLong(key: String): Long? =
         if (has(key) && !isNull(key)) getLong(key) else null

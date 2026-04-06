@@ -181,6 +181,30 @@
         app:iconSpaceReserved="true" />
 
     <SwitchPreferenceCompat
+        android:key="ludicrous_show_time_zones"
+        android:title="@string/ludacris_show_time_zones"
+        android:summary="@string/ludacris_show_time_zones_summary"
+        android:defaultValue="false"
+        android:icon="@drawable/ic_pref_explore"
+        app:iconSpaceReserved="true" />
+
+    <SwitchPreferenceCompat
+        android:key="ludicrous_show_elevation"
+        android:title="@string/ludacris_show_elevation"
+        android:summary="@string/ludacris_show_elevation_summary"
+        android:defaultValue="false"
+        android:icon="@drawable/ic_pref_straighten"
+        app:iconSpaceReserved="true" />
+
+    <SwitchPreferenceCompat
+        android:key="ludicrous_show_max_speed"
+        android:title="@string/ludacris_show_max_speed"
+        android:summary="@string/ludacris_show_max_speed_summary"
+        android:defaultValue="false"
+        android:icon="@drawable/ic_pref_flight_takeoff"
+        app:iconSpaceReserved="true" />
+
+    <SwitchPreferenceCompat
         android:key="verbose_logging"
         android:title="Verbose logging"
         android:summary="Elevate log level for debugging (no PII)"

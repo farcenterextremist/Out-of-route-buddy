@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.outofroutebuddy.data.PreferencesManager
+import com.example.outofroutebuddy.data.SettingsManager
 import com.example.outofroutebuddy.data.TripPersistenceManager
 import com.example.outofroutebuddy.data.TripStateManager
 import com.example.outofroutebuddy.data.TripStatePersistence
@@ -17,6 +18,7 @@ import com.example.outofroutebuddy.OutOfRouteApplication
 import com.example.outofroutebuddy.R
 import com.example.outofroutebuddy.services.BackgroundSyncService
 import com.example.outofroutebuddy.services.DriveState
+import com.example.outofroutebuddy.services.GpsTrackingData
 import com.example.outofroutebuddy.services.OptimizedGpsDataFlow
 import com.example.outofroutebuddy.services.TripCrashRecoveryManager
 import com.example.outofroutebuddy.services.TripEndedOverlayService
@@ -27,10 +29,13 @@ import com.example.outofroutebuddy.services.UnifiedTripService
 import com.example.outofroutebuddy.di.IoDispatcher
 import com.example.outofroutebuddy.validation.ValidationFramework
 import com.example.outofroutebuddy.util.AppLogger
+import com.example.outofroutebuddy.util.AddressArrivalEligibility
+import com.example.outofroutebuddy.data.geocoding.PhotonForwardGeocoder
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.flow.first
@@ -88,6 +93,7 @@ class TripInputViewModel
         // ✅ CRASH RECOVERY: Added in #12
         private val crashRecoveryManager: TripCrashRecoveryManager,
         private val tripBackupManager: com.example.outofroutebuddy.data.backup.TripBackupManager,
+        private val settingsManager: SettingsManager,
         private val application: android.app.Application,
         @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
     ) : ViewModel() {
@@ -759,6 +765,30 @@ class TripInputViewModel
         // ==================== TRIP INPUT METHODS ====================
 
         /**
+         * Forward-geocode pickup/dropoff only when [AddressArrivalEligibility] accepts them (street-level).
+         * Respects Photon fair-use spacing when both run.
+         */
+        private suspend fun geocodeWaypointsIfEligible(
+            pickupAddress: String,
+            dropoffAddress: String,
+        ): Pair<Pair<Double, Double>?, Pair<Double, Double>?> {
+            return withContext(ioDispatcher) {
+                val pickupTrim = pickupAddress.trim()
+                val dropTrim = dropoffAddress.trim()
+                var pickupCoords: Pair<Double, Double>? = null
+                var dropCoords: Pair<Double, Double>? = null
+                if (AddressArrivalEligibility.isStreetLevelEnough(pickupTrim)) {
+                    pickupCoords = PhotonForwardGeocoder.geocodeFirstLatLng(pickupTrim)
+                }
+                if (AddressArrivalEligibility.isStreetLevelEnough(dropTrim)) {
+                    if (pickupCoords != null) delay(1100)
+                    dropCoords = PhotonForwardGeocoder.geocodeFirstLatLng(dropTrim)
+                }
+                Pair(pickupCoords, dropCoords)
+            }
+        }
+
+        /**
          * ✅ SIMPLIFIED: Calculate trip using unified service
          */
         fun calculateTrip(
@@ -865,10 +895,13 @@ class TripInputViewModel
                                 )
                             )
                         }
+                        val (pickupWp, dropoffWp) = geocodeWaypointsIfEligible(pickupAddress, dropoffAddress)
                         TripTrackingService.startService(
                             context = application,
                             loadedMiles = loadedMiles,
-                            bounceMiles = bounceMiles
+                            bounceMiles = bounceMiles,
+                            geocodedPickup = pickupWp,
+                            geocodedDropoff = dropoffWp,
                         )
                         TripEndedOverlayService.startWhenTripActive(application)
                         Log.d(TAG, "GPS tracking service started")
@@ -943,19 +976,16 @@ class TripInputViewModel
                 
                 AppLogger.d(TAG, "Trip end calculation completed")
                 
-                // ✅ CRITICAL FIX: Stop GPS tracking service to prevent battery drain
-                // 
-                // 🔧 WHY THIS WORKS:
-                // 1. TripTrackingService runs as foreground service (battery intensive)
-                // 2. Must be explicitly stopped when trip ends
-                // 3. Prevents continuous GPS tracking after trip completion
-                // 4. Clean service lifecycle: Start → Track → Stop
-                // 
-                // 📊 RESOURCE MANAGEMENT:
-                // - Stops GPS location updates
-                // - Removes foreground service notification
-                // - Releases location manager resources
-                // - Prevents background battery drain
+                // Snapshot GPS metadata from TripTrackingService BEFORE stopping it.
+                // The service holds live GPS stats in a static StateFlow; once stopService()
+                // processes, the data resets. Capturing first preserves the real metadata for DB save.
+                val serviceGpsSnapshot = try {
+                    TripTrackingService.gpsTrackingData.value
+                } catch (e: Exception) {
+                    Log.w(TAG, "Could not snapshot GPS tracking data", e)
+                    null
+                }
+
                 try {
                     TripTrackingService.stopService(application)
                     Log.d(TAG, "GPS tracking service stopped")
@@ -982,45 +1012,71 @@ class TripInputViewModel
                 // DomainTripRepositoryAdapter maps trip.startTime to TripEntity.date for DB storage.
                 val tripEndDate = Date()
                 // C1 (R1): Persist completed trip with GPS metadata via saveCompletedTrip (single insert path).
-                val saveResult = try {
-                    // Persist very short trips as a tiny floor value so they are still saved/viewable/deletable.
-                    val persistedActualMiles = state.actualMiles.coerceAtLeast(MIN_PERSISTED_ACTUAL_MILES)
-                    val tripStartDate = currentTrip?.startTime ?: tripEndDate
-                    val tripId = tripStatePersistence.saveCompletedTrip(
-                        actualMiles = persistedActualMiles,
-                        loadedMiles = state.loadedMiles,
-                        bounceMiles = state.bounceMiles,
-                        tripStartTime = tripStartDate,
-                        tripEndTime = tripEndDate,
-                        pickupAddress = currentTrip?.pickupAddress.orEmpty(),
-                        dropoffAddress = currentTrip?.dropoffAddress.orEmpty(),
-                    )
-                    AppLogger.d(TAG, "Trip saved via saveCompletedTrip")
-                    currentTrip = Trip(
-                        id = "trip-$tripId",
-                        loadedMiles = state.loadedMiles,
-                        bounceMiles = state.bounceMiles,
-                        actualMiles = persistedActualMiles,
-                        oorMiles = calculationResult.oorMiles,
-                        oorPercentage = calculationResult.oorPercentage,
-                        startTime = tripStartDate,
-                        endTime = tripEndDate,
-                        status = TripStatus.COMPLETED
-                    )
-                    "success"
-                } catch (e: Exception) {
-                    AppLogger.e(TAG, "saveCompletedTrip failed", e)
-                    _events.emit(TripEvent.SaveError(application.getString(R.string.database_unavailable)))
-                    "failed"
-                }
+                val saveResult =
+                    if (!settingsManager.isAutoSaveTripEnabled()) {
+                        AppLogger.d(TAG, "Auto-save trips disabled; skipping database persist")
+                        val tripStartDate = currentTrip?.startTime ?: tripEndDate
+                        val persistedActualMiles = state.actualMiles.coerceAtLeast(MIN_PERSISTED_ACTUAL_MILES)
+                        currentTrip = Trip(
+                            id = "ended-not-saved",
+                            loadedMiles = state.loadedMiles,
+                            bounceMiles = state.bounceMiles,
+                            actualMiles = persistedActualMiles,
+                            oorMiles = calculationResult.oorMiles,
+                            oorPercentage = calculationResult.oorPercentage,
+                            startTime = tripStartDate,
+                            endTime = tripEndDate,
+                            status = TripStatus.COMPLETED,
+                        )
+                        "skipped"
+                    } else {
+                        try {
+                            val persistedActualMiles = state.actualMiles.coerceAtLeast(MIN_PERSISTED_ACTUAL_MILES)
+                            val tripStartDate = currentTrip?.startTime ?: tripEndDate
+                            val tripId = tripStatePersistence.saveCompletedTrip(
+                                actualMiles = persistedActualMiles,
+                                loadedMiles = state.loadedMiles,
+                                bounceMiles = state.bounceMiles,
+                                tripStartTime = tripStartDate,
+                                tripEndTime = tripEndDate,
+                                pickupAddress = currentTrip?.pickupAddress.orEmpty(),
+                                dropoffAddress = currentTrip?.dropoffAddress.orEmpty(),
+                                serviceGpsSnapshot = serviceGpsSnapshot,
+                            )
+                            AppLogger.d(TAG, "Trip saved via saveCompletedTrip")
+                            currentTrip = Trip(
+                                id = "trip-$tripId",
+                                loadedMiles = state.loadedMiles,
+                                bounceMiles = state.bounceMiles,
+                                actualMiles = persistedActualMiles,
+                                oorMiles = calculationResult.oorMiles,
+                                oorPercentage = calculationResult.oorPercentage,
+                                startTime = tripStartDate,
+                                endTime = tripEndDate,
+                                status = TripStatus.COMPLETED,
+                            )
+                            "success"
+                        } catch (e: Exception) {
+                            AppLogger.e(TAG, "saveCompletedTrip failed", e)
+                            _events.emit(TripEvent.SaveError(application.getString(R.string.database_unavailable)))
+                            "failed"
+                        }
+                    }
                 
                 // Update status message based on save result
-                _uiState.update { it.copy(
-                    tripStatusMessage = if (saveResult == "success") "Trip saved!" else "Trip ended"
-                ) }
-                
+                _uiState.update {
+                    it.copy(
+                        tripStatusMessage =
+                            when (saveResult) {
+                                "success" -> "Trip saved!"
+                                "skipped" -> application.getString(R.string.trip_ended_not_saved_autosave_off)
+                                else -> "Trip ended"
+                            },
+                    )
+                }
+
                 // ✅ NEW (#12): Stop auto-save when trip ends
-                stopAutoSave(clearRecoveryState = saveResult == "success")
+                stopAutoSave(clearRecoveryState = saveResult == "success" || saveResult == "skipped")
 
                 // Keep trip state manager lifecycle aligned with end-trip completion.
                 try {
@@ -1028,25 +1084,26 @@ class TripInputViewModel
                 } catch (e: Exception) {
                     Log.e(TAG, "Failed to end TripStateManager state", e)
                 }
-                
-                // ✅ NEW: Clear trip persistence only when save succeeds.
-                // Keeping persistence on save failure protects crash/restart recovery.
-                if (saveResult == "success") {
+
+                // Clear persistence when saved or intentionally not saved; keep on DB failure for recovery.
+                if (saveResult == "success" || saveResult == "skipped") {
                     clearTripPersistence()
                 } else {
                     Log.w(TAG, "Trip save failed; preserving persisted active-state data for recovery")
                 }
 
-                // ✅ FIX: Refresh monthly + period/year stats synchronously in this flow so
-                // month/year fields update immediately after End Trip (no app restart needed).
                 val selected = _uiState.value.selectedPeriod
-                refreshStatisticsAfterSave(selected)
+                if (saveResult == "success") {
+                    refreshStatisticsAfterSave(selected)
+                }
 
                 if (saveResult == "success") {
                     _events.emit(TripEvent.TripSaved)
-                    // Trigger auto-backup to Downloads after every successful save
                     viewModelScope.launch(ioDispatcher) {
-                        try { tripBackupManager.autoBackupIfNeeded() } catch (_: Exception) {}
+                        try {
+                            tripBackupManager.autoBackupIfNeeded()
+                        } catch (_: Exception) {
+                        }
                     }
                 } else {
                     _events.emit(TripEvent.TripEnded)
@@ -1520,27 +1577,28 @@ class TripInputViewModel
          * also starts overlay monitoring for trip-ended detection.
          */
         fun continueRecoveredTrip(savedState: TripPersistenceManager.SavedTripState) {
-            try {
-                Log.d(TAG, "Continuing recovered trip: ${savedState.trip.id}")
-                attachToOngoingTrackedTrip(savedState)
+            viewModelScope.launch {
+                try {
+                    Log.d(TAG, "Continuing recovered trip: ${savedState.trip.id}")
+                    attachToOngoingTrackedTrip(savedState)
 
-                // Start GPS tracking service with restored miles and pause state
-                TripTrackingService.startService(
-                    context = application,
-                    loadedMiles = savedState.loadedMiles,
-                    bounceMiles = savedState.bounceMiles,
-                    initialTotalMiles = savedState.actualMiles,
-                    startPaused = savedState.isPaused
-                )
-                // Reinstate overlay monitoring so trip-ended bubble/notification work again
-                TripEndedOverlayService.startWhenTripActive(application)
-                
-                // Start auto-save for crash recovery
-                Log.d(TAG, "Recovered trip started successfully; notification and icon reinstated")
-                
-            } catch (e: Exception) {
-                Log.e(TAG, "Failed to continue recovered trip", e)
-                viewModelScope.launch {
+                    val (pickupWp, dropoffWp) = geocodeWaypointsIfEligible(
+                        savedState.trip.pickupAddress,
+                        savedState.trip.dropoffAddress,
+                    )
+                    TripTrackingService.startService(
+                        context = application,
+                        loadedMiles = savedState.loadedMiles,
+                        bounceMiles = savedState.bounceMiles,
+                        initialTotalMiles = savedState.actualMiles,
+                        startPaused = savedState.isPaused,
+                        geocodedPickup = pickupWp,
+                        geocodedDropoff = dropoffWp,
+                    )
+                    TripEndedOverlayService.startWhenTripActive(application)
+                    Log.d(TAG, "Recovered trip started successfully; notification and icon reinstated")
+                } catch (e: Exception) {
+                    Log.e(TAG, "Failed to continue recovered trip", e)
                     _events.emit(TripEvent.Error("Failed to recover trip: ${e.message}"))
                 }
             }

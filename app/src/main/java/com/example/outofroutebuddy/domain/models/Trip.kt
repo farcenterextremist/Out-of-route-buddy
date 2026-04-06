@@ -29,6 +29,12 @@ data class Trip(
     val dropoffAddress: String = "",
     /** Data tier: SILVER (may delete), PLATINUM (demote/promote), GOLD (human, digital gold). Default GOLD for human-ended trips. */
     val dataTier: DataTier = DataTier.GOLD,
+    /**
+     * When true, this instance is a time-proportional slice for calendar-day display only; see
+     * `TripCalendarDaySlice.kt` (`scaledToCalendarDay`). Strict mile floors are relaxed for small
+     * slices. [id] still refers to the full stored trip.
+     */
+    val isProportionalDaySlice: Boolean = false,
 ) {
     init {
         // Validate trip values in constructor
@@ -39,43 +45,52 @@ data class Trip(
             "Trip values cannot be infinite"
         }
 
-        // ✅ FIX: Validate actualMiles FIRST (tests expect "Actual miles" error message)
-        val dispatchedTotal = loadedMiles + bounceMiles
-        
-        // Reject all-zeros case (trip must represent some activity)
-        // EXCEPT for ACTIVE/PENDING trips where GPS hasn't started tracking yet
-        if (loadedMiles == 0.0 && bounceMiles == 0.0 && actualMiles == 0.0 && status != TripStatus.ACTIVE && status != TripStatus.PENDING) {
-            throw IllegalArgumentException("Actual miles must be at least 0.001 miles: all trip values are zero")
-        }
-        
-        // Reject epsilon values for actualMiles
-        if (actualMiles > 0.0 && actualMiles < 0.001) {
-            throw IllegalArgumentException("Actual miles must be at least 0.001 miles: $actualMiles")
-        }
-        
-        // ✅ FIX: For COMPLETED trips only, require meaningful actualMiles
-        // Allow 0.0 for ACTIVE/PENDING trips (GPS is still updating)
-        if (status == TripStatus.COMPLETED && dispatchedTotal > 0.0 && actualMiles == 0.0) {
-            throw IllegalArgumentException("Actual miles must be at least 0.001 miles for a completed trip: $actualMiles")
-        }
+        if (isProportionalDaySlice) {
+            require(loadedMiles >= 0 && bounceMiles >= 0 && actualMiles >= 0) {
+                "Partial day slice miles cannot be negative"
+            }
+            require(bounceMiles < 10000.0 && loadedMiles < 10000.0 && actualMiles < 10000.0) {
+                "Partial day slice miles exceed bound"
+            }
+        } else {
+            // ✅ FIX: Validate actualMiles FIRST (tests expect "Actual miles" error message)
+            val dispatchedTotal = loadedMiles + bounceMiles
 
-        // ✅ FIX: Validate bounce miles - check negative first, then epsilon values
-        require(bounceMiles >= 0) {
-            "Bounce miles cannot be negative: $bounceMiles"
-        }
-        if (bounceMiles > 0.0 && bounceMiles < 0.001) {
-            throw IllegalArgumentException("Bounce miles must be at least 0.001 miles: $bounceMiles")
-        }
-        require(bounceMiles < 10000.0) {
-            "Bounce miles seems unrealistic (>10000.0): $bounceMiles"
-        }
-        
-        // ✅ FIX: Validate loaded miles - reject epsilon values
-        if (loadedMiles > 0.0 && loadedMiles < 0.001) {
-            throw IllegalArgumentException("Loaded miles must be at least 0.001 miles: $loadedMiles")
-        }
-        require(loadedMiles < 10000.0) {
-            "Loaded miles seems unrealistic (>10000.0): $loadedMiles"
+            // Reject all-zeros case (trip must represent some activity)
+            // EXCEPT for ACTIVE/PENDING trips where GPS hasn't started tracking yet
+            if (loadedMiles == 0.0 && bounceMiles == 0.0 && actualMiles == 0.0 && status != TripStatus.ACTIVE && status != TripStatus.PENDING) {
+                throw IllegalArgumentException("Actual miles must be at least 0.001 miles: all trip values are zero")
+            }
+
+            // Reject epsilon values for actualMiles
+            if (actualMiles > 0.0 && actualMiles < 0.001) {
+                throw IllegalArgumentException("Actual miles must be at least 0.001 miles: $actualMiles")
+            }
+
+            // ✅ FIX: For COMPLETED trips only, require meaningful actualMiles
+            // Allow 0.0 for ACTIVE/PENDING trips (GPS is still updating)
+            if (status == TripStatus.COMPLETED && dispatchedTotal > 0.0 && actualMiles == 0.0) {
+                throw IllegalArgumentException("Actual miles must be at least 0.001 miles for a completed trip: $actualMiles")
+            }
+
+            // ✅ FIX: Validate bounce miles - check negative first, then epsilon values
+            require(bounceMiles >= 0) {
+                "Bounce miles cannot be negative: $bounceMiles"
+            }
+            if (bounceMiles > 0.0 && bounceMiles < 0.001) {
+                throw IllegalArgumentException("Bounce miles must be at least 0.001 miles: $bounceMiles")
+            }
+            require(bounceMiles < 10000.0) {
+                "Bounce miles seems unrealistic (>10000.0): $bounceMiles"
+            }
+
+            // ✅ FIX: Validate loaded miles - reject epsilon values
+            if (loadedMiles > 0.0 && loadedMiles < 0.001) {
+                throw IllegalArgumentException("Loaded miles must be at least 0.001 miles: $loadedMiles")
+            }
+            require(loadedMiles < 10000.0) {
+                "Loaded miles seems unrealistic (>10000.0): $loadedMiles"
+            }
         }
     }
     
@@ -204,6 +219,8 @@ data class GpsMetadata(
     val validPoints: Int = 0,
     val rejectedPoints: Int = 0,
     val avgAccuracy: Double = 0.0,
+    /** Average reported speed where the device had speed (mph); 0 if unknown. */
+    val avgSpeedMph: Double = 0.0,
     val maxSpeed: Double = 0.0,
     val locationJumps: Int = 0,
     val accuracyWarnings: Int = 0,
@@ -211,6 +228,21 @@ data class GpsMetadata(
     val tripDurationMinutes: Int = 0,
     val satelliteCount: Int = 0,
     val gpsQualityPercentage: Double = 0.0,
+    /** GPS fix where recorded trip movement began (null = not captured). */
+    val startLatitude: Double? = null,
+    val startLongitude: Double? = null,
+    /** Last GPS fix before trip end (null = not captured). */
+    val endLatitude: Double? = null,
+    val endLongitude: Double? = null,
+    /** Completed stops ≥ ~2 min (low motion + little roll); heuristic. */
+    val stopEventsCount: Int = 0,
+    /** Significant heading changes between driven segments; heuristic. */
+    val significantTurnsCount: Int = 0,
+    /** Min/max altitude from fixes that had altitude (meters); null if none. */
+    val elevationMinMeters: Double? = null,
+    val elevationMaxMeters: Double? = null,
+    /** Distinct device timezone offsets seen during trip (0 = unknown). */
+    val distinctTimeZoneCount: Int = 0,
     // Extended metadata (schema v4) — collection via road-type API/POI in future
     val interstatePercent: Double = 0.0,
     val interstateMinutes: Int = 0,

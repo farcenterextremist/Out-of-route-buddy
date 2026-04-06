@@ -21,7 +21,7 @@
 | 2 | Driver ranking | (sandboxed) | 20 |
 | 3 | Ranking chart | (sandboxed) | 20 |
 | 4 | Optional email signup for updates | (sandboxed) | 20 |
-| 5 | Route deviation map (instant replay) | (sandboxed) | 40 |
+| 5 | Route deviation map (instant replay) | (sandboxed) | 55 |
 | 6 | Sandboxed virtual fleet | (sandboxed) | 20 |
 | 7 | Auto drive detected | (sandbox-ready) | 60 |
 | 8 | Reports screen | (sandbox-ready) | 40 |
@@ -43,7 +43,7 @@
 
 **Count:** 23 / 50. **Next run:** Light and Medium must add 1–2 new Heavy ideas.
 
-**Sandbox improvement this run:** Route deviation map 20→40 (validation checklist added). New Heavy idea: Weekly one-liner.
+**Sandbox improvement (latest):** Route deviation map — formal sandbox doc `docs/product/sandbox/ROUTE_DEVIATION_MAP_SANDBOX.md` (gap analysis, phased plan, checklist); completion ~40→55%.
 
 ---
 

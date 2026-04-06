@@ -156,6 +156,8 @@ class TripInputViewModelIntegrationTest {
                 unifiedOfflineService = mockUnifiedOfflineService,
                 crashRecoveryManager = mockCrashRecoveryManager,
                 tripPersistenceManager = mockTripPersistenceManager,
+                tripBackupManager = mockk(relaxed = true),
+                settingsManager = mockk(relaxed = true),
                 application = mockApplication,
                 ioDispatcher = testDispatcher,
             )
@@ -650,6 +652,8 @@ class TripInputViewModelIntegrationTest {
                 unifiedOfflineService = mockUnifiedOfflineService,
                 crashRecoveryManager = mockCrashRecoveryManager,
                 tripPersistenceManager = mockTripPersistenceManager,
+                tripBackupManager = mockk(relaxed = true),
+                settingsManager = mockk(relaxed = true),
                 application = mockApplication,
                 ioDispatcher = testDispatcher,
             )
@@ -708,6 +712,8 @@ class TripInputViewModelIntegrationTest {
             unifiedOfflineService = mockUnifiedOfflineService,
             crashRecoveryManager = mockCrashRecoveryManager,
             tripPersistenceManager = mockTripPersistenceManager,
+            tripBackupManager = mockk(relaxed = true),
+            settingsManager = mockk(relaxed = true),
             application = mockApplication,
             ioDispatcher = testDispatcher,
         )

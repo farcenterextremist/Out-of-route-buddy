@@ -12,6 +12,8 @@
     <!-- Monthly OOR Fragment -->
     <string name="back">Back</string>
     <string name="close">Close</string>
+    <string name="previous_day">Previous day</string>
+    <string name="next_day">Next day</string>
     <string name="delete_trip">Delete</string>
     <string name="delete_trip_description">Delete this trip</string>
     <string name="delete_month_trips_description">Delete month trips</string>
@@ -102,6 +104,10 @@
     <string name="dropoff_address_hint">Dropoff (optional)</string>
     <string name="pickup_address_input_description">Pickup location or address</string>
     <string name="dropoff_address_input_description">Dropoff location or address</string>
+    <string name="trip_arrival_notification_channel_name">Trip address arrivals</string>
+    <string name="trip_arrival_notification_channel_desc">Alerts when you arrive at a geocoded pickup or dropoff you entered with a street address</string>
+    <string name="trip_notification_arrived_shipper_title">Arrived at shipper</string>
+    <string name="trip_notification_arrived_shipper_text">You are near the pickup address you entered.</string>
     <string name="destination_address_accuracy_tooltip">Increases trip accuracy when addresses match your route</string>
     <string name="destination_info_content_description">Info: optional addresses can improve trip accuracy</string>
     <string name="ludacris_settings_title">Ludacris settings</string>
@@ -211,6 +217,15 @@
     <string name="dispatched_miles">Dispatched Miles</string>
     <string name="duration">Duration</string>
     <string name="gps_metadata">GPS Metadata</string>
+    <string name="trip_history_start_coordinates">Trip started (GPS)</string>
+    <string name="trip_history_end_coordinates">Trip ended (GPS)</string>
+    <string name="trip_gps_insight_avg_speed">Average speed: %1$.1f mph</string>
+    <string name="trip_gps_insight_max_speed">Max speed: %1$.1f mph</string>
+    <string name="trip_gps_insight_stops">Stops (about 2+ min parked): %1$d</string>
+    <string name="trip_gps_insight_turns">Significant turns (estimate): %1$d</string>
+    <string name="trip_gps_insight_elevation_ft">Elevation range: %1$.0f–%2$.0f ft</string>
+    <string name="trip_gps_insight_time_zones">Device time zone offsets seen: %1$d</string>
+    <string name="trip_gps_insight_jumps">GPS jump events: %1$d</string>
     <string name="interstate_percent">Interstate</string>
     <string name="interstate_format">%1$.1f%% (%2$d min)</string>
     <string name="back_roads_percent">Back roads</string>
@@ -222,9 +237,12 @@
     <string name="partial_trip">Partial trip</string>
     <string name="partial_trip_range">Partial Trip %1$s–%2$s</string>
     <string name="trip_card_title">Trip %d</string>
+    <string name="trip_stat_slice_miles_caption">Miles and OOR are this day’s time-based share of the trip. Open details for full-trip totals.</string>
+    <string name="trip_gps_metadata_full_trip_hint">estimates for full trip</string>
     <string name="trip_stat_card_flagged_content_description">Trip may need review: unusual duration or GPS data</string>
     <string name="duration_minutes_format">%d min</string>
     <string name="no_gps_metadata">No GPS metadata</string>
+    <string name="trip_ended_not_saved_autosave_off">Trip ended. Not saved to history (auto-save is off).</string>
     <string name="on_route">On route (0.0%%)</string>
     <!-- Trip history by date: OOR banner (single-trip uses history_day_oor_summary_single) -->
     <string name="history_day_oor_summary">Blended OOR for this day: %1$.1f%% - %2$s</string>

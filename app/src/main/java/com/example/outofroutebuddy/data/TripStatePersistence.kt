@@ -6,6 +6,7 @@ import com.example.outofroutebuddy.domain.models.Trip as DomainTrip
 import com.example.outofroutebuddy.domain.models.TripStatus
 import com.example.outofroutebuddy.domain.models.DataTier
 import com.example.outofroutebuddy.models.Trip as DataTrip
+import com.example.outofroutebuddy.services.GpsTrackingData
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -69,6 +70,11 @@ class TripStatePersistence(
     /**
      * Wired to trip-end flow (TripInputViewModel.endTrip). Saves completed trip with GPS metadata. R1.
      * Uses [tripStateManager] for loaded/bounce/actual miles and GPS metadata; single insert via data repository.
+     *
+     * @param serviceGpsSnapshot Live GPS stats captured from [TripTrackingService.gpsTrackingData]
+     *   **before** the service was stopped. When non-null and contains real data, its values override
+     *   the (often empty) [TripStateManager] metadata so points, accuracy, speed, and duration
+     *   are persisted correctly.
      */
     suspend fun saveCompletedTrip(
         actualMiles: Double,
@@ -78,13 +84,46 @@ class TripStatePersistence(
         tripEndTime: Date? = null,
         pickupAddress: String = "",
         dropoffAddress: String = "",
+        serviceGpsSnapshot: GpsTrackingData? = null,
     ): Long {
         return withContext(Dispatchers.IO) {
             try {
                 val currentState = tripStateManager.getCurrentState()
                 val gpsMetadata = tripStateManager.getGpsMetadataForStorage().toMutableMap()
 
-                // Calculate trip metrics
+                // Overlay real GPS data from the tracking service snapshot when available.
+                // TripStateManager is often empty because GpsSynchronizationService was never
+                // called from TripTrackingService — so the service snapshot is the authoritative source.
+                if (serviceGpsSnapshot != null && serviceGpsSnapshot.totalGpsPoints > 0) {
+                    gpsMetadata["totalGpsPoints"] = serviceGpsSnapshot.totalGpsPoints
+                    gpsMetadata["validGpsPoints"] = serviceGpsSnapshot.validGpsPoints
+                    gpsMetadata["rejectedGpsPoints"] = serviceGpsSnapshot.rejectedGpsPoints
+                    gpsMetadata["avgGpsAccuracy"] = serviceGpsSnapshot.avgAccuracy.toDouble()
+                    gpsMetadata["minGpsAccuracy"] = serviceGpsSnapshot.minAccuracy.let {
+                        if (it == Float.MAX_VALUE) 0.0 else it.toDouble()
+                    }
+                    gpsMetadata["maxGpsAccuracy"] = serviceGpsSnapshot.maxAccuracy.toDouble()
+                    gpsMetadata["avgSpeedMph"] = serviceGpsSnapshot.avgSpeedMph.toDouble()
+                    gpsMetadata["maxSpeedMph"] = serviceGpsSnapshot.maxSpeedMph.toDouble()
+                    gpsMetadata["locationJumpsDetected"] = serviceGpsSnapshot.locationJumpsDetected
+                    gpsMetadata["accuracyWarnings"] = serviceGpsSnapshot.accuracyWarnings
+                    gpsMetadata["speedAnomalies"] = serviceGpsSnapshot.speedAnomalies
+                    if (serviceGpsSnapshot.tripDurationMinutes > 0) {
+                        gpsMetadata["tripDurationMinutes"] = serviceGpsSnapshot.tripDurationMinutes
+                    }
+                    serviceGpsSnapshot.tripStartLatitude?.let { gpsMetadata["tripStartLat"] = it }
+                    serviceGpsSnapshot.tripStartLongitude?.let { gpsMetadata["tripStartLng"] = it }
+                    serviceGpsSnapshot.tripEndLatitude?.let { gpsMetadata["tripEndLat"] = it }
+                    serviceGpsSnapshot.tripEndLongitude?.let { gpsMetadata["tripEndLng"] = it }
+                    gpsMetadata["stopEventsCount"] = serviceGpsSnapshot.stopEventsCount
+                    gpsMetadata["significantTurnsCount"] = serviceGpsSnapshot.significantTurnsCount
+                    serviceGpsSnapshot.elevationMinMeters?.let { gpsMetadata["elevationMinMeters"] = it }
+                    serviceGpsSnapshot.elevationMaxMeters?.let { gpsMetadata["elevationMaxMeters"] = it }
+                    gpsMetadata["distinctTimeZoneCount"] = serviceGpsSnapshot.distinctTimeZoneCount
+                    AppLogger.d(TAG, "Applied service GPS snapshot: ${serviceGpsSnapshot.totalGpsPoints} points, " +
+                        "avg accuracy ${serviceGpsSnapshot.avgAccuracy}m")
+                }
+
                 val resolvedLoadedMiles = loadedMiles ?: (currentState.loadedMiles.toDoubleOrNull() ?: 0.0)
                 val resolvedBounceMiles = bounceMiles ?: (currentState.bounceMiles.toDoubleOrNull() ?: 0.0)
                 val resolvedStartTime = tripStartTime ?: (gpsMetadata["tripStartTime"] as? Date) ?: currentState.startTime ?: Date()
@@ -92,14 +131,31 @@ class TripStatePersistence(
 
                 gpsMetadata["tripStartTime"] = resolvedStartTime
                 gpsMetadata["tripEndTime"] = resolvedEndTime
-                // Store timezone where trip was recorded so we can show it when user is in a different zone
+
+                if (serviceGpsSnapshot != null && serviceGpsSnapshot.totalGpsPoints > 0) {
+                    serviceGpsSnapshot.tripEndLatitude?.let { lat ->
+                        serviceGpsSnapshot.tripEndLongitude?.let { lng ->
+                            gpsMetadata["lastLocationLat"] = lat
+                            gpsMetadata["lastLocationLng"] = lng
+                            gpsMetadata["lastLocationTime"] = resolvedEndTime
+                        }
+                    }
+                }
+
+                // Derive duration from start/end if the service didn't provide it
+                val hasDuration = (gpsMetadata["tripDurationMinutes"] as? Int ?: 0) > 0
+                if (!hasDuration) {
+                    val durationMs = resolvedEndTime.time - resolvedStartTime.time
+                    if (durationMs > 0) {
+                        gpsMetadata["tripDurationMinutes"] = (durationMs / 60_000L).toInt()
+                    }
+                }
+
                 gpsMetadata["tripTimeZoneId"] = TimeZone.getDefault().id
-                // Human-ended trips are GOLD tier (digital gold; parse carefully, copy when needed).
                 gpsMetadata["dataTier"] = DataTier.GOLD
                 if (pickupAddress.isNotBlank()) gpsMetadata["pickupAddress"] = pickupAddress
                 if (dropoffAddress.isNotBlank()) gpsMetadata["dropoffAddress"] = dropoffAddress
 
-                // Create trip entity (data layer Trip for repository)
                 val dataTrip = DataTrip(
                     id = 0L,
                     date = resolvedEndTime,
@@ -108,10 +164,9 @@ class TripStatePersistence(
                     actualMiles = actualMiles,
                 )
 
-                // Save to database with GPS metadata
                 val tripId = repository.insertTrip(dataTrip, gpsMetadata)
 
-                AppLogger.d(TAG, "Saved completed trip to database")
+                AppLogger.d(TAG, "Saved completed trip to database (duration=${gpsMetadata["tripDurationMinutes"]}min)")
                 tripId
             } catch (e: Exception) {
                 AppLogger.e(TAG, "Failed to save completed trip", e)

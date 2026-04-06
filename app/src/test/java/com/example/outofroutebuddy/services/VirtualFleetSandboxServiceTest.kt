@@ -20,6 +20,7 @@ class VirtualFleetSandboxServiceTest {
         val service = VirtualFleetSandboxService(
             context = context,
             ioDispatcher = StandardTestDispatcher(),
+            fleetDataGenerator = VirtualFleetDataGenerator(),
         )
 
         val bundle = service.generateBundle(
@@ -46,6 +47,7 @@ class VirtualFleetSandboxServiceTest {
         val service = VirtualFleetSandboxService(
             context = context,
             ioDispatcher = StandardTestDispatcher(testScheduler),
+            fleetDataGenerator = VirtualFleetDataGenerator(),
         )
 
         val receipt = service.generateAndExport(

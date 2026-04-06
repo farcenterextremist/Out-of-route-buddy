@@ -91,6 +91,7 @@
 | Idea | This run (2026-03-13) |
 |------|------------------------|
 | **OOR percentage goal / target (§ 8.1)** | Validation checklist: (1) Define where goal is stored (e.g. PreferencesManager); (2) Confirm UI placement (Settings vs stat card); (3) Acceptance: user sets target %, app shows over/under. |
+| **Route deviation map (§ 3.1)** | Started sandboxing: `docs/product/sandbox/ROUTE_DEVIATION_MAP_SANDBOX.md` — gap analysis (no polyline in DB), phased A–D plan, expected-path matrix, SDK shortlist, privacy, validation checklist ~55%. |
 
 ---
 

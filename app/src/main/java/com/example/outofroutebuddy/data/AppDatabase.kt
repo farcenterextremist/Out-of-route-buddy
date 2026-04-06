@@ -18,7 +18,7 @@ import com.example.outofroutebuddy.data.util.DataTierConverter
  */
 @Database(
     entities = [TripEntity::class],
-    version = 6,
+    version = 7,
     exportSchema = true,
 )
 @TypeConverters(DateConverter::class, DataTierConverter::class)
@@ -44,7 +44,14 @@ abstract class AppDatabase : RoomDatabase() {
                         AppDatabase::class.java,
                         "outofroutebuddy_database",
                     )
-                        .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
+                        .addMigrations(
+                            MIGRATION_1_2,
+                            MIGRATION_2_3,
+                            MIGRATION_3_4,
+                            MIGRATION_4_5,
+                            MIGRATION_5_6,
+                            MIGRATION_6_7,
+                        )
                         .addCallback(DatabaseHealthCheck.IntegrityCheckCallback())
                         // REMOVED: fallbackToDestructiveMigration() — this silently wipes all
                         // trip data when a migration fails. Better to crash and fix the migration
@@ -186,6 +193,22 @@ abstract class AppDatabase : RoomDatabase() {
                 override fun migrate(db: SupportSQLiteDatabase) {
                     db.execSQL("ALTER TABLE trips ADD COLUMN pickupAddress TEXT NOT NULL DEFAULT ''")
                     db.execSQL("ALTER TABLE trips ADD COLUMN dropoffAddress TEXT NOT NULL DEFAULT ''")
+                }
+            }
+
+        /** Migration 6→7: trip start/end coordinates, stop/turn heuristics, elevation & TZ stats. */
+        internal val MIGRATION_6_7 =
+            object : Migration(6, 7) {
+                override fun migrate(db: SupportSQLiteDatabase) {
+                    db.execSQL("ALTER TABLE trips ADD COLUMN tripStartLat REAL")
+                    db.execSQL("ALTER TABLE trips ADD COLUMN tripStartLng REAL")
+                    db.execSQL("ALTER TABLE trips ADD COLUMN tripEndLat REAL")
+                    db.execSQL("ALTER TABLE trips ADD COLUMN tripEndLng REAL")
+                    db.execSQL("ALTER TABLE trips ADD COLUMN stopEventsCount INTEGER NOT NULL DEFAULT 0")
+                    db.execSQL("ALTER TABLE trips ADD COLUMN significantTurnsCount INTEGER NOT NULL DEFAULT 0")
+                    db.execSQL("ALTER TABLE trips ADD COLUMN elevationMinMeters REAL")
+                    db.execSQL("ALTER TABLE trips ADD COLUMN elevationMaxMeters REAL")
+                    db.execSQL("ALTER TABLE trips ADD COLUMN distinctTimeZoneCount INTEGER NOT NULL DEFAULT 0")
                 }
             }
     }

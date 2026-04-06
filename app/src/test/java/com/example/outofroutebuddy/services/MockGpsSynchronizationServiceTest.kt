@@ -135,6 +135,8 @@ class MockGpsSynchronizationServiceTest {
                 unifiedOfflineService = mockUnifiedOfflineService,
                 crashRecoveryManager = mockCrashRecoveryManager,
                 tripPersistenceManager = mockTripPersistenceManager,
+                tripBackupManager = mockk(relaxed = true),
+                settingsManager = mockk(relaxed = true),
                 application = mockApplication,
                 ioDispatcher = testDispatcher,
             )
@@ -309,6 +311,8 @@ class MockGpsSynchronizationServiceTest {
                 unifiedOfflineService = mockUnifiedOfflineService,
                 crashRecoveryManager = mockCrashRecoveryManager,
                 tripPersistenceManager = mockTripPersistenceManager,
+                tripBackupManager = mockk(relaxed = true),
+                settingsManager = mockk(relaxed = true),
                 application = mockApplication,
                 ioDispatcher = testDispatcher,
             )
@@ -376,6 +380,8 @@ class MockGpsSynchronizationServiceTest {
                 unifiedOfflineService = mockUnifiedOfflineService,
                 crashRecoveryManager = mockCrashRecoveryManager,
                 tripPersistenceManager = mockTripPersistenceManager,
+                tripBackupManager = mockk(relaxed = true),
+                settingsManager = mockk(relaxed = true),
                 application = mockApplication,
                 ioDispatcher = testDispatcher,
             )

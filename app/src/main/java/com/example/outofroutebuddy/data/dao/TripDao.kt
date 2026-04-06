@@ -31,6 +31,32 @@ interface TripDao {
     fun getAllTrips(): Flow<List<TripEntity>>
 
     /**
+     * Find an existing trip matching the given business-key fields.
+     * Uses a +/-60 second window for date, tripStartTime and tripEndTime so that
+     * near-duplicate inserts (e.g. double endTrip with a new Date() each call) are caught.
+     */
+    @Query("""
+        SELECT * FROM trips 
+        WHERE ABS(date - :date) < 60000
+        AND loadedMiles = :loadedMiles 
+        AND bounceMiles = :bounceMiles 
+        AND actualMiles = :actualMiles
+        AND ((:tripStartTime IS NULL AND tripStartTime IS NULL) 
+             OR ABS(tripStartTime - :tripStartTime) < 60000)
+        AND ((:tripEndTime IS NULL AND tripEndTime IS NULL) 
+             OR ABS(tripEndTime - :tripEndTime) < 60000)
+        ORDER BY id DESC LIMIT 1
+    """)
+    fun findDuplicate(
+        date: Date,
+        loadedMiles: Double,
+        bounceMiles: Double,
+        actualMiles: Double,
+        tripStartTime: Date?,
+        tripEndTime: Date?,
+    ): TripEntity?
+
+    /**
      * Get a specific trip by ID (suspend to avoid blocking main thread).
      */
     @Query("SELECT * FROM trips WHERE id = :tripId")

@@ -92,6 +92,9 @@ class SettingsFragment : PreferenceFragmentCompat() {
                 "drive_detect_walking_speed_mph",
                 "drive_detect_walking_min_duration_sec",
                 "drive_detect_highway_lookback_sec",
+                "ludicrous_show_time_zones",
+                "ludicrous_show_elevation",
+                "ludicrous_show_max_speed",
                 "verbose_logging",
                 "export_app_logs",
                 "export_debug_snapshot",
@@ -243,6 +246,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
         // Dark Mode preference
         findPreference<ListPreference>("theme_preference")?.setOnPreferenceChangeListener { _, newValue ->
             val themeValue = newValue as String
+            settingsManager.setThemePreference(themeValue)
             val mode = when (themeValue) {
                 "light" -> AppCompatDelegate.MODE_NIGHT_NO
                 "dark" -> AppCompatDelegate.MODE_NIGHT_YES
@@ -262,8 +266,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
         // GPS Update Frequency preference
         findPreference<ListPreference>("gps_update_frequency")?.setOnPreferenceChangeListener { _, newValue ->
             val frequency = (newValue as String).toIntOrNull() ?: 10
-            // Update GPS service configuration
-            updateGpsFrequency(frequency)
+            android.util.Log.d(TAG, "GPS update frequency set to ${frequency}s (applies when tracking starts; stored by preference UI)")
             true
         }
 
@@ -276,21 +279,41 @@ class SettingsFragment : PreferenceFragmentCompat() {
         }
         
         // Distance Units preference
-        findPreference<ListPreference>("distance_units")?.setOnPreferenceChangeListener { _, _ ->
-            // UI will automatically update on next screen refresh
+        findPreference<ListPreference>("distance_units")?.setOnPreferenceChangeListener { _, newValue ->
+            settingsManager.setDistanceUnits(newValue as String)
+            true
+        }
+
+        findPreference<SwitchPreferenceCompat>("battery_optimization")?.setOnPreferenceChangeListener { _, newValue ->
+            settingsManager.setBatteryOptimizationEnabled(newValue as Boolean)
+            true
+        }
+
+        findPreference<SwitchPreferenceCompat>("high_accuracy_mode")?.setOnPreferenceChangeListener { _, newValue ->
+            settingsManager.setHighAccuracyMode(newValue as Boolean)
             true
         }
         
         // Notification preferences
         findPreference<SwitchPreferenceCompat>("notifications_enabled")?.setOnPreferenceChangeListener { _, newValue ->
             val enabled = newValue as Boolean
-            updateNotificationSettings(enabled)
+            settingsManager.setNotificationsEnabled(enabled)
             true
         }
         
         // Auto-start trip preference
-        findPreference<SwitchPreferenceCompat>("auto_start_trip")?.setOnPreferenceChangeListener { _, _ ->
-            // This will be checked when app launches
+        findPreference<SwitchPreferenceCompat>("auto_start_trip")?.setOnPreferenceChangeListener { _, newValue ->
+            settingsManager.setAutoStartTripEnabled(newValue as Boolean)
+            true
+        }
+
+        findPreference<SwitchPreferenceCompat>("notification_sound")?.setOnPreferenceChangeListener { _, newValue ->
+            settingsManager.setNotificationSoundEnabled(newValue as Boolean)
+            true
+        }
+
+        findPreference<SwitchPreferenceCompat>("auto_save_trip")?.setOnPreferenceChangeListener { _, newValue ->
+            settingsManager.setAutoSaveTripEnabled(newValue as Boolean)
             true
         }
 
@@ -398,17 +421,6 @@ class SettingsFragment : PreferenceFragmentCompat() {
         iconFrame?.visibility = View.VISIBLE
     }
     
-    private fun updateGpsFrequency(seconds: Int) {
-        // This would update the GPS service configuration
-        // For now, just log it
-        android.util.Log.d(TAG, "GPS update frequency changed to: $seconds seconds")
-    }
-    
-    private fun updateNotificationSettings(enabled: Boolean) {
-        // Update notification channel settings
-        android.util.Log.d(TAG, "Notifications enabled: $enabled")
-    }
-
     /**
      * Debug-only diagnostic log for automatic trip pruning schedule.
      * No UI changes; this is Logcat visibility for maintenance and validation.

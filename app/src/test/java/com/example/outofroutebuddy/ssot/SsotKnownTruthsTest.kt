@@ -149,6 +149,8 @@ class SsotKnownTruthsTest {
             unifiedTripService = mockUnifiedTrip,
             unifiedOfflineService = mockk(relaxed = true),
             crashRecoveryManager = mockk(relaxed = true),
+            tripBackupManager = mockk(relaxed = true),
+            settingsManager = mockk(relaxed = true),
             application = mockApplication,
             ioDispatcher = testDispatcher
         )

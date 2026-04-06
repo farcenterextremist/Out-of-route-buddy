@@ -328,6 +328,7 @@ open class OutOfRouteApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         Log.d(TAG, "Application onCreate started")
+        AppLogger.initApplicationContext(this)
 
         try {
             // ✅ NEW: Apply saved theme preference before any UI is shown

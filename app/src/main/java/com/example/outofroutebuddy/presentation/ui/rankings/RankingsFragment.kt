@@ -206,7 +206,7 @@ class RankingsFragment : Fragment() {
 
         val currentTrips = leaderboard.userRanking?.totalTrips ?: 0
         val targetTrips = leaderboard.cohort.tripRange.last
-        val remaining = leaderboard.tripsUntilNextCohort
+        val remaining = (targetTrips - currentTrips).coerceAtLeast(0)
         val progress = if (targetTrips > 0) {
             (currentTrips.toFloat() / targetTrips * 100).toInt().coerceIn(0, 100)
         } else {

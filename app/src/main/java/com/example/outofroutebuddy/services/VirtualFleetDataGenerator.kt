@@ -262,11 +262,20 @@ class VirtualFleetDataGenerator @Inject constructor() {
         val totalGpsPoints = (durationMinutes * 6 * (0.8 + random.nextDouble() * 0.4)).toInt()
         val validPoints = (totalGpsPoints * gpsQuality / 100.0).roundToInt()
 
+        val startLat = 36.0 + random.nextDouble() * 10.0
+        val startLng = -100.0 + random.nextDouble() * 24.0
+        val endLat = (startLat + (random.nextDouble() - 0.5) * 1.8).coerceIn(24.0, 49.5)
+        val endLng = (startLng + (random.nextDouble() - 0.5) * 2.8).coerceIn(-125.0, -66.0)
+        val avgTripSpeed = archetype.avgSpeedMph * (0.78 + random.nextDouble() * 0.22)
+        val elevBaseM = randomInRange(random, 120.0, 650.0)
+        val elevSpan = randomInRange(random, 40.0, 720.0)
+
         val gpsMetadata = GpsMetadata(
             totalPoints = totalGpsPoints,
             validPoints = validPoints,
             rejectedPoints = totalGpsPoints - validPoints,
             avgAccuracy = randomInRange(random, 3.0, 25.0),
+            avgSpeedMph = avgTripSpeed,
             maxSpeed = archetype.avgSpeedMph + random.nextDouble() * 20.0,
             locationJumps = random.nextInt(5),
             accuracyWarnings = random.nextInt(3),
@@ -274,6 +283,15 @@ class VirtualFleetDataGenerator @Inject constructor() {
             tripDurationMinutes = durationMinutes,
             satelliteCount = 6 + random.nextInt(10),
             gpsQualityPercentage = gpsQuality,
+            startLatitude = startLat,
+            startLongitude = startLng,
+            endLatitude = endLat,
+            endLongitude = endLng,
+            stopEventsCount = random.nextInt(6),
+            significantTurnsCount = ((durationMinutes / 12).coerceIn(4, 85) + random.nextInt(8)),
+            elevationMinMeters = elevBaseM,
+            elevationMaxMeters = elevBaseM + elevSpan,
+            distinctTimeZoneCount = if (random.nextDouble() < 0.12) 2 else 1,
             interstatePercent = if (archetype == DriverArchetype.HIGHWAY_WARRIOR) {
                 randomInRange(random, 60.0, 90.0)
             } else {

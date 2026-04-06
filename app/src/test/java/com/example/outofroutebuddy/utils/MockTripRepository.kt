@@ -3,6 +3,7 @@ package com.example.outofroutebuddy.utils
 import com.example.outofroutebuddy.domain.models.DataTier
 import com.example.outofroutebuddy.domain.models.Trip
 import com.example.outofroutebuddy.domain.models.TripStatus
+import com.example.outofroutebuddy.domain.calendar.scaledToCalendarDay
 import com.example.outofroutebuddy.domain.repository.TripRepository
 import com.example.outofroutebuddy.domain.repository.TripStatistics
 import kotlinx.coroutines.flow.Flow
@@ -77,11 +78,13 @@ class MockTripRepository : TripRepository {
         flowOf(_trips.value.filter { it.endTime?.let { e -> !e.before(startDate) && !e.after(endDate) } == true })
 
     override fun getTripsOverlappingDay(startOfDay: Date, endOfDay: Date): Flow<List<Trip>> =
-        flowOf(_trips.value.filter { trip ->
-            val start = trip.startTime ?: return@filter false
-            val end = trip.endTime ?: return@filter false
-            start.before(endOfDay) && end.after(startOfDay)
-        })
+        flowOf(
+            _trips.value.filter { trip ->
+                val start = trip.startTime ?: return@filter false
+                val end = trip.endTime ?: return@filter false
+                start.before(endOfDay) && end.after(startOfDay)
+            }.map { it.scaledToCalendarDay(startOfDay, endOfDay) },
+        )
 
     override fun getTripsByStatus(status: TripStatus): Flow<List<Trip>> =
         flowOf(_trips.value.filter { it.status == status })

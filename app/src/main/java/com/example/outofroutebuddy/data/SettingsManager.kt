@@ -19,9 +19,22 @@ class SettingsManager @Inject constructor(
     private val prefs: SharedPreferences = 
         context.getSharedPreferences("app_settings", Context.MODE_PRIVATE)
     
-    // GPS Settings
-    fun getGpsUpdateFrequency(): Int = prefs.getInt("gps_update_frequency", 10)
-    fun setGpsUpdateFrequency(seconds: Int) = prefs.edit {putInt("gps_update_frequency", seconds)}
+    // GPS Settings — ListPreference stores string seconds; preset path may store int.
+    fun getGpsUpdateFrequency(): Int {
+        val raw = prefs.all["gps_update_frequency"] ?: return 10
+        val seconds =
+            when (raw) {
+                is Int -> raw
+                is String -> raw.toIntOrNull() ?: 10
+                else -> 10
+            }
+        return seconds.coerceIn(1, 600)
+    }
+
+    fun setGpsUpdateFrequency(seconds: Int) =
+        prefs.edit {
+            putInt("gps_update_frequency", seconds.coerceIn(1, 600))
+        }
     
     fun isHighAccuracyMode(): Boolean = prefs.getBoolean("high_accuracy_mode", true)
     fun setHighAccuracyMode(enabled: Boolean) = prefs.edit {putBoolean("high_accuracy_mode", enabled)}
